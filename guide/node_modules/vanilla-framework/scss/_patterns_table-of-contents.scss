@@ -1,0 +1,56 @@
+@import 'settings';
+
+@mixin vf-p-table-of-contents {
+  .p-table-of-contents {
+    border-top: 1px solid $color-mid-light;
+    font-size: 0.875rem;
+    padding: 0 $sp-large;
+
+    @media (min-width: $threshold-6-12-col) {
+      border-left: 1px solid $color-mid-light;
+      border-top: 0;
+      padding: 0 $sp-medium;
+    }
+  }
+
+  .p-table-of-contents__header {
+    color: $color-mid-dark;
+    font-size: $sp-medium;
+    line-height: 1.5;
+    margin-bottom: $sp-medium;
+    text-transform: uppercase;
+  }
+
+  .p-table-of-contents__section {
+    padding: $sp-medium 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px dotted $color-mid-light;
+    }
+  }
+
+  .p-table-of-contents__nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .p-table-of-contents__link {
+      border-bottom: 0;
+      color: $color-dark;
+      margin-bottom: $sp-x-small;
+
+      &:visited {
+        color: $color-dark;
+      }
+
+      &:hover {
+        color: $color-link;
+      }
+
+      &.is-active {
+        font-weight: $font-weight-bold;
+        padding-left: $sp-x-small;
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+// deprecated: .p-muted-heading and vf-p-muted-heading is deprecated, use .p-text--small-caps instead
+@mixin vf-p-muted-heading {
+  .p-muted-heading {
+    @extend %small-caps-text;
+  }
+}

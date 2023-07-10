@@ -1,0 +1,14 @@
+@import 'settings';
+
+@mixin vf-p-form-help-text {
+  .p-form-help-text {
+    @extend %small-text;
+
+    color: $color-mid-dark;
+    margin-top: -$sp-unit;
+
+    &.is-tick-element {
+      margin-left: $sph--large + $form-tick-box-size;
+    }
+  }
+}

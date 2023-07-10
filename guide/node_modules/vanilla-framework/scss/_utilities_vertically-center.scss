@@ -1,0 +1,14 @@
+@import 'settings';
+
+// Vertically align
+@mixin vf-u-vertically-center {
+  .u-vertically-center {
+    align-items: center !important;
+    display: grid !important;
+
+    // stylelint-disable-next-line selector-max-type -- img elements should always align self
+    > img {
+      align-self: center !important;
+    }
+  }
+}

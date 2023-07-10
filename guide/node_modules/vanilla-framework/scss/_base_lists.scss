@@ -1,0 +1,51 @@
+@import 'settings';
+
+@mixin vf-b-lists {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  ol,
+  ul {
+    margin-bottom: $spv--x-large;
+    margin-left: $sph--large;
+    margin-top: 0;
+    padding-left: $sph--large;
+
+    nav & {
+      list-style: none;
+      list-style-image: none;
+    }
+  }
+
+  li {
+    margin: 0;
+    padding: 0;
+  }
+
+  li > ul,
+  li > ol {
+    margin-bottom: 0;
+    padding-top: 0;
+  }
+
+  li > ul > li:last-of-type,
+  li > ol > li:last-of-type {
+    padding-bottom: 0;
+  }
+
+  dl {
+    margin-bottom: $spv--x-large;
+    margin-top: 0;
+    padding: 0;
+  }
+
+  dd {
+    @extend %default-text;
+
+    margin-left: $sph--large;
+  }
+
+  dt {
+    @extend %default-text;
+    @extend %bold;
+  }
+  // stylelint-enable selector-max-type
+}

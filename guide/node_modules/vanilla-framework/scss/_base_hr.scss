@@ -1,0 +1,81 @@
+@import 'settings';
+
+%fixed-width-hr {
+  @mixin adjusted-width($size) {
+    $gutters-sizes: 2 * map-get($grid-margin-widths, $size);
+
+    max-width: calc($grid-max-width - $gutters-sizes);
+    width: calc(100% - $gutters-sizes);
+  }
+
+  margin-left: auto;
+  margin-right: auto;
+  @include adjusted-width(small);
+
+  @media (min-width: $threshold-4-6-col) {
+    @include adjusted-width(default);
+  }
+
+  .row &,
+  .u-fixed-width & {
+    width: 100%;
+  }
+}
+
+// Horizontal rule
+@mixin vf-b-hr {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  hr {
+    @extend %hr;
+
+    margin-bottom: calc($spv--small - 1px);
+
+    &.u-no-margin--bottom {
+      // compensate for hr thickness, to make sure it doesn't drift from baseline grid
+      @extend %u-no-margin--bottom--hr;
+    }
+
+    &.is-muted {
+      background-color: $colors--light-theme--border-low-contrast;
+    }
+
+    &.is-fixed-width {
+      @extend %fixed-width-hr;
+    }
+  }
+
+  // Theming
+  @if ($theme-default-hr == 'dark') {
+    hr {
+      @include vf-hr-dark-theme;
+    }
+
+    hr.is-light {
+      @include vf-hr-light-theme;
+    }
+  } @else {
+    hr {
+      @include vf-hr-light-theme;
+    }
+
+    hr.is-dark {
+      @include vf-hr-dark-theme;
+    }
+  }
+  // stylelint-enable selector-max-type
+}
+
+@mixin vf-hr-theme(
+  // color of the horizontal rule line
+  $color-hr-line
+) {
+  background: $color-hr-line;
+}
+
+@mixin vf-hr-light-theme {
+  @include vf-hr-theme($colors--light-theme--border-default);
+}
+
+@mixin vf-hr-dark-theme {
+  @include vf-hr-theme($colors--dark-theme--border-default);
+}

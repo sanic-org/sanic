@@ -1,0 +1,34 @@
+@import 'settings';
+
+@mixin vf-p-badge {
+  %vf-badge {
+    @extend %x-small-text;
+    background-color: $color-dark;
+    border-radius: 1rem;
+    box-sizing: content-box;
+    color: $color-x-light;
+    margin-bottom: 0;
+    max-width: 4ch;
+    overflow: hidden;
+    padding: 0 $spv--x-small;
+  }
+
+  .p-badge,
+  .p-badge--negative {
+    @extend %vf-badge;
+  }
+
+  .p-badge--negative {
+    background-color: $color-negative;
+  }
+
+  .p-chip,
+  [class*='p-chip--'] {
+    .p-badge,
+    .p-badge--negative {
+      align-self: center;
+      margin-left: $sph--small;
+      margin-right: -0.15rem;
+    }
+  }
+}

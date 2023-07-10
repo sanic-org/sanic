@@ -1,0 +1,16 @@
+@import 'settings';
+
+// Box-sizing FTW!
+//https://css-tricks.com/inheriting-box-sizing-probably-slightly-better-best-practice/
+@mixin vf-b-box-sizing {
+  // stylelint-disable-next-line selector-max-type -- base styles can use type selectors
+  html {
+    box-sizing: border-box;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+}

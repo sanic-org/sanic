@@ -1,0 +1,62 @@
+@import 'settings';
+
+// Default status label styling
+@mixin vf-p-status-label {
+  %vf-status-label {
+    @extend %x-small-text;
+    @extend %u-no-margin--bottom--small;
+
+    border-radius: $border-radius;
+    display: inline-block;
+    font-weight: $font-weight-bold;
+    padding: map-get($nudges, x-small) $sph--small;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .p-status-label,
+  .p-label {
+    @extend %vf-status-label;
+
+    background-color: $color-mid-dark;
+    color: $color-x-light;
+  }
+
+  .p-status-label--positive,
+  .p-label--positive {
+    @extend %vf-status-label;
+
+    background-color: $color-positive;
+    color: $color-x-light;
+  }
+
+  .p-status-label--caution,
+  .p-label--caution {
+    @extend %vf-status-label;
+
+    background-color: $color-caution;
+    color: $color-dark;
+  }
+
+  .p-status-label--information,
+  .p-label--information {
+    @extend %vf-status-label;
+
+    background-color: $color-information;
+    color: $color-x-light;
+  }
+
+  .p-status-label--negative,
+  .p-label--negative {
+    @extend %vf-status-label;
+
+    background-color: $color-negative;
+    color: $color-x-light;
+  }
+}
+
+// Deprecated mixin kept for compatibility
+@mixin vf-p-label {
+  @include vf-p-status-label;
+}

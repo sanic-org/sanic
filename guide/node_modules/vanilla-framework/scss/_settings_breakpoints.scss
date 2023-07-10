@@ -1,0 +1,7 @@
+// Global breakpoints
+$breakpoint-x-small: 460px !default;
+$breakpoint-small: 620px !default;
+$breakpoint-large: 1036px !default;
+$breakpoint-navigation-threshold: $breakpoint-large !default;
+$breakpoint-heading-threshold: $breakpoint-large !default;
+$breakpoint-x-large: 1681px !default; // exclude most laptops

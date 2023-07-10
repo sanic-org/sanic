@@ -1,0 +1,95 @@
+@import 'settings';
+
+@mixin horizontal-dividers() {
+  padding-bottom: $spv--large;
+  padding-top: $spv--large;
+
+  &:not(:first-child)::before {
+    bottom: auto;
+    content: '';
+    height: 1px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+  }
+}
+
+@mixin vertical-dividers() {
+  padding-bottom: 0;
+  padding-top: 0;
+
+  &:not(:first-child)::before {
+    bottom: 0;
+    content: '';
+    height: auto;
+    left: map-get($grid-gutter-widths, default) * -0.5;
+    position: absolute;
+    right: auto;
+    top: 0;
+    width: 1px;
+  }
+}
+
+@mixin vf-p-divider {
+  .p-divider {
+    @extend %vf-row;
+
+    margin-bottom: $spv--x-large;
+  }
+
+  .p-divider__block {
+    position: relative;
+
+    @include horizontal-dividers();
+
+    // Medium screens will have horizontal dividers unless col-medium-...
+    // classes have been applied.
+    @media (min-width: $threshold-4-6-col) {
+      // If a col-medium- class has been applied then use vertical dividers.
+      &[class*='#{$grid-medium-col-prefix}'] {
+        @include vertical-dividers();
+      }
+    }
+
+    @media (min-width: $threshold-6-12-col) {
+      @include vertical-dividers();
+    }
+  }
+
+  // Theming
+  @if ($theme-default-p-divider == 'dark') {
+    .p-divider__block {
+      @include vf-divider-dark-theme;
+    }
+
+    .p-divider.is-light .p-divider__block {
+      @include vf-divider-light-theme;
+    }
+  } @else {
+    .p-divider__block {
+      @include vf-divider-light-theme;
+    }
+
+    .p-divider.is-dark .p-divider__block {
+      @include vf-divider-dark-theme;
+    }
+  }
+}
+
+@mixin vf-divider-theme($color-divider-text, $color-divider-line) {
+  color: $color-divider-text;
+
+  &:not(:first-child)::before {
+    background-color: $color-divider-line;
+  }
+}
+
+@mixin vf-divider-light-theme {
+  @include vf-divider-theme($colors--light-theme--text-default, $colors--light-theme--border-default);
+}
+
+@mixin vf-divider-dark-theme {
+  @include vf-divider-theme($colors--dark-theme--text-default, $colors--dark-theme--border-default);
+}

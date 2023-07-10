@@ -1,0 +1,236 @@
+$input-color-dark: $grey-lighter !default
+$input-background-color-dark: $black !default
+$input-border-color-dark: $grey-darker !default
+$input-shadow-dark: inset 0 1px 2px rgba($white, 0.1) !default
+$input-placeholder-color-dark: rgba($input-color-dark, 0.3) !default
+
+$input-hover-color-dark: $grey-lighter !default
+$input-hover-border-color-dark: $grey-dark !default
+
+$input-focus-color-dark: $grey-lighter !default
+$input-focus-border-color-dark: $link-dark !default
+$input-focus-box-shadow-size: 0 0 0 0.125em !default
+$input-focus-box-shadow-color-dark: rgba($link-dark, 0.25) !default
+
+$input-disabled-color-dark: $text-dark !default
+$input-disabled-background-color-dark: $background-dark !default
+$input-disabled-border-color-dark: $background-dark !default
+$input-disabled-placeholder-color-dark: rgba($input-disabled-color-dark, 0.3) !default
+
+$input-arrow-dark: $link-dark !default
+
+$input-icon-color-dark: $grey-darker !default
+
+$file-border-color-dark: $border-dark !default
+
+$file-cta-background-color-dark: $black-ter !default
+$file-cta-color-dark: $grey-light !default
+$file-cta-hover-color-dark: $grey-lighter !default
+$file-cta-active-color-dark: $grey-lighter !default
+
+$file-name-border-color-dark: $border-dark !default
+
+$label-color-dark: $grey-lighter !default
+
+=input
+  background-color: $input-background-color-dark
+  border-color: $input-border-color-dark
+  color: $input-color-dark
+  +placeholder
+    color: $input-placeholder-color-dark
+  &:hover,
+  &.is-hovered
+    border-color: $input-hover-border-color-dark
+  &:focus,
+  &.is-focused,
+  &:active,
+  &.is-active
+    border-color: $input-focus-border-color-dark
+    box-shadow: $input-focus-box-shadow-size $input-focus-box-shadow-color-dark
+  &[disabled],
+  fieldset[disabled] &
+    background-color: $input-disabled-background-color-dark
+    border-color: $input-disabled-border-color-dark
+    color: $input-disabled-color-dark
+    +placeholder
+      color: $input-disabled-placeholder-color-dark
+
+.input,
+.textarea
+  +input
+  box-shadow: $input-shadow-dark
+  // Colors
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    &.is-#{$name}
+      border-color: $color
+      &:focus,
+      &.is-focused,
+      &:active,
+      &.is-active
+        box-shadow: $input-focus-box-shadow-size rgba($color, 0.25)
+  // Colors Dark
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    &.is-#{$name}-dark
+      border-color: $color
+      &:focus,
+      &.is-focused,
+      &:active,
+      &.is-active
+        box-shadow: $input-focus-box-shadow-size rgba($color, 0.25)
+
+.checkbox,
+.radio
+  &:hover
+    color: $input-hover-color-dark
+  &[disabled],
+  fieldset[disabled] &
+    color: $input-disabled-color-dark
+
+.select
+  &:not(.is-multiple):not(.is-loading)
+    &::after
+      border-color: $input-arrow-dark
+  select
+    +input
+    &[disabled]:hover,
+    fieldset[disabled] &:hover
+      border-color: $input-disabled-border-color-dark
+    option
+      color: $input-color-dark
+  // States
+  &:not(.is-multiple):not(.is-loading):hover
+    &::after
+      border-color: $input-hover-color-dark
+  // Colors
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    &.is-#{$name}
+      &:not(:hover)::after
+        border-color: $color
+      select
+        border-color: $color
+        &:hover,
+        &.is-hovered
+          border-color: darken($color, 5%)
+        &:focus,
+        &.is-focused,
+        &:active,
+        &.is-active
+          box-shadow: $input-focus-box-shadow-size rgba($color, 0.25)
+  // Colors Dark
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    &.is-#{$name}-dark
+      &:not(:hover)::after
+        border-color: $color
+      select
+        border-color: $color
+        &:hover,
+        &.is-hovered
+          border-color: darken($color, 5%)
+        &:focus,
+        &.is-focused,
+        &:active,
+        &.is-active
+          box-shadow: $input-focus-box-shadow-size rgba($color, 0.25)
+  // Modifiers
+  &.is-disabled
+    &::after
+      border-color: $input-disabled-color-dark
+
+.file
+  // Colors
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}
+      .file-cta
+        background-color: $color
+        color: $color-invert
+      &:hover,
+      &.is-hovered
+        .file-cta
+          background-color: darken($color, 2.5%)
+          color: $color-invert
+      &:focus,
+      &.is-focused
+        .file-cta
+          box-shadow: 0 0 0.5em rgba($color, 0.25)
+          color: $color-invert
+      &:active,
+      &.is-active
+        .file-cta
+          background-color: darken($color, 5%)
+          color: $color-invert
+  // Colors Dark
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}-dark
+      .file-cta
+        background-color: $color
+        color: $color-invert
+      &:hover,
+      &.is-hovered
+        .file-cta
+          background-color: darken($color, 2.5%)
+          color: $color-invert
+      &:focus,
+      &.is-focused
+        .file-cta
+          box-shadow: 0 0 0.5em rgba($color, 0.25)
+          color: $color-invert
+      &:active,
+      &.is-active
+        .file-cta
+          background-color: darken($color, 5%)
+          color: $color-invert
+
+.file-label
+  &:hover
+    .file-cta
+      background-color: darken($file-cta-background-color-dark, 2.5%)
+      color: $file-cta-hover-color-dark
+    .file-name
+      border-color: darken($file-name-border-color-dark, 2.5%)
+  &:active
+    .file-cta
+      background-color: darken($file-cta-background-color-dark, 5%)
+      color: $file-cta-active-color-dark
+    .file-name
+      border-color: darken($file-name-border-color-dark, 5%)
+
+.file-cta,
+.file-name
+  border-color: $file-border-color-dark
+
+.file-cta
+  background-color: $file-cta-background-color-dark
+  color: $file-cta-color-dark
+
+.file-name
+  border-color: $file-name-border-color-dark
+
+.label
+  color: $label-color-dark
+
+.help
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    &.is-#{$name}
+      color: $color
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    &.is-#{$name}-dark
+      color: $color
+
+// Containers
+
+.control
+  // Modifiers
+  &.has-icons-left,
+  &.has-icons-right
+    .icon
+      color: $input-icon-color-dark

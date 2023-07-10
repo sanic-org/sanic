@@ -1,0 +1,302 @@
+@use 'sass:math';
+@import 'settings';
+
+@mixin vf-p-chip {
+  %vf-chip {
+    @extend %small-text;
+    @include vf-transition(#{background-color, border-color}, snap, out);
+    @include vf-focus;
+
+    align-items: baseline;
+    border-radius: 1rem;
+    display: inline-flex;
+    margin: 0 $sph--small $input-margin-bottom 0;
+    max-width: 100%;
+    padding: calc($spv--x-small - $input-border-thickness) $sph--small; // account for border thickness using calc
+    position: relative;
+    user-select: none;
+    vertical-align: calc($input-border-thickness - map-get($nudges, p));
+    white-space: nowrap;
+
+    .p-chip__lead,
+    .p-chip__value {
+      display: inline;
+      margin-bottom: 0;
+      overflow: hidden;
+      padding: 0;
+      text-overflow: ellipsis;
+      vertical-align: baseline;
+    }
+
+    .p-chip__lead {
+      @extend %x-small-text;
+
+      text-transform: uppercase;
+    }
+
+    .p-chip__lead + .p-chip__value::before {
+      @extend %x-small-text;
+
+      content: ': ';
+    }
+
+    .p-chip__value {
+      @extend %small-text;
+      font-weight: $font-weight-bold;
+    }
+
+    .p-chip__dismiss {
+      @extend %icon;
+      // also includes button and close icon styles in the theming section
+
+      align-self: center;
+      background-size: map-get($icon-sizes, small);
+      border-radius: 50%;
+      flex: 0 0 auto;
+      margin-left: $sph--x-small;
+      @media (min-width: $breakpoint-x-large) {
+        background-size: math.div(map-get($icon-sizes, small), $font-size-ratio--largescreen); //ensure no rounding happens as it positions the icon off center
+      }
+    }
+
+    &.is-dense {
+      padding: 0 $sph--small;
+    }
+
+    &.is-inline {
+      margin: 0;
+      vertical-align: baseline;
+    }
+  }
+
+  .p-chip,
+  .p-chip--positive,
+  .p-chip--caution,
+  .p-chip--negative,
+  .p-chip--information {
+    @extend %vf-chip;
+  }
+
+  // Theming
+  @if ($theme-default-p-chip == 'dark') {
+    .p-chip {
+      @include vf-chip-dark-theme;
+    }
+    .p-chip.is-light {
+      @include vf-chip-light-theme;
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip {
+      @include vf-chip-dark-theme($is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip.is-light {
+      @include vf-chip-light-theme($is-interactive: true);
+    }
+
+    .p-chip--positive {
+      @include vf-chip-dark-theme(positive);
+    }
+    .p-chip--positive.is-light {
+      @include vf-chip-light-theme(positive);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--positive {
+      @include vf-chip-dark-theme($chip-type: positive, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--positive.is-light {
+      @include vf-chip-light-theme($chip-type: positive, $is-interactive: true);
+    }
+
+    .p-chip--caution {
+      @include vf-chip-dark-theme(caution);
+    }
+    .p-chip--caution.is-light {
+      @include vf-chip-light-theme(caution);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--caution {
+      @include vf-chip-dark-theme($chip-type: caution, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--caution.is-light {
+      @include vf-chip-light-theme($chip-type: caution, $is-interactive: true);
+    }
+
+    .p-chip--negative {
+      @include vf-chip-dark-theme(negative);
+    }
+    .p-chip--negative.is-light {
+      @include vf-chip-light-theme(negative);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--negative {
+      @include vf-chip-dark-theme($chip-type: negative, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--negative.is-light {
+      @include vf-chip-light-theme($chip-type: negative, $is-interactive: true);
+    }
+
+    .p-chip--information {
+      @include vf-chip-dark-theme(information);
+    }
+    .p-chip--information.is-light {
+      @include vf-chip-light-theme(information);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--information {
+      @include vf-chip-dark-theme($chip-type: information, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--information.is-light {
+      @include vf-chip-light-theme($chip-type: information, $is-interactive: true);
+    }
+  } @else {
+    .p-chip {
+      @include vf-chip-light-theme;
+    }
+    .p-chip.is-dark {
+      @include vf-chip-dark-theme;
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip {
+      @include vf-chip-light-theme($is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip.is-dark {
+      @include vf-chip-dark-theme($is-interactive: true);
+    }
+
+    .p-chip--positive {
+      @include vf-chip-light-theme(positive);
+    }
+    .p-chip--positive.is-dark {
+      @include vf-chip-dark-theme(positive);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--positive {
+      @include vf-chip-light-theme($chip-type: positive, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--positive.is-dark {
+      @include vf-chip-dark-theme($chip-type: positive, $is-interactive: true);
+    }
+
+    .p-chip--caution {
+      @include vf-chip-light-theme(caution);
+    }
+    .p-chip--caution.is-dark {
+      @include vf-chip-dark-theme(caution);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--caution {
+      @include vf-chip-light-theme($chip-type: caution, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--caution.is-dark {
+      @include vf-chip-dark-theme($chip-type: caution, $is-interactive: true);
+    }
+
+    .p-chip--negative {
+      @include vf-chip-light-theme(negative);
+    }
+    .p-chip--negative.is-dark {
+      @include vf-chip-dark-theme(negative);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--negative {
+      @include vf-chip-light-theme($chip-type: negative, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--negative.is-dark {
+      @include vf-chip-dark-theme($chip-type: negative, $is-interactive: true);
+    }
+
+    .p-chip--information {
+      @include vf-chip-light-theme(information);
+    }
+    .p-chip--information.is-dark {
+      @include vf-chip-dark-theme(information);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--information {
+      @include vf-chip-light-theme($chip-type: information, $is-interactive: true);
+    }
+    // stylelint-disable-next-line selector-max-type
+    button.p-chip--information.is-dark {
+      @include vf-chip-dark-theme($chip-type: information, $is-interactive: true);
+    }
+  }
+}
+
+@mixin vf-chip-theme($chip-type: neutral, $is-interactive: false, $colors-chip-tinted-backgrounds, $colors-chip-tinted-borders, $color-chip-value, $color-chip-lead) {
+  @if (not map-has-key($colors-chip-tinted-backgrounds, $chip-type)) {
+    $chip-type: neutral;
+  }
+
+  $color-background: map-get($colors-chip-tinted-backgrounds, $chip-type, 'default');
+  $color-background-hover: map-get($colors-chip-tinted-backgrounds, $chip-type, 'hover');
+  $color-background-active: map-get($colors-chip-tinted-backgrounds, $chip-type, 'active');
+  $color-border: map-get($colors-chip-tinted-borders, $chip-type);
+
+  background-color: $color-background;
+  border: $input-border-thickness solid $color-border;
+
+  .p-chip__value {
+    color: $color-chip-value;
+  }
+  .p-chip__lead,
+  .p-chip__lead + .p-chip__value::before {
+    color: $color-chip-lead;
+  }
+
+  @if ($is-interactive) {
+    &:hover {
+      background-color: $color-background-hover;
+      border-color: $color-border;
+    }
+    &[aria-pressed='true'],
+    &.is-selected,
+    &:active {
+      background-color: $color-background-active;
+      border-color: $color-border;
+    }
+  } @else {
+    .p-chip__dismiss {
+      @include vf-icon-close($color-chip-lead);
+
+      @include vf-button-pattern(
+        $button-background-color: transparent,
+        $button-border-color: transparent,
+        $button-hover-background-color: $color-background-hover,
+        $button-hover-border-color: transparent,
+        $button-active-background-color: $color-background-active,
+        $button-active-border-color: transparent
+      );
+    }
+  }
+}
+
+@mixin vf-chip-light-theme($chip-type: neutral, $is-interactive: false) {
+  @include vf-chip-theme(
+    $chip-type: $chip-type,
+    $is-interactive: $is-interactive,
+    $colors-chip-tinted-backgrounds: $colors-light-theme--tinted-backgrounds,
+    $colors-chip-tinted-borders: $colors-light-theme--tinted-borders,
+    $color-chip-value: $colors--light-theme--text-default,
+    $color-chip-lead: $colors--light-theme--text-default
+  );
+}
+
+@mixin vf-chip-dark-theme($chip-type: neutral, $is-interactive: false) {
+  @include vf-chip-theme(
+    $chip-type: $chip-type,
+    $is-interactive: $is-interactive,
+    $colors-chip-tinted-backgrounds: $colors-dark-theme--tinted-backgrounds,
+    $colors-chip-tinted-borders: $colors-dark-theme--tinted-borders,
+    $color-chip-value: $colors--dark-theme--text-default,
+    $color-chip-lead: $colors--dark-theme--text-default
+  );
+}

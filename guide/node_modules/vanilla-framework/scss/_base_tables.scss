@@ -1,0 +1,76 @@
+@import 'settings';
+
+// Tables
+@mixin vf-b-tables {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  table {
+    border: 0;
+    border-collapse: collapse;
+    caption-side: bottom;
+    line-height: map-get($line-heights, default-text);
+    margin-bottom: $spv--x-large;
+    overflow-x: auto;
+    width: 100%;
+
+    @if ($table-layout-fixed) {
+      table-layout: fixed;
+    } @else {
+      table-layout: auto;
+    }
+  }
+
+  td,
+  th {
+    @extend %single-border-text-vpadding--scaling;
+
+    font-weight: $font-weight-regular-text;
+    overflow: hidden;
+    padding-left: $sph--small;
+    padding-right: $sph--small;
+    text-align: left;
+    text-overflow: ellipsis;
+    vertical-align: top;
+
+    &.has-overflow {
+      overflow: visible;
+    }
+  }
+
+  thead {
+    th {
+      @extend %table-header-label;
+
+      padding-bottom: $spv--large - map-get($nudges, x-small);
+      padding-top: map-get($nudges, x-small) + map-get($browser-rounding-compensations, small) + $sp-unit;
+    }
+
+    tr {
+      border-bottom: 1px solid $colors--light-theme--border-default;
+      vertical-align: top;
+    }
+  }
+
+  tfoot {
+    tr {
+      @extend %table-row-border;
+    }
+  }
+
+  tbody {
+    tr {
+      &:not(:first-child) {
+        @extend %table-row-border;
+      }
+    }
+  }
+
+  caption {
+    padding-bottom: $spv--small;
+    padding-top: $spv--small;
+  }
+  // stylelint-enable selector-max-type
+
+  %table-row-border {
+    border-top: 1px solid $colors--light-theme--border-low-contrast;
+  }
+}

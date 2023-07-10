@@ -1,0 +1,35 @@
+$content-heading-color-dark: $text-strong-dark !default
+
+$content-blockquote-background-color-dark: $background-dark !default
+$content-blockquote-border-left-dark: 5px solid $border-dark !default
+
+$content-table-cell-border-dark: 1px solid $border-dark !default
+$content-table-cell-heading-color-dark: $text-strong-dark !default
+$content-table-head-cell-color-dark: $text-strong-dark !default
+$content-table-foot-cell-color-dark: $text-strong-dark !default
+
+.content
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6
+    color: $content-heading-color-dark
+  blockquote
+    background-color: $content-blockquote-background-color-dark
+    border-left: $content-blockquote-border-left-dark
+  table
+    td,
+    th
+      border: $content-table-cell-border-dark
+    th
+      color: $content-table-cell-heading-color-dark
+    thead
+      td,
+      th
+        color: $content-table-head-cell-color-dark
+    tfoot
+      td,
+      th
+        color: $content-table-foot-cell-color-dark

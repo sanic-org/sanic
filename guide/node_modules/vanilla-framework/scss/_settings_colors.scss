@@ -1,0 +1,204 @@
+// Global color settings
+$color-transparent: transparent !default;
+
+// Generic gray values (used in elements that have not been themed yet)
+$color-x-light: #fff !default;
+$color-light: #f7f7f7 !default;
+$color-mid-x-light: #e5e5e5 !default;
+$color-mid-light: #d9d9d9 !default;
+$color-mid: #999 !default;
+$color-mid-dark: #666 !default;
+$color-dark: #111 !default;
+$color-x-dark: #000 !default;
+$color-input-shadow: rgba($color-x-dark, 0.12) !default;
+
+// SEMANTIC COLOURS
+$color-negative: #c7162b !default;
+$color-caution: #f99b11 !default;
+$color-positive: #0e8420 !default;
+$color-information: #24598f !default;
+
+// for dark themes
+$color-negative-dark: #a11223 !default;
+$color-positive-dark: #008013 !default;
+
+// STATE VARIABLES
+$disabled-element-opacity: 0.33;
+
+$shadow-opacity: 0.2;
+
+// Link colors
+$color-link: #06c !default;
+$color-link-visited: #7d42b8 !default;
+$color-focus: #2e96ff !default;
+
+// Focus modifications to meet AA 3:1 contrast ratio against
+// button background for positive/negative buttons
+$color-focus-positive: #003008 !default;
+$color-focus-negative: #3b0006 !default;
+
+// Button background color changes
+$input-background-opacity-amount: 0.04;
+$hover-background-opacity-amount: 0.05;
+$active-background-opacity-amount: 0.08;
+
+$muted-text-opacity-amount: 0.6;
+$inactive-text-opacity-amount: 0.75;
+
+// NON-SEMANTIC COLOURS
+$color-label-validated: #006b75;
+$color-code-background: rgba($color-x-dark, 0.03);
+$color-code-background-dark: rgba($color-x-light, 0.3);
+$color-code-heading-background: rgba($color-x-dark, 0.08);
+
+// Background colours for form elements
+$color-positive-background: #edf8eb;
+$color-positive-background--hover: #e5f6e2;
+$color-positive-background--focus: #e0f4dc;
+
+$color-caution-background: #f8efe8;
+$color-caution-background--hover: #f5e7dd;
+$color-caution-background--focus: #f3e2d6;
+
+$color-negative-background: #f8e9e8;
+$color-negative-background--hover: #f5dfdd;
+$color-negative-background--focus: #f3d8d6;
+
+$states: (
+  error: $color-negative,
+  caution: $color-caution,
+  success: $color-positive,
+  information: $color-information,
+);
+
+// THEME COLORS
+// ==============
+//
+// Text colors:
+// --text-default    - default text color
+// --text-hover      - dimmed version of default text color, to be used in hover effects (when background doesn't change)
+// --text-disabled   - dimmed version of default text color, to be used on disabled controls
+// --text-muted      - muted version of default text color, to be used on elements with less prominence
+//
+// Background colors:
+// --background           - default background color
+// --background-alt       - alternative version of background color, to be used to differentiate given surface
+// --background-active    - background for selected and active states of interactive elements
+// --background-hover     - background for hover states of interactive elements
+// --background-overlay   - background used to overlay the screen when showing a modal type dialogs
+//
+// Border colors:
+// --border-default       - default border color
+// --border-high-contrast - high contrast version of border color, to be used when border needs more visibility (form inputs, etc)
+// --border-low-contrast  - low contrast version of border color, to be used when border needs more visibility (separators)
+
+// Light theme
+$colors--light-theme--text-default: #111 !default;
+$colors--light-theme--text-muted: rgba($color-x-dark, $muted-text-opacity-amount) !default;
+$colors--light-theme--text-inactive: rgba($color-x-dark, $inactive-text-opacity-amount) !default;
+
+$colors--light-theme--background-default: #fff !default;
+$colors--light-theme--background-alt: #f7f7f7 !default;
+$colors--light-theme--background-inputs: adjust-color($color-x-dark, $lightness: 100% * (1 - $input-background-opacity-amount)) !default;
+$colors--light-theme--background-active: adjust-color($color-x-dark, $lightness: 100% * (1 - $active-background-opacity-amount)) !default;
+$colors--light-theme--background-hover: adjust-color($color-x-dark, $lightness: 100% * (1 - $hover-background-opacity-amount)) !default;
+$colors--light-theme--background-overlay: transparentize($color-dark, 0.15) !default;
+
+$colors--light-theme--border-default: rgba($color-x-dark, 0.15) !default;
+$colors--light-theme--border-high-contrast: rgba($color-x-dark, 0.56) !default;
+$colors--light-theme--border-low-contrast: rgba($color-x-dark, 0.1) !default;
+
+$colors-light-theme--tinted-backgrounds: (
+  neutral: (
+    default: #f2f2f2,
+    hover: adjust-color(#f2f2f2, $lightness: -100% * $hover-background-opacity-amount, $saturation: -100% * 2 * $hover-background-opacity-amount),
+    active: adjust-color(#f2f2f2, $lightness: -100% * $active-background-opacity-amount, $saturation: -100% * 2 * $active-background-opacity-amount),
+  ),
+  positive: (
+    default: hsl(129deg 90% 39% / 10%),
+    hover: hsl(129deg 100% 39% / #{10% + $hover-background-opacity-amount * 100%}),
+    active: hsl(129deg 100% 39% / #{10% + $active-background-opacity-amount * 100%}),
+  ),
+  caution: (
+    default: hsl(27deg 100% 39% / 10%),
+    hover: hsl(27deg 100% 39% / #{10% + $hover-background-opacity-amount * 100%}),
+    active: hsl(27deg 100% 39% / #{10% + $active-background-opacity-amount * 100%}),
+  ),
+  negative: (
+    default: hsl(354deg 100% 39% / 10%),
+    hover: hsl(354deg 100% 39% / #{10% + $hover-background-opacity-amount * 100%}),
+    active: hsl(354deg 100% 39% / #{10% + $active-background-opacity-amount * 100%}),
+  ),
+  information: (
+    default: hsl(210deg 100% 39% / 10%),
+    hover: hsl(210deg 100% 39% / #{10% + $hover-background-opacity-amount * 100%}),
+    active: hsl(210deg 100% 39% / #{10% + $active-background-opacity-amount * 100%}),
+  ),
+);
+
+$colors-light-theme--tinted-borders: (
+  neutral: $colors--light-theme--border-high-contrast,
+  positive: $color-positive,
+  caution: hsl(27deg 100% 39%),
+  negative: $color-negative,
+  information: $color-information,
+);
+
+// Dark theme
+$colors--dark-theme--text-default: hsl(0, 0%, 100%) !default;
+$colors--dark-theme--text-hover: hsl(0, 0%, 76%) !default; // minimum contrast on primary that satisfies contrast checker AA
+$colors--dark-theme--text-muted: rgba($colors--dark-theme--text-default, $muted-text-opacity-amount) !default;
+$colors--dark-theme--text-inactive: rgba($colors--dark-theme--text-default, $inactive-text-opacity-amount) !default;
+
+$colors--dark-theme--background-default: hsl(0, 0%, 15%) !default;
+$colors--dark-theme--background-alt: hsl(0, 0%, 20%) !default;
+$colors--dark-theme--background-active: rgba($colors--dark-theme--text-default, $active-background-opacity-amount) !default;
+$colors--dark-theme--background-hover: rgba($colors--dark-theme--text-default, $hover-background-opacity-amount) !default;
+$colors--dark-theme--background-overlay: transparentize($color-dark, 0.15) !default;
+
+$colors--dark-theme--border-default: rgba($colors--dark-theme--text-default, 0.2) !default;
+$colors--dark-theme--border-high-contrast: hsl(0deg 0% 60%) !default;
+$colors--dark-theme--border-low-contrast: rgba($colors--dark-theme--text-default, 0.1) !default;
+
+$colors-dark-theme--tinted-backgrounds: (
+  neutral: (
+    default: rgba(255, 255, 255, 0.15),
+    hover: rgba(255, 255, 255, 0.2),
+    active: rgba(255, 255, 255, 0.25),
+  ),
+  positive: (
+    default: hsl(129deg 90% 39% / 20%),
+    hover: hsl(129deg 100% 39% / #{20% + 2 * $hover-background-opacity-amount * 100%}),
+    active: hsl(129deg 100% 39% / #{20% + 2 * $active-background-opacity-amount * 100%}),
+  ),
+  caution: (
+    default: hsl(27deg 100% 50% / 20%),
+    hover: hsl(27deg 100% 60% / #{20% + 2 * $hover-background-opacity-amount * 100%}),
+    active: hsl(27deg 100% 50% / #{20% + 2 * $active-background-opacity-amount * 100%}),
+  ),
+  negative: (
+    default: hsl(353deg 100% 70% / 20%),
+    hover: hsl(353deg 100% 70% / #{20% + 2 * $hover-background-opacity-amount * 100%}),
+    active: hsl(353deg 100% 70% / #{20% + 2 * $active-background-opacity-amount * 100%}),
+  ),
+  information: (
+    default: hsl(210deg 100% 50% / 20%),
+    hover: hsl(210deg 100% 50% / #{20% + 2 * $hover-background-opacity-amount * 100%}),
+    active: hsl(210deg 100% 50% / #{20% + 2 * $active-background-opacity-amount * 100%}),
+  ),
+);
+
+$colors-dark-theme--tinted-borders: (
+  neutral: hsl(0deg 0% 65%),
+  positive: hsl(129deg 60% 65%),
+  caution: hsl(27deg 80% 65%),
+  negative: hsl(353deg 80% 70%),
+  information: hsl(210deg 80% 65%),
+);
+
+// Branding colors
+$color-brand: #333 !default;
+$color-brand-dark: $color-brand !default;
+$color-brand-background: $colors--dark-theme--background-default;
+$color-accent: #e95420 !default;
+$color-accent-background: $color-brand !default;

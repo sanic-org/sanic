@@ -1,0 +1,785 @@
+@import 'settings';
+
+$lightness-threshold: 70;
+$navigation-logo-tag-width: 1.313rem; // 21px when 1rem is 16px
+$navigation-logo-tag-height: 2rem;
+$navigation-logo-tag-height-desktop: 2.3rem;
+$navigation-logo-banner-height: 3rem; // legacy logo height (small and medium screens)
+$navigation-logo-banner-height-desktop: 3.5rem; // legacy logo height (on large screens)
+$navigation-logo-size: 1rem;
+$sph-navigation-link: 0.3rem;
+$spv-navigation-logo-bottom-position: 0.125rem; // 2px when 1rem is 16px
+
+@mixin vf-p-navigation {
+  // placeholders
+  %navigation-link-responsive-padding-vertical {
+    padding-bottom: $spv--medium;
+    padding-top: $spv--medium;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      padding-bottom: $spv--large;
+      padding-top: $spv--large;
+    }
+  }
+
+  %navigation-link-responsive-padding-left {
+    // follows grid padding to ensure nav items on small breakpoints align with grid padding
+    padding-left: map-get($grid-margin-widths, small);
+
+    @media (min-width: $threshold-4-6-col) {
+      padding-left: map-get($grid-margin-widths, default);
+    }
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      padding-left: $sph--large;
+    }
+  }
+
+  %navigation-link-responsive-padding-right {
+    // follows grid padding to ensure nav items on small breakpoints align with grid padding
+    padding-right: map-get($grid-margin-widths, small);
+
+    @media (min-width: $threshold-4-6-col) {
+      padding-right: map-get($grid-margin-widths, default);
+    }
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      padding-right: $sph--large;
+    }
+  }
+
+  %navigation-link-responsive-padding-horizontal {
+    @extend %navigation-link-responsive-padding-left;
+    @extend %navigation-link-responsive-padding-right;
+  }
+
+  %navigation-link {
+    $properties: #{background-color, color, opacity};
+    @extend %navigation-link-responsive-padding-horizontal;
+    @extend %navigation-link-responsive-padding-vertical;
+    @extend %vf-navigation-separator;
+    @include vf-transition($properties, snap);
+    @include vf-focus;
+
+    // override button styles
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+
+    display: block;
+    font-weight: $font-weight-regular-text;
+    line-height: map-get($line-heights, default-text);
+    margin: 0;
+    overflow: hidden;
+    padding-left: calc(#{map-get($grid-margin-widths, small)} + #{$sph--x-large}); // allow navigation align with tag logo text on small screens
+    position: relative;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+
+    @media (min-width: $threshold-4-6-col) {
+      padding-left: calc(#{map-get($grid-margin-widths, default)} + #{$sph--x-large});
+    }
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      padding-left: $sph--large;
+    }
+
+    &:visited,
+    &:focus,
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  %vf-reset-horizontal-padding {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  %vf-navigation-separator {
+    &::before {
+      content: '';
+      height: 1px;
+      left: calc(#{map-get($grid-margin-widths, small)} + #{$sph--x-large});
+      position: absolute;
+      right: 0;
+      top: 0;
+
+      @media (min-width: $threshold-4-6-col) {
+        left: calc(#{map-get($grid-margin-widths, default)} + #{$sph--x-large});
+      }
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        content: none;
+      }
+    }
+  }
+
+  .p-navigation {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      flex-direction: row;
+    }
+
+    // p-search-box overrides
+    .p-search-box {
+      flex: 1 0 auto;
+      margin-left: map-get($grid-margin-widths, small);
+      margin-right: map-get($grid-margin-widths, small);
+      margin-top: -1px;
+      min-width: 10em;
+      order: -1;
+
+      @media (min-width: $threshold-4-6-col) {
+        margin-left: map-get($grid-margin-widths, default);
+        margin-right: map-get($grid-margin-widths, default);
+      }
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        // align baselines of menu items and input text
+        $input-gap-top: $spv--large - $spv-nudge;
+
+        display: flex;
+        flex: 1 1 auto;
+        margin: $input-gap-top 0 auto auto;
+        max-width: 20rem;
+        min-width: initial;
+        order: 1;
+      }
+    }
+
+    .u-image-position .u-image-position--right {
+      order: 2; // ensure it is to the right of search
+      // XXX: patch - override utility, as it positions absolutely, which leads to overlap on smaller screens.
+      // Should use flex instead; But that will require changing the markup
+      position: relative;
+      right: initial;
+    }
+  }
+
+  // navigation row
+  .p-navigation__row,
+  .p-navigation__row--full-width {
+    display: flex;
+    flex-direction: column;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      flex-direction: row;
+    }
+  }
+
+  .p-navigation__row {
+    @extend %fixed-width-container;
+    @extend %vf-reset-horizontal-padding;
+  }
+
+  .p-navigation__row--full-width {
+    width: 100%;
+  }
+
+  .p-navigation__item,
+  .p-navigation__item--dropdown-toggle {
+    @media (min-width: $breakpoint-navigation-threshold) {
+      $nav-link-max-width: 20em !default;
+
+      max-width: $nav-link-max-width;
+    }
+  }
+
+  .p-navigation__link {
+    @extend %navigation-link;
+  }
+
+  // navigation logo
+  .p-navigation__banner {
+    @extend %navigation-link-responsive-padding-left;
+
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+    padding-right: 0;
+
+    .p-navigation__link {
+      // reset padding for navigation links in the navigation banner
+      @extend %navigation-link-responsive-padding-horizontal;
+      @extend %navigation-link-responsive-padding-vertical;
+
+      // remove navigation separator for navigation links in the navigation banner
+      &::before {
+        content: none;
+      }
+    }
+
+    @media (min-width: $threshold-4-6-col) {
+      padding-left: map-get($grid-margin-widths, default);
+      padding-right: 0;
+    }
+  }
+
+  // Styles for old navigation logo
+  .p-navigation__logo {
+    display: flex;
+    flex: 0 0 auto;
+    height: $navigation-logo-banner-height;
+    margin: 0 $sph--large 0 0;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      height: $navigation-logo-banner-height-desktop;
+    }
+
+    .p-navigation__item {
+      @include vf-focus;
+
+      display: flex;
+    }
+  }
+
+  .p-navigation__tagged-logo {
+    display: flex; // to prevent logo link from expanding full width
+    margin-right: 0;
+    min-width: 13rem;
+
+    .p-navigation__logo-tag {
+      background-color: $color-accent;
+      height: $navigation-logo-tag-height;
+      left: 0;
+      position: absolute;
+      top: 0;
+      width: $navigation-logo-tag-width;
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        height: $navigation-logo-tag-height-desktop;
+      }
+    }
+
+    .p-navigation__logo-icon {
+      bottom: $spv-navigation-logo-bottom-position;
+      height: $navigation-logo-size;
+      left: 50%;
+      position: absolute;
+      transform: translate(-50%, 0);
+      width: $navigation-logo-size;
+    }
+
+    .p-navigation__logo-title {
+      @extend %vf-heading-4;
+      font-size: #{map-get($font-sizes, h4)}rem;
+      line-height: map-get($line-heights, x-small);
+    }
+
+    .p-navigation__link {
+      @extend %navigation-link;
+
+      padding-left: $sph--x-large;
+
+      &:hover {
+        background-color: transparent !important;
+      }
+
+      &::before {
+        content: none;
+      }
+    }
+  }
+
+  .p-navigation__image {
+    align-self: center;
+    max-height: 2rem;
+    min-height: 1.5rem;
+  }
+
+  // navigation items
+  .p-navigation__items {
+    @extend %vf-navigation-separator;
+
+    display: none; // hidden by default on mobile (expands is a dropdown)
+    list-style: none;
+    margin: -1px 0 0 0;
+    padding: 0;
+    position: relative;
+
+    // remove navigation separator for the first navigation items list
+    &:first-child::before {
+      content: none;
+    }
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      display: flex;
+      flex-wrap: wrap;
+      margin-top: 0; // prevents bottom border of nav from moving 1px
+    }
+  }
+
+  .p-navigation__nav {
+    display: none;
+    flex-direction: column;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      margin-right: map-get($grid-margin-widths, default);
+      width: 100%;
+    }
+  }
+
+  // items inside the logo banner (for mobile menu)
+  .p-navigation__banner .p-navigation__items {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 0; // prevents bottom border of nav from moving 1px
+
+    // remove separtion for navigation items in the navigation banner
+    &::before {
+      content: none;
+    }
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      display: none;
+    }
+  }
+
+  // small screen navigation toggles
+  .p-navigation__toggle--close {
+    display: none;
+  }
+
+  .p-navigation__toggle--open,
+  .p-navigation__toggle--search {
+    display: block;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      display: none;
+    }
+  }
+
+  .p-navigation__toggle--open,
+  .p-navigation__toggle--close,
+  .p-navigation__toggle--search {
+    @extend %navigation-link-responsive-padding-horizontal;
+    @extend %navigation-link-responsive-padding-vertical;
+    @include vf-focus;
+
+    margin: 0 0 auto 0;
+
+    &,
+    &:visited,
+    &:focus,
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  .p-navigation:target {
+    &::after {
+      display: none;
+    }
+
+    .p-navigation__nav {
+      display: flex;
+    }
+
+    .p-navigation__items {
+      display: block;
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        display: flex;
+      }
+    }
+
+    .p-navigation__toggle--open {
+      display: none;
+    }
+
+    .p-navigation__toggle--close {
+      display: block;
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        display: none;
+      }
+    }
+  }
+
+  // SEARCH
+
+  // on mobile screens search box is visible inside of the mobile navigation dropdown
+  .p-navigation__search {
+    display: none;
+    padding-top: $spv--large;
+
+    // allow search box to take full width
+    .p-search-box {
+      max-width: none;
+    }
+  }
+
+  .p-navigation__link--search-toggle {
+    @extend %navigation-link;
+
+    display: block;
+    height: 100%; // keep the height of the navigation when 'Search' label is hidden
+    padding-left: 0; // on small screens label is hidden, so we remove left padding as well
+    padding-right: 2 * $sph--small + map-get($icon-sizes, default);
+    position: relative;
+
+    // hide "search" label on small screens (only show the icon)
+    .p-navigation__search-label {
+      display: none;
+    }
+
+    // show both label and icon on large screens
+    @media (min-width: $breakpoint-large) {
+      padding-left: $sph--large;
+
+      .p-navigation__search-label {
+        display: initial;
+      }
+    }
+
+    &::after {
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+      content: '';
+      display: block;
+      height: $spv--large;
+      pointer-events: none;
+      position: absolute;
+      right: calc($sph--small + 1px); // 1px for the border on selects. this aligns it with any selects underneath
+      text-indent: calc(100% + 10rem);
+      top: calc($spv--medium + map-get($nudges, x-small));
+      width: map-get($icon-sizes, default);
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        top: calc($spv--large + map-get($nudges, x-small));
+      }
+    }
+  }
+
+  .p-navigation__nav .p-navigation__link--search-toggle {
+    display: none;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      display: block;
+    }
+  }
+
+  // the expanding search box is only visible on large screens in navigation bar
+  @media (min-width: $breakpoint-navigation-threshold) {
+    .p-navigation__search {
+      align-items: center;
+      display: none;
+      flex-grow: 1;
+      padding: 0;
+    }
+
+    .p-navigation__search-overlay {
+      @include vf-transition(opacity, snap);
+
+      background-color: $colors--light-theme--background-overlay;
+      display: block;
+      height: 100%;
+      left: 0;
+      opacity: 0;
+      pointer-events: none;
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 100%;
+      z-index: 59;
+    }
+  }
+
+  // when navigation search is expanded
+  .p-navigation.has-search-open {
+    // make sure search in navigation renders on top of the overlay
+    .p-navigation__nav {
+      display: flex;
+      z-index: 60;
+    }
+
+    // hide all navigation items (including search toggle)
+    .p-navigation__nav .p-navigation__items {
+      display: none;
+    }
+
+    // show expanded search box
+    .p-navigation__search {
+      display: flex;
+    }
+
+    // fade in search overlay
+    .p-navigation__search-overlay {
+      opacity: 0.5;
+      pointer-events: all;
+    }
+  }
+
+  .p-navigation.has-menu-open {
+    // hide all navigation items (including search toggle)
+    .p-navigation__nav {
+      display: flex;
+    }
+
+    .p-navigation__nav .p-navigation__items {
+      display: block;
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        display: flex;
+      }
+    }
+
+    // show expanded search box
+    .p-navigation__search {
+      display: none;
+    }
+  }
+
+  // DROPDOWNS
+  .p-navigation__dropdown,
+  .p-navigation__dropdown--right {
+    @extend %vf-has-box-shadow;
+    @extend %vf-has-round-corners;
+
+    display: none;
+    margin: 0;
+    min-width: 100%;
+    padding: 0;
+    z-index: 5;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      position: absolute;
+      // padding applied to .p-navigation__link + line-heigh of the anchor text inside
+      top: $spv--large * 2 + map-get($line-heights, default-text);
+    }
+
+    @media (max-width: ($breakpoint-navigation-threshold - 1)) {
+      box-shadow: none;
+    }
+  }
+
+  .p-navigation__dropdown--right {
+    right: 0;
+  }
+
+  .p-navigation__item--dropdown-toggle {
+    position: relative;
+
+    &::after {
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+      content: '';
+      display: block;
+      height: $spv--large;
+      pointer-events: none;
+      position: absolute;
+      right: map-get($grid-margin-widths, small);
+      text-indent: calc(100% + 10rem);
+      top: calc($spv--large + map-get($nudges, x-small));
+      transform: rotate(-90deg);
+      width: map-get($icon-sizes, default);
+
+      @media (min-width: $threshold-4-6-col) {
+        right: map-get($grid-margin-widths, default);
+      }
+
+      @media (min-width: $breakpoint-navigation-threshold) {
+        right: calc($sph--small + 1px); // 1px for the border on selects. this aligns it with any selects underneath
+        transform: rotate(0deg);
+      }
+    }
+
+    &.is-active {
+      &::after {
+        transform: rotate(0deg);
+
+        @media (min-width: $breakpoint-navigation-threshold) {
+          transform: rotate(180deg);
+        }
+      }
+
+      .p-navigation__dropdown,
+      .p-navigation__dropdown--right {
+        display: block;
+      }
+    }
+
+    .p-navigation__link {
+      // add padding to accommodate icon
+      padding-right: 2 * $sph--small + map-get($icon-sizes, default);
+    }
+
+    &:first-child .p-navigation__link::before {
+      content: none;
+    }
+  }
+
+  .p-navigation__dropdown-item {
+    @extend %navigation-link-responsive-padding-horizontal;
+    @extend %navigation-link-responsive-padding-vertical;
+    @extend %vf-navigation-separator;
+
+    display: block;
+    padding-left: calc(#{map-get($grid-margin-widths, small)} + #{$sph--x-large}); // make dropdown items align with the tag logo text
+    position: relative;
+    white-space: nowrap;
+
+    @media (min-width: $threshold-4-6-col) {
+      padding-left: calc(#{map-get($grid-margin-widths, default)} + #{$sph--x-large});
+    }
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      padding-bottom: $spv--medium;
+      padding-left: $sph--large;
+      padding-top: $spv--medium;
+    }
+
+    &,
+    &:active,
+    &:focus,
+    &:hover,
+    &:visited {
+      text-decoration: none;
+    }
+  }
+
+  // Theming
+  @if ($theme-default-nav == 'dark') {
+    .p-navigation {
+      @include vf-navigation-dark-theme;
+    }
+
+    .p-navigation.is-light {
+      @include vf-navigation-light-theme;
+    }
+  } @else {
+    .p-navigation {
+      @include vf-navigation-light-theme;
+    }
+
+    .p-navigation.is-dark {
+      @include vf-navigation-dark-theme;
+    }
+  }
+}
+
+@mixin vf-navigation-theme(
+  // color for the navigation separator on small screens
+  $color-navigation-separator,
+  // color for the navigation background
+  $color-navigation-background,
+  $color-navigation-background--active,
+  // color for the navigation text
+  $color-navigation-text,
+  $color-navigation-background--hover,
+  // color for the navigation highlight bar
+  $color-navigation-highlight,
+  $color-navigation-icon
+) {
+  background-color: $color-navigation-background;
+
+  .p-navigation__link,
+  .p-navigation__link--search-toggle,
+  .p-navigation__toggle--close,
+  .p-navigation__toggle--open,
+  .p-navigation__dropdown-item {
+    &,
+    &:hover,
+    &:visited,
+    &:focus {
+      color: $color-navigation-text;
+    }
+
+    &:hover {
+      background-color: $color-navigation-background--hover;
+    }
+
+    &[aria-pressed='true'],
+    &:active {
+      background-color: $color-navigation-background--active;
+    }
+  }
+
+  .p-navigation__logo-title {
+    color: $color-navigation-text;
+  }
+
+  .p-navigation__item--dropdown-toggle {
+    &::after {
+      @include vf-icon-chevron($color-navigation-icon);
+    }
+
+    &.is-active > .p-navigation__link {
+      background-color: $color-navigation-background--active;
+    }
+  }
+
+  .p-navigation__toggle--search::after,
+  .p-navigation__item .p-navigation__link--search-toggle::after {
+    @include vf-icon-search($color-navigation-icon);
+  }
+
+  .p-navigation__dropdown,
+  .p-navigation__dropdown--right {
+    background-color: $color-navigation-background;
+  }
+
+  [class*='p-navigation__item'].is-selected > .p-navigation__link {
+    background-color: $color-navigation-background--hover;
+
+    @include vf-highlight-bar($color-navigation-highlight, left, true);
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      @include vf-highlight-bar($color-navigation-highlight, bottom, false);
+    }
+  }
+
+  // add color to separator line for navigation items, navigation links and dropdown items
+  .p-navigation__nav .p-navigation__link::before,
+  .p-navigation__nav .p-navigation__items::before,
+  .p-navigation__nav .p-navigation__items .p-navigation__dropdown-item::before {
+    background: $color-navigation-separator;
+  }
+
+  // on mobile expanded nav needs to match pressed color of the buttons
+  &.has-menu-open .p-navigation__nav,
+  &.has-search-open .p-navigation__nav {
+    background-color: $color-navigation-background--active;
+
+    @media (min-width: $breakpoint-navigation-threshold) {
+      background-color: transparent;
+    }
+  }
+}
+
+@mixin vf-navigation-light-theme {
+  @include vf-navigation-theme(
+    $color-navigation-text: $colors--light-theme--text-default,
+    $color-navigation-background: $colors--light-theme--background-default,
+    $color-navigation-background--hover: $colors--light-theme--background-alt,
+    $color-navigation-background--active: $colors--light-theme--background-active,
+    $color-navigation-highlight: $colors--light-theme--text-default,
+    $color-navigation-separator: $colors--light-theme--border-low-contrast,
+    $color-navigation-icon: $colors--light-theme--text-default
+  );
+}
+
+@mixin vf-navigation-dark-theme {
+  @include vf-navigation-theme(
+    $color-navigation-text: $colors--dark-theme--text-default,
+    $color-navigation-background: $colors--dark-theme--background-default,
+    $color-navigation-background--hover: $colors--dark-theme--background-hover,
+    $color-navigation-background--active: $colors--dark-theme--background-active,
+    $color-navigation-highlight: $colors--dark-theme--text-default,
+    $color-navigation-separator: $colors--dark-theme--border-low-contrast,
+    $color-navigation-icon: $colors--dark-theme--text-default
+  );
+}

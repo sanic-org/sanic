@@ -1,0 +1,519 @@
+@import 'settings';
+$list-status-icon-height: $default-icon-size;
+
+@mixin vf-p-list-placeholders {
+  %numbered-step-container {
+    counter-reset: li;
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    padding-left: 0;
+  }
+
+  %numbered-step-title {
+    list-style: none;
+    margin-left: 0;
+
+    &::before {
+      align-self: start;
+      background-color: $color-x-light;
+      border: 1px solid $color-x-dark;
+      border-radius: 100%;
+      content: counter(li);
+      counter-increment: li;
+      direction: rtl;
+      display: block;
+      font-size: map-get($base-font-sizes, base);
+      font-weight: $font-weight-regular-text;
+      left: 0;
+      position: absolute;
+      text-align: center;
+    }
+  }
+
+  %nested-counter {
+    // Counter is named and it will be reset for each "ol" element.
+    counter-reset: list-item;
+    li::marker {
+      // "counters" function returns a string representing the current value of the named counter ("list-item").
+      // It is used to insert a string between different levels of nested counters.
+      // Source: https://www.w3schools.com/css/css_counters.asp
+      content: counters(list-item, '.') '. ';
+      counter-increment: list-item;
+    }
+  }
+
+  // Mixin for list items
+  %vf-list-item {
+    padding-bottom: $spv--x-small;
+    padding-top: $spv--x-small;
+
+    // FIXME: we need a better way to handle forms within lists
+    // stylelint-disable selector-max-type
+    form & {
+      padding-bottom: 0;
+      padding-top: 0;
+
+      label {
+        margin-bottom: $spv-nudge-compensation;
+      }
+    }
+    // stylelint-enable selector-max-type
+  }
+
+  %vf-list-item-state-base {
+    @extend %vf-list;
+    background-repeat: no-repeat;
+    background-size: $list-status-icon-height;
+    content: '';
+    display: inline-block;
+    height: $sph--large;
+    top: $spv--small;
+  }
+
+  %vf-list-item-ordered {
+    &::marker {
+      content: none;
+      display: none;
+    }
+
+    &::before {
+      color: $color-dark;
+      content: counters(list-item, '.') '. ';
+      display: inline-block;
+      text-align: right;
+    }
+  }
+
+  %vf-list-item-bullet {
+    &::before {
+      color: $color-dark;
+      content: '•';
+      display: inline-block;
+      text-align: right;
+    }
+  }
+}
+
+@mixin vf-list-item-has-prefix {
+  padding-left: $sp-x-large;
+  position: relative;
+
+  > .p-list--divided,
+  > .p-list {
+    margin-left: 0;
+  }
+
+  &::before {
+    left: 0;
+    position: absolute;
+    width: $sp-medium;
+  }
+}
+
+@mixin vf-list-item-divided {
+  box-shadow: inset 0px 1px 0px 0px $color-mid-x-light;
+  margin: 0;
+  padding-bottom: $sph--large;
+  padding-top: $sph--small;
+
+  &:first-child {
+    box-shadow: none;
+  }
+
+  .p-list--divided > .p-list__item:first-child {
+    box-shadow: inset 0px 1px 0px 0px $color-mid-x-light;
+  }
+}
+
+// Mixin for inline list items
+@mixin vf-inline-list-item {
+  display: inline;
+  list-style: none;
+  margin-right: $sph--large;
+
+  &.last-item,
+  &:last-of-type {
+    margin-right: 0;
+  }
+}
+
+// List styling using list class
+@mixin vf-p-list {
+  .p-list {
+    @extend %vf-clearfix;
+    @extend %vf-list;
+
+    &__item {
+      @extend %vf-list-item;
+    }
+  }
+}
+
+// A list with separators between items
+@mixin vf-p-list-divided {
+  .p-list--divided {
+    @extend %vf-list;
+
+    .p-list__item {
+      @extend %vf-list-item;
+      @include vf-list-item-divided;
+
+      &.is-ticked::before,
+      &.is-crossed::before {
+        top: $spv--medium;
+      }
+    }
+
+    &.is-split .p-list__item:last-of-type {
+      border-bottom: 1px solid $color-mid-light;
+    }
+
+    & & {
+      margin-bottom: 0;
+      margin-left: $sp-x-large;
+      padding-top: $sph--large;
+
+      .p-list__item:last-child {
+        padding-bottom: 0;
+      }
+    }
+  }
+
+  // stylelint-disable selector-max-type -- we want to target ordered lists
+  ol.p-list--divided {
+    list-style: none;
+
+    .p-list__item {
+      @extend %vf-list-item-ordered;
+      @include vf-list-item-has-prefix;
+    }
+  }
+  // stylelint-enable selector-max-type -- we want to target ordered lists
+}
+
+// Displays item with a state icon
+@mixin vf-p-list-item-state {
+  .p-list__item.is-ticked {
+    @include vf-list-item-has-prefix;
+
+    &::before {
+      @extend %vf-list-item-state-base;
+      @include vf-icon-success;
+    }
+  }
+
+  .p-list__item.is-crossed {
+    @include vf-list-item-has-prefix;
+
+    &::before {
+      @extend %vf-list-item-state-base;
+      @include vf-icon-error;
+    }
+  }
+
+  // Displays item with a bullet
+  .p-list__item.has-bullet {
+    @extend %vf-list-item-bullet;
+    @include vf-list-item-has-prefix;
+  }
+}
+
+// Displays a list inline with spacing
+@mixin vf-p-inline-list {
+  .p-inline-list {
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .p-inline-list__item {
+    @include vf-inline-list-item;
+  }
+}
+
+// Displays a list inline with items separated by dots
+@mixin vf-p-inline-list-middot {
+  .p-inline-list--middot {
+    margin-left: 0;
+    padding-left: 0;
+
+    .p-inline-list__item {
+      @include vf-inline-list-item;
+      margin-right: $sph--small;
+      position: relative;
+
+      &::after {
+        content: '\2022';
+        line-height: map-get($line-heights, default-text);
+        position: relative;
+        right: -0.25rem;
+      }
+
+      &:last-of-type,
+      .last-item {
+        &::after {
+          content: '';
+        }
+      }
+    }
+  }
+
+  // Theming
+  @if ($theme-default-p-inline-list--middot == 'dark') {
+    .p-inline-list--middot {
+      @include vf-p-inline-list-middot-dark-theme;
+    }
+
+    .p-inline-list--middot.is-light {
+      @include vf-p-inline-list-middot-light-theme;
+    }
+  } @else {
+    .p-inline-list--middot {
+      @include vf-p-inline-list-middot-light-theme;
+    }
+
+    .p-inline-list--middot.is-dark {
+      @include vf-p-inline-list-middot-dark-theme;
+    }
+  }
+}
+
+@mixin vf-p-inline-list-middot-theme($color-list-text) {
+  color: $color-list-text;
+}
+
+@mixin vf-p-inline-list-middot-light-theme {
+  @include vf-p-inline-list-middot-theme($colors--light-theme--text-default);
+}
+
+@mixin vf-p-inline-list-middot-dark-theme {
+  @include vf-p-inline-list-middot-theme($colors--dark-theme--text-default);
+}
+
+@mixin vf-p-inline-list-stretch {
+  .p-inline-list--stretch {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 0;
+    padding-left: 0;
+
+    .p-inline-list__item {
+      flex: 1 auto;
+      list-style: none;
+    }
+  }
+}
+
+// Displays a step by step list of instructions
+@mixin vf-p-stepped-list {
+  .p-stepped-list {
+    @extend %vf-clearfix;
+    @extend %numbered-step-container;
+
+    margin-bottom: 0; // spacing has been moved onto __item; this ensures that the heading / paragraph spacing matches that of regular headings / paragraphs
+    margin-left: 0;
+  }
+
+  .p-stepped-list__item {
+    // override unecessary col-8 class in markup; layout is handled with css below
+    float: none;
+    margin-left: 0;
+    overflow: visible;
+    padding-bottom: $spv--x-large;
+    position: relative;
+    width: 100%;
+  }
+
+  .p-stepped-list__bullet {
+    display: none;
+  }
+
+  // Indent titles
+  $bullet-width: map-get($line-heights, default-text);
+  $bullet-width-mobile: map-get($line-heights, default-text);
+
+  .p-stepped-list__title {
+    @extend %numbered-step-title;
+
+    padding-left: $bullet-width-mobile + $sph--large;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      padding-left: $bullet-width + $sph--large;
+    }
+
+    &::before {
+      // Need to account for the 1px border:
+      line-height: calc($bullet-width-mobile - 2px);
+      margin-right: $sph--large;
+      width: $bullet-width-mobile;
+
+      @media (min-width: $breakpoint-heading-threshold) {
+        // Need to account for the 1px border:
+        line-height: calc($bullet-width - 2px);
+        width: $bullet-width;
+      }
+    }
+    .p-strip--dark &::before {
+      background-color: $color-x-dark;
+      border: 1px solid $color-x-light;
+    }
+  }
+
+  .p-stepped-list__title + .p-stepped-list__content {
+    margin-left: $bullet-width-mobile + $sph--large;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      margin-left: $bullet-width + $sph--large;
+    }
+  }
+
+  @for $i from 6 through 1 {
+    // Bullet sizes for each heading level
+    $bullet-width: map-get($line-heights, default-text);
+    $bullet-width-mobile: map-get($line-heights, default-text);
+    // h6 line height is the same as the bullet width so no need to apply any margin:
+    $bullet-margin: 0;
+    $bullet-margin-mobile: 0;
+
+    @if $i < 5 {
+      // To align the bullet with the title we need to use half
+      // the height difference between the bullet and the title and then add the
+      // nudge to position it with the lower case text.
+      $bullet-margin: calc((map-get($line-heights, h#{$i}) - $bullet-width) / 2) + map-get($nudges, h#{$i});
+      $bullet-margin-mobile: calc((map-get($line-heights, h#{$i}-mobile) - $bullet-width-mobile) / 2) + map-get($nudges, h#{$i});
+    }
+
+    .p-heading--#{$i}.p-stepped-list__title,
+    h#{$i}.p-stepped-list__title {
+      padding-left: $bullet-width-mobile + $sph--large;
+
+      @media (min-width: $breakpoint-heading-threshold) {
+        padding-left: $bullet-width + $sph--large;
+      }
+
+      &::before {
+        // Need to account for the 1px border:
+        line-height: calc($bullet-width-mobile - 2px);
+        margin-right: $sph--large;
+        margin-top: $bullet-margin-mobile;
+        width: $bullet-width-mobile;
+
+        @media (min-width: $breakpoint-heading-threshold) {
+          // Need to account for the 1px border:
+          line-height: calc($bullet-width - 2px);
+          margin-top: $bullet-margin;
+          width: $bullet-width;
+        }
+      }
+    }
+
+    .p-heading--#{$i}.p-stepped-list__title + .p-stepped-list__content,
+    h#{$i}.p-stepped-list__title + .p-stepped-list__content {
+      margin-left: $bullet-width-mobile + $sph--large;
+
+      @media (min-width: $breakpoint-heading-threshold) {
+        margin-left: $bullet-width + $sph--large;
+      }
+    }
+  }
+
+  .p-stepped-list--detailed .p-stepped-list__title + .p-stepped-list__content {
+    @media (min-width: $threshold-6-12-col) {
+      margin-left: 0;
+    }
+  }
+}
+
+@mixin vf-p-stepped-list-detailed {
+  .p-stepped-list--detailed {
+    @extend %numbered-step-container;
+
+    margin-left: auto;
+
+    @supports (display: grid) {
+      .p-stepped-list__content {
+        @media (min-width: $threshold-6-12-col) {
+          grid-column-end: span 6;
+          margin-top: 0;
+        }
+      }
+
+      .p-stepped-list__title {
+        display: flex;
+        grid-column-end: span 6;
+        margin-left: 0;
+      }
+    }
+
+    .p-stepped-list__item {
+      @extend %vf-row;
+      @include vf-b-row-reset;
+
+      @media (min-width: $threshold-6-12-col) {
+        padding-top: $sp-unit;
+        position: relative;
+
+        &::after {
+          background-color: $colors--light-theme--border-low-contrast;
+          content: '';
+          height: 1px;
+          left: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+        }
+      }
+    }
+  }
+}
+
+// Adaptor class `is-split` to split the items of a list into two columns
+@mixin vf-p-list-split {
+  [class*='p-list'].is-split {
+    @media (min-width: $threshold-4-6-col) {
+      @supports ((-webkit-columns: 1) or (columns: 1)) {
+        column-gap: $sp-x-large;
+        columns: 2;
+
+        .p-list__item {
+          display: inline-block;
+          width: 100%;
+        }
+      }
+
+      @supports not ((-webkit-columns: 1) or (columns: 1)) {
+        display: flex;
+        flex-wrap: wrap;
+
+        .p-list__item {
+          width: calc(50% - 0.5rem);
+        }
+      }
+
+      &:nth-child(2n-1) {
+        margin-right: $sp-medium;
+      }
+    }
+  }
+}
+
+@mixin vf-p-list-nested-counter {
+  .p-list--nested-counter {
+    @extend %nested-counter;
+  }
+}
+
+@mixin vf-p-lists {
+  @include vf-p-list-placeholders;
+
+  @include vf-p-list;
+  @include vf-p-list-divided;
+  @include vf-p-list-item-state;
+  @include vf-p-inline-list;
+  @include vf-p-inline-list-middot;
+  @include vf-p-inline-list-stretch;
+  @include vf-p-stepped-list;
+  @include vf-p-stepped-list-detailed;
+  @include vf-p-list-split;
+  @include vf-p-list-nested-counter;
+}

@@ -1,0 +1,91 @@
+@mixin vf-l-full-width {
+  $l-full-screen-aside-width: 15rem;
+
+  // we switch to full screen layout (with side navigation fixed to left side)
+  // when screen is big enough to fit side nav on left, same size on right, and grid
+  // in the middle
+  // we have to calculate media query breakpoint in px instead of rem to make sure
+  // we take into account bigger font size on large screens
+  $breakpoint-full-screen-layout: calc(($grid-max-width + 2 * $l-full-screen-aside-width) * $font-size-ratio--largescreen);
+  // TODO: make sure it works with grid-max-width set to 100% as in
+  // like: https://github.com/canonical/jaas-dashboard/blob/b9ca3876d054c48dc2da74df0080cd14a0f15740/src/scss/index.scss#L28
+
+  @media (min-width: $breakpoint-large) {
+    // stylelint-disable-next-line selector-max-type
+    body {
+      position: relative;
+    }
+
+    .l-full-width__sidebar {
+      background: $color-light;
+
+      // height of top navigation, as padding applied to .p-navigation__link + line-heigh of the anchor text inside
+      $navigation-top-height: $spv--large * 2 + map-get($line-heights, default-text);
+
+      height: calc(100% - $navigation-top-height); // height of document reduced by height of top nav
+      min-height: calc(100vh - $navigation-top-height);
+      position: absolute;
+      width: $l-full-screen-aside-width;
+      z-index: 1;
+
+      &::after {
+        background: linear-gradient(90deg, transparent, rgba($color-x-dark, 0.05));
+        bottom: 0;
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 8px;
+      }
+
+      // side navigation component drawer needs background only when it's fixed on smaller screens
+      // keep it transparent when it's visible as part of full width layout
+      .p-side-navigation__drawer {
+        background: transparent;
+      }
+    }
+
+    .l-full-width {
+      display: grid;
+      grid-template-areas: 'start main end';
+      grid-template-columns: $l-full-screen-aside-width minmax(0, 1fr) min-content;
+      width: 100%;
+
+      // left side container
+      .l-start {
+        grid-area: start;
+      }
+
+      // main container
+      .l-main {
+        grid-area: main;
+
+        // grid should align to the left (no left margin)
+        // TODO: ideally this should be applied to %fixed-width-container
+        .row,
+        .u-fixed-width {
+          margin-left: 0;
+        }
+      }
+
+      // right side container
+      .l-end {
+        grid-area: end;
+      }
+    }
+  }
+
+  // full width layout
+  @media (min-width: $breakpoint-full-screen-layout) {
+    .l-full-width {
+      grid-template-columns: $l-full-screen-aside-width minmax(0, 1fr) $l-full-screen-aside-width;
+
+      .l-main {
+        .row,
+        .u-fixed-width {
+          margin-left: auto;
+        }
+      }
+    }
+  }
+}

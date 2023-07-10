@@ -1,0 +1,130 @@
+@import 'settings';
+
+$color-pre-bg: rgba($color-x-dark, 0.03);
+$digit-width: 1ch; // measured width of one character in the monospaced font
+$code-sidebar-width: calc($sph--large + (4 * $digit-width)) !default;
+$code-inline-padding: 0.25rem;
+
+// Base code styles
+@mixin vf-b-code {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: unquote($font-monospace);
+    font-weight: $font-weight-regular-text;
+    text-align: left;
+
+    b,
+    strong {
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  code,
+  kbd,
+  samp {
+    background-color: $color-code-background;
+    border-radius: $border-radius;
+    box-decoration-break: slice;
+    color: inherit;
+    line-height: map-get($line-heights, default-text) - $code-inline-padding;
+    padding: calc($code-inline-padding - $input-border-thickness) $code-inline-padding;
+  }
+
+  code,
+  pre {
+    direction: ltr;
+    // stylelint-disable property-no-vendor-prefix
+    -webkit-hyphens: none;
+    hyphens: none;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    // stylelint-enable property-no-vendor-prefix
+    tab-size: 4;
+    word-spacing: normal;
+    word-wrap: break-word;
+  }
+
+  // Inside pre, code does not behave as an inline element;
+  // To ensure multiple lines adhere to the baseline grid, we need to make it a block element.
+  pre code {
+    background: none;
+    box-shadow: none;
+    display: inline-block;
+    line-height: map-get($line-heights, default-text);
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+  }
+
+  pre {
+    background-color: $color-code-background;
+    color: $color-dark;
+    display: block;
+    margin-bottom: $spv--x-large;
+    margin-top: 0;
+    overflow: auto;
+    padding: $spv--small $sph--large;
+    text-align: left;
+    text-shadow: none;
+    white-space: pre;
+  }
+
+  // dark theme
+  [class*='--dark'] code,
+  code.is-dark {
+    background-color: $color-code-background-dark;
+    color: $colors--dark-theme--text-default;
+  }
+
+  %leading-linux-prompt-icon {
+    &::before {
+      @extend %icon;
+      @include vf-icon-linux-prompt($color-mid-dark);
+
+      content: '';
+      left: $sph--large;
+      position: absolute;
+      top: #{$spv--small + 0.5 * (map-get($line-heights, default-text) - map-get($icon-sizes, default))};
+      width: map-get($icon-sizes, default);
+
+      @if ($increase-font-size-on-larger-screens) {
+        // stylelint-disable-next-line max-nesting-depth
+        @media (min-width: $breakpoint-x-large) {
+          top: #{$spv--small + 0.5 * (map-get($line-heights, default-text) * $font-size-ratio--largescreen - map-get($icon-sizes, default))};
+        }
+      }
+    }
+  }
+
+  %code-numbered-line {
+    display: inline-block;
+    padding: 0 $sph--large 0 $code-sidebar-width;
+    position: relative;
+    width: 100%;
+
+    &:empty::after {
+      content: ' ';
+      user-select: none;
+    }
+
+    &::before {
+      color: $color-mid-dark;
+      content: counter(line-numbering);
+      counter-increment: line-numbering;
+      height: 100%;
+      left: -$digit-width;
+      overflow: hidden;
+      padding-right: $sph--large;
+      pointer-events: none;
+      position: absolute;
+      text-align: right;
+      user-select: none;
+      // We're adding a negative left position above of $digit-width,
+      // so the width here needs to take that into account
+      width: calc($code-sidebar-width + $digit-width);
+    }
+  }
+}

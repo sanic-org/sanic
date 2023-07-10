@@ -1,0 +1,151 @@
+@import 'settings';
+@import 'base_fontfaces';
+@import 'base_typography-heading-mixins';
+
+// Typographic element styles
+@mixin vf-b-typography {
+  @include vf-b-typography-fontfaces;
+
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  html {
+    color: $color-dark;
+    font-family: unquote($font-base-family);
+    // These vendor prefixes are unique and cannot be added by autoprefixer
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    font-weight: $font-weight-regular-text;
+    // set default line height to match p
+    line-height: map-get($line-heights, default-text);
+
+    @if ($increase-font-size-on-larger-screens) {
+      font-size: map-get($base-font-sizes, base);
+
+      @media (min-width: $breakpoint-x-large) {
+        font-size: map-get($base-font-sizes, large);
+        //the rem value is not affected by the change in font-size; it needs to be multiplied by the ratio new font-size/default font-size
+        line-height: map-get($line-heights, default-text) * $font-size-ratio--largescreen;
+      }
+    } @else {
+      font-size: map-get($base-font-sizes, base);
+    }
+  }
+
+  // headings
+  h1 {
+    @extend %vf-heading-1;
+  }
+
+  h2 {
+    @extend %vf-heading-2;
+  }
+
+  h3 {
+    @extend %vf-heading-3;
+  }
+
+  h4 {
+    @extend %vf-heading-4;
+  }
+
+  h5 {
+    @extend %vf-heading-5;
+  }
+
+  h6 {
+    @extend %vf-heading-6;
+  }
+
+  p {
+    @extend %paragraph;
+
+    max-width: $text-max-width;
+  }
+
+  .p-text--default {
+    @extend %default-text;
+  }
+
+  small,
+  .p-text--small {
+    @extend %small-text;
+
+    &.dense {
+      margin-bottom: map-get($sp-after, small--dense) + map-get($line-heights, default-text) - map-get($line-heights, small) - map-get($nudges, small);
+    }
+  }
+
+  .p-text--x-small {
+    @extend %x-small-text;
+  }
+
+  .p-text--small-caps,
+  // deprecated: .p-text--x-small-capitalised is deprecated, use .p-text--small-caps instead
+  .p-text--x-small-capitalised {
+    @extend %small-caps-text;
+  }
+
+  //@section Adjusted spacing for headings (or a p) following a paragraph
+  p:not([class*='p-heading--']):not([class*='p-muted-heading']) {
+    & + h1,
+    & + .p-heading--1 {
+      @extend %sp--ph1;
+    }
+
+    & + h2,
+    & + .p-heading--2 {
+      @extend %sp--ph2;
+    }
+
+    & + h3,
+    & + .p-heading--3 {
+      @extend %sp--ph3;
+    }
+
+    & + h4,
+    & + .p-heading--4 {
+      @extend %sp--ph4;
+    }
+
+    & + h5,
+    & + .p-heading--5,
+    & + h6,
+    & + .p-heading--6 {
+      @extend %sp--ph5;
+    }
+
+    & + .p-muted-heading {
+      @extend %sp--pmuted;
+    }
+
+    // N.B.: selector order matters here - the epmty selector must come after all other rules affecting paragraphs
+    &:empty {
+      line-height: 0;
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  cite {
+    @extend %default-text;
+  }
+
+  // misc
+  b,
+  strong {
+    @extend %bold;
+  }
+
+  sub,
+  sup {
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+
+  abbr[title] {
+    border-bottom: 0.1em dotted;
+    cursor: help;
+    text-decoration: none;
+  }
+  // stylelint-enable selector-max-type
+}

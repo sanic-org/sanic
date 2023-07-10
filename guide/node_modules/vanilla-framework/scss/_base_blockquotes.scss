@@ -1,0 +1,25 @@
+@import 'settings';
+
+// Base blockquotes styling
+@mixin vf-b-blockquotes {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  blockquote {
+    border-left: 2px solid $color-mid-dark;
+    margin-bottom: $spv--x-large;
+    margin-left: 0;
+    margin-top: 0;
+    overflow: auto; // include margins of children into it's own height
+    padding-bottom: $spv--small;
+    padding-left: $sp-large;
+
+    & > :last-child {
+      margin-bottom: $spv-nudge-compensation;
+    }
+
+    > cite {
+      display: block;
+      font-style: normal;
+    }
+  }
+  // stylelint-enable selector-max-type
+}

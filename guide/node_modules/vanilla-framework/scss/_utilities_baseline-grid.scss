@@ -1,0 +1,44 @@
+@import 'settings';
+
+@mixin vf-u-baseline-grid {
+  $baseline-color: #f00 !default;
+  $baseline-offset: 0 !default;
+  $baseline-size: $sp-unit !default;
+
+  .u-baseline-grid {
+    position: relative;
+
+    &::after {
+      background: linear-gradient(to top, transparentize($baseline-color, 0.85), transparentize($baseline-color, 0.85) 1px, transparent 1px, transparent);
+      background-size: 100% $baseline-size;
+      bottom: 0;
+      content: '';
+      display: block;
+      left: 0;
+      pointer-events: none;
+      position: absolute;
+      right: 0;
+      top: $baseline-offset;
+      z-index: 200;
+    }
+  }
+
+  // baseline grid on document should be in the background
+  // stylelint-disable selector-max-type -- needed for examples
+  html.u-baseline-grid {
+    background-color: transparentize($baseline-color, 0.95);
+    position: static;
+
+    &::after {
+      z-index: -1;
+    }
+  }
+  // stylelint-enable selector-max-type
+
+  .u-baseline-grid__toggle {
+    bottom: $spv--x-large;
+    position: fixed;
+    right: $sp-unit * 3;
+    z-index: 201;
+  }
+}

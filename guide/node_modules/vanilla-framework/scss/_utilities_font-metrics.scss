@@ -1,0 +1,31 @@
+@import 'settings_font';
+
+@mixin vf-u-visualise-baseline($horizontal-bleed: 2rem) {
+  .u-visualise-font-metrics {
+    position: relative;
+
+    &::before {
+      border-bottom-color: transparentize($color-information, 0.5);
+      border-bottom-style: solid;
+      border-top-color: transparentize($color-positive, 0.5);
+      border-top-style: solid;
+      border-width: 1px;
+      content: '';
+      height: calc($cap-height - $x-height);
+      left: -#{$horizontal-bleed};
+      position: absolute;
+      top: calc($baseline-position - $cap-height - 1px);
+      width: calc($horizontal-bleed * 2 + 100%);
+    }
+
+    &::after {
+      background-color: transparentize($color-negative, 0.5);
+      content: '';
+      height: 1px;
+      left: -#{$horizontal-bleed};
+      position: absolute;
+      top: calc($baseline-position - 1px);
+      width: calc($horizontal-bleed * 2 + 100%);
+    }
+  }
+}

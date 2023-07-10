@@ -1,0 +1,231 @@
+@import 'settings';
+@import 'base_typography-definitions';
+
+// Placeholders containing used rules in multiple base components and patterns
+// Default settings can be found in _settings_placeholders
+@mixin vf-b-placeholders {
+  @include vf-b-typography-definitions;
+
+  // Styling
+  %vf-has-round-corners {
+    border-radius: $border-radius;
+  }
+
+  %vf-has-box-shadow {
+    box-shadow: $box-shadow;
+  }
+
+  %vf-has-box-shadow--deep {
+    box-shadow: $box-shadow--deep;
+  }
+
+  %vf-is-bordered {
+    border: $border;
+  }
+
+  %vf-bg--light {
+    background-color: $color-light;
+    color: $color-dark;
+  }
+
+  %vf-bg--x-light {
+    background-color: $color-x-light;
+    color: $color-dark;
+  }
+
+  %vf-card-padding {
+    overflow: auto;
+    padding: $spv--large;
+  }
+
+  %vf-card {
+    @extend %vf-bg--x-light;
+    @extend %vf-card-padding;
+
+    margin-bottom: $spv--x-large;
+    overflow: auto; // prevent overflow of child margins
+    padding: $spv--large;
+  }
+
+  //accordion, table
+  %single-border-text-vpadding--scaling {
+    padding-bottom: $table-cell-vertical-padding;
+    padding-top: calc($table-cell-vertical-padding - 1px);
+  }
+
+  // Default list styling
+  %vf-list {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  // Bars and borders
+  %vf-pseudo-border {
+    background-color: $color-mid-light;
+    content: '';
+    height: 1px;
+    left: 0;
+    position: absolute;
+    right: 0;
+  }
+
+  %vf-pseudo-border--bottom {
+    position: relative;
+
+    &::after {
+      @extend %vf-pseudo-border;
+
+      bottom: 0;
+    }
+  }
+
+  %vf-pseudo-border--top {
+    position: relative;
+
+    &::after {
+      @extend %vf-pseudo-border;
+
+      top: 0;
+    }
+  }
+
+  %hr {
+    border: 0;
+    height: 1px;
+    margin-top: 0;
+    position: relative;
+    width: 100%;
+  }
+
+  // Spacing
+  %section-padding--shallow {
+    padding-bottom: $spv--x-large;
+    padding-top: $spv--x-large;
+  }
+
+  %section-padding--default {
+    padding-bottom: $spv--strip-regular * 0.5;
+    padding-top: $spv--strip-regular * 0.5;
+
+    @media (min-width: $breakpoint-large) {
+      padding-bottom: $spv--strip-regular;
+      padding-top: $spv--strip-regular;
+    }
+  }
+
+  %section-padding--deep {
+    padding: $spv--strip-deep * 0.5 0 $spv--strip-deep * 0.5;
+
+    @media (min-width: $breakpoint-large) {
+      padding: $spv--strip-deep 0;
+    }
+  }
+
+  // Utilities
+  %vf-hide-text {
+    overflow: hidden;
+    // vw value necessary because text indent in % does not work with padding;
+    // 110vw ensures the text is off the screen, and in most cases will
+    // still be smaller than 9999px, so should have better performance
+    text-indent: 110vw;
+    white-space: nowrap;
+  }
+
+  %vf-clearfix::after {
+    clear: both;
+    content: '';
+    display: block;
+  }
+
+  %u-no-margin--bottom {
+    &:not(hr):not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(p):not(small):not([class*='p-heading']):not([class*='p-button--link']) {
+      margin-bottom: 0 !important;
+    }
+  }
+
+  %u-no-margin--bottom--h1 {
+    margin-bottom: -#{map-get($nudges, h1-mobile)} !important;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      margin-bottom: -#{map-get($nudges, h1)} !important;
+    }
+
+    @if ($increase-font-size-on-larger-screens) {
+      @media (min-width: $breakpoint-x-large) {
+        margin-bottom: -#{map-get($nudges, h1-large)} !important;
+      }
+    }
+  }
+
+  %u-no-margin--bottom--h2 {
+    margin-bottom: -#{map-get($nudges, h2-mobile)} !important;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      margin-bottom: -#{map-get($nudges, h2)} !important;
+    }
+  }
+
+  %u-no-margin--bottom--h3 {
+    margin-bottom: #{$sp-unit - map-get($nudges, h3-mobile)} !important;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      margin-bottom: -#{map-get($nudges, h3)} !important;
+    }
+  }
+
+  %u-no-margin--bottom--h4 {
+    margin-bottom: #{$sp-unit - map-get($nudges, h4-mobile)} !important;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      margin-bottom: -#{map-get($nudges, h4)} !important;
+    }
+
+    @if ($increase-font-size-on-larger-screens) {
+      @media (min-width: $breakpoint-x-large) {
+        margin-bottom: -#{map-get($nudges, h4-large)} !important;
+      }
+    }
+  }
+
+  %u-no-margin--bottom--default-text {
+    margin-bottom: #{$sp-unit - map-get($nudges, p)} !important;
+  }
+
+  %u-no-margin--bottom--small {
+    margin-bottom: -#{map-get($nudges, small)} !important;
+  }
+
+  %u-no-margin--bottom--hr {
+    // compensate for hr thickness, to make sure it doesn't drift from baseline grid
+    margin-bottom: -1px !important;
+    // then lift it up on the z axis, so the negative margin doesn't cause it to be
+    // obscured by neighbouring elements with color backgrounds
+    z-index: 2;
+  }
+
+  %icon {
+    $vertical-offset: 0.5px;
+    @extend %vf-hide-text;
+    @include vf-icon-size($default-icon-size);
+    background: {
+      position: center;
+      repeat: no-repeat;
+    }
+
+    display: inline-block;
+    font-size: inherit; // allow icons to match size of parent text element, when set in em
+    margin: 0;
+    padding: 0;
+    position: relative;
+    vertical-align: calc($vertical-offset + 0.5 * $cap-height - 0.5 * $default-icon-size);
+  }
+
+  %social-icon {
+    @extend %vf-hide-text;
+    @include vf-icon-size(map-get($icon-sizes, heading-icon--x-small));
+
+    background-repeat: no-repeat;
+    display: inline-block;
+  }
+}

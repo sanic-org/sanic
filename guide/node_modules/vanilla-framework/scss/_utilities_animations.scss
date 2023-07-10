@@ -1,0 +1,26 @@
+/// Animations
+@mixin vf-u-animations {
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+  .u-animation--spin {
+    -webkit-animation: spin map-get($animation-duration, sleepy) infinite linear; // stylelint-disable-line property-no-vendor-prefix
+    animation: spin map-get($animation-duration, sleepy) infinite linear;
+  }
+
+  @keyframes spin {
+    0% {
+      -webkit-transform: rotate(0deg); // stylelint-disable-line property-no-vendor-prefix
+      transform: rotate(0deg);
+    }
+
+    100% {
+      -webkit-transform: rotate(360deg); // stylelint-disable-line property-no-vendor-prefix
+      transform: rotate(360deg);
+    }
+  }
+}

@@ -1,0 +1,88 @@
+@mixin vf-b-row-reset {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+@mixin vf-b-grid-definitions {
+  %display-block {
+    // make columns explicitly display:block; the use of a placeholder is to ensure the rule appears only once in the compiled css
+    display: block;
+  }
+
+  %fixed-width-container--common-properties {
+    @extend %vf-grid-container-padding;
+
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+
+  %fixed-width-container {
+    @extend %fixed-width-container--common-properties;
+
+    max-width: $grid-max-width;
+  }
+
+  %vf-row {
+    @extend %fixed-width-container;
+
+    & & {
+      @include vf-b-row-reset;
+    }
+
+    @supports (display: grid) {
+      display: grid;
+      grid-gap: 0 map-get($grid-gutter-widths, small);
+      grid-template-columns: repeat($grid-columns-small, minmax(0, 1fr));
+      grid-template-rows: auto;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: $grid-max-width;
+
+      & > * {
+        grid-column-end: span $grid-columns-small;
+      }
+
+      [class*='#{$grid-column-prefix}'] {
+        grid-column-start: auto;
+      }
+
+      // set static gutter width per breakpoint
+      @media (min-width: $threshold-4-6-col) {
+        grid-gap: 0 map-get($grid-gutter-widths, default);
+        grid-template-columns: repeat($grid-columns-medium, minmax(0, 1fr));
+
+        & > * {
+          grid-column-end: span $grid-columns-medium;
+        }
+      }
+
+      @media (min-width: $threshold-6-12-col) {
+        grid-gap: 0 map-get($grid-gutter-widths, default);
+        grid-template-columns: repeat($grid-columns, minmax(0, 1fr));
+
+        & > * {
+          grid-column-end: span $grid-columns;
+        }
+      }
+    }
+  }
+
+  %vf-grid-container-padding {
+    // set static outside padding per breakpoint
+    padding-left: map-get($grid-margin-widths, small);
+    padding-right: map-get($grid-margin-widths, small);
+
+    @media (min-width: $threshold-4-6-col) {
+      padding-left: map-get($grid-margin-widths, default);
+      padding-right: map-get($grid-margin-widths, default);
+    }
+
+    @media (min-width: $threshold-6-12-col) {
+      padding-left: map-get($grid-margin-widths, default);
+      padding-right: map-get($grid-margin-widths, default);
+    }
+  }
+}

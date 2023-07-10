@@ -1,0 +1,29 @@
+@import 'settings';
+
+// Show elements with explicit breakpoints
+@mixin vf-u-show {
+  .u-show {
+    display: initial !important;
+
+    &--small {
+      @media (max-width: $breakpoint-small - 1) {
+        display: inherit !important;
+        display: initial !important;
+      }
+    }
+
+    &--medium {
+      @media (min-width: $breakpoint-small) and (max-width: $breakpoint-large - 1) {
+        display: inherit !important;
+        display: initial !important;
+      }
+    }
+
+    &--large {
+      @media (min-width: $breakpoint-large) {
+        display: inherit !important;
+        display: initial !important;
+      }
+    }
+  }
+}

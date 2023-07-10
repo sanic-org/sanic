@@ -1,0 +1,286 @@
+@mixin vf-b-typography-definitions {
+  //@section Heading styling in placeholders
+  %vf-heading-1 {
+    font-size: #{map-get($font-sizes, h1-mobile)}rem;
+    font-style: normal;
+    font-weight: $font-weight-display-heading;
+    line-height: map-get($line-heights, h1-mobile);
+    margin-bottom: map-get($sp-after, h1-mobile) - map-get($nudges, h1-mobile);
+    margin-top: 0;
+    max-width: $text-max-width;
+    padding-top: map-get($nudges, h1-mobile) + map-get($browser-rounding-compensations, h1);
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      font-size: #{map-get($font-sizes, h1)}rem;
+      line-height: map-get($line-heights, h1);
+      margin-bottom: map-get($sp-after, h1) - map-get($nudges, h1);
+      padding-top: map-get($nudges, h1) + map-get($browser-rounding-compensations, h1);
+    }
+
+    @if ($increase-font-size-on-larger-screens) {
+      @media (min-width: $breakpoint-x-large) {
+        margin-bottom: map-get($sp-after, h1) - map-get($nudges, h1-large);
+        padding-top: map-get($nudges, h1-large) + map-get($browser-rounding-compensations, h1);
+      }
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--h1;
+    }
+  }
+
+  %vf-heading-2 {
+    font-size: #{map-get($font-sizes, h2-mobile)}rem;
+    font-style: normal;
+    font-weight: $font-weight-display-heading;
+    line-height: map-get($line-heights, h2-mobile);
+    margin-bottom: map-get($sp-after, h2-mobile) - map-get($nudges, h2-mobile);
+    margin-top: 0;
+    max-width: $text-max-width;
+    padding-top: map-get($nudges, h2-mobile) + map-get($browser-rounding-compensations, h2);
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      font-size: #{map-get($font-sizes, h2)}rem;
+      line-height: map-get($line-heights, h2);
+      margin-bottom: map-get($sp-after, h2) - map-get($nudges, h2);
+      padding-top: map-get($nudges, h2) + map-get($browser-rounding-compensations, h2);
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--h2;
+    }
+  }
+
+  %vf-heading-3 {
+    font-size: #{map-get($font-sizes, h3-mobile)}rem;
+    font-style: normal;
+    font-weight: $font-weight-display-heading;
+    line-height: map-get($line-heights, h3-mobile);
+    margin-bottom: map-get($sp-after, h3-mobile) - map-get($nudges, h3-mobile);
+    margin-top: 0;
+    max-width: $text-max-width;
+    padding-top: map-get($nudges, h3-mobile);
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      font-size: #{map-get($font-sizes, h3)}rem;
+      line-height: map-get($line-heights, h3);
+      margin-bottom: map-get($sp-after, h3) - map-get($nudges, h3);
+      padding-top: map-get($nudges, h3) + map-get($browser-rounding-compensations, h3);
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--h3;
+    }
+  }
+
+  %vf-heading-4 {
+    font-size: #{map-get($font-sizes, h4-mobile)}rem;
+    font-style: normal;
+    font-weight: $font-weight-thin;
+    line-height: map-get($line-heights, h4-mobile);
+    margin-bottom: map-get($sp-after, h4-mobile) - map-get($nudges, h4-mobile);
+    margin-top: 0;
+    max-width: $text-max-width;
+    padding-top: map-get($nudges, h4-mobile) + map-get($browser-rounding-compensations, h4);
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      font-size: #{map-get($font-sizes, h4)}rem;
+      line-height: map-get($line-heights, h4);
+      margin-bottom: map-get($sp-after, h4) - map-get($nudges, h4);
+      padding-top: map-get($nudges, h4) + map-get($browser-rounding-compensations, h4);
+    }
+
+    @if ($increase-font-size-on-larger-screens) {
+      @media (min-width: $breakpoint-x-large) {
+        margin-bottom: map-get($sp-after, h4) - map-get($nudges, h4-large);
+        padding-top: map-get($nudges, h4-large) + map-get($browser-rounding-compensations, h4);
+      }
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--h4;
+    }
+  }
+
+  %vf-heading-5 {
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: $font-weight-bold;
+    line-height: map-get($line-heights, default-text);
+    margin-bottom: map-get($sp-after, p) - map-get($nudges, p);
+    margin-top: 0;
+    max-width: $text-max-width;
+    padding-top: map-get($nudges, p) + map-get($browser-rounding-compensations, h5);
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--default-text;
+    }
+  }
+
+  %vf-heading-6 {
+    font-size: 1rem;
+    font-style: italic;
+    font-weight: $font-weight-regular-text;
+    line-height: map-get($line-heights, default-text);
+    margin-bottom: map-get($sp-after, p) - map-get($nudges, p);
+    margin-top: 0;
+    max-width: $text-max-width;
+    padding-top: map-get($nudges, h6) + map-get($browser-rounding-compensations, h6);
+
+    @if ($increase-font-size-on-larger-screens) {
+      @media (min-width: $breakpoint-x-large) {
+        padding-top: map-get($nudges, h6-large) + map-get($browser-rounding-compensations, h6);
+      }
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--default-text;
+    }
+  }
+
+  %common-default-text-properties {
+    line-height: map-get($line-heights, default-text);
+    margin-top: 0;
+    padding-top: map-get($nudges, p) + map-get($browser-rounding-compensations, p);
+  }
+
+  %default-text {
+    @extend %common-default-text-properties;
+    font-size: 1rem;
+    font-weight: $font-weight-regular-text;
+
+    margin-bottom: map-get($sp-after, default-text) - map-get($nudges, p);
+  }
+
+  %paragraph {
+    @extend %common-default-text-properties;
+
+    margin-bottom: map-get($sp-after, p) - map-get($nudges, p);
+
+    &:not([class*='p-heading--']):not([class*='p-muted-heading']) + & {
+      margin-top: -#{$sp-unit};
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--default-text;
+    }
+  }
+
+  %small-text {
+    font-size: #{map-get($font-sizes, small)}rem;
+    line-height: map-get($line-heights, small);
+    margin-bottom: map-get($sp-after, small) - map-get($nudges, small);
+    padding-top: map-get($nudges, small) + map-get($browser-rounding-compensations, small);
+
+    @if ($increase-font-size-on-larger-screens) {
+      @media (min-width: $breakpoint-x-large) {
+        padding-top: map-get($nudges, small) + map-get($browser-rounding-compensations, small-largescreen);
+      }
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--small;
+    }
+  }
+
+  %x-small-text {
+    font-size: #{map-get($font-sizes, x-small)}rem;
+    font-weight: $font-weight-bold;
+    line-height: map-get($line-heights, x-small);
+    margin-bottom: map-get($sp-after, x-small) - map-get($nudges, x-small);
+    padding-top: map-get($nudges, x-small) + map-get($browser-rounding-compensations, small);
+
+    @if ($increase-font-size-on-larger-screens) {
+      @media (min-width: $breakpoint-x-large) {
+        padding-top: map-get($nudges, x-small) + map-get($browser-rounding-compensations, small-largescreen);
+      }
+    }
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--small;
+    }
+  }
+
+  %muted-text {
+    color: $colors--light-theme--text-muted;
+  }
+
+  %small-caps-text {
+    @extend %default-text;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.05em;
+    margin-bottom: map-get($sp-after, default-text) - map-get($nudges, p);
+
+    &.u-no-margin--bottom {
+      @extend %u-no-margin--bottom--small;
+    }
+
+    // deprecated: the use of .u-align-text--x-small-to-default on small caps text is deprecated
+    // previously small caps was implemented as x-small text variant requiring .u-align-text--x-small-to-default compensations
+    // but now it's implemented with default text size not requiring any compensations,
+    // so we need to reset the padding-top to the default value
+    &.u-align-text--x-small-to-default {
+      padding-top: map-get($nudges, p) + map-get($browser-rounding-compensations, p);
+    }
+  }
+
+  %table-header-label {
+    // TODO: table header should use %small-caps-text,
+    // but we need to test it in the context of MAAS dense tables first
+    @extend %x-small-text;
+
+    text-transform: uppercase;
+  }
+
+  // deprecated: %muted-text is deprecated, use %small-caps-text instead
+  %muted-heading {
+    @extend %small-caps-text;
+  }
+
+  %bold {
+    font-weight: $font-weight-bold;
+  }
+
+  // @section Adjustments to spacing between pairs of text elements e.g. p + h1
+  // Placeholder naming: $sp + -- + {preceding element} + {following element}, e.g. for p + h1: $sp--ph1
+
+  %sp--ph1 {
+    padding-top: map-get($nudges, h1-mobile) + $spv--x-large;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      padding-top: map-get($nudges, h1) + $spv--x-large;
+    }
+  }
+
+  %sp--ph2 {
+    padding-top: map-get($nudges, h2-mobile) + $spv--x-large;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      padding-top: map-get($nudges, h2) + $spv--x-large;
+    }
+  }
+
+  %sp--ph3 {
+    padding-top: map-get($nudges, h3-mobile) + $spv--x-large;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      padding-top: map-get($nudges, h3) + $spv--x-large;
+    }
+  }
+
+  %sp--ph4 {
+    padding-top: map-get($nudges, h4-mobile) + $spv--x-large;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      padding-top: map-get($nudges, h4) + $spv--x-large;
+    }
+  }
+
+  %sp--ph5 {
+    padding-top: map-get($nudges, p) + $spv--x-large;
+  }
+
+  %sp--pmuted {
+    padding-top: map-get($nudges, small) + $spv--x-large;
+  }
+}

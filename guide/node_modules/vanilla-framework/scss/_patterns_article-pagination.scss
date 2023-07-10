@@ -1,0 +1,103 @@
+@import 'settings';
+
+@mixin vf-p-article-pagination {
+  %chevron-icon {
+    @extend %icon;
+    @include vf-icon-chevron($color-mid-dark);
+
+    content: '';
+    position: absolute;
+    top: calc($spv--large + $spv--x-small);
+  }
+
+  .p-article-pagination {
+    display: flex;
+    width: 100%;
+  }
+
+  .p-article-pagination__label,
+  .p-article-pagination__title {
+    color: $color-dark;
+    display: block;
+    margin-top: 0;
+    width: 100%;
+  }
+
+  .p-article-pagination__label {
+    margin-bottom: $sp-x-small;
+  }
+
+  .p-article-pagination__title {
+    font-size: 1.125em;
+
+    @media (min-width: $breakpoint-small) {
+      font-size: 1.25em;
+    }
+  }
+
+  %p-article-pagination__link {
+    @extend %vf-button-base;
+    @include vf-button-pattern(
+      $button-border-color: $color-transparent,
+      $button-hover-border-color: $color-transparent,
+      $button-active-border-color: $color-transparent,
+      $button-disabled-border-color: $color-transparent
+    );
+
+    margin-top: 0;
+    padding: $sp-medium;
+    position: relative;
+    width: 50%;
+  }
+
+  .p-article-pagination__link--previous {
+    @extend %p-article-pagination__link;
+
+    padding-left: $sp-xx-large;
+    text-align: left;
+
+    @media (max-width: $breakpoint-x-small - 1) {
+      margin-right: 0;
+      width: auto;
+
+      &:only-child {
+        width: 100%;
+      }
+
+      &:not(:only-child) * {
+        display: none;
+        max-width: $sp-x-small;
+        padding-left: $sp-large;
+      }
+    }
+
+    &::before {
+      @extend %chevron-icon;
+
+      left: $sp-small;
+      transform: rotate(90deg);
+    }
+  }
+
+  .p-article-pagination__link--next {
+    @extend %p-article-pagination__link;
+
+    padding-right: $sp-xx-large;
+    text-align: right;
+
+    @media (max-width: $breakpoint-x-small - 1) {
+      width: 100%;
+    }
+
+    &:only-child {
+      margin-left: auto;
+    }
+
+    &::after {
+      @extend %chevron-icon;
+
+      right: $sp-small;
+      transform: rotate(-90deg);
+    }
+  }
+}

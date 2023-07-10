@@ -1,0 +1,99 @@
+@import 'settings';
+
+@mixin vf-p-modal {
+  $icon-size: map-get($icon-sizes, default);
+
+  .p-modal {
+    align-items: center;
+    background: transparentize($color-dark, 0.15);
+    bottom: 0;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    left: 0;
+    margin: 0;
+    padding: $spv--large;
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 100%;
+    z-index: 150; // render on top of any other content or layout elements
+  }
+
+  .p-modal__dialog {
+    @extend %vf-card;
+    @extend %vf-has-box-shadow;
+    @extend %vf-has-round-corners;
+
+    left: $sph--x-large;
+    margin-bottom: 0;
+    max-height: calc(100% - 2 * $spv--large);
+    max-width: $grid-max-width;
+    overflow: auto;
+    padding-top: 0;
+    position: absolute;
+    right: $sph--x-large;
+    width: auto;
+
+    @media (min-width: $threshold-6-12-col) {
+      bottom: initial;
+      left: initial;
+      position: relative;
+      right: initial;
+      top: initial;
+    }
+  }
+
+  .p-modal__header {
+    @extend %vf-pseudo-border--bottom;
+
+    background: $color-x-light;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: $spv--small;
+    // add padding to accommodate the width of p-modal__close
+    padding-right: $icon-size + $sph--small * 2;
+    padding-top: $spv--large;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .p-modal__title {
+    @extend %vf-heading-4;
+
+    align-self: flex-end;
+  }
+
+  .p-modal__close {
+    background: {
+      image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' height='90' width='90'%3E%3Cg color='%23000'%3E%3Cpath fill='none' d='M0 0h90v90H0z'/%3E%3Cpath d='M14.52 6L6 14.52 36.48 45 6 75.49 14.52 84 45 53.52 75.48 84 84 75.49 53.52 45 84 14.52 75.48 6 45 36.49z' fill='%23888'/%3E%3C/g%3E%3C/svg%3E");
+      position: center;
+      repeat: no-repeat;
+      size: $icon-size;
+    }
+
+    border: 0;
+    box-sizing: content-box;
+    height: $icon-size;
+    margin: 0;
+    margin-top: $spv--large;
+    padding: $sp-unit;
+    position: absolute;
+    right: 0;
+    text-indent: -999em;
+    top: 0;
+    width: $icon-size;
+
+    &:focus {
+      outline: $bar-thickness solid $color-focus;
+    }
+  }
+
+  .p-modal__footer {
+    @extend %vf-pseudo-border--top;
+
+    padding-top: 1rem;
+    text-align: right;
+  }
+}

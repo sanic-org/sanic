@@ -1,0 +1,103 @@
+@import 'settings';
+
+@mixin vf-p-card {
+  @include vf-p-card-default;
+  @include vf-p-card-highlighted;
+  @include vf-p-card-overlay;
+  @include vf-p-card-muted;
+  @include vf-p-card-specific-content;
+}
+
+@mixin vf-p-card-default {
+  .p-card {
+    @extend %vf-card;
+    @extend %vf-is-bordered;
+    @extend %vf-has-round-corners;
+
+    padding: calc($spv--large - 1px);
+  }
+}
+
+@mixin vf-p-card-highlighted {
+  %p-card--highlighted {
+    @extend %vf-card;
+    @extend %vf-has-box-shadow;
+    @extend %vf-has-round-corners;
+  }
+
+  .p-card--highlighted {
+    @extend %p-card--highlighted;
+  }
+}
+
+@mixin vf-p-card-overlay {
+  .p-card--overlay {
+    background: transparentize($color-x-light, 0.1);
+    color: $color-dark;
+    margin-bottom: $spv--x-large;
+    overflow: auto;
+    padding: $spv--large;
+  }
+}
+
+@mixin vf-p-card-muted {
+  .p-card--muted {
+    @extend %vf-bg--light;
+    @extend %vf-has-box-shadow;
+    @extend %vf-has-round-corners;
+
+    margin-bottom: $spv--x-large;
+    overflow: auto;
+    padding: $spv--large;
+  }
+}
+
+@mixin vf-p-card-specific-content {
+  // p-card scoped rules should only be added if the required behaviour is not likely to be needed in any other pattern.
+  // If possible, please consider adding a modifier to a base pattern, so it can be used elsewhere too.
+
+  .p-card__image {
+    display: block;
+    margin-bottom: $spv--small;
+    width: 100%;
+  }
+
+  .p-card__header {
+    border-bottom: 1px solid $color-mid-light;
+    padding-bottom: $spv--large;
+
+    > .p-link--soft {
+      display: inline-block;
+      overflow: auto;
+    }
+  }
+
+  .p-card__inner {
+    @extend %vf-card-padding;
+  }
+
+  .p-card__content {
+    @extend %u-no-margin--bottom--default-text;
+  }
+
+  .p-card__thumbnail {
+    max-height: map-get($icon-sizes, heading-icon--small);
+  }
+
+  [class*='p-card'] {
+    // FIXME: this is overly complex
+    // stylelint-disable selector-max-type
+    > p:not([class*='p-heading--']),
+    > h5,
+    > h6 {
+      &:last-child {
+        margin-bottom: $spv-nudge-compensation;
+      }
+
+      &:first-child {
+        margin-top: -#{$sp-unit};
+      }
+    }
+    // stylelint-enable selector-max-type
+  }
+}

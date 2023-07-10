@@ -1,0 +1,146 @@
+@import 'settings';
+
+// Base button styles
+@mixin vf-b-button {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  button {
+    @extend %vf-button-base;
+    @include vf-button-pattern;
+  }
+
+  %vf-button-dense-vertical-padding {
+    padding-bottom: calc($spv-nudge - $sp-unit * 0.5 - $input-border-thickness);
+    padding-top: calc($spv-nudge - $sp-unit * 0.5 - $input-border-thickness);
+  }
+
+  %vf-button-base {
+    @include vf-transition(#{background-color, border-color}, snap, in);
+    @include vf-focus;
+
+    border-style: solid;
+    border-width: $input-border-thickness;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 1rem;
+    font-weight: $font-weight-regular-text;
+    justify-content: center;
+    line-height: map-get($line-heights, default-text);
+    margin: 0 $sph--large $input-margin-bottom 0;
+    padding: $input-vertical-padding $sph--large;
+    text-align: center;
+    text-decoration: none;
+
+    &:active,
+    &:focus,
+    &:hover {
+      text-decoration: none;
+    }
+
+    &:disabled,
+    &.is-disabled {
+      cursor: not-allowed;
+      opacity: $disabled-element-opacity;
+    }
+
+    &:last-child {
+      margin-right: 0;
+    }
+
+    &.is-dense {
+      @extend %vf-button-dense-vertical-padding;
+
+      margin-bottom: $spv-nudge-compensation;
+    }
+
+    &.is-small {
+      font-size: #{map-get($font-sizes, small)}rem;
+      line-height: map-get($line-heights, small);
+      margin-bottom: $input-margin-bottom - $sp-unit;
+      padding: calc(map-get($nudges, small) - $input-border-thickness) $sph--small;
+    }
+
+    &.is-small.is-dense {
+      margin-bottom: $spv-nudge-compensation;
+      padding-bottom: calc($spv-nudge - $sp-unit * 0.5 - $input-border-thickness);
+      padding-top: calc($spv-nudge - $sp-unit * 0.5 - $input-border-thickness);
+    }
+
+    // The following rules address buttons nested in <p>'s;
+    p & {
+      margin-bottom: $sp-unit + $spv-nudge-compensation;
+      margin-top: -#{$spv-nudge};
+    }
+
+    p + p > & {
+      margin-top: $spv-nudge-compensation;
+    }
+    // stylelint-enable selector-max-type
+  }
+
+  %vf-button-white-success-icon {
+    & .p-icon--success {
+      @include vf-icon-success($color-x-light, $color-transparent);
+    }
+  }
+
+  %vf-button-has-icon {
+    & [class*='p-icon'] {
+      margin-left: $sph--small;
+      margin-right: $sph--small;
+
+      &:first-child {
+        margin-left: -$sph--small;
+      }
+
+      &:last-child {
+        margin-right: -$sph--small;
+      }
+    }
+  }
+}
+
+@mixin vf-button-pattern(
+  $button-background-color: $colors--light-theme--background-default,
+  $button-text-color: $colors--light-theme--text-default,
+  $button-disabled-background-color: $color-transparent,
+  $button-disabled-border-color: $colors--light-theme--border-high-contrast,
+  $button-border-color: $colors--light-theme--border-high-contrast,
+  $button-hover-background-color: $colors--light-theme--background-hover,
+  $button-hover-border-color: $colors--light-theme--border-high-contrast,
+  $button-active-background-color: $colors--light-theme--background-active,
+  $button-active-border-color: $colors--light-theme--border-high-contrast
+) {
+  background-color: $button-background-color;
+  border-color: $button-border-color;
+  color: $button-text-color;
+
+  &:visited {
+    color: $button-text-color;
+  }
+
+  &:hover {
+    background-color: $button-hover-background-color;
+    border-color: $button-hover-border-color;
+  }
+
+  &:active,
+  &[aria-pressed='true'],
+  &[aria-selected='true'],
+  &[aria-expanded='true'] {
+    background-color: $button-active-background-color;
+    border-color: $button-active-border-color;
+    transition-duration: 0s;
+  }
+
+  &:disabled,
+  &.is-disabled {
+    &:active,
+    &[aria-pressed='true'],
+    &[aria-selected='true'],
+    &[aria-expanded='true'],
+    &:hover {
+      background-color: $button-disabled-background-color;
+      border-color: $button-disabled-border-color;
+    }
+  }
+}

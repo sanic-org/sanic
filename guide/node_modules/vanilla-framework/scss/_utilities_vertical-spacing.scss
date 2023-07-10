@@ -1,0 +1,20 @@
+@mixin vf-u-vertical-spacing($start: -3, $end: 3) {
+  %u-vertical-spacer {
+    content: '';
+    display: block;
+    height: 1px; // needed so any margin applied is taken as part of the flow
+    position: relative;
+  }
+
+  @for $i from $start through $end {
+    @if $i != 0 {
+      .u-sv#{$i} {
+        &::after {
+          @extend %u-vertical-spacer;
+
+          margin-top: calc($sp-unit * $i - 1px); // subtracting the element height, which is set to 1px above.
+        }
+      }
+    }
+  }
+}

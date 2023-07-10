@@ -1,0 +1,172 @@
+@import 'settings';
+
+@mixin vf-l-fluid-breakout(
+  $l-fluid-breakout-aside-width: $l-fluid-breakout-aside-width,
+  $l-fluid-breakout-main-child-width: $l-fluid-breakout-main-child-width,
+  $grid-gap: $sp-unit * 2,
+  $suffix: ''
+) {
+  .l-fluid-breakout#{$suffix} {
+    display: block;
+    grid-gap: 0 0;
+    padding-left: map-get($grid-margin-widths, small);
+    padding-right: map-get($grid-margin-widths, small);
+
+    @media (min-width: $breakpoint-large) {
+      display: grid;
+      grid-template-columns:
+        minmax($l-fluid-breakout-aside-width, 1fr)
+        minmax(0, $l-fluid-breakout-max-width)
+        minmax($l-fluid-breakout-aside-width, 1fr);
+      grid-template-rows: auto;
+      margin-left: auto;
+      margin-right: auto;
+      max-width: calc(2 * $l-fluid-breakout-aside-width + $l-fluid-breakout-max-width);
+    }
+
+    @media (min-width: $threshold-4-6-col) {
+      padding-left: map-get($grid-margin-widths, default);
+      padding-right: map-get($grid-margin-widths, default);
+    }
+
+    @media (min-width: $threshold-6-12-col) {
+      padding-left: map-get($grid-margin-widths, default);
+      padding-right: map-get($grid-margin-widths, default);
+    }
+
+    @media (min-width: $l-fluid-breakout-3-col-threshold) {
+      padding-left: 0;
+      padding-right: 0;
+
+      @supports (display: grid) {
+        grid-gap: 0 0;
+      }
+    }
+
+    .l-fluid-breakout__main {
+      display: grid;
+      grid-gap: 0 $grid-gap;
+      grid-row: 2;
+      grid-template-columns: repeat(auto-fit, minmax($l-fluid-breakout-main-child-width, 1fr));
+      width: 100%;
+
+      @media (min-width: $l-fluid-breakout-3-col-threshold) {
+        padding-left: map-get($grid-margin-widths, default);
+        padding-right: map-get($grid-margin-widths, default);
+      }
+
+      @media (min-width: $breakpoint-large) {
+        grid-column: auto / span 2;
+
+        &.no-aside {
+          grid-column: 2 / span 2;
+        }
+      }
+
+      &.is-full-width {
+        @media (min-width: $breakpoint-large) {
+          grid-column: 1 / span 3;
+        }
+      }
+
+      .row {
+        max-width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+      }
+    }
+
+    .l-fluid-breakout__item {
+      @media (min-width: $l-fluid-breakout-3-col-threshold) {
+        grid-column: auto / auto;
+        width: initial;
+      }
+    }
+
+    %l-fluid-breakout__aside-common-properties#{$suffix} {
+      grid-column-end: span 1;
+      grid-column-start: auto;
+      grid-row: 2 / 100;
+
+      @media (min-width: $l-fluid-breakout-3-col-threshold) {
+        align-items: start;
+      }
+    }
+
+    .l-fluid-breakout__aside {
+      @extend %l-fluid-breakout__aside-common-properties#{$suffix};
+
+      @media (min-width: $breakpoint-large) {
+        padding-right: map-get($grid-margin-widths, default);
+      }
+
+      @media (min-width: $l-fluid-breakout-3-col-threshold) {
+        padding-left: map-get($grid-margin-widths, default);
+        padding-right: 0;
+      }
+    }
+
+    .l-fluid-breakout__aside--right {
+      @extend %l-fluid-breakout__aside-common-properties#{$suffix};
+
+      @media (min-width: $breakpoint-large) {
+        padding-left: map-get($grid-margin-widths, default);
+        padding-right: 0;
+      }
+
+      @media (min-width: $l-fluid-breakout-3-col-threshold) {
+        padding-left: 0;
+        padding-right: map-get($grid-margin-widths, default);
+      }
+
+      @extend %l-fluid-breakout__aside-common-properties#{$suffix};
+    }
+
+    .l-fluid-breakout__toolbar {
+      margin-block-end: $spv--large;
+
+      @media (min-width: $breakpoint-large) {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns:
+          minmax($l-fluid-breakout-aside-width, 1fr)
+          minmax(0, $l-fluid-breakout-max-width)
+          minmax($l-fluid-breakout-aside-width, 1fr);
+        grid-template-rows: auto;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: calc(2 * $l-fluid-breakout-aside-width + $l-fluid-breakout-max-width);
+      }
+
+      @media (min-width: $l-fluid-breakout-3-col-threshold) {
+        margin-left: map-get($grid-margin-widths, default);
+        margin-right: map-get($grid-margin-widths, default);
+      }
+    }
+
+    .l-fluid-breakout__toolbar-items {
+      display: grid;
+      grid-column: 2 / -1;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+
+      @media (max-width: $threshold-4-6-col - 1) {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        width: $l-fluid-breakout-main-child-width;
+      }
+    }
+
+    .l-fluid-breakout__toolbar-item {
+      align-items: center;
+      display: flex;
+      grid-column-end: span 1;
+
+      &:nth-child(2) {
+        justify-content: flex-end;
+
+        @media (max-width: $threshold-4-6-col - 1) {
+          justify-content: flex-start;
+        }
+      }
+    }
+  }
+}

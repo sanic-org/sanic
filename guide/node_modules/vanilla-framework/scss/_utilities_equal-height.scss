@@ -1,0 +1,15 @@
+@import 'settings';
+
+// Equal heights makes all immediate child divs and li's heights equal
+@mixin vf-u-equal-height {
+  // Default equal-height pattern styles
+  .u-equal-height {
+    @media (min-width: $threshold-6-12-col) {
+      display: flex;
+
+      &.row {
+        display: grid;
+      }
+    }
+  }
+}

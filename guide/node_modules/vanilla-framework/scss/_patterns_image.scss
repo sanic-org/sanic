@@ -1,0 +1,15 @@
+@import 'settings';
+
+@mixin vf-p-image {
+  .p-image--bordered {
+    border: {
+      color: $color-mid-light;
+      style: solid;
+      width: 1px;
+    }
+  }
+
+  .p-image--shadowed {
+    box-shadow: 0 1px 5px 1px transparentize($color-mid-light, 0.8);
+  }
+}

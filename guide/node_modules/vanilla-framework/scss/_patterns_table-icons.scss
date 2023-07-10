@@ -1,0 +1,15 @@
+@import 'settings';
+
+@mixin vf-p-table-icons {
+  .p-table__cell--icon-placeholder {
+    $table-icon-size: map-get($icon-sizes, default);
+    $table-icon-margin: $sph--small;
+
+    padding-left: $sph--small + $table-icon-size + $table-icon-margin;
+
+    [class^='p-icon']:first-child {
+      margin-left: -($table-icon-size + $table-icon-margin);
+      margin-right: $table-icon-margin;
+    }
+  }
+}

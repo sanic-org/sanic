@@ -1,0 +1,99 @@
+@import 'settings';
+
+@mixin vf-p-tabs {
+  // for _patterns_tabs.scss
+  $color-tabs-active-bar: $colors--light-theme--text-default !default;
+
+  .p-tabs {
+    border-radius: 0;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+
+    &__list {
+      @extend %vf-pseudo-border--bottom;
+
+      display: flex;
+      margin: 0 auto $spv--x-large;
+      overflow-x: auto;
+      padding: 0;
+      position: relative;
+      white-space: nowrap;
+      width: 100%;
+    }
+
+    &__item {
+      margin: 0;
+      padding: 0;
+      width: auto;
+
+      &:last-child {
+        margin-right: $sp-xxx-large;
+      }
+    }
+
+    &__link {
+      @extend %vf-button-base;
+      @include vf-button-pattern(
+        $button-border-color: $color-transparent,
+        $button-hover-border-color: $color-transparent,
+        $button-active-border-color: $color-transparent,
+        $button-disabled-border-color: $color-transparent
+      );
+      @include vf-highlight-bar(transparent, bottom, false);
+
+      align-items: center;
+      border: none;
+      color: $color-dark;
+      display: flex;
+      gap: $sph--small;
+      height: 100%;
+      line-height: map-get($line-heights, default-text);
+      margin-bottom: 0;
+      padding: $spv--medium $sph--large;
+      position: relative;
+
+      &::before {
+        @extend %vf-pseudo-border;
+        @include vf-transition(#{background-color, border-color}, snap, in);
+
+        bottom: 0;
+        z-index: 1;
+      }
+
+      // make sure tab strip border doesn't overlap focus outline
+      &:focus {
+        z-index: 1;
+
+        &::before,
+        &::after {
+          content: none;
+        }
+      }
+
+      // Display the highlight when focussing in modern browsers that support
+      // focus-visible.
+      &:focus:not(:focus-visible) {
+        @include vf-highlight-bar($color-tabs-active-bar, bottom, false);
+      }
+
+      &:active,
+      &[aria-selected='true'] {
+        @include vf-highlight-bar($color-tabs-active-bar, bottom, false);
+
+        // Display the highlight when focussing (in combination with the parent
+        // states) in modern browsers that support focus-visible.
+        &:focus:not(:focus-visible) {
+          @include vf-highlight-bar($color-tabs-active-bar, bottom, false);
+        }
+
+        // Hide the highlight when focussing (in combination with the parent
+        // states) in browsers that don't support focus-visible.
+        &:focus::before,
+        &:focus::after {
+          content: none;
+        }
+      }
+    }
+  }
+}

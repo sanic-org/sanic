@@ -1,0 +1,6 @@
+@mixin vf-base-background {
+  // stylelint-disable-next-line selector-max-type -- base styles can use type selectors
+  html {
+    background: $color-x-light;
+  }
+}

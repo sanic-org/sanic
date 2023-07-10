@@ -1,0 +1,74 @@
+@mixin vf-l-application-panels {
+  .p-panel {
+    background: $colors--light-theme--background-default;
+    color: $colors--light-theme--text-default;
+    max-width: 100%;
+    min-height: 100%; // make sure it fills whole container even when has little content
+
+    &.is-dark {
+      background: $colors--dark-theme--background-default;
+      color: $colors--dark-theme--text-default;
+    }
+  }
+
+  .p-panel__header {
+    @extend %vf-grid-container-padding;
+
+    display: flex;
+  }
+
+  .p-panel__header.is-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    .p-panel.is-dark & {
+      background: $colors--dark-theme--background-default;
+    }
+  }
+
+  .p-panel__content {
+    @extend %section-padding--shallow;
+
+    overflow: hidden;
+  }
+
+  .p-panel__logo {
+    align-items: center;
+    display: flex;
+    margin-bottom: 1.25rem;
+    // to center the logo inside the collapsed side navigation we have to move it a bit to the left
+    // so its position is aligned with the icons of side navigation
+    margin-left: -0.25rem; // (LOGO_SIZE - ICON_SIZE) / 2 = (1.5rem - 1rem) / 2 = 0.25rem
+    margin-top: 1.25rem;
+
+    .p-panel__logo-icon {
+      height: 1.5rem;
+    }
+
+    .p-panel__logo-name {
+      height: 1rem;
+      margin-left: 0.5rem;
+    }
+  }
+
+  .p-panel__title {
+    @extend %vf-heading-4;
+
+    margin: 0;
+    padding-bottom: $sp-medium;
+    padding-top: $sp-medium;
+  }
+
+  .p-panel__controls {
+    margin-left: auto;
+    padding-top: $spv--large;
+  }
+
+  .p-panel__toggle {
+    cursor: pointer;
+    display: block;
+    margin-bottom: 1.25rem;
+    margin-top: 0.25rem;
+  }
+}

@@ -1,0 +1,59 @@
+@mixin vf-p-segmented-control {
+  .p-segmented-control,
+  // p-tab-buttons is deprecated,
+  // please use p-segmented-control instead 
+  .p-tab-buttons {
+    .p-segmented-control__list,
+    .p-tab-buttons__list {
+      display: flex;
+    }
+
+    .p-segmented-control__button,
+    .p-tab-buttons__button {
+      @extend %vf-button-has-icon;
+
+      border-radius: 0;
+      margin-right: 0;
+      overflow: hidden;
+      position: relative;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      &:not(:first-child) {
+        border-left: 0;
+      }
+
+      &:not(:last-child) {
+        border-right: 0;
+
+        &::after {
+          background-color: $colors--light-theme--border-low-contrast;
+          bottom: 0;
+          content: '';
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: $input-border-thickness;
+        }
+      }
+
+      &:first-child {
+        border-radius: $border-radius 0 0 $border-radius;
+      }
+
+      &:last-child {
+        border-radius: 0 $border-radius $border-radius 0;
+      }
+    }
+
+    &.is-dense .p-segmented-control__button,
+    &.is-dense .p-tab-buttons__button {
+      @extend %vf-button-dense-vertical-padding;
+    }
+  }
+}
+
+// Deprecated mixin kept for compatibility
+@mixin vf-p-tab-buttons {
+  @include vf-p-segmented-control;
+}

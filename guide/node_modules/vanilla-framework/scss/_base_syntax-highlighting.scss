@@ -1,0 +1,83 @@
+@import 'settings';
+
+@mixin vf-b-syntax-highlighting {
+  /*
+    http://prismjs.com/
+
+    prism.js theme based by theme by Edward Horsford for GOV.UK
+    https://github.com/alphagov/govuk_elements/blob/master/assets/sass/vendor/prism.scss
+  */
+
+  .token {
+    &.comment,
+    &.prolog,
+    &.doctype,
+    &.cdata {
+      color: $colors--light-theme--text-muted;
+    }
+
+    &.punctuation {
+      color: $colors--light-theme--text-default;
+    }
+
+    &.namespace {
+      opacity: 0.7;
+    }
+
+    &.property,
+    &.tag,
+    &.boolean,
+    &.number,
+    &.constant,
+    &.symbol,
+    &.deleted {
+      color: #77216f; // √ brand light aubergine
+    }
+
+    &.selector,
+    &.attr-name,
+    &.string,
+    &.char,
+    &.builtin,
+    &.inserted {
+      color: #0e811f; // positive button bg color nudged to meet AA contrast req on #f7f7f7
+    }
+
+    .operator,
+    .entity,
+    .url,
+    .language-css &.string,
+    .style &.string {
+      color: #a86500; // $color-caution darkened to meet AA
+    }
+
+    &.atrule,
+    &.attr-value,
+    &.keyword {
+      color: #06c; // $color-link
+    }
+
+    &.function,
+    &.class-name {
+      color: #c7162b; // color-negative
+    }
+
+    &.regex,
+    &.important,
+    &.variable {
+      color: #dc3023; // secondary palette nudged to AA
+    }
+
+    &.important,
+    &.bold {
+      font-weight: $font-weight-bold;
+    }
+    &.italic {
+      font-style: italic;
+    }
+
+    &.entity {
+      cursor: help;
+    }
+  }
+}

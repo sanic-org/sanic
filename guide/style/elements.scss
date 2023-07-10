@@ -1,0 +1,57 @@
+.footer {
+    a[target=_blank]::after { display: none; }
+    margin-bottom: 4rem;
+}
+@media screen and (max-width: $desktop) {
+    .footer .level { align-items: baseline; }
+    .footer a { font-size: 0.75em; }
+}
+.hero {
+    .subtitle {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    .tagline {
+        font-family: Fira Code,Source Code Pro,Menlo,Monaco,Consolas,Lucisa Console,monospace;
+        font-size: 2rem;
+        font-weight: 300;
+        margin-bottom: 2rem
+    }
+}
+
+.language-sh {
+    code {
+        display: inline-block;
+        &::before {
+            content: '▶ '
+        }
+
+    }
+}
+
+.notification {
+    margin-top: 2rem;
+    .notification-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+}
+
+.ol, .ul,
+.list {
+    margin: 1rem 0;
+    .li,
+    .list-item {
+        padding: 0.5rem 0;
+    }
+}
+.ul .li {
+    margin-left: 1.5rem;
+    list-style-type: disc;
+}
+.introduction-table {
+    margin: 2rem 0;
+    a[target=_blank]::after { display: none; }
+    th { display: none; }
+}

@@ -1,0 +1,6 @@
+{
+    "dependencies": {
+        "bulma": "^0.9.4",
+        "bulma-prefers-dark": "^0.1.0-beta.1"
+    }
+}

@@ -1,0 +1,248 @@
+@import 'settings';
+
+/*
+  @classreference
+  notification:
+    Root element:
+        .p-notification:
+            Notification in default variant. Same as `.p-notification--information`.
+        .p-notification--information:
+            Information notification. Same as default `.p-notification`.
+        .p-notification--positive:
+            Positive notification.
+        .p-notification--caution:
+            Caution notification.
+        .p-notification--negative:
+            Negative notification.
+        "&.is-borderless":
+            Borderless variant of notification. Used when notification is embeded into another container element.
+        "&.is-inline":
+            Inline version of notification with title and message rendered side by side.
+
+    Content container:
+        .p-notification__content:
+            Container element for notification content (title and message).
+
+    Title:
+        .p-notification__title:
+            The notification title.
+
+    Message:
+        .p-notification__message:
+            Text of the notification message.
+
+    Close button:
+        .p-notification__close:
+            The button to close the notification.
+
+    Meta-data container:
+        .p-notification__meta:
+            The container element for notification meta-data (timestamp and action buttons).
+
+    Timestamp:
+        .p-notification__timestamp:
+            Notification timestamp or date.
+
+    Actions container:
+        .p-notification__actions:
+            Container element for notification action buttons.
+
+    Action button:
+        .p-notification__action:
+            Single action button.
+*/
+
+// space on the left of the icon + icon width + space on the right of the icon
+$notification-content-icon-space: 2 * $sph--large + map-get($icon-sizes, default);
+
+// the icon is a background element, so it needs to be manually positioned to match the text next to it;
+// Step 1: push down by the same amount applied as padding top on text ($spv-nudge)
+// Step 2: to center the icon within the line-height of text, we subtract icon height from text line-height and multiply by .5; this is the amount we need to push the icon down by
+$borderless-notification-icon-vert-offset: $spv-nudge + 0.5 * (map-get($line-heights, default-text) - map-get($icon-sizes, default));
+// Step 3: Add the notification padding-top (if it exists); we have two cases, so at this point we create a second var that contains the first one + the notification padding-top
+$notification-icon-vert-offset: $spv--small + $borderless-notification-icon-vert-offset;
+
+// normally, paragraphs use a large margin-bottom (currently 1.5rem) to ensure elements that follow are sufficiently spaced.
+// within the insulated context of a notification, less space is needed, as the notification itself has an ample margin on it.
+// We still need a little space so things like the border on the __meta do not crash into the preceding text element, so we use a reduced amount of margin
+// being text, it still needs to align to the baseline grid. So we need to subtract $spv-nudge (the amount applied to this text as padding-top) from the total amount of margin-bottom.
+// As a result, padding-top + margin-bottom == an exact multiple of the base spacing unit, $sp-unit (which is .5rem)
+$notification-text-margin-bottom: $spv--large - $spv-nudge;
+
+// Notification style patterns
+@mixin vf-p-notification {
+  // The mixin for basic notification styling
+  %vf-notification {
+    @extend %vf-is-bordered;
+    @extend %vf-bg--x-light;
+
+    background-position: $sph--large $notification-icon-vert-offset;
+    background-repeat: no-repeat;
+    background-size: map-get($icon-sizes, default);
+    border-radius: 0 $border-radius $border-radius 0;
+    margin-bottom: $spv--x-large;
+    padding-bottom: calc($spv--small - 1px);
+    padding-left: $notification-content-icon-space;
+    padding-top: calc($spv--small - 1px);
+    position: relative;
+
+    &::before {
+      left: -1px !important;
+    }
+
+    &.is-borderless {
+      background-color: transparent;
+      background-position: 0 $borderless-notification-icon-vert-offset;
+      border: none;
+      margin-top: 0;
+      padding: 0 0 0 2 * $sph--large;
+
+      &::before {
+        display: none;
+      }
+    }
+
+    &.is-inline {
+      .p-notification__content {
+        margin-bottom: $notification-text-margin-bottom;
+      }
+
+      .p-notification__meta {
+        padding-top: 0;
+
+        &::after {
+          // unset pseudo border
+          content: none;
+        }
+      }
+
+      .p-notification__title,
+      .p-notification__message {
+        display: inline;
+      }
+    }
+
+    .p-notification__content {
+      @extend %common-default-text-properties;
+
+      margin-bottom: $notification-text-margin-bottom;
+      max-width: unset;
+      padding-right: 2 * $sph--large;
+    }
+
+    .p-notification__title {
+      font-size: 1rem;
+      font-weight: $font-weight-bold;
+      line-height: map-get($line-heights, default-text);
+      margin: 0;
+      padding: 0;
+    }
+
+    .p-notification__message {
+      margin: 0;
+      max-width: unset;
+      padding: 0;
+    }
+
+    .p-notification__close {
+      @extend %vf-hide-text;
+      @include vf-icon-close($color-mid-dark);
+
+      background-color: transparent;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: unset;
+      border: 0;
+      // set the height of the button to be size of an icon + padding on top and bottom
+      height: calc(2 * $spv--small + $default-icon-size);
+      position: absolute;
+      right: $sph--large * 0.5;
+      top: $spv--small;
+      width: $default-icon-size;
+    }
+
+    .p-notification__meta {
+      @extend %vf-pseudo-border--top;
+
+      align-items: flex-start;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: $spv--small;
+      padding-right: $sph--large;
+      padding-top: $spv--small;
+    }
+
+    .p-notification__timestamp {
+      @extend %default-text;
+      @extend %muted-text;
+    }
+
+    .p-notification__actions {
+      align-items: flex-start;
+      display: flex;
+
+      &:only-child {
+        margin-left: auto;
+      }
+    }
+
+    .p-notification__action {
+      @extend %default-text;
+    }
+
+    .p-notification__action + .p-notification__action {
+      margin-left: $sph--large;
+    }
+  }
+
+  @include vf-notifications-default;
+  @include vf-notifications-positive;
+  @include vf-notifications-caution;
+  @include vf-notifications-negative;
+  @include vf-notifications-information;
+}
+
+// Default notification styling
+@mixin vf-notifications-default {
+  .p-notification {
+    @extend %vf-notification;
+    @include vf-highlight-bar($color-information, left, true);
+    @include vf-icon-info($color-mid-dark);
+  }
+}
+
+// Positive notification styling
+@mixin vf-notifications-positive {
+  .p-notification--positive {
+    @extend %vf-notification;
+    @include vf-highlight-bar($color-positive, left, true);
+    @include vf-icon-success;
+  }
+}
+
+// Caution notification styling
+@mixin vf-notifications-caution {
+  .p-notification--caution {
+    @extend %vf-notification;
+    @include vf-highlight-bar($color-caution, left, true);
+    @include vf-icon-warning;
+  }
+}
+
+// Negative notification styling
+@mixin vf-notifications-negative {
+  .p-notification--negative {
+    @extend %vf-notification;
+    @include vf-highlight-bar($color-negative, left, true);
+    @include vf-icon-error;
+  }
+}
+
+// Information notification styling
+@mixin vf-notifications-information {
+  .p-notification--information {
+    @extend %vf-notification;
+    @include vf-highlight-bar($color-information, left, true);
+    @include vf-icon-info($color-mid-dark);
+  }
+}

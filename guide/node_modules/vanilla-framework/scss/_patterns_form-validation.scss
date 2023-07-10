@@ -1,0 +1,83 @@
+@import 'settings';
+
+// form validation styling for form inputs
+@mixin vf-p-form-validation {
+  $icon-size: map-get($icon-sizes, default);
+
+  %vf-validation-wrapper {
+    background-position: left, center;
+    background-repeat: no-repeat;
+    padding-left: calc($icon-size + $sph--small);
+    padding-top: 0;
+  }
+
+  .p-form-validation__message {
+    @extend %small-text;
+
+    margin-top: -$sp-unit;
+  }
+
+  .is-success {
+    .p-form-validation__input {
+      background-color: $color-positive-background;
+      border-bottom-color: $color-positive;
+
+      &:hover {
+        background-color: $color-positive-background--hover;
+      }
+
+      &:focus {
+        background-color: $color-positive-background--focus;
+      }
+    }
+
+    .p-form-validation__message {
+      @extend %vf-validation-wrapper;
+      @include vf-icon-success($color-positive);
+
+      color: $color-positive;
+    }
+  }
+
+  .is-caution {
+    .p-form-validation__input {
+      background-color: $color-caution-background;
+      border-bottom-color: $color-caution;
+
+      &:hover {
+        background-color: $color-caution-background--hover;
+      }
+
+      &:focus {
+        background-color: $color-caution-background--focus;
+      }
+    }
+
+    .p-form-validation__message {
+      @extend %vf-validation-wrapper;
+      @include vf-icon-warning($color-caution);
+    }
+  }
+
+  .is-error {
+    .p-form-validation__input {
+      background-color: $color-negative-background;
+      border-bottom-color: $color-negative;
+
+      &:hover {
+        background-color: $color-negative-background--hover;
+      }
+
+      &:focus {
+        background-color: $color-negative-background--focus;
+      }
+    }
+
+    .p-form-validation__message {
+      @extend %vf-validation-wrapper;
+      @include vf-icon-error($color-negative);
+
+      color: $color-negative;
+    }
+  }
+}

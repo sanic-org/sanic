@@ -1,0 +1,280 @@
+@import 'layouts_application-panels';
+
+// default max width of the pinned aside panel in the application layout
+$application-layout--aside-panel-max-width: 50vw !default;
+// screen width breakpoint (min-width) at which side navigation is in collapsed mode
+$application-layout--breakpoint-side-nav-collapsed: $breakpoint-small !default;
+// screen width breakpoint (min-width) at which side navigation is in expanded mode
+$application-layout--breakpoint-side-nav-expanded: $breakpoint-large !default;
+// width of the collapsed side navigation
+$application-layout--side-nav-width-collapsed: 4rem !default;
+// width of the expanded side navigation
+$application-layout--side-nav-width-expanded: 15rem !default;
+
+@mixin vf-application-layout--when-collapsed() {
+  // when app navigation panel is collapsed
+  @media (min-width: $application-layout--breakpoint-side-nav-collapsed) {
+    .l-navigation & {
+      @content;
+    }
+  }
+}
+
+@mixin vf-application-layout--when-expanded() {
+  // when app navigation panel is collapsed, fade out unnecessary elements
+  @media (min-width: $application-layout--breakpoint-side-nav-collapsed) {
+    // keep faded elements visible when navigation is expanded on hover or pinned
+    .l-navigation.is-pinned &,
+    .l-navigation:focus-within &,
+    .l-navigation:hover & {
+      @content;
+    }
+  }
+
+  // keep faded elements visible when app navigation is expanded on largest screens
+  @media (min-width: $application-layout--breakpoint-side-nav-expanded) {
+    .l-navigation & {
+      @content;
+    }
+  }
+}
+
+@mixin vf-l-application {
+  $panel-drop-shadow: $box-shadow--deep;
+  $panel-drop-shadow-transparent: 0 0 0 0 transparent;
+  @include vf-l-application-panels;
+
+  .l-application {
+    display: grid;
+    grid-template-areas:
+      'nav  navbar navbar'
+      'nav  main   aside'
+      'nav  status status';
+    grid-template-columns: min-content minmax(0, 1fr) minmax(0, min-content);
+    grid-template-rows: min-content 1fr min-content;
+    height: 100vh;
+    overflow: hidden; // make sure panels transformed off-screen don't make the layout scroll
+    width: 100vw;
+  }
+
+  // Top navigation bar to toggle side navigation on small screens
+  .l-navigation-bar {
+    grid-area: navbar;
+  }
+
+  // Navigation panel/drawer
+  // -------------------------
+  .l-navigation {
+    @include vf-transition($property: #{transform, box-shadow}, $duration: fast);
+
+    bottom: 0;
+    box-shadow: $panel-drop-shadow;
+    height: 100vh;
+    left: 0;
+    overflow-y: auto;
+    position: fixed;
+    top: 0;
+    transform: translateX(0);
+    width: 100%;
+    z-index: 103; // consistent with side-navigation component, above global nav
+
+    @media (min-width: $breakpoint-x-small) {
+      width: auto;
+    }
+
+    &.is-collapsed {
+      box-shadow: $panel-drop-shadow-transparent;
+      transform: translateX(-100%);
+    }
+
+    &.is-collapsed:focus-within {
+      box-shadow: $panel-drop-shadow;
+      transform: none;
+    }
+  }
+
+  .l-navigation__drawer {
+    height: 100vh;
+    width: auto;
+
+    @media (min-width: $breakpoint-x-small) {
+      width: $application-layout--side-nav-width-expanded;
+    }
+  }
+
+  @media (min-width: $application-layout--breakpoint-side-nav-collapsed) {
+    .l-navigation-bar {
+      // use navigation bar as a grid spacer for collapsed navigation
+      grid-area: nav;
+      overflow: hidden;
+      visibility: hidden;
+      width: $application-layout--side-nav-width-collapsed;
+    }
+
+    .l-navigation {
+      @include vf-transition($property: #{width, box-shadow}, $duration: fast);
+
+      box-shadow: $panel-drop-shadow-transparent;
+      overflow: hidden;
+      transform: translateX(0);
+      width: $application-layout--side-nav-width-collapsed;
+
+      &.is-collapsed {
+        transform: translateX(0);
+        width: $application-layout--side-nav-width-collapsed;
+      }
+    }
+
+    .l-navigation:hover,
+    .l-navigation:focus-within,
+    .l-navigation.is-pinned {
+      overflow-y: auto;
+      width: $application-layout--side-nav-width-expanded;
+    }
+
+    .l-navigation:hover {
+      box-shadow: $panel-drop-shadow;
+    }
+
+    .l-navigation.is-pinned {
+      box-shadow: $panel-drop-shadow-transparent;
+      grid-area: nav;
+      position: static;
+    }
+  }
+
+  @media (min-width: $application-layout--breakpoint-side-nav-expanded) {
+    .l-navigation-bar {
+      // hide navigation bar completely when not needed
+      display: none;
+    }
+
+    .l-navigation {
+      box-shadow: none;
+      grid-area: nav;
+      overflow-y: auto;
+      position: static;
+      width: $application-layout--side-nav-width-expanded;
+
+      &:hover {
+        box-shadow: none;
+      }
+
+      &.is-collapsed {
+        transform: translateX(0);
+        width: $application-layout--side-nav-width-expanded;
+      }
+    }
+  }
+
+  // Fading elements when navigation panel is collapsed
+  %vf-application-layout--faded-when-collapsed {
+    // when app navigation panel is collapsed, fade out unnecessary elements
+    @include vf-application-layout--when-collapsed() {
+      @include vf-transition($property: opacity, $duration: snap);
+
+      opacity: 0;
+    }
+
+    // keep faded elements visible when app navigation is expanded on hover, pin or largest screens
+    @include vf-application-layout--when-expanded() {
+      opacity: 1;
+    }
+  }
+
+  .l-navigation .is-fading-when-collapsed {
+    @extend %vf-application-layout--faded-when-collapsed;
+  }
+
+  // Customisations of side navigation component
+  .l-navigation .p-side-navigation,
+  .l-navigation [class*='p-side-navigation--'] {
+    .p-side-navigation__label {
+      @extend %vf-application-layout--faded-when-collapsed;
+    }
+
+    .p-side-navigation__list::after {
+      @extend %vf-application-layout--faded-when-collapsed;
+    }
+  }
+
+  // --when-collapsed and --when-expanded mixins nest selectors inslide l-navigation
+  // so we don't have to (and can't) nest it manually here
+
+  // hide nested levels when side nav is collapsed
+  .p-side-navigation__list .p-side-navigation__list {
+    @include vf-application-layout--when-collapsed() {
+      display: none;
+    }
+    @include vf-application-layout--when-expanded() {
+      display: block;
+    }
+  }
+
+  // disable text wrapping when side nav is collapsed
+  .p-side-navigation__item {
+    @include vf-application-layout--when-collapsed() {
+      white-space: nowrap;
+    }
+    @include vf-application-layout--when-expanded() {
+      white-space: normal;
+    }
+  }
+
+  // Other panels
+  // --------------
+  .l-application .l-main {
+    grid-area: main;
+    overflow-y: auto;
+  }
+
+  .l-application .l-status {
+    border-top: 1px solid $colors--light-theme--border-low-contrast;
+    grid-area: status;
+    z-index: 102;
+  }
+
+  .l-application .l-aside {
+    @include vf-transition($property: #{transform, box-shadow, visibility}, $duration: snap);
+
+    box-shadow: $panel-drop-shadow;
+    grid-area: main;
+    justify-self: right;
+    overflow-y: auto;
+    width: 100%;
+    z-index: 101; // below side nav, above anything else
+
+    @media (min-width: $breakpoint-x-small) {
+      max-width: 100%;
+      width: 33.5rem; // ~col-6
+
+      &.is-wide {
+        width: $grid-max-width; // full grid width: ~col-12
+      }
+
+      &.is-narrow {
+        width: 21.65rem; // ~col-4
+      }
+    }
+
+    &.is-collapsed {
+      box-shadow: $panel-drop-shadow-transparent;
+      transform: translateX(100%);
+      visibility: hidden;
+    }
+
+    @media (min-width: $application-layout--breakpoint-side-nav-collapsed) {
+      &.is-pinned {
+        border-left: 1px solid $colors--light-theme--border-low-contrast;
+        box-shadow: none;
+        grid-area: aside;
+        justify-self: auto;
+        max-width: $application-layout--aside-panel-max-width;
+      }
+
+      &.is-pinned.is-collapsed {
+        display: none;
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+@mixin vf-p-separator {
+  .p-separator {
+    // spacing based on %section-padding--default, but using margins on <hr>
+    margin-bottom: $spv--strip-regular * 0.5;
+    margin-top: $spv--strip-regular * 0.5;
+
+    @media (min-width: $breakpoint-large) {
+      margin-bottom: $spv--strip-regular;
+      margin-top: $spv--strip-regular;
+    }
+  }
+}

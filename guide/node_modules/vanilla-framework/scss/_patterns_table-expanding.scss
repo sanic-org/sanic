@@ -1,0 +1,55 @@
+@import 'settings';
+
+@mixin vf-p-table-expanding {
+  .p-table--expanding {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-between;
+
+    // stylelint-disable selector-max-type -- table elements can use selector types
+    thead,
+    tbody {
+      margin: 0;
+    }
+
+    tr {
+      display: flex;
+      margin: 0;
+      width: 100%;
+      flex: {
+        flow: row;
+        wrap: wrap;
+      }
+    }
+
+    th,
+    td {
+      align-items: flex-start;
+      display: block;
+      flex-basis: 0;
+      flex-grow: 1;
+      margin: 0;
+      text-overflow: ellipsis;
+
+      &.p-table__expanding-panel {
+        flex-basis: 100%;
+        max-width: 100%;
+
+        &[aria-hidden='true'] {
+          display: none;
+        }
+
+        .row {
+          max-width: 100%;
+          padding: 0;
+          width: 100%;
+        }
+      }
+
+      &[aria-hidden='true'] {
+        display: none;
+      }
+    }
+    // stylelint-enable selector-max-type
+  }
+}

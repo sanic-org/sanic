@@ -1,0 +1,22 @@
+@import 'settings';
+
+// Embedded media util
+@mixin vf-u-embedded-media {
+  .u-embedded-media {
+    height: 0;
+    margin-bottom: $spv--x-large;
+    margin-top: $spv--small;
+    max-width: 100%;
+    overflow: hidden;
+    padding-bottom: 56.25%;
+    position: relative;
+  }
+
+  .u-embedded-media__element {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+}

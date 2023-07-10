@@ -1,0 +1,69 @@
+@import 'settings';
+
+// Align all text within an element
+@mixin vf-u-align {
+  @include vf-u-align--center;
+  @include vf-u-align--left;
+  @include vf-u-align--right;
+  @include vf-u-align--bottom;
+  @include vf-u-align--text;
+}
+
+// Center all children within an element
+@mixin vf-u-align--center {
+  .u-align--center {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+}
+
+// Left align all children within an element
+@mixin vf-u-align--left {
+  .u-align--left {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+}
+
+// Right align all children within an element
+@mixin vf-u-align--right {
+  .u-align--right {
+    justify-content: flex-end !important;
+    text-align: right !important;
+  }
+}
+
+@mixin vf-u-align--bottom {
+  .u-align--bottom {
+    margin-top: auto !important;
+  }
+}
+
+// Separate utility for aligning text
+@mixin vf-u-align--text {
+  .u-align-text {
+    &--center {
+      margin-left: auto !important;
+      margin-right: auto !important;
+      text-align: center !important;
+    }
+
+    &--left {
+      margin-right: auto !important;
+      text-align: left !important;
+    }
+
+    &--right {
+      margin-left: auto !important;
+      text-align: right !important;
+    }
+  }
+
+  .u-align-text--small-to-default {
+    padding-top: map-get($nudges, small) + $sp-unit;
+  }
+
+  .u-align-text--x-small-to-default {
+    padding-top: map-get($nudges, x-small) + $sp-unit;
+  }
+}

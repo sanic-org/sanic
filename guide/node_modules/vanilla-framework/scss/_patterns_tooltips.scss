@@ -1,0 +1,324 @@
+@import 'settings';
+$triangle-height: $sp-unit;
+
+// tooltip messages have a small overlay added to their
+// ::after psuedo element to keep the message visible when
+// moving the cursor over it. We use border-radius to shape the
+// psuedo element relative to the tooltip's position, so here
+// we've extracted some repeated values.
+$tooltip-overlay-bottom-border-radius: 100% 100% 0% 0%;
+$tooltip-overlay-top-border-radius: 0% 0% 100% 100%;
+
+@mixin vf-p-tooltips {
+  %tooltip {
+    position: relative;
+
+    &:focus,
+    &:hover {
+      .p-tooltip__message {
+        display: inline;
+        text-decoration: initial;
+      }
+    }
+
+    &.is-detached {
+      display: block;
+      position: absolute;
+    }
+  }
+
+  .p-tooltip {
+    @extend %tooltip;
+  }
+
+  .p-tooltip__message {
+    @extend %small-text;
+
+    background-color: $color-dark;
+    border: 0;
+    border-radius: $border-radius;
+    color: $color-x-light;
+    display: none;
+    left: -2 * $triangle-height;
+    margin-bottom: 0;
+    padding: $spv--small $sph--large;
+    position: absolute;
+    text-align: left;
+    text-decoration: initial;
+    top: 100%;
+    -webkit-transform: translateX(0%) translateY(13px); // stylelint-disable-line property-no-vendor-prefix
+    transform: translateX(0%) translateY(13px);
+    white-space: pre;
+    z-index: 11; // one step above p-navigation's z-index
+
+    .is-detached & {
+      display: block;
+    }
+
+    // tooltip
+    &::before {
+      border: {
+        bottom: $triangle-height solid $color-dark;
+        left: $triangle-height solid transparent;
+        right: $triangle-height solid transparent;
+      }
+
+      bottom: 100%;
+      content: '';
+      height: 0;
+      left: $sph--large;
+      pointer-events: none;
+      position: absolute;
+      width: 0;
+    }
+
+    // hover overlay
+    &::after {
+      border-radius: 10% 90% 0% 100% / $tooltip-overlay-bottom-border-radius;
+      content: '';
+      height: 2 * $triangle-height;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: -2 * $triangle-height;
+    }
+  }
+
+  // Bottom center tooltip
+  .p-tooltip--btm-center {
+    @extend %tooltip;
+
+    .p-tooltip__message {
+      bottom: inherit;
+      left: 50%;
+      top: 100%;
+      -webkit-transform: translateX(-50%) translateY(13px); // stylelint-disable-line property-no-vendor-prefix
+      transform: translateX(-50%) translateY(13px);
+
+      // tooltip
+      &::before {
+        left: 50%;
+        -webkit-transform: translateX(-50%); // stylelint-disable-line property-no-vendor-prefix
+        transform: translateX(-50%);
+      }
+
+      // hover overlay
+      &::after {
+        border-radius: 50% 50% 0% 100% / $tooltip-overlay-bottom-border-radius;
+        height: 2 * $triangle-height;
+      }
+    }
+  }
+
+  // Bottom right tooltip
+  .p-tooltip--btm-right {
+    @extend %tooltip;
+
+    .p-tooltip__message {
+      bottom: inherit;
+      left: initial;
+      right: -2 * $triangle-height;
+      top: 100%;
+      -webkit-transform: translateY(13px); // stylelint-disable-line property-no-vendor-prefix
+      transform: translateY(13px);
+
+      // tooltip
+      &::before {
+        left: initial;
+        right: $sph--large;
+      }
+
+      // hover overlay
+      &::after {
+        border-radius: 90% 10% 0% 100% / $tooltip-overlay-bottom-border-radius;
+        height: 2 * $triangle-height;
+      }
+    }
+  }
+
+  // Top left tooltip
+  .p-tooltip--top-left {
+    @extend %tooltip;
+
+    .p-tooltip__message {
+      bottom: 100%;
+      left: -2 * $triangle-height;
+      top: initial;
+      -webkit-transform: translateX(0%) translateY(-13px); // stylelint-disable-line property-no-vendor-prefix
+      transform: translateX(0%) translateY(-13px);
+
+      // tooltip
+      &::before {
+        border: {
+          bottom: $triangle-height solid transparent;
+          left: $triangle-height solid transparent;
+          right: $triangle-height solid transparent;
+          top: $triangle-height solid $color-dark;
+        }
+
+        bottom: -2 * $triangle-height;
+        left: $sph--large;
+      }
+
+      // hover overlay
+      &::after {
+        border-radius: 0% 100% 90% 10% / $tooltip-overlay-top-border-radius;
+        bottom: -2 * $triangle-height;
+        height: 2 * $triangle-height;
+        top: auto;
+      }
+    }
+  }
+
+  // Top center tooltip
+  .p-tooltip--top-center {
+    @extend %tooltip;
+
+    .p-tooltip__message {
+      bottom: 100%;
+      left: 50%;
+      top: initial;
+      -webkit-transform: translateX(-50%) translateY(-13px); // stylelint-disable-line property-no-vendor-prefix
+      transform: translateX(-50%) translateY(-13px);
+
+      // tooltip
+      &::before {
+        border: {
+          bottom: $triangle-height solid transparent;
+          left: $triangle-height solid transparent;
+          right: $triangle-height solid transparent;
+          top: $triangle-height solid $color-dark;
+        }
+
+        bottom: -2 * $triangle-height;
+        left: 50%;
+        -webkit-transform: translateX(-50%); // stylelint-disable-line property-no-vendor-prefix
+        transform: translateX(-50%);
+      }
+
+      // hover overlay
+      &::after {
+        border-radius: 100% 0% 50% 50% / $tooltip-overlay-top-border-radius;
+        bottom: -2 * $triangle-height;
+        height: 2 * $triangle-height;
+        top: auto;
+      }
+    }
+  }
+
+  // Top right tooltip
+  .p-tooltip--top-right {
+    @extend %tooltip;
+
+    .p-tooltip__message {
+      bottom: 100%;
+      left: initial;
+      right: -2 * $triangle-height;
+      top: initial;
+      -webkit-transform: translateX(0%) translateY(-13px); // stylelint-disable-line property-no-vendor-prefix
+      transform: translateX(0%) translateY(-13px);
+
+      // tooltip
+      &::before {
+        border: {
+          bottom: $triangle-height solid transparent;
+          left: $triangle-height solid transparent;
+          right: $triangle-height solid transparent;
+          top: $triangle-height solid $color-dark;
+        }
+
+        bottom: -2 * $triangle-height;
+        left: initial;
+        right: $sph--large;
+      }
+
+      // hover overlay
+      &::after {
+        border-radius: 100% 0% 10% 90% / $tooltip-overlay-top-border-radius;
+        bottom: -2 * $triangle-height;
+        height: 2 * $triangle-height;
+        top: auto;
+      }
+    }
+  }
+
+  // Right tooltip
+  .p-tooltip--right {
+    @extend %tooltip;
+
+    .p-tooltip__message {
+      bottom: inherit;
+      left: 100%;
+      top: 50%;
+      -webkit-transform: translateX(14px) translateY(-50%); // stylelint-disable-line property-no-vendor-prefix
+      transform: translateX(14px) translateY(-50%);
+
+      // tooltip
+      &::before {
+        border: {
+          bottom: $triangle-height solid transparent;
+          left: $triangle-height solid transparent;
+          right: $triangle-height solid $color-dark;
+          top: $triangle-height solid transparent;
+        }
+
+        bottom: inherit;
+        left: 0;
+        top: 50%;
+        -webkit-transform: translateX(-16px) translateY(-50%); // stylelint-disable-line property-no-vendor-prefix
+        transform: translateX(-16px) translateY(-50%);
+      }
+
+      // hover overlay
+      &::after {
+        border-radius: 0;
+        bottom: 0;
+        height: auto;
+        left: -2 * $triangle-height;
+        right: auto;
+        top: 0;
+        width: 2 * $triangle-height;
+      }
+    }
+  }
+
+  // Left tooltip
+  .p-tooltip--left {
+    @extend %tooltip;
+
+    .p-tooltip__message {
+      bottom: inherit;
+      left: -16px;
+      top: 50%;
+      -webkit-transform: translateX(-100%) translateY(-50%); // stylelint-disable-line property-no-vendor-prefix
+      transform: translateX(-100%) translateY(-50%);
+
+      // tooltip
+      &::before {
+        border: {
+          bottom: $triangle-height solid transparent;
+          left: $triangle-height solid $color-dark;
+          right: $triangle-height solid transparent;
+          top: $triangle-height solid transparent;
+        }
+
+        bottom: inherit;
+        left: 100%;
+        top: 50%;
+        -webkit-transform: translateX(0) translateY(-50%); // stylelint-disable-line property-no-vendor-prefix
+        transform: translateX(0) translateY(-50%);
+      }
+
+      // hover overlay
+      &::after {
+        border-radius: 0;
+        bottom: 0;
+        height: auto;
+        left: auto;
+        right: -2 * $triangle-height;
+        top: 0;
+        width: 2 * $triangle-height;
+      }
+    }
+  }
+}

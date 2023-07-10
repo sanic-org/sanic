@@ -1,0 +1,66 @@
+@import 'settings';
+$knob-size: $sp-unit * 2;
+
+@mixin vf-p-switch {
+  .p-switch {
+    align-items: center;
+    display: flex;
+  }
+
+  .p-switch__input {
+    margin: 0;
+    opacity: 0;
+    position: absolute;
+
+    &:checked + .p-switch__slider::before {
+      border: $input-border-thickness solid $color-link;
+      left: 50%;
+    }
+
+    &:disabled + .p-switch__slider {
+      @extend %vf-disabled-element;
+    }
+
+    &:checked + .p-switch__slider {
+      background: $color-link;
+    }
+
+    &:focus {
+      outline: none;
+
+      + .p-switch__slider {
+        outline: $bar-thickness solid $color-focus;
+      }
+    }
+  }
+
+  .p-switch__slider {
+    background: $color-mid-light;
+    border-radius: $knob-size;
+    box-shadow: inset 0 2px 5px 0 transparentize($color-dark, 0.8);
+    display: inline-block;
+    height: $knob-size;
+    margin: 0;
+    position: relative;
+    width: $knob-size * 2;
+
+    &::before {
+      @extend %vf-has-round-corners;
+      @extend %vf-has-box-shadow;
+      @include vf-transition($duration: slow);
+
+      background: $color-x-light;
+      border: $input-border-thickness solid $color-mid-dark;
+      border-radius: 50%;
+      content: '';
+      height: $knob-size;
+      left: 0;
+      position: absolute;
+      width: $knob-size;
+    }
+  }
+
+  .p-switch__label {
+    margin-left: $sph--small;
+  }
+}

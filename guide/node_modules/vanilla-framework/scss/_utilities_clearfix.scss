@@ -1,0 +1,8 @@
+@import 'settings';
+
+// Force a parent to clear floated children
+@mixin vf-u-clearfix {
+  .u-clearfix::after {
+    @extend %vf-clearfix;
+  }
+}

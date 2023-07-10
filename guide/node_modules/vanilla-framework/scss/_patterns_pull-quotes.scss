@@ -1,0 +1,118 @@
+@import 'settings';
+
+@mixin vf-quote-mark {
+  color: $color-mid-dark;
+  display: inline-block;
+  position: absolute;
+  width: 0.5em;
+}
+
+@mixin vf-pull-quote {
+  border: 0;
+  margin: $spv--x-large 0 $spv--x-large;
+  overflow: visible;
+  position: relative;
+
+  &.has-image {
+    margin-top: 0;
+  }
+}
+
+// Pull quote styling
+@mixin vf-p-pull-quotes {
+  .p-pull-quote,
+  .p-pull-quote--small,
+  .p-pull-quote--large {
+    @include vf-pull-quote;
+
+    // this needs to be nested to increase the specificity
+    .p-pull-quote__citation {
+      @extend %vf-heading-6;
+
+      display: block;
+      margin-top: $spv--small;
+    }
+  }
+
+  .p-pull-quote__image {
+    height: $sp-x-large;
+    margin: $spv--large 0 $spv--small;
+  }
+
+  .p-pull-quote__quote {
+    position: relative;
+
+    &:first-of-type::before {
+      @include vf-quote-mark;
+
+      content: '\201C'; // Unicode for left double quotation mark +  1/2 em space
+      left: -0.75em;
+      text-align: right;
+      top: 0.5rem;
+    }
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+
+    &:last-of-type::after {
+      @include vf-quote-mark;
+
+      bottom: 0.55em;
+      content: '\201E';
+      margin-left: 0.25em;
+    }
+  }
+
+  .p-pull-quote {
+    padding: 0 2rem;
+
+    .p-pull-quote__quote {
+      @extend %vf-heading-4;
+
+      &::before,
+      &::after {
+        font-size: 2em;
+      }
+    }
+  }
+
+  .p-pull-quote--small {
+    padding: 0 1.5rem;
+
+    .p-pull-quote__quote {
+      @extend %default-text;
+
+      &::before,
+      &::after {
+        font-size: 1.5em;
+      }
+    }
+  }
+
+  .p-pull-quote--large {
+    padding: 0 2.5rem;
+
+    .p-pull-quote__quote {
+      @extend %vf-heading-3;
+
+      &::before,
+      &::after {
+        font-size: 2em;
+        max-width: 1em;
+      }
+    }
+  }
+
+  // align the opening quote with the increased top padding of %vf-heading-3 / %vf-heading-4
+  .p-pull-quote,
+  .p-pull-quote--large {
+    .p-pull-quote__quote {
+      &:first-of-type::before {
+        @media (max-width: $breakpoint-heading-threshold - 1) {
+          top: 0.75rem;
+        }
+      }
+    }
+  }
+}

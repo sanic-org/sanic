@@ -1,0 +1,77 @@
+@import 'settings';
+
+@mixin vf-p-links {
+  .p-link--soft {
+    color: $color-dark;
+
+    &:visited {
+      color: $color-dark;
+      text-decoration: none;
+    }
+
+    &:hover {
+      color: $color-link;
+    }
+
+    &.is-selected {
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  .p-link--inverted {
+    color: $color-light;
+    font-weight: $font-weight-bold;
+
+    &:hover {
+      color: $color-light;
+    }
+
+    &:visited {
+      color: darken($color-light, 10%);
+    }
+  }
+
+  .p-link--skip {
+    color: $color-link;
+    display: block;
+    left: -999px;
+    position: absolute;
+    top: -999px;
+
+    &:focus {
+      @include vf-focus;
+
+      left: 0;
+      padding: $spv--x-small;
+      position: relative;
+      top: 0;
+      z-index: 999999;
+    }
+  }
+
+  .p-top {
+    align-items: center;
+    display: flex;
+
+    &::before {
+      border-bottom: 1px solid $colors--light-theme--border-default;
+      content: '';
+      flex-grow: 1;
+      margin: $spv--x-large 0 calc($spv--x-large - 1px) 0;
+    }
+
+    &::after {
+      @extend %icon;
+      @include vf-icon-back-to-top($color-mid-dark);
+
+      content: '';
+      margin-right: $sph--small;
+    }
+  }
+
+  .p-top__link {
+    color: $color-dark;
+    padding: 0 $sph--small 0 $sph--large;
+    text-decoration: none;
+  }
+}

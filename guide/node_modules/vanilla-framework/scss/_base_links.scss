@@ -1,0 +1,32 @@
+@import 'settings';
+
+// Base styling for links
+@mixin vf-b-links {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  a {
+    @extend %vf-link-base;
+  }
+
+  %vf-link-base {
+    @include vf-focus;
+
+    color: $color-link;
+    text-decoration: none;
+
+    &:focus {
+      outline-offset: 0;
+    }
+
+    &:hover {
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.075em;
+    }
+
+    &:visited {
+      color: $color-link-visited;
+    }
+  }
+  // stylelint-enable selector-max-type
+}

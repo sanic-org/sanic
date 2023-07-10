@@ -1,0 +1,333 @@
+@import 'settings';
+
+@mixin vf-p-form-tick-elements {
+  %vf-hidden-tick-input {
+    float: none;
+    height: $form-tick-box-size;
+    margin: 0;
+    opacity: 0;
+    position: absolute;
+    width: $form-tick-box-size;
+  }
+
+  %vf-pseudo-tick-box {
+    padding-left: $sph--large + $form-tick-box-size;
+    position: relative;
+
+    &::before,
+    &::after {
+      $properties: #{background-color, border-color};
+      @include vf-transition($properties);
+
+      position: absolute;
+    }
+
+    // container
+    &::before {
+      content: '';
+      height: $form-tick-box-size;
+      left: 0;
+      outline-offset: $input-border-thickness;
+      top: calc($baseline-position - $form-tick-box-size + $form-tick-box-nudge);
+      width: $form-tick-box-size;
+    }
+
+    // tick/circle
+    &::after {
+      content: '';
+      opacity: 0;
+    }
+
+    .p-muted-heading & {
+      color: $colors--light-theme--text-muted;
+    }
+
+    &:hover::before {
+      background-color: $colors--light-theme--background-hover;
+    }
+  }
+
+  %vf-pseudo-tick-box-checked {
+    &::before {
+      background-color: $color-link;
+      border-color: $color-link;
+    }
+
+    &::after {
+      opacity: 1;
+    }
+  }
+
+  %vf-pseudo-tick-box-focused {
+    &::before {
+      outline: $bar-thickness solid $color-focus;
+    }
+  }
+
+  %vf-pseudo-checkbox {
+    // container
+    &::before {
+      border-radius: 0;
+    }
+
+    //tick
+    &::after {
+      border-bottom: 2px solid;
+      border-left: 2px solid;
+      height: $form-tick-height;
+      left: $form-tick-height * 0.5;
+      top: calc($baseline-position - $form-tick-box-size + $form-tick-offset-top + $form-tick-box-nudge);
+      transform: rotate(-45deg);
+      width: 0.625rem;
+    }
+
+    [aria-checked='mixed'] + &,
+    :indeterminate + & {
+      @extend %vf-pseudo-tick-box-checked;
+
+      &::after {
+        border-left: none;
+        transform: none;
+      }
+    }
+  }
+
+  %vf-pseudo-radio {
+    &::before {
+      border-radius: 50%;
+    }
+
+    &::after {
+      border-radius: 50%;
+      height: $form-radio-inner-circle-diameter;
+      left: #{($form-tick-box-size - $form-radio-inner-circle-diameter) * 0.5};
+      top: calc($baseline-position - $form-tick-box-size + $form-radio-circle-offset + $form-tick-box-nudge);
+      width: $form-radio-inner-circle-diameter;
+    }
+  }
+
+  .p-radio__label {
+    @extend %vf-pseudo-tick-box;
+    @extend %vf-pseudo-radio;
+  }
+
+  .p-checkbox__label {
+    @extend %vf-pseudo-tick-box;
+    @extend %vf-pseudo-checkbox;
+  }
+
+  // nudge ticks in headings back to the baseline
+  .p-checkbox--heading .p-checkbox__label,
+  .p-radio--heading .p-radio__label {
+    &::before,
+    &::after {
+      margin-top: -$form-tick-box-nudge;
+    }
+  }
+
+  // contain the absolutely positioned input
+  .p-checkbox,
+  .p-checkbox--heading,
+  .p-checkbox--inline,
+  .p-radio,
+  .p-radio--heading,
+  .p-radio--inline {
+    $asterisk-width: 1ch;
+
+    position: relative;
+    // repositioning asterisk in front of the label
+    &.is-required {
+      &::before {
+        display: block;
+        left: $sph--large + $form-tick-box-size;
+        position: absolute;
+        width: $asterisk-width;
+      }
+      .p-radio__label,
+      .p-checkbox__label {
+        padding-left: calc($sph--large + $form-tick-box-size + $asterisk-width);
+      }
+    }
+  }
+
+  // Fix label alignment when text drops to new line
+  .p-checkbox,
+  .p-radio {
+    display: block;
+    padding-left: $sph--large + $form-tick-box-size;
+    text-indent: -1 * ($sph--large + $form-tick-box-size);
+
+    &.is-required {
+      &::before {
+        left: $sph--large + $form-tick-box-size + $sph--large + $form-tick-box-size;
+      }
+    }
+  }
+
+  .p-checkbox__input,
+  .p-radio__input {
+    @extend %vf-hidden-tick-input;
+
+    // adjust position of hidden inputs to place them approximately on the baseline
+    bottom: 0.2em;
+  }
+
+  // inline variants
+  .p-checkbox--heading,
+  .p-checkbox--inline,
+  .p-radio--heading,
+  .p-radio--inline {
+    display: inline;
+  }
+
+  // fake tick checked state
+  .p-checkbox__input:checked + .p-checkbox__label,
+  .p-radio__input:checked + .p-radio__label {
+    @extend %vf-pseudo-tick-box-checked;
+  }
+
+  // fake tick focused state
+  .p-checkbox__input:focus + .p-checkbox__label,
+  .p-radio__input:focus + .p-radio__label {
+    @extend %vf-pseudo-tick-box-focused;
+  }
+
+  // fake tick disabled state
+  .p-checkbox__input:disabled + .p-checkbox__label,
+  .p-radio__input:disabled + .p-radio__label {
+    @extend %vf-disabled-element;
+  }
+
+  // when tick elements are following each other in the document
+  // keep them closer together by 1 baseline grid unit
+  .p-radio + .p-radio,
+  .p-checkbox + .p-checkbox,
+  .p-checkbox + .p-radio,
+  .p-radio + .p-checkbox {
+    margin-top: -$sp-unit;
+  }
+
+  // Theming
+  @if ($theme-default-forms == 'dark') {
+    .p-checkbox__label {
+      @include vf-checkbox-dark-theme;
+    }
+
+    .p-radio__label {
+      @include vf-radio-dark-theme;
+    }
+
+    .p-checkbox.is-light .p-checkbox__label {
+      @include vf-checkbox-light-theme;
+    }
+
+    .p-radio.is-light .p-radio__label {
+      @include vf-radio-light-theme;
+    }
+  } @else {
+    .p-checkbox__label {
+      @include vf-checkbox-light-theme;
+    }
+
+    .p-radio__label {
+      @include vf-radio-light-theme;
+    }
+
+    .p-checkbox.is-dark .p-checkbox__label {
+      @include vf-checkbox-dark-theme;
+    }
+
+    .p-radio.is-dark .p-radio__label {
+      @include vf-radio-dark-theme;
+    }
+  }
+}
+
+// theme for common properties on radios and checkboxes
+@mixin vf-tick-elements-theme(
+  // color of the tick element label text
+  $color-tick-text,
+  // color of the tick element background
+  $color-tick-background,
+  // color of the tick element border
+  $color-tick-border: $colors--light-theme--border-high-contrast
+) {
+  color: $color-tick-text;
+
+  &::before {
+    background: $color-tick-background;
+    border: $input-border-thickness solid $color-tick-border;
+  }
+}
+
+// theme for checkbox (including common properties)
+@mixin vf-checkbox-theme(
+  // color of the tick element label text
+  $color-tick-text,
+  // color of the tick element background
+  $color-tick-background,
+  // color of the tick element border
+  $color-tick-border,
+  // color of the checkbox tick
+  $color-checkbox-tick
+) {
+  @include vf-tick-elements-theme($color-tick-text, $color-tick-background, $color-tick-border);
+
+  &::after {
+    color: $color-checkbox-tick;
+  }
+}
+
+@mixin vf-checkbox-light-theme {
+  @include vf-checkbox-theme(
+    $color-tick-text: $colors--light-theme--text-default,
+    $color-tick-background: $colors--light-theme--background-default,
+    $color-tick-border: $colors--light-theme--border-high-contrast,
+    $color-checkbox-tick: $colors--light-theme--background-default
+  );
+}
+
+@mixin vf-checkbox-dark-theme {
+  @include vf-checkbox-theme(
+    $color-tick-text: $colors--dark-theme--text-default,
+    $color-tick-background: $colors--dark-theme--background-default,
+    $color-tick-border: $colors--dark-theme--border-high-contrast,
+    $color-checkbox-tick: $colors--dark-theme--text-default
+  );
+}
+
+// theme for radio (including common properties)
+@mixin vf-radio-theme(
+  // color of the tick element label text
+  $color-tick-text,
+  // color of the tick element background
+  $color-tick-background,
+  // color of the tick element border
+  $color-tick-border,
+  // color of the radio dot
+  $color-radio-dot
+) {
+  @include vf-tick-elements-theme($color-tick-text, $color-tick-background, $color-tick-border);
+
+  &::after {
+    background-color: $color-radio-dot;
+  }
+}
+
+@mixin vf-radio-light-theme {
+  @include vf-radio-theme(
+    $color-tick-text: $colors--light-theme--text-default,
+    $color-tick-background: $colors--light-theme--background-default,
+    $color-tick-border: $colors--light-theme--border-high-contrast,
+    $color-radio-dot: $colors--light-theme--background-default
+  );
+}
+
+@mixin vf-radio-dark-theme {
+  @include vf-radio-theme(
+    $color-tick-text: $colors--dark-theme--text-default,
+    $color-tick-background: $colors--dark-theme--background-default,
+    $color-tick-border: $colors--dark-theme--border-high-contrast,
+    $color-radio-dot: $colors--dark-theme--text-default
+  );
+}

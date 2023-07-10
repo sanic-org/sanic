@@ -1,0 +1,170 @@
+/*
+  @classreference
+  code-snippet:
+    Root element:
+        .p-code-snippet:
+            Main element of the code snippet component.
+        "&.is-bordered":
+            Bordered variant, to be used when additional content (such as iframes) is used inside the code snippet component.
+
+    Code block:
+        .p-code-snippet__block:
+            Code block without any additonal styling elements.
+        "&.is-wrapped":
+            Code block with wrapped content in lines.
+        .p-code-snippet__block--icon:
+            Code block that starts with an icon. Default icon is a UNIX prompt. To be used with Linux CLI examples.
+        "&.is-windows-prompt":
+            Changes the `.p-code-snippet__block--icon` to use a Windows prompt icon. To be used with Windows CLI examples.
+        "&.is-url":
+            Changes the `.p-code-snippet__block--icon` to use a link icon. To be used with URLs.
+        .p-code-snippet__block--numbered:
+            Code block with numbered lines of code (to be used with longer pieces of code examples). Requires `.p-code-snippet__line`.
+
+    Code line:
+        .p-code-snippet__line:
+            A wrapper around single line of code. Needed with numbered variant of a code block.
+
+    Code block header:
+        .p-code-snippet__header:
+            A header of a code block. Contains a title and optional dropdowns.
+        "&.is-stacked":
+            A stacked version of a header (with a title displayed above the dropdowns). To be used when there are multiple dropdowns with a long title.
+
+    Code block title:
+        .p-code-snippet__title:
+            The title of a code block.
+
+    Dropdowns container:
+        .p-code-snippet__dropdowns:
+            The container element for any dropdowns in the header.
+
+    Dropdown:
+        .p-code-snippet__dropdown:
+            An individual dropdown in code block header.
+*/
+
+@import 'settings';
+
+$color-snippet-heading-bg: rgba($color-x-dark, 0.08);
+$code-snippet-header-v-spacing: $spv--small;
+
+@mixin vf-p-code-snippet {
+  .p-code-snippet {
+    margin-bottom: $spv--x-large;
+
+    &.is-bordered {
+      border: 1px solid $colors--light-theme--border-low-contrast;
+    }
+
+    .p-code-snippet__block,
+    .p-code-snippet__block--icon,
+    .p-code-snippet__block--numbered {
+      margin: 0;
+
+      &.is-wrapped {
+        white-space: pre-wrap;
+      }
+    }
+
+    .p-code-snippet__block--icon {
+      @extend %leading-linux-prompt-icon;
+
+      padding-left: #{$sph--large + map-get($icon-sizes, default) + $sph--small};
+      position: relative;
+
+      &.is-windows-prompt::before {
+        @include vf-icon-chevron($color-mid-dark);
+
+        transform: rotate(270deg);
+      }
+
+      &.is-url::before {
+        @include vf-icon-get-link($color-mid-dark);
+      }
+    }
+
+    .p-code-snippet__block--numbered {
+      counter-reset: line-numbering;
+
+      .p-code-snippet__line {
+        @extend %code-numbered-line;
+      }
+    }
+
+    .p-code-snippet__header {
+      align-items: flex-start;
+      background-color: $color-code-heading-background;
+      display: flex;
+      justify-content: space-between;
+      padding-left: $sph--large;
+      padding-right: $sph--large;
+    }
+
+    .p-code-snippet__title {
+      @extend %vf-heading-5;
+
+      flex: 0 1 auto;
+      margin-bottom: $code-snippet-header-v-spacing;
+      overflow: hidden;
+      padding-top: $code-snippet-header-v-spacing;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .p-code-snippet__dropdown {
+      background-color: $color-transparent;
+      border: 0;
+      color: $color-dark;
+      margin-bottom: 0;
+      margin-left: $sph--small;
+      min-width: min-content;
+      padding-bottom: $code-snippet-header-v-spacing;
+      padding-left: $sph--large;
+      padding-top: $code-snippet-header-v-spacing;
+      width: min-content;
+    }
+
+    .p-code-snippet__dropdowns {
+      display: flex;
+      flex-shrink: 0;
+
+      &:first-child {
+        // if no header is present, use this to
+        // align the dropdowns to the right
+        margin-left: auto;
+      }
+    }
+
+    .p-code-snippet__dropdown + .p-code-snippet__dropdown {
+      border-left: 1px solid $colors--light-theme--border-default;
+    }
+
+    .p-code-snippet__header.is-stacked {
+      flex-direction: column;
+
+      .p-code-snippet__title {
+        white-space: normal;
+      }
+
+      .p-code-snippet__dropdowns {
+        flex: 1 0 100%;
+        justify-content: flex-end;
+        width: 100%;
+      }
+
+      .p-code-snippet__title + .p-code-snippet__dropdowns {
+        border-top: 1px solid $colors--light-theme--border-default;
+      }
+    }
+
+    // stylelint-disable-next-line selector-max-type
+    iframe {
+      margin: 0;
+      // fixes a Chrome bug where, on larger screens,
+      // a .is-bordered snippet's right border would
+      // disappear at every other pixel width increment
+      width: calc(100% - 1px);
+    }
+  }
+}

@@ -1,0 +1,47 @@
+@import 'settings';
+
+@mixin vf-p-table-sortable {
+  %heading-icon {
+    $vertical-offset: 0.5px;
+    @include vf-icon-chevron;
+    @include vf-icon-size(map-get($icon-sizes, default));
+
+    background: {
+      repeat: no-repeat;
+      size: 100%;
+    }
+
+    content: '';
+    display: inline-block;
+    margin-left: $sp-x-small;
+    // table heading text is smaller than the icon, so we need to compensate with negative top margin
+    margin-top: calc(#{map-get($font-sizes, x-small)}rem - $default-icon-size);
+    vertical-align: calc($vertical-offset + 0.5 * $cap-height - 0.5 * $default-icon-size);
+  }
+
+  // stylelint-disable selector-max-type -- table elements can use selector types
+  table th {
+    &[aria-sort] {
+      align-items: center;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    &[aria-sort='ascending']::after {
+      @extend %heading-icon;
+    }
+
+    &[aria-sort='descending']::after {
+      @extend %heading-icon;
+
+      -webkit-transform: rotate(180deg); // stylelint-disable-line property-no-vendor-prefix
+      transform: rotate(180deg);
+    }
+
+    &[aria-sort]:hover {
+      color: $color-link;
+      text-decoration: underline;
+    }
+  }
+  // stylelint-enable selector-max-type
+}

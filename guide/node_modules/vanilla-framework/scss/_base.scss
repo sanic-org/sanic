@@ -1,0 +1,41 @@
+// Base
+@import 'base_placeholders'; //mandatory import
+@import 'base_icon-definitions';
+@import 'base_typography';
+@import 'base_blockquotes';
+@import 'base_box-sizing';
+@import 'base_button';
+@import 'base_code';
+@import 'base_details';
+@import 'base_forms';
+@import 'base_hr';
+@import 'base_links';
+@import 'base_lists';
+@import 'base_media';
+@import 'base_reset';
+@import 'base_tables';
+@import 'base_background';
+@import 'base_grid-definitions';
+@import 'base_syntax-highlighting';
+
+@mixin vf-base {
+  // Reset
+  @include vf-b-reset;
+  // Base
+  @include vf-b-placeholders; // mandatory include
+  @include vf-base-background;
+  @include vf-b-typography;
+  @include vf-b-blockquotes;
+  @include vf-b-box-sizing;
+  @include vf-b-button;
+  @include vf-b-code;
+  @include vf-b-details;
+  @include vf-b-forms;
+  @include vf-b-hr;
+  @include vf-b-links;
+  @include vf-b-lists;
+  @include vf-b-media;
+  @include vf-b-tables;
+  @include vf-b-grid-definitions;
+  @include vf-b-syntax-highlighting;
+}

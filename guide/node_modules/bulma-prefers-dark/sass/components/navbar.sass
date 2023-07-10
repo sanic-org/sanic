@@ -1,0 +1,214 @@
+$navbar-background-color-dark: $body-background-dark !default
+$navbar-box-shadow-size: 0 2px 0 0 !default
+$navbar-box-shadow-color-dark: $background-dark !default
+
+$navbar-item-color-dark: $grey-light !default
+$navbar-item-hover-color-dark: $link-dark !default
+$navbar-item-hover-background-color-dark: $black-bis !default
+$navbar-item-active-color-dark: $white !default
+
+$navbar-burger-color-dark: $navbar-item-color-dark !default
+
+$navbar-tab-hover-border-bottom-color-dark: $link-dark !default
+$navbar-tab-active-color-dark: $link-dark !default
+$navbar-tab-active-border-bottom-color-dark: $link-dark !default
+
+$navbar-dropdown-background-color-dark: $black !default
+$navbar-dropdown-border-top-dark: 2px solid $border-dark !default
+$navbar-dropdown-arrow-dark: $link-dark !default
+
+$navbar-dropdown-boxed-shadow-dark: 0 8px 8px rgba($white, 0.1), 0 0 0 1px rgba($white, 0.1) !default
+
+$navbar-dropdown-item-hover-color-dark: $white !default
+$navbar-dropdown-item-hover-background-color-dark: $background-dark !default
+$navbar-dropdown-item-active-color-dark: $link-dark !default
+$navbar-dropdown-item-active-background-color-dark: $background-dark !default
+
+$navbar-divider-background-color-dark: $background-dark !default
+
+$navbar-bottom-box-shadow-size: 0 -2px 0 0 !default
+
+$navbar-breakpoint: $desktop !default
+
+.navbar
+  background-color: $navbar-background-color-dark
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}
+      background-color: $color
+      color: $color-invert
+      .navbar-brand
+        & > .navbar-item,
+        .navbar-link
+          color: $color-invert
+        & > a.navbar-item,
+        .navbar-link
+          &:hover,
+          &.is-active
+            background-color: darken($color, 5%)
+            color: $color-invert
+        .navbar-link
+          &::after
+            border-color: $color-invert
+      .navbar-burger
+        color: $color-invert
+      +from($navbar-breakpoint)
+        .navbar-start,
+        .navbar-end
+          & > .navbar-item,
+          .navbar-link
+            color: $color-invert
+          & > a.navbar-item,
+          .navbar-link
+            &:hover,
+            &.is-active
+              background-color: darken($color, 5%)
+              color: $color-invert
+          .navbar-link
+            &::after
+              border-color: $color-invert
+        .navbar-item.has-dropdown:hover .navbar-link,
+        .navbar-item.has-dropdown.is-active .navbar-link
+          background-color: darken($color, 5%)
+          color: $color-invert
+        .navbar-dropdown
+          a.navbar-item
+            &.is-active
+              background-color: $color
+              color: $color-invert
+  // Colors Dark
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}-dark
+      background-color: $color
+      color: $color-invert
+      .navbar-brand
+        & > .navbar-item,
+        .navbar-link
+          color: $color-invert
+        & > a.navbar-item,
+        .navbar-link
+          &:hover,
+          &.is-active
+            background-color: darken($color, 5%)
+            color: $color-invert
+        .navbar-link
+          &::after
+            border-color: $color-invert
+      .navbar-burger
+        color: $color-invert
+      +from($navbar-breakpoint)
+        .navbar-start,
+        .navbar-end
+          & > .navbar-item,
+          .navbar-link
+            color: $color-invert
+          & > a.navbar-item,
+          .navbar-link
+            &:hover,
+            &.is-active
+              background-color: darken($color, 5%)
+              color: $color-invert
+          .navbar-link
+            &::after
+              border-color: $color-invert
+        .navbar-item.has-dropdown:hover .navbar-link,
+        .navbar-item.has-dropdown.is-active .navbar-link
+          background-color: darken($color, 5%)
+          color: $color-invert
+        .navbar-dropdown
+          a.navbar-item
+            &.is-active
+              background-color: $color
+              color: $color-invert
+  &.has-shadow
+    box-shadow: $navbar-box-shadow-size $navbar-box-shadow-color-dark
+  &.is-fixed-bottom
+    &.has-shadow
+      box-shadow: $navbar-bottom-box-shadow-size $navbar-box-shadow-color-dark
+
+.navbar-burger
+  color: $navbar-burger-color-dark
+
+.navbar-item,
+.navbar-link
+  color: $navbar-item-color-dark
+
+a.navbar-item,
+.navbar-link
+  &:hover,
+  &.is-active
+    background-color: $navbar-item-hover-background-color-dark
+    color: $navbar-item-hover-color-dark
+
+.navbar-item
+    &:hover
+      border-bottom-color: $navbar-tab-hover-border-bottom-color-dark
+    &.is-active
+      border-bottom-color: $navbar-tab-active-border-bottom-color-dark
+      color: $navbar-tab-active-color-dark
+
+.navbar-link:not(.is-arrowless)
+  &::after
+    border-color: $navbar-dropdown-arrow-dark
+
+.navbar-divider
+  background-color: $navbar-divider-background-color-dark
+
++until($navbar-breakpoint)
+  .navbar-menu
+    background-color: $navbar-background-color-dark
+    box-shadow: 0 8px 16px rgba($white, 0.1)
+  // Fixed navbar
+  .navbar
+    &.is-fixed-bottom-touch
+      &.has-shadow
+        box-shadow: 0 -2px 3px rgba($white, 0.1)
+
++from($navbar-breakpoint)
+  .navbar
+    &.is-transparent
+      .navbar-dropdown
+        a.navbar-item
+          &:hover
+            background-color: $navbar-dropdown-item-hover-background-color-dark
+            color: $navbar-dropdown-item-hover-color-dark
+          &.is-active
+            background-color: $navbar-dropdown-item-active-background-color-dark
+            color: $navbar-dropdown-item-active-color-dark
+  .navbar-item
+    &.has-dropdown-up
+      .navbar-dropdown
+        border-bottom: $navbar-dropdown-border-top-dark
+        box-shadow: 0 -8px 8px rgba($white, 0.1)
+  .navbar-dropdown
+    background-color: $navbar-dropdown-background-color-dark
+    border-top: $navbar-dropdown-border-top-dark
+    box-shadow: 0 8px 8px rgba($white, 0.1)
+    a.navbar-item
+      &:hover
+        background-color: $navbar-dropdown-item-hover-background-color-dark
+        color: $navbar-dropdown-item-hover-color-dark
+      &.is-active
+        background-color: $navbar-dropdown-item-active-background-color-dark
+        color: $navbar-dropdown-item-active-color-dark
+    .navbar.is-spaced &,
+    &.is-boxed
+      box-shadow: $navbar-dropdown-boxed-shadow-dark
+  // Fixed navbar
+  .navbar
+    &.is-fixed-bottom-desktop
+      &.has-shadow
+        box-shadow: 0 -2px 3px rgba($white, 0.1)
+  // Hover/Active states
+  a.navbar-item,
+  .navbar-link
+    &.is-active
+      color: $navbar-item-active-color-dark
+  .navbar-item.has-dropdown
+    &:hover,
+    &.is-active
+      .navbar-link
+        background-color: $navbar-item-hover-background-color-dark

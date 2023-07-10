@@ -1,0 +1,24 @@
+// For compatibility with other sites which rely on these mixins
+@mixin vf-heading-1 {
+  @extend %vf-heading-1;
+}
+
+@mixin vf-heading-2 {
+  @extend %vf-heading-2;
+}
+
+@mixin vf-heading-3 {
+  @extend %vf-heading-3;
+}
+
+@mixin vf-heading-4 {
+  @extend %vf-heading-4;
+}
+
+@mixin vf-heading-5 {
+  @extend %vf-heading-5;
+}
+
+@mixin vf-heading-6 {
+  @extend %vf-heading-6;
+}

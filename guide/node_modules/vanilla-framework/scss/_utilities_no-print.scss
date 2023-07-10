@@ -1,0 +1,8 @@
+// A utility to hide elements when printing a page
+@mixin vf-u-no-print {
+  @media print {
+    .u-no-print {
+      display: none !important;
+    }
+  }
+}

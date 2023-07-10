@@ -1,0 +1,5 @@
+// Global assets settings
+
+// This is the URL of the CDN used to store and access static assets
+// usage: background: url(#{$assets-path}img//backgrounds/background.jpg);
+$assets-path: 'https://assets.ubuntu.com/v1/' !default;

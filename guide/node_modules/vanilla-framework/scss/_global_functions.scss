@@ -1,0 +1,153 @@
+@use 'sass:math';
+
+// Functions used across multiple patterns or utils
+
+/// Replace `$search` with `$replace` in `$string`
+/// see: https://css-tricks.com/snippets/sass/str-replace-function/
+/// @author Hugo Giraudel
+/// @param {String} $string - Initial string
+/// @param {String} $search - Substring to replace
+/// @param {String} $replace ('') - New value
+/// @return {String} - Updated string
+@function str-replace($string, $search, $replace: '') {
+  $index: str-index($string, $search);
+
+  @if $index {
+    @return str-slice($string, 1, $index - 1) + $replace + str-replace(str-slice($string, $index + str-length($search)), $search, $replace);
+  }
+
+  @return $string;
+}
+
+// This is to get the color variable inserted in an inline svg,
+// we have to strip the `#` and replace with %23 for #HEX notation, or
+// remove spaces and replace `,` with %2C for rgba() notation.
+@function vf-url-friendly-color($color) {
+  @if type-of($color) != 'color' {
+    @warn '#{$color} is not a color.';
+    @return $color;
+  } @else {
+    @return str-replace(str-replace(str-replace('#{$color}', '#', '%23'), ',', '%2C'), ' ');
+  }
+}
+
+// Test value of bg $color and return light or dark text color accordingly
+@function vf-contrast-text-color($color) {
+  @if (lightness($color) > 55) {
+    @return $color-dark; // Lighter background, return dark color
+  } @else {
+    @return $color-x-light; // Darker background, return light color
+  }
+}
+
+// Returns the font color to be presented on the passed background-color
+// variable.
+@function vf-determine-text-color($background-color) {
+  @if (lightness($background-color) > 50) {
+    @return $color-dark;
+  } @else {
+    @return $color-x-light;
+  }
+}
+
+// Adds visual focus to elements on :focus-visible,
+// or :focus if the browser doesn't support the former
+@mixin vf-focus($color: $color-focus, $width: $bar-thickness, $has-validation: false) {
+  &:focus {
+    outline: $width solid $color;
+    outline-offset: -#{$width};
+  }
+
+  &:focus-visible {
+    outline: $width solid $color;
+    outline-offset: -#{$width};
+  }
+
+  &:focus:not(:focus-visible) {
+    outline: 0;
+    outline-offset: 0;
+  }
+
+  @if ($has-validation) {
+    .is-error &:focus {
+      outline-color: $color-negative;
+    }
+
+    .is-caution &:focus {
+      outline-color: $color-caution;
+    }
+
+    .is-success &:focus {
+      outline-color: $color-positive;
+    }
+  }
+}
+
+// Raises a number to a power (https://css-tricks.com/snippets/sass/power-function/)
+@function pow($number, $exponent) {
+  $value: 1;
+
+  @if $exponent > 0 {
+    @for $i from 1 through $exponent {
+      $value: $value * $number;
+    }
+  } @else if $exponent < 0 {
+    @for $i from 1 through -$exponent {
+      $value: math.div($value, $number);
+    }
+  }
+
+  @return $value;
+}
+
+@mixin vf-highlight-bar($bg-color: $color-mid-dark, $position: top, $over-border: false) {
+  position: relative;
+
+  &::before {
+    #{$position}: 0;
+    background-color: $bg-color;
+    content: '';
+    position: absolute;
+  }
+
+  @if $position == top or $position == bottom {
+    &::before {
+      height: $bar-thickness;
+      width: auto;
+
+      @if $over-border == true {
+        left: -1px;
+        right: -1px;
+        z-index: 1;
+      } @else {
+        left: 0;
+        right: 0;
+      }
+
+      @if $position == bottom {
+        bottom: 0;
+        top: auto;
+      }
+    }
+  } @else if $position == left or $position == right {
+    &::before {
+      height: auto;
+      width: $bar-thickness;
+
+      @if $over-border == true {
+        bottom: -1px;
+        top: -1px;
+        z-index: 1;
+      } @else {
+        bottom: 0;
+        top: 0;
+      }
+    }
+  }
+}
+
+@mixin vf-icon-size($size: $default-icon-size) {
+  background-size: contain;
+  height: $size;
+  width: $size;
+}

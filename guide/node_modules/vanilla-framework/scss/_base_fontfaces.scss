@@ -1,0 +1,81 @@
+@mixin vf-b-typography-fontfaces {
+  @at-root {
+    @if str-index($font-base-family, 'Ubuntu') {
+      // Default font-display option
+      @font-face {
+        font-family: 'Ubuntu variable';
+        font-stretch: 100%; /*  min and max value for the width axis, expressed as percentage */
+        font-style: normal;
+        font-weight: 100 800; /*  min and max value for the weight axis */
+        src: url('#{$assets-path}15be2ffe-UbuntuBeta0.865[wdth,wght]-latin.woff2') format('woff2-variations');
+      }
+
+      @font-face {
+        font-family: 'Ubuntu variable';
+        font-stretch: 100%; /*  min and max value for the width axis, expressed as percentage */
+        font-style: italic;
+        font-weight: 100 800; /*  min and max value for the weight axis */
+        src: url('#{$assets-path}a84821f4-UbuntuBeta0.865-Italic[wdth,wght]-latin.woff2') format('woff2-variations');
+      }
+
+      @font-face {
+        font-family: 'Ubuntu Mono variable';
+        font-style: normal;
+        font-weight: 100 800; /*  min and max value for the weight axis */
+        src: url('#{$assets-path}ec568c8f-UbuntuMonoBeta0.865[wght]-latin.woff2') format('woff2-variations');
+      }
+
+      @if $font-allow-cyrillic-greek-latin {
+        // cyrillic-ext
+        @font-face {
+          font-family: 'Ubuntu variable';
+          font-stretch: 100%; /*  min and max value for the width axis, expressed as percentage */
+          font-style: normal;
+          font-weight: 100 800; /*  min and max value for the weight axis */
+          src: url('#{$assets-path}929e5b64-UbuntuBeta0.865[wdth,wght]-cyrillic-extended.woff2') format('woff2-variations');
+          unicode-range: U+0460-052F, U+20B4, U+2DE0-2DFF, U+A640-A69F;
+        }
+
+        // cyrillic
+        @font-face {
+          font-family: 'Ubuntu variable';
+          font-stretch: 100%; /*  min and max value for the width axis, expressed as percentage */
+          font-style: normal;
+          font-weight: 100 800; /*  min and max value for the weight axis */
+          src: url('#{$assets-path}ec29c093-UbuntuBeta0.865[wdth,wght]-cyrillic.woff2') format('woff2-variations');
+          unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+        }
+
+        // greek-ext
+        @font-face {
+          font-family: 'Ubuntu variable';
+          font-stretch: 100%; /*  min and max value for the width axis, expressed as percentage */
+          font-style: normal;
+          font-weight: 100 800; /*  min and max value for the weight axis */
+          src: url('#{$assets-path}0a8276a6-UbuntuBeta0.865[wdth,wght]-greek-extended.woff2') format('woff2-variations');
+          unicode-range: U+1F00-1FFF;
+        }
+
+        // greek
+        @font-face {
+          font-family: 'Ubuntu variable';
+          font-stretch: 100%; /*  min and max value for the width axis, expressed as percentage */
+          font-style: normal;
+          font-weight: 100 800; /*  min and max value for the weight axis */
+          src: url('#{$assets-path}16acdbb4-UbuntuBeta0.865[wdth,wght]-greek.woff2') format('woff2-variations');
+          unicode-range: U+0370-03FF;
+        }
+
+        // latin-ext
+        @font-face {
+          font-family: 'Ubuntu variable';
+          font-stretch: 100%; /*  min and max value for the width axis, expressed as percentage */
+          font-style: normal;
+          font-weight: 100 800; /*  min and max value for the weight axis */
+          src: url('#{$assets-path}c81d0142-UbuntuBeta0.865[wdth,wght]-latin-extended.woff2') format('woff2-variations');
+          unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+@import 'settings';
+
+@mixin vf-p-forms {
+  @include vf-p-forms-stacked;
+  @include vf-p-forms-inline;
+
+  // FIXME: should buttons outside of a form be related to the form?
+  // We should avoid targetting form element types
+  // stylelint-disable-next-line selector-max-type
+  form + [class*='p-button'] {
+    margin-top: $spv--x-large;
+  }
+}
+
+@mixin vf-p-forms-stacked {
+  .p-form--stacked {
+    width: 100%;
+
+    .p-form__group {
+      @media (min-width: $threshold-6-12-col) {
+        align-items: baseline;
+
+        + .p-form__group {
+          margin-top: $spv--small;
+        }
+      }
+    }
+  }
+}
+
+@mixin vf-p-forms-inline {
+  .p-form--inline {
+    @media (min-width: $threshold-6-12-col) {
+      align-items: baseline;
+      display: inline-flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+
+      > * {
+        margin-right: $sph--x-large;
+      }
+    }
+
+    .p-form__group {
+      @media (min-width: $threshold-6-12-col) {
+        display: flex;
+        flex-shrink: 1;
+        width: auto;
+
+        + [class*='p-button'] {
+          flex-shrink: 1;
+        }
+
+        .p-form__label,
+        .p-form__control,
+        .p-form-validation__message {
+          align-self: baseline;
+          box-sizing: border-box;
+        }
+
+        .p-form__label {
+          flex-shrink: 0;
+          padding-right: $sph--large;
+        }
+
+        .p-form__control {
+          display: inline-block;
+        }
+      }
+    }
+  }
+}

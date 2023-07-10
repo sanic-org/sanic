@@ -1,0 +1,141 @@
+@mixin vf-p-search-box {
+  %search-box-button {
+    display: block;
+    height: calc((2 * $spv-nudge + map-get($line-heights, default-text)) - (2 * $bar-thickness)); // side padding + icon width - focus outline width * 2
+    margin: $bar-thickness 0;
+    position: relative;
+
+    &:hover {
+      background: inherit;
+
+      &:disabled {
+        cursor: not-allowed;
+      }
+    }
+
+    & [class*='p-icon'] {
+      vertical-align: 0; // reset vertical-align, as icon is aligned to the parent container, not the baseline of the text.
+
+      &:only-child {
+        margin-left: -$sph--small;
+        margin-right: -$sph--small;
+      }
+    }
+  }
+
+  .p-search-box {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: $input-margin-bottom;
+    position: relative;
+
+    .p-search-box__reset {
+      @extend %search-box-button;
+      @extend %transparent-button;
+
+      &:not(:last-of-type):not(:only-of-type) {
+        margin-right: $bar-thickness;
+      }
+    }
+
+    .p-search-box__input {
+      flex: 1 1 100%;
+      margin-bottom: 0;
+      padding-right: calc(2 * (2 * $spv-nudge + map-get($line-heights, default-text)));
+      position: absolute;
+      right: 0;
+
+      &::-webkit-search-cancel-button {
+        -webkit-appearance: none; // stylelint-disable-line property-no-vendor-prefix
+      }
+
+      &:not(:valid) ~ .p-search-box__reset {
+        display: none;
+      }
+    }
+
+    .p-search-box__button {
+      @extend %search-box-button;
+      @extend %transparent-button;
+
+      border-left-style: solid;
+      border-left-width: 1px;
+      border-radius: 0 $border-radius $border-radius 0;
+      margin-right: $bar-thickness;
+    }
+  }
+
+  // Theming
+  %transparent-button {
+    &,
+    &:active,
+    &:focus,
+    &:hover {
+      background-color: transparent !important; //XXX: remove important once buttons have been themified
+      border-width: 0;
+    }
+  }
+
+  @if ($theme-default-p-search-box == 'dark') {
+    .p-search-box__input {
+      @include vf-search-box-dark-theme;
+    }
+
+    .p-search-box.is-light {
+      .p-search-box__input {
+        @include vf-search-box-light-theme;
+      }
+    }
+  } @else {
+    .p-search-box {
+      .p-search-box__input {
+        @include vf-search-box-light-theme;
+      }
+    }
+
+    .p-search-box.is-dark {
+      .p-search-box__input {
+        @include vf-search-box-dark-theme;
+      }
+    }
+  }
+}
+
+@mixin vf-search-box-theme($color-search-box-background, $color-search-box-border, $color-search-box-text) {
+  //XXX: This should inherit from input color theming. Once that becomes available, delete this.
+  background-color: $color-search-box-background;
+  border-color: $color-search-box-border;
+  color: $color-search-box-text;
+
+  &:active,
+  &:focus,
+  &:hover,
+  &:-internal-autofill-selected,
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    // XXX: remove important once the button {} selector is refactored to use themeing. At the moment, it trumps these.
+    background-color: $color-search-box-background !important;
+    border-color: $color-search-box-border !important;
+  }
+}
+
+@mixin vf-search-box-light-theme {
+  @include vf-search-box-theme(
+    $color-search-box-background: $colors--light-theme--background-inputs,
+    $color-search-box-border: $colors--light-theme--border-high-contrast,
+    $color-search-box-text: $colors--light-theme--text-default
+  );
+}
+
+@mixin vf-search-box-dark-theme {
+  @include vf-search-box-theme(
+    $color-search-box-background: lighten($colors--dark-theme--background-default, 10%),
+    $color-search-box-border: $color-x-light,
+    $color-search-box-text: $colors--dark-theme--text-default
+  );
+
+  &::placeholder {
+    color: $colors--dark-theme--text-default;
+  }
+}

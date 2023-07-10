@@ -1,0 +1,115 @@
+@import 'settings';
+
+@mixin vf-p-accordion {
+  $icon-size: map-get($icon-sizes, default);
+
+  .p-accordion__list {
+    list-style-type: none;
+    margin: 0 0 $spv--x-large 0;
+    padding: 0;
+  }
+
+  .p-accordion__group {
+    & + & {
+      @extend %vf-pseudo-border--top;
+    }
+  }
+
+  .p-accordion__tab {
+    @extend %single-border-text-vpadding--scaling;
+    @include vf-focus;
+
+    background-color: inherit;
+    border: 0;
+    border-radius: 0;
+    font-size: inherit;
+    justify-content: flex-start;
+    margin-bottom: 0;
+    padding-right: $sph--large;
+    position: relative;
+    text-align: left;
+    width: 100%;
+    z-index: 2;
+
+    &::before {
+      @extend %icon;
+      @include vf-icon-chevron($color-mid-dark);
+      @include vf-transition($property: transform, $duration: fast);
+
+      content: '';
+      margin-right: $sph--large;
+    }
+
+    // aria-selected controls the open and closed state for the accordion tab
+    &[aria-expanded='true'] {
+      // override base expanded button styles
+      background-color: inherit;
+
+      &:hover {
+        background-color: $colors--light-theme--background-hover;
+      }
+      @include vf-transition(#{background-color, border-color});
+    }
+
+    &[aria-expanded='false'] {
+      &::before {
+        transform: rotate(-90deg);
+      }
+
+      @include vf-transition(#{background-color, border-color});
+    }
+  }
+
+  .p-accordion__heading {
+    margin-bottom: 0;
+    max-width: none;
+    padding-top: 0;
+
+    > .p-accordion__tab {
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+    }
+  }
+
+  // stylelint-disable selector-max-type
+  .p-heading--2 > .p-accordion__tab::before,
+  h2.p-accordion__heading > .p-accordion__tab::before {
+    @include vf-icon-size($x-height);
+    vertical-align: 0;
+  }
+
+  .p-heading--3 > .p-accordion__tab::before,
+  .p-heading--4 > .p-accordion__tab::before,
+  h3.p-accordion__heading > .p-accordion__tab::before,
+  h4.p-accordion__heading > .p-accordion__tab::before {
+    vertical-align: 0;
+  }
+  // stylelint-enable selector-max-type
+
+  .p-accordion__panel {
+    margin: 0;
+    overflow: auto; // include child margins into its height
+    padding-left: $icon-size + $sph--large * 2;
+
+    @include vf-transition(#{transform, opacity}, fast);
+    // Hides panel content
+    &[aria-hidden='true'] {
+      height: 0;
+      opacity: 0;
+      transform: translate3d(0, -0.5rem, 0);
+      visibility: hidden;
+    }
+
+    &[aria-hidden='false'] {
+      height: auto;
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+      visibility: visible;
+    }
+
+    &.has-tick-elements {
+      padding-left: 1em;
+    }
+  }
+}

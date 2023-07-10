@@ -1,0 +1,42 @@
+// Create utility class for positioning images at top or bottom of the section
+@mixin vf-u-image-position {
+  .u-image-position {
+    @media (min-width: $threshold-6-12-col) {
+      overflow: hidden;
+      position: relative;
+
+      %u-image-position {
+        margin: 0;
+        position: absolute;
+      }
+
+      [class*='col-'] {
+        position: static;
+      }
+
+      &--top {
+        @extend %u-image-position;
+
+        top: 0;
+      }
+
+      &--bottom {
+        @extend %u-image-position;
+
+        bottom: 0;
+      }
+
+      &--left {
+        @extend %u-image-position;
+
+        left: 0;
+      }
+
+      &--right {
+        @extend %u-image-position;
+
+        right: 0;
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+@import 'settings';
+// Collapse margins
+@mixin vf-u-margin-collapse {
+  .u-no-margin {
+    margin: 0 !important;
+
+    &--top {
+      margin-top: 0 !important;
+    }
+
+    &--right {
+      margin-right: 0 !important;
+    }
+
+    &--bottom {
+      @extend %u-no-margin--bottom;
+    }
+
+    &--left {
+      margin-left: 0 !important;
+    }
+  }
+
+  .u-table-cell-padding-overlap {
+    margin-bottom: -#{$table-cell-vertical-padding} !important;
+    margin-top: calc(-1 * $table-cell-vertical-padding - 1px) !important;
+  }
+}

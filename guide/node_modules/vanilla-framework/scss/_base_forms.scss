@@ -1,0 +1,231 @@
+@import 'settings';
+@import 'base_forms-range';
+
+// Form element styles
+@mixin vf-b-forms {
+  @include vf-b-range;
+  // Used in buttons, inputs
+  %bordered-text-vertical-padding {
+    padding-bottom: $input-vertical-padding;
+    padding-top: $input-vertical-padding;
+  }
+
+  // Default form input element styles
+  %vf-input-elements {
+    @extend %bordered-text-vertical-padding;
+    @include vf-focus($color-focus, $bar-thickness, true);
+    @include vf-animation(#{background-color}, fast);
+
+    // stylelint-disable property-no-vendor-prefix
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+    // stylelint-enable property-no-vendor-prefix
+    background-color: $colors--light-theme--background-inputs;
+    border: 0 solid transparent;
+    border-bottom: $input-border-thickness solid $colors--light-theme--text-default;
+    border-radius: 0;
+    color: $color-dark;
+    font-family: unquote($font-base-family);
+    font-size: 1rem;
+    font-weight: $font-weight-regular-text;
+    line-height: map-get($line-heights, default-text);
+    margin-bottom: $input-margin-bottom;
+    min-width: 10em;
+    padding-left: $sph--small;
+    padding-right: $sph--small;
+    vertical-align: baseline;
+    width: 100%;
+
+    &:hover {
+      background-color: $colors--light-theme--background-hover;
+    }
+
+    &:active,
+    &:focus {
+      background-color: $colors--light-theme--background-active;
+    }
+
+    &.is-dense {
+      margin: 0 0 $spv-nudge-compensation 0;
+      padding-bottom: calc($spv-nudge - $spv--x-small - $input-border-thickness);
+      padding-top: calc($spv-nudge - $spv--x-small - $input-border-thickness);
+    }
+
+    &[disabled],
+    &[disabled='disabled'] {
+      @extend %vf-disabled-element;
+    }
+
+    &[readonly],
+    &[readonly='readonly'] {
+      @extend %vf-readonly-element;
+    }
+
+    @each $state, $color in $states {
+      &.has-#{$state} {
+        border: $input-border-thickness solid $color;
+      }
+    }
+  }
+
+  // Disabled form elements
+  %vf-disabled-element {
+    cursor: not-allowed;
+    opacity: $disabled-element-opacity;
+  }
+
+  // Readonly form elements
+  %vf-readonly-element {
+    color: $color-mid-light;
+    cursor: default;
+
+    &:hover,
+    &:active {
+      border-color: $color-mid-dark;
+      outline: none;
+    }
+  }
+
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  label {
+    cursor: pointer;
+    display: inline-block;
+    margin-bottom: $spv--large - $spv-nudge;
+    margin-top: 0;
+    max-width: $text-max-width;
+    padding-top: map-get($nudges, p);
+    width: fit-content;
+
+    &.is-required::before {
+      content: '* ';
+      position: relative;
+    }
+
+    &.u-truncate {
+      // width: fit-content prevents ellipses when u-truncate is applied
+      width: auto;
+    }
+
+    @each $state, $color in $states {
+      &.has-#{$state} {
+        color: $color;
+      }
+    }
+  }
+
+  // Input styles
+  [type='text'],
+  [type='date'],
+  [type='datetime'],
+  [type='datetime-local'],
+  [type='month'],
+  [type='time'],
+  [type='week'],
+  [type='number'],
+  [type='search'],
+  [type='password'],
+  [type='email'],
+  [type='url'],
+  [type='tel'],
+  select {
+    @extend %vf-input-elements;
+  }
+
+  [type='file'] {
+    @extend %bordered-text-vertical-padding;
+    @include vf-focus;
+
+    margin-bottom: $input-margin-bottom;
+    width: 100%;
+  }
+
+  [type='search'] {
+    // stylelint-disable property-no-vendor-prefix
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    // stylelint-enable property-no-vendor-prefix
+    border-radius: 0;
+
+    // These vendor prefixes are unique and cannot be added by autoprefixer
+    &::-webkit-search-results-decoration {
+      display: none;
+    }
+
+    &::-webkit-search-cancel-button {
+      -webkit-appearance: searchfield-cancel-button; // stylelint-disable-line property-no-vendor-prefix
+      cursor: pointer;
+    }
+  }
+
+  input[list] {
+    &::-webkit-calendar-picker-indicator {
+      opacity: 0;
+    }
+  }
+
+  // Select styles
+  select {
+    @include vf-icon-chevron;
+
+    // stylelint-disable property-no-vendor-prefix
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    // stylelint-enable property-no-vendor-prefix
+    background-color: $colors--light-theme--background-hover;
+    background-position: right $sph--small center;
+    background-repeat: no-repeat;
+    background-size: map-get($icon-sizes, default);
+    box-shadow: none;
+    color: $color-dark;
+    min-height: map-get($line-heights, default-text);
+    padding-right: calc($default-icon-size + 2 * $sph--small);
+    text-indent: 0.01px;
+    text-overflow: '';
+
+    &:hover {
+      cursor: pointer;
+    }
+
+    option {
+      background-color: white;
+    }
+
+    &[multiple],
+    &[size] {
+      background-image: none;
+      box-shadow: none;
+      height: auto;
+
+      option {
+        background-color: $colors--light-theme--background-hover;
+        font-weight: $font-weight-regular-text;
+        line-height: calc($sp-unit * 2 - 2px);
+        padding: $spv--x-small 0;
+      }
+    }
+  }
+
+  // Textarea styles
+  textarea {
+    @extend %vf-input-elements;
+
+    margin-bottom: $input-margin-bottom;
+    overflow: auto;
+    vertical-align: top;
+  }
+
+  // Fieldset styles
+  fieldset {
+    @extend %vf-card;
+    @extend %vf-is-bordered;
+    @extend %vf-has-round-corners;
+
+    margin-left: 0;
+    margin-right: 0;
+    padding: calc($spv--large - $input-border-thickness);
+  }
+  // stylelint-enable selector-max-type
+}

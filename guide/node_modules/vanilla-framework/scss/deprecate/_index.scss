@@ -1,0 +1,169 @@
+// Copyright (c) 2015-present, salesforce.com, inc. All rights reserved
+// Licensed under BSD 3-Clause - see LICENSE.txt or git.io/sfdc-license
+
+/// Application version
+/// @type String
+$app-version: '1.0.0' !default;
+
+/// Deprecation mode
+///
+/// ### Available modes:
+/// - `disabled`: output all the code, even if deprecated
+/// - `silent`: disable all warnings but don't output deprecated code
+/// - `verbose`: show all warnings, even for code that is *about* to be deprecated
+/// - `sensible` (default): output warnings when deprecated code is detected
+/// - `fail`: prevent compilation when deprecated code is found
+///
+/// @type String
+$deprecate-mode: 'sensible' !default;
+
+// Casts a string into a number (integer only)
+//
+// @param {String} $value - Value to be parsed
+//
+// @return {Number}
+// @author @HugoGiraudel - Simplified by @kaelig to only convert unsigned integers
+// @link http://hugogiraudel.com/2014/01/15/sass-string-to-number/
+// @access private
+@function _d-to-number($value) {
+  $result: 0;
+  $digits: 0;
+  $numbers: (
+    '0': 0,
+    '1': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+  );
+
+  @for $i from 1 through str-length($value) {
+    $character: str-slice($value, $i, $i);
+
+    @if ($digits == 0) {
+      $result: $result * 10 + map-get($numbers, $character);
+    } @else {
+      $digits: $digits * 10;
+      $result: $result + map-get($numbers, $character) / $digits;
+    }
+  }
+
+  @return $result;
+}
+
+// Major revision of a version
+//
+// @param {String} $version - SemVer version (e.g. '1.0.0')
+// @return {Number} Major revision
+//
+// @example scss
+//  _d-version-major('1.0.0') // 1
+//
+// @access private
+@function _d-version-major($version) {
+  @return _d-to-number(str-slice($version, 0, str-index($version, '.') - 1));
+}
+
+// Minor revision of a version
+//
+// @param {String} $version - SemVer version (e.g. '1.50.0')
+// @return {Number} Minor revision
+//
+// @example scss
+//  _d-version-minor('1.50.0') // 50
+//
+// @access private
+@function _d-version-minor($version) {
+  $minor-patch: str-slice($version, str-index($version, '.') + 1, str-length($version));
+  @return _d-to-number(str-slice($minor-patch, 0, str-index($minor-patch, '.') - 1));
+}
+
+// Patch revision of a version
+//
+// @param {String} $version - SemVer version (e.g. '1.50.25')
+// @return {Number} Patch revision
+//
+// @example scss
+//  _d-version-patch('1.50.25') // 25
+//
+// @access private
+@function _d-version-patch($version) {
+  $minor-patch: str-slice($version, str-index($version, '.') + 1, str-length($version));
+  @return _d-to-number(str-slice($minor-patch, str-index($minor-patch, '.') + 1, str-length($minor-patch)));
+}
+
+/// Output code only until $app-version reaches $version
+/// and signal its deprecation to developers
+///
+/// @require $app-version
+/// @require $deprecate-mode
+/// @param {String} $version - SemVer-like version (e.g. '2.0.0')
+/// @param {String} $message - Reason about why the code will be deprecated or possible workaround (e.g. 'Use .new-thing instead')
+@mixin deprecate($version, $message: null) {
+  @if (type-of($version) != 'string') {
+    @error 'The parameter passed to deprecate() must be a String. Good: deprecate(\'0.1.0\') / Bad: deprecate(0.1.0).';
+  }
+
+  // Plugin is disabled. Output anyway.
+  @if ('disabled' == $deprecate-mode) {
+    @content;
+  } @else {
+    @if not('silent' == $deprecate-mode) {
+      // Assume we found code that is (or is about to be) deprecated
+      $deprecation-found: true;
+
+      @if ('verbose' == $deprecate-mode) {
+        @if (&) {
+          $parent: &;
+          @warn '#{$parent} will be deprecated in #{$version}. Current version: #{$app-version}.';
+        } @else {
+          @warn 'Some code will be deprecated in #{$version}. Current version: #{$app-version}.';
+        }
+      }
+
+      // Define if the code is actually deprecated
+      @if (function-exists('deprecate-version-greater-than')) {
+        // A custom version comparison engine was found:
+        // rely on it to check if $version is greater than $app-version,
+        @if (deprecate-version-greater-than($version, $app-version)) {
+          @content;
+          $deprecation-found: false;
+        }
+      } @else {
+        // No custom version comparison engine was found:
+        // fall back to simple version comparison tests.
+        @if (_d-version-major($version) > _d-version-major($app-version)) {
+          @content;
+          $deprecation-found: false;
+        } @else {
+          @if (_d-version-major($version) == _d-version-major($app-version)) {
+            @if (_d-version-minor($version) > _d-version-minor($app-version)) {
+              @content;
+              $deprecation-found: false;
+            } @else {
+              @if (_d-version-minor($version) == _d-version-minor($app-version)) {
+                @if (_d-version-patch($version) > _d-version-patch($app-version)) {
+                  @content;
+                  $deprecation-found: false;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      @if ($deprecation-found) {
+        $message: if($message, '\AREASON:  #{$message}', '');
+        @if ('fail' == $deprecate-mode) {
+          @error 'Deprecated code was found. Remove it to continue.#{$message}';
+        } @else {
+          @warn 'Deprecated code was found, it should be removed before its release.#{$message}';
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+@import 'settings';
+
+@mixin vf-p-slider {
+  .p-slider__wrapper {
+    align-items: center;
+    display: inline-flex;
+    width: 100%;
+  }
+
+  .p-slider__input {
+    margin: 0 0 0 $sp-medium;
+    min-width: 5rem;
+    text-align: center;
+    width: 5%;
+  }
+}

@@ -1,0 +1,31 @@
+@import 'settings_spacing';
+@import 'settings_breakpoints';
+
+// Global grid settings
+$grid-max-width: 72rem !default;
+$grid-columns-small: 4 !default;
+$grid-columns-medium: 6 !default;
+$grid-columns: 12 !default;
+$threshold-4-6-col: $breakpoint-small !default;
+$threshold-6-12-col: $breakpoint-large !default;
+
+$grid-column-prefix: 'col-' !default;
+$grid-small-col-prefix: '#{$grid-column-prefix}small-' !default;
+$grid-medium-col-prefix: '#{$grid-column-prefix}medium-' !default;
+$grid-large-col-prefix: #{$grid-column-prefix} !default;
+
+$grid-gutter-widths: (
+  small: $sp-unit * 3,
+  default: $sp-unit * 4,
+) !default;
+
+$grid-margin-widths: (
+  small: $sp-unit * 2,
+  default: $sp-unit * 3,
+) !default;
+
+// Grid breakout template
+$l-fluid-breakout-max-width: $grid-max-width !default;
+$l-fluid-breakout-aside-width: 14rem !default;
+$l-fluid-breakout-main-child-width: 13rem !default;
+$l-fluid-breakout-3-col-threshold: calc($grid-max-width + $l-fluid-breakout-aside-width);

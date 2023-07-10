@@ -1,0 +1,6 @@
+@mixin vf-u-has-icon {
+  .u-has-icon [class*='p-icon--']:first-child {
+    margin-right: $sph--small;
+    margin-top: $spv--small;
+  }
+}

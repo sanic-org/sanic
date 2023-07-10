@@ -1,0 +1,113 @@
+@import 'settings';
+
+@mixin vf-p-side-navigation-expandable {
+  .p-side-navigation__item,
+  .p-side-navigation__item--title {
+    // position relative for the absolutely positioned `.p-side-navigation__expand` button
+    position: relative;
+  }
+  .p-side-navigation__link.is-expandable,
+  .p-side-navigation__text.is-expandable {
+    // extra padding to accomodate for `.p-side-navigation__expand` button
+    padding-right: 3rem;
+  }
+
+  .p-side-navigation__expand {
+    @include vf-button-base;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0;
+    padding-bottom: $spv--x-small;
+    padding-top: $spv--x-small;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    &::before {
+      @extend %icon;
+      @include vf-icon-chevron;
+      content: '';
+      transform: rotate(-90deg);
+      transition: transform 100ms;
+    }
+  }
+
+  .p-side-navigation__expand[aria-expanded='true']::before {
+    transform: rotate(0deg);
+  }
+
+  // transition
+  .p-side-navigation__list {
+    @include vf-animation(#{transform, opacity}, fast);
+  }
+  .p-side-navigation__expand[aria-expanded='false'] + .p-side-navigation__list {
+    height: 0;
+    opacity: 0;
+    transform: translate3d(0, -0.5rem, 0);
+    // disable transition on close
+    transition-duration: 0s;
+    visibility: hidden;
+  }
+
+  .p-side-navigation__expand[aria-expanded='true'] + .p-side-navigation__list {
+    height: auto;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    visibility: visible;
+  }
+
+  // Theming for the expandable variant
+  @if ($theme-default-p-side-navigation == 'dark') {
+    .p-side-navigation,
+    [class*='p-side-navigation--'] {
+      @include vf-side-navigation-expandable-theme-dark;
+
+      &.is-light {
+        @include vf-side-navigation-expandable-theme-light;
+      }
+    }
+  } @else {
+    .p-side-navigation,
+    [class*='p-side-navigation--'] {
+      @include vf-side-navigation-expandable-theme-light;
+
+      &.is-dark {
+        @include vf-side-navigation-expandable-theme-dark;
+      }
+    }
+  }
+}
+
+@mixin vf-side-navigation-expandable-theme($color-sidenav-text-active, $color-sidenav-item-background-hover, $color-sidenav-toggle-icon) {
+  .p-side-navigation__expand {
+    background-color: inherit;
+    &::before {
+      @include vf-icon-chevron($color-sidenav-toggle-icon);
+    }
+
+    &:hover {
+      background: $color-sidenav-item-background-hover;
+      color: $color-sidenav-text-active;
+    }
+  }
+}
+
+@mixin vf-side-navigation-expandable-theme-light {
+  @include vf-side-navigation-expandable-theme(
+    $color-sidenav-text-active: $colors--light-theme--text-default,
+    $color-sidenav-item-background-hover: $colors--light-theme--background-hover,
+    $color-sidenav-toggle-icon: $colors--light-theme--text-inactive
+  );
+}
+
+@mixin vf-side-navigation-expandable-theme-dark {
+  @include vf-side-navigation-expandable-theme(
+    $color-sidenav-text-active: $colors--dark-theme--text-default,
+    $color-sidenav-item-background-hover: $colors--dark-theme--background-hover,
+    // color of toggle icon - needed because of lack of rgba support in icon mixin
+    $color-sidenav-toggle-icon: #999
+  );
+}

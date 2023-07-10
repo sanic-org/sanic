@@ -1,0 +1,80 @@
+@import 'settings';
+
+@mixin vf-p-pagination {
+  %pagination-link {
+    @extend %vf-button-base;
+    @include vf-button-pattern;
+
+    &.is-active,
+    &[aria-current='page'] {
+      background-color: scale-color($color-x-light, $lightness: -$active-background-opacity-amount * 100%);
+      color: $color-dark;
+      text-decoration: none;
+    }
+  }
+
+  // .p-pagination on the <ol> element is deprecated. It should be used on the wrapping <nav> element instead, and .p-pagination__items on the <ol> or <ul> element.
+
+  // stylelint-disable selector-max-type
+  .p-pagination:not(nav),
+  .p-pagination__items {
+    display: flex;
+    flex-direction: row;
+    list-style: none;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .p-pagination__item {
+    width: auto;
+
+    & + & {
+      &:not(:nth-child(2)):not(:nth-last-child(1)) {
+        margin-left: $sph--small;
+      }
+
+      &:nth-child(2),
+      &:nth-last-child(1) {
+        margin-left: $sph--large;
+      }
+    }
+
+    &--truncation {
+      padding: $input-vertical-padding 0;
+    }
+  }
+
+  .p-pagination__link {
+    @extend %pagination-link;
+  }
+
+  .p-pagination__link--previous,
+  .p-pagination__link--next {
+    @extend %pagination-link;
+  }
+
+  [class*='p-icon'] {
+    .p-pagination__link--next &,
+    .p-pagination__link--previous & {
+      margin-left: $sph--small;
+      margin-right: $sph--small;
+
+      &:first-child {
+        margin-left: -$sph--small;
+      }
+
+      &:last-child {
+        margin-right: -#{$sph--small};
+      }
+    }
+
+    .p-pagination__link--previous & {
+      transform: rotate(0.25turn);
+    }
+
+    .p-pagination__link--next & {
+      transform: rotate(-0.25turn);
+    }
+  }
+}

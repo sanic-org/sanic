@@ -1,0 +1,52 @@
+@import 'settings';
+
+// Media element styles
+@mixin vf-b-media {
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  img {
+    border: 0;
+    height: auto;
+    max-width: 100%;
+  }
+
+  figure {
+    margin-bottom: $spv--x-large;
+    margin-left: 0;
+    width: 100%;
+
+    caption,
+    figcaption {
+      display: block;
+      font-style: italic;
+      margin-top: $sp-x-small;
+      width: 100%;
+    }
+  }
+
+  iframe {
+    border: 0;
+  }
+
+  object,
+  iframe,
+  embed,
+  canvas,
+  video,
+  audio {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 100%;
+  }
+
+  // Prevents modern browsers from displaying 'audio' without controls
+  // Remove excess height in iOS5 devices
+  audio:not([controls]) {
+    display: none;
+    height: 0;
+  }
+  // stylelint-enable selector-max-type
+
+  [hidden] {
+    display: none;
+  }
+}

@@ -1,0 +1,83 @@
+@import 'settings';
+
+@mixin vf-p-table-mobile-card {
+  .p-table--mobile-card {
+    // stylelint-disable selector-max-type -- table elements can use selector types
+    td::before,
+    tbody th::before {
+      @extend %table-header-label;
+
+      text-align: left;
+    }
+
+    @media (max-width: $threshold-6-12-col - 1) {
+      @supports (display: grid) {
+        thead {
+          display: none;
+        }
+
+        tbody {
+          display: grid;
+          grid-gap: 0 map-get($grid-gutter-widths, small);
+          grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+          grid-template-rows: auto;
+          width: 100%;
+        }
+
+        tr {
+          border: $border;
+          border-radius: $border-radius;
+          display: block;
+          margin-bottom: $spv--x-large;
+          padding: 0 $sph--large;
+        }
+        td,
+        tbody th {
+          display: block;
+          min-width: 100%;
+          overflow: hidden;
+          padding-left: 0;
+          padding-right: 0;
+          position: relative;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          width: 100%;
+          word-break: break-word;
+          // stylelint-disable max-nesting-depth
+          &.u-align--right {
+            justify-content: unset !important;
+            text-align: left !important;
+          }
+
+          &.has-overflow {
+            overflow: visible;
+          }
+
+          &[data-heading]::before {
+            content: attr(data-heading);
+            display: block;
+            margin-bottom: map-get($sp-after, x-small) - map-get($nudges, x-small) - $sp-unit;
+            overflow: hidden;
+            padding-left: 0;
+            padding-right: 0;
+            text-overflow: ellipsis;
+            width: 100%;
+          }
+
+          &:not(:first-child)::after {
+            background-color: $color-mid-light;
+            content: '';
+            height: 1px;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+          }
+          // stylelint-enable max-nesting-depth
+        }
+      }
+
+      // stylelint-enable selector-max-type
+    }
+  }
+}

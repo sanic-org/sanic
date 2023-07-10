@@ -1,0 +1,93 @@
+@mixin vf-b-range {
+  $thumb-shadow: 0 0 $bar-thickness 1px rgba(0, 0, 0, 0.2);
+  $thumb-size: 1rem;
+  $thumb-radius: 50%;
+  $thumb-border: $input-border-thickness solid $color-mid-dark;
+  $track-height: $bar-thickness;
+  $track-radius: $bar-thickness;
+
+  // stylelint-disable selector-max-type -- base styles can use type selectors
+  input[type='range'] {
+    // stylelint-disable property-no-vendor-prefix
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    // stylelint-enable property-no-vendor-prefix
+    border-radius: $track-radius;
+    margin: $sp-small 0;
+    padding: 0;
+    width: 100%;
+
+    // Chrome
+    &::-webkit-slider-runnable-track {
+      border-radius: $track-radius;
+      height: $track-height;
+    }
+
+    &::-webkit-slider-thumb {
+      // stylelint-disable property-no-vendor-prefix
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      // stylelint-enable property-no-vendor-prefix
+      background: $color-x-light;
+      border: $thumb-border;
+      border-radius: $thumb-radius;
+      box-shadow: $thumb-shadow;
+      height: $thumb-size;
+      margin-top: (-$thumb-size + $track-height) * 0.5;
+      width: $thumb-size;
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    // Firefox
+    &::-moz-range-track {
+      background: $color-mid-light;
+      border-radius: $track-radius;
+      height: $track-height;
+    }
+
+    &::-moz-range-progress {
+      background-color: $color-link;
+      border-radius: $track-radius;
+      height: $track-height;
+    }
+
+    &::-moz-range-thumb {
+      background: $color-x-light;
+      border: $thumb-border;
+      border-radius: $thumb-radius;
+      box-shadow: $thumb-shadow;
+      height: $thumb-size;
+      width: $thumb-size;
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    &::-moz-focus-outer {
+      border: 0;
+    }
+
+    &:focus {
+      outline: none;
+
+      &::-webkit-slider-thumb {
+        outline: $bar-thickness solid $color-focus;
+      }
+
+      &::-moz-range-thumb {
+        outline: $bar-thickness solid $color-focus;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
+    // stylelint-enable selector-max-type
+  }
+}

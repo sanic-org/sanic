@@ -1,0 +1,16 @@
+// screen width breakpoint (min-width) at which sticky footer is applied
+$site-layout--breakpoint-sticky-footer: $breakpoint-small !default;
+
+@mixin vf-l-site {
+  @media (min-width: $site-layout--breakpoint-sticky-footer) {
+    .l-site {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .l-footer--sticky {
+      margin-top: auto;
+    }
+  }
+}

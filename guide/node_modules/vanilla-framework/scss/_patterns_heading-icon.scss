@@ -1,0 +1,48 @@
+@import 'settings';
+
+@mixin vf-p-heading-icon {
+  .p-heading-icon {
+    margin-bottom: $spv--x-large;
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      margin-bottom: 0;
+    }
+  }
+
+  .p-heading-icon__header {
+    display: flex;
+
+    &.is-stacked {
+      display: inherit;
+    }
+  }
+
+  .p-heading-icon__img {
+    flex-shrink: 0;
+    height: map-get($icon-sizes, heading-icon--small);
+    margin-bottom: 0;
+    margin-right: $sph--large;
+    margin-top: map-get($nudges, h3-mobile);
+    width: map-get($icon-sizes, heading-icon--small);
+
+    @media (min-width: $breakpoint-heading-threshold) {
+      height: map-get($icon-sizes, heading-icon);
+      margin-top: map-get($nudges, h3);
+      width: map-get($icon-sizes, heading-icon);
+    }
+  }
+
+  .p-heading-icon--small {
+    .p-heading-icon__img {
+      height: map-get($icon-sizes, heading-icon--x-small);
+      margin-top: $sp-x-small;
+      width: map-get($icon-sizes, heading-icon--x-small);
+
+      @media (min-width: $breakpoint-heading-threshold) {
+        height: map-get($icon-sizes, heading-icon--small);
+        margin-top: 0;
+        width: map-get($icon-sizes, heading-icon--small);
+      }
+    }
+  }
+}

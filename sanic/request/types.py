@@ -72,6 +72,11 @@ except ImportError:
     from json import loads as json_loads  # type: ignore
 
 if TYPE_CHECKING:
+    # The default argument of TypeVar is proposed to be added in Python 3.13
+    # by PEP 696 (https://www.python.org/dev/peps/pep-0696/).
+    # Therefore, we use typing_extensions.TypeVar for compatibility.
+    # For more information, see:
+    # https://discuss.python.org/t/pep-696-type-defaults-for-typevarlikes
     sanic_type = TypeVar(
         "sanic_type", bound=Sanic, default=Sanic[Config, SimpleNamespace]
     )
@@ -149,7 +154,7 @@ class Request(Generic[sanic_type, ctx_type]):
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
         self._stream_id = stream_id
-        self.app: sanic_type = app
+        self.app = app
 
         self.headers = Header(headers)
         self.version = version

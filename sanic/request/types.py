@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 from inspect import isawaitable
+from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
     Any,
     DefaultDict,
     Dict,
+    Generic,
     List,
     Optional,
     Tuple,
@@ -15,6 +17,7 @@ from typing import (
 )
 
 from sanic_routing.route import Route
+from typing_extensions import TypeVar
 
 from sanic.http.constants import HTTP  # type: ignore
 from sanic.http.stream import Stream
@@ -23,13 +26,13 @@ from sanic.models.http_types import Credentials
 
 
 if TYPE_CHECKING:
-    from sanic.server import ConnInfo
     from sanic.app import Sanic
+    from sanic.config import Config
+    from sanic.server import ConnInfo
 
 import uuid
 
 from collections import defaultdict
-from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, urlunparse
 
 from httptools import parse_url
@@ -68,8 +71,16 @@ try:
 except ImportError:
     from json import loads as json_loads  # type: ignore
 
+if TYPE_CHECKING:
+    sanic_type = TypeVar(
+        "sanic_type", bound=Sanic, default=Sanic[Config, SimpleNamespace]
+    )
+else:
+    sanic_type = TypeVar("sanic_type")
+ctx_type = TypeVar("ctx_type")
 
-class Request:
+
+class Request(Generic[sanic_type, ctx_type]):
     """
     Properties of an HTTP request such as URL, headers, etc.
     """
@@ -80,6 +91,7 @@ class Request:
     __slots__ = (
         "__weakref__",
         "_cookies",
+        "_ctx",
         "_id",
         "_ip",
         "_parsed_url",
@@ -96,7 +108,6 @@ class Request:
         "app",
         "body",
         "conn_info",
-        "ctx",
         "head",
         "headers",
         "method",
@@ -125,7 +136,7 @@ class Request:
         version: str,
         method: str,
         transport: TransportProtocol,
-        app: Sanic,
+        app: sanic_type,
         head: bytes = b"",
         stream_id: int = 0,
     ):
@@ -138,7 +149,7 @@ class Request:
         self._id: Optional[Union[uuid.UUID, str, int]] = None
         self._name: Optional[str] = None
         self._stream_id = stream_id
-        self.app = app
+        self.app: sanic_type = app
 
         self.headers = Header(headers)
         self.version = version
@@ -149,7 +160,7 @@ class Request:
         # Init but do not inhale
         self.body = b""
         self.conn_info: Optional[ConnInfo] = None
-        self.ctx = SimpleNamespace()
+        self._ctx: Optional[ctx_type] = None
         self.parsed_accept: Optional[AcceptList] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters
@@ -175,6 +186,10 @@ class Request:
     def __repr__(self):
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.method} {self.path}>"
+
+    @staticmethod
+    def make_context() -> ctx_type:
+        return cast(ctx_type, SimpleNamespace())
 
     @classmethod
     def get_current(cls) -> Request:
@@ -204,6 +219,15 @@ class Request:
     @classmethod
     def generate_id(*_):
         return uuid.uuid4()
+
+    @property
+    def ctx(self) -> ctx_type:
+        """
+        :return: The current request context
+        """
+        if not self._ctx:
+            self._ctx = self.make_context()
+        return self._ctx
 
     @property
     def stream_id(self):

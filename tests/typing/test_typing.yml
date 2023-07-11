@@ -43,3 +43,78 @@
 
       app = Sanic("test", config=CustomConfig(), ctx=Foo())
       reveal_type(app)  # N: Revealed type is "sanic.app.Sanic[main.CustomConfig, main.Foo]"
+# DEFAULT WILL ONLY WORK WITH Python 3.12, but in IDEs it should work as expected
+# - case: request_type_default
+#   mypy_config: |
+#       follow_imports = silent
+#   main: |
+#       from sanic import Sanic, Request
+#       app = Sanic("test")
+
+#       @app.get("/")
+#       async def handler(request: Request):
+#           reveal_type(request.app)  # N: Revealed type is "sanic.app.Sanic[sanic.config.Config, types.SimpleNamespace]"
+- case: request_type_custom_sanic
+  mypy_config: |
+      follow_imports = silent
+  main: |
+      from sanic import Sanic, Request
+      from sanic.config import Config
+      from types import SimpleNamespace
+
+      class CustomConfig(Config):
+          pass
+
+      app = Sanic("test", config=CustomConfig())
+
+      @app.get("/")
+      async def handler(request: Request[Sanic[CustomConfig, SimpleNamespace], SimpleNamespace]):
+          reveal_type(request.app)  # N: Revealed type is "sanic.app.Sanic[main.CustomConfig, types.SimpleNamespace]"
+- case: request_type_custom_ctx
+  mypy_config: |
+      follow_imports = silent
+  main: |
+      from sanic import Sanic, Request
+      from sanic.config import Config
+      from types import SimpleNamespace
+
+      class Foo:
+          pass
+
+      app = Sanic("test")
+
+      @app.get("/")
+      async def handler(request: Request[Sanic[Config, SimpleNamespace], Foo]):
+          reveal_type(request.ctx)  # N: Revealed type is "main.Foo"
+- case: request_type_fully_custom
+  mypy_config: |
+      follow_imports = silent
+  main: |
+      from sanic import Sanic, Request
+      from sanic.config import Config
+
+      class CustomConfig(Config):
+          pass
+
+      class Foo:
+          pass
+
+      class RequestContext:
+          foo: Foo
+
+      class CustomRequest(Request[Sanic[CustomConfig, Foo], RequestContext]):
+          @staticmethod
+          def make_context() -> RequestContext:
+              ctx = RequestContext()
+              ctx.foo = Foo()
+              return ctx
+
+      app = Sanic(
+          "test", config=CustomConfig(), ctx=Foo(), request_class=CustomRequest
+       )
+
+      @app.get("/")
+      async def handler(request: CustomRequest):
+          reveal_type(request)  # N: Revealed type is "main.CustomRequest"
+          reveal_type(request.ctx)  # N: Revealed type is "main.RequestContext"
+          reveal_type(request.app)  # N: Revealed type is "sanic.app.Sanic[main.CustomConfig, main.Foo]"

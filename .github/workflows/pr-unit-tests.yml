@@ -45,7 +45,6 @@ jobs:
           - { python-version: "3.9", tox-env: py39-no-ext }
           - { python-version: "3.10", tox-env: py310-no-ext }
           - { python-version: "3.11", tox-env: py310-no-ext }
-    continue-on-error: true
     steps:
       - name: Run unit tests
         id: run-unit-tests
@@ -53,7 +52,4 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version }}
           tox-env: ${{ matrix.config.tox-env }}
-
-      - name: Output warning if failed
-        if: steps.run-unit-tests.outcome == 'failure'
-        run: Write-Host "::warning::Unit tests failed, but exiting with success code"
+          ignore-errors: true

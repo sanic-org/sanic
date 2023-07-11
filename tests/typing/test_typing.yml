@@ -1,0 +1,45 @@
+- case: app_type_default
+  mypy_config: |
+      follow_imports = silent
+  main: |
+      from sanic import Sanic
+      app = Sanic("test")
+      reveal_type(app)  # N: Revealed type is "sanic.app.Sanic[sanic.config.Config, types.SimpleNamespace]"
+- case: app_type_custom_config
+  mypy_config: |
+      follow_imports = silent
+  main: |
+      from sanic import Sanic
+      from sanic.config import Config
+
+      class CustomConfig(Config):
+          pass
+
+      app = Sanic("test", config=CustomConfig())
+      reveal_type(app)  # N: Revealed type is "sanic.app.Sanic[main.CustomConfig, types.SimpleNamespace]"
+- case: app_type_custom_ctx
+  mypy_config: |
+      follow_imports = silent
+  main: |
+      from sanic import Sanic
+
+      class Foo:
+          pass
+
+      app = Sanic("test", ctx=Foo())
+      reveal_type(app)  # N: Revealed type is "sanic.app.Sanic[sanic.config.Config, main.Foo]"
+- case: app_type_fully_custom
+  mypy_config: |
+      follow_imports = silent
+  main: |
+      from sanic import Sanic
+      from sanic.config import Config
+
+      class CustomConfig(Config):
+          pass
+
+      class Foo:
+          pass
+
+      app = Sanic("test", config=CustomConfig(), ctx=Foo())
+      reveal_type(app)  # N: Revealed type is "sanic.app.Sanic[main.CustomConfig, main.Foo]"

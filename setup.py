@@ -121,6 +121,7 @@ tests_require = [
     "beautifulsoup4",
     "pytest-sanic",
     "pytest-benchmark",
+    "pytest-mypy-plugins",
     "chardet==3.*",
     "flake8",
     "black",

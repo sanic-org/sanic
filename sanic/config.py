@@ -50,7 +50,7 @@ DEFAULT_CONFIG = {
     "INSPECTOR_TLS_KEY": _default,
     "INSPECTOR_TLS_CERT": _default,
     "INSPECTOR_API_KEY": "",
-    "KEEP_ALIVE_TIMEOUT": 80,  # 80 seconds
+    "KEEP_ALIVE_TIMEOUT": 120,  # Two minutes matches Caddy, exceeds Nginx default
     "KEEP_ALIVE": True,
     "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
     "LOCAL_TLS_KEY": _default,

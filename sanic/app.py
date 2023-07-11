@@ -16,7 +16,7 @@ from asyncio import (
 )
 from asyncio.futures import Future
 from collections import defaultdict, deque
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from functools import partial
 from inspect import isawaitable
 from os import environ
@@ -29,10 +29,12 @@ from typing import (
     AnyStr,
     Awaitable,
     Callable,
+    ClassVar,
     Coroutine,
     Deque,
     Dict,
     Iterable,
+    Iterator,
     List,
     Optional,
     Set,
@@ -48,7 +50,7 @@ from sanic_routing.route import Route
 
 from sanic.application.ext import setup_ext
 from sanic.application.state import ApplicationState, ServerStage
-from sanic.asgi import ASGIApp
+from sanic.asgi import ASGIApp, Lifespan
 from sanic.base.root import BaseSanic
 from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
@@ -63,15 +65,11 @@ from sanic.exceptions import (
 from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
-from sanic.log import (
-    LOGGING_CONFIG_DEFAULTS,
-    deprecation,
-    error_logger,
-    logger,
-)
+from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
+from sanic.mixins.static import StaticHandleMixin
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -79,7 +77,6 @@ from sanic.models.futures import (
     FutureRegistry,
     FutureRoute,
     FutureSignal,
-    FutureStatic,
 )
 from sanic.models.handler_types import ListenerType, MiddlewareType
 from sanic.models.handler_types import Sanic as SanicVar
@@ -91,6 +88,7 @@ from sanic.signals import Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
+from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
 
 
@@ -106,7 +104,7 @@ if OS_IS_WINDOWS:  # no cov
     enable_windows_color_support()
 
 
-class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
+class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     """
     The main application instance
     """
@@ -119,6 +117,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     )
     __slots__ = (
         "_asgi_app",
+        "_asgi_lifespan",
         "_asgi_client",
         "_blueprint_order",
         "_delayed_tasks",
@@ -137,6 +136,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "_test_client",
         "_test_manager",
         "blueprints",
+        "certloader_class",
         "config",
         "configure_logging",
         "ctx",
@@ -159,8 +159,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         "websocket_tasks",
     )
 
-    _app_registry: Dict[str, "Sanic"] = {}
-    test_mode = False
+    _app_registry: ClassVar[Dict[str, "Sanic"]] = {}
+    test_mode: ClassVar[bool] = False
 
     def __init__(
         self,
@@ -179,6 +179,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         loads: Optional[Callable[..., Any]] = None,
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
+        certloader_class: Optional[Type[CertLoader]] = None,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -198,6 +199,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             self.config.INSPECTOR = inspector
 
         # Then we can do the rest
+        self._asgi_app: Optional[ASGIApp] = None
+        self._asgi_lifespan: Optional[Lifespan] = None
         self._asgi_client: Any = None
         self._blueprint_order: List[Blueprint] = []
         self._delayed_tasks: List[str] = []
@@ -211,6 +214,9 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.asgi = False
         self.auto_reload = False
         self.blueprints: Dict[str, Blueprint] = {}
+        self.certloader_class: Type[CertLoader] = (
+            certloader_class or CertLoader
+        )
         self.configure_logging: bool = configure_logging
         self.ctx: Any = ctx or SimpleNamespace()
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
@@ -412,8 +418,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     def _apply_listener(self, listener: FutureListener):
         return self.register_listener(listener.listener, listener.event)
 
-    def _apply_route(self, route: FutureRoute) -> List[Route]:
+    def _apply_route(
+        self, route: FutureRoute, overwrite: bool = False
+    ) -> List[Route]:
         params = route._asdict()
+        params["overwrite"] = overwrite
         websocket = params.pop("websocket", False)
         subprotocols = params.pop("subprotocols", None)
 
@@ -430,36 +439,36 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
 
         ctx = params.pop("route_context")
 
-        routes = self.router.add(**params)
-        if isinstance(routes, Route):
-            routes = [routes]
+        with self.amend():
+            routes = self.router.add(**params)
+            if isinstance(routes, Route):
+                routes = [routes]
 
-        for r in routes:
-            r.extra.websocket = websocket
-            r.extra.static = params.get("static", False)
-            r.ctx.__dict__.update(ctx)
+            for r in routes:
+                r.extra.websocket = websocket
+                r.extra.static = params.get("static", False)
+                r.ctx.__dict__.update(ctx)
 
         return routes
-
-    def _apply_static(self, static: FutureStatic) -> Route:
-        return self._register_static(static)
 
     def _apply_middleware(
         self,
         middleware: FutureMiddleware,
         route_names: Optional[List[str]] = None,
     ):
-        if route_names:
-            return self.register_named_middleware(
-                middleware.middleware, route_names, middleware.attach_to
-            )
-        else:
-            return self.register_middleware(
-                middleware.middleware, middleware.attach_to
-            )
+        with self.amend():
+            if route_names:
+                return self.register_named_middleware(
+                    middleware.middleware, route_names, middleware.attach_to
+                )
+            else:
+                return self.register_middleware(
+                    middleware.middleware, middleware.attach_to
+                )
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
-        return self.signal_router.add(*signal)
+        with self.amend():
+            return self.signal_router.add(*signal)
 
     def dispatch(
         self,
@@ -545,6 +554,9 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                             )
                         else:
                             params["version_prefix"] = blueprint.version_prefix
+                    name_prefix = getattr(blueprint, "name_prefix", None)
+                    if name_prefix and "name_prefix" not in params:
+                        params["name_prefix"] = name_prefix
                 self.blueprint(item, **params)
             return
         if blueprint.name in self.blueprints:
@@ -763,6 +775,10 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         """
         response = None
         await self.dispatch(
+            "server.lifecycle.exception",
+            context={"exception": exception},
+        )
+        await self.dispatch(
             "http.lifecycle.exception",
             inline=True,
             context={"request": request, "exception": exception},
@@ -878,6 +894,8 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         :param request: HTTP Request object
         :return: Nothing
         """
+        __tracebackhide__ = True
+
         await self.dispatch(
             "http.lifecycle.handle",
             inline=True,
@@ -890,11 +908,11 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             Union[
                 BaseHTTPResponse,
                 Coroutine[Any, Any, Optional[BaseHTTPResponse]],
+                ResponseStream,
             ]
         ] = None
         run_middleware = True
         try:
-
             await self.dispatch(
                 "http.routing.before",
                 inline=True,
@@ -926,7 +944,6 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 and request.stream.request_body
                 and not route.extra.ignore_body
             ):
-
                 if hasattr(handler, "is_stream"):
                     # Streaming handler: lift the size limit
                     request.stream.request_max_size = float("inf")
@@ -1000,7 +1017,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 ...
                 await response.send(end_stream=True)
             elif isinstance(response, ResponseStream):
-                resp = await response(request)  # type: ignore
+                resp = await response(request)
                 await self.dispatch(
                     "http.lifecycle.response",
                     inline=True,
@@ -1009,7 +1026,7 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                         "response": resp,
                     },
                 )
-                await response.eof()  # type: ignore
+                await response.eof()
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
@@ -1211,18 +1228,9 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     ) -> Task:
         if not isinstance(task, Future):
             prepped = cls._prep_task(task, app, loop)
-            if sys.version_info < (3, 8):  # no cov
-                task = loop.create_task(prepped)
-                if name:
-                    error_logger.warning(
-                        "Cannot set a name for a task when using Python 3.7. "
-                        "Your task will be created without a name."
-                    )
-                task.get_name = lambda: name
-            else:
-                task = loop.create_task(prepped, name=name)
+            task = loop.create_task(prepped, name=name)
 
-        if name and register and sys.version_info > (3, 7):
+        if name and register:
             app._task_registry[name] = task
 
         return task
@@ -1351,12 +1359,14 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         three arguments: scope, receive, send. See the ASGI reference for more
         details: https://asgi.readthedocs.io/en/latest
         """
-        self.asgi = True
         if scope["type"] == "lifespan":
+            self.asgi = True
             self.motd("")
-        self._asgi_app = await ASGIApp.create(self, scope, receive, send)
-        asgi_app = self._asgi_app
-        await asgi_app()
+            self._asgi_lifespan = Lifespan(self, scope, receive, send)
+            await self._asgi_lifespan()
+        else:
+            self._asgi_app = await ASGIApp.create(self, scope, receive, send)
+            await self._asgi_app()
 
     _asgi_single_callable = True  # We conform to ASGI 3.0 single-callable
 
@@ -1517,6 +1527,27 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     # Lifecycle
     # -------------------------------------------------------------------- #
 
+    @contextmanager
+    def amend(self) -> Iterator[None]:
+        """
+        If the application has started, this function allows changes
+        to be made to add routes, middleware, and signals.
+        """
+        if not self.state.is_started:
+            yield
+        else:
+            do_router = self.router.finalized
+            do_signal_router = self.signal_router.finalized
+            if do_router:
+                self.router.reset()
+            if do_signal_router:
+                self.signal_router.reset()
+            yield
+            if do_signal_router:
+                self.signalize(self.config.TOUCHUP)
+            if do_router:
+                self.finalize()
+
     def finalize(self):
         try:
             self.router.finalize()
@@ -1550,17 +1581,20 @@ class Sanic(BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         self.signalize(self.config.TOUCHUP)
         self.finalize()
 
-        route_names = [route.name for route in self.router.routes]
+        route_names = [route.extra.ident for route in self.router.routes]
         duplicates = {
             name for name in route_names if route_names.count(name) > 1
         }
         if duplicates:
             names = ", ".join(duplicates)
-            deprecation(
-                f"Duplicate route names detected: {names}. In the future, "
-                "Sanic will enforce uniqueness in route naming.",
-                23.3,
+            message = (
+                f"Duplicate route names detected: {names}. You should rename "
+                "one or more of them explicitly by using the `name` param, "
+                "or changing the implicit name derived from the class and "
+                "function name. For more details, please see "
+                "https://sanic.dev/en/guide/release-notes/v23.3.html#duplicated-route-names-are-no-longer-allowed"  # noqa
             )
+            raise ServerError(message)
 
         Sanic._check_uvloop_conflict()
 

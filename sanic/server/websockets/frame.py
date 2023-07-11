@@ -52,7 +52,6 @@ class WebsocketFrameAssembler:
         paused: bool
 
     def __init__(self, protocol) -> None:
-
         self.protocol = protocol
 
         self.read_mutex = asyncio.Lock()

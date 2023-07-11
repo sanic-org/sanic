@@ -12,6 +12,7 @@ Setting ``app.config.FALLBACK_ERROR_FORMAT = "auto"`` will enable a switch that
 will attempt to provide an appropriate response format based upon the
 request type.
 """
+from __future__ import annotations
 
 import sys
 import typing as t
@@ -21,8 +22,9 @@ from traceback import extract_tb
 
 from sanic.exceptions import BadRequest, SanicException
 from sanic.helpers import STATUS_CODES
-from sanic.request import Request
-from sanic.response import HTTPResponse, html, json, text
+from sanic.log import deprecation, logger
+from sanic.pages.error import ErrorPage
+from sanic.response import html, json, text
 
 
 dumps: t.Callable[..., str]
@@ -33,13 +35,15 @@ try:
 except ImportError:  # noqa
     from json import dumps
 
+if t.TYPE_CHECKING:
+    from sanic import HTTPResponse, Request
 
 DEFAULT_FORMAT = "auto"
-FALLBACK_TEXT = (
-    "The server encountered an internal error and "
-    "cannot complete your request."
-)
+FALLBACK_TEXT = """\
+The application encountered an unexpected error and could not continue.\
+"""
 FALLBACK_STATUS = 500
+JSON = "application/json"
 
 
 class BaseRenderer:
@@ -88,8 +92,10 @@ class BaseRenderer:
             self.full
             if self.debug and not getattr(self.exception, "quiet", False)
             else self.minimal
-        )
-        return output()
+        )()
+        output.status = self.status
+        output.headers.update(self.headers)
+        return output
 
     def minimal(self) -> HTTPResponse:  # noqa
         """
@@ -113,134 +119,18 @@ class HTMLRenderer(BaseRenderer):
     The default fallback type.
     """
 
-    TRACEBACK_STYLE = """
-        html { font-family: sans-serif }
-        h2 { color: #888; }
-        .tb-wrapper p, dl, dd { margin: 0 }
-        .frame-border { margin: 1rem }
-        .frame-line > *, dt, dd { padding: 0.3rem 0.6rem }
-        .frame-line, dl { margin-bottom: 0.3rem }
-        .frame-code, dd { font-size: 16px; padding-left: 4ch }
-        .tb-wrapper, dl { border: 1px solid #eee }
-        .tb-header,.obj-header {
-            background: #eee; padding: 0.3rem; font-weight: bold
-        }
-        .frame-descriptor, dt { background: #e2eafb; font-size: 14px }
-    """
-    TRACEBACK_WRAPPER_HTML = (
-        "<div class=tb-header>{exc_name}: {exc_value}</div>"
-        "<div class=tb-wrapper>{frame_html}</div>"
-    )
-    TRACEBACK_BORDER = (
-        "<div class=frame-border>"
-        "The above exception was the direct cause of the following exception:"
-        "</div>"
-    )
-    TRACEBACK_LINE_HTML = (
-        "<div class=frame-line>"
-        "<p class=frame-descriptor>"
-        "File {0.filename}, line <i>{0.lineno}</i>, "
-        "in <code><b>{0.name}</b></code>"
-        "<p class=frame-code><code>{0.line}</code>"
-        "</div>"
-    )
-    OBJECT_WRAPPER_HTML = (
-        "<div class=obj-header>{title}</div>"
-        "<dl class={obj_type}>{display_html}</dl>"
-    )
-    OBJECT_DISPLAY_HTML = "<dt>{key}</dt><dd><code>{value}</code></dd>"
-    OUTPUT_HTML = (
-        "<!DOCTYPE html><html lang=en>"
-        "<meta charset=UTF-8><title>{title}</title>\n"
-        "<style>{style}</style>\n"
-        "<h1>{title}</h1><p>{text}\n"
-        "{body}"
-    )
-
     def full(self) -> HTTPResponse:
-        return html(
-            self.OUTPUT_HTML.format(
-                title=self.title,
-                text=self.text,
-                style=self.TRACEBACK_STYLE,
-                body=self._generate_body(full=True),
-            ),
-            status=self.status,
+        page = ErrorPage(
+            debug=self.debug,
+            title=super().title,
+            text=super().text,
+            request=self.request,
+            exc=self.exception,
         )
+        return html(page.render())
 
     def minimal(self) -> HTTPResponse:
-        return html(
-            self.OUTPUT_HTML.format(
-                title=self.title,
-                text=self.text,
-                style=self.TRACEBACK_STYLE,
-                body=self._generate_body(full=False),
-            ),
-            status=self.status,
-            headers=self.headers,
-        )
-
-    @property
-    def text(self):
-        return escape(super().text)
-
-    @property
-    def title(self):
-        return escape(f"⚠️ {super().title}")
-
-    def _generate_body(self, *, full):
-        lines = []
-        if full:
-            _, exc_value, __ = sys.exc_info()
-            exceptions = []
-            while exc_value:
-                exceptions.append(self._format_exc(exc_value))
-                exc_value = exc_value.__cause__
-
-            traceback_html = self.TRACEBACK_BORDER.join(reversed(exceptions))
-            appname = escape(self.request.app.name)
-            name = escape(self.exception.__class__.__name__)
-            value = escape(self.exception)
-            path = escape(self.request.path)
-            lines += [
-                f"<h2>Traceback of {appname} " "(most recent call last):</h2>",
-                f"{traceback_html}",
-                "<div class=summary><p>",
-                f"<b>{name}: {value}</b> "
-                f"while handling path <code>{path}</code>",
-                "</div>",
-            ]
-
-        for attr, display in (("context", True), ("extra", bool(full))):
-            info = getattr(self.exception, attr, None)
-            if info and display:
-                lines.append(self._generate_object_display(info, attr))
-
-        return "\n".join(lines)
-
-    def _generate_object_display(
-        self, obj: t.Dict[str, t.Any], descriptor: str
-    ) -> str:
-        display = "".join(
-            self.OBJECT_DISPLAY_HTML.format(key=key, value=value)
-            for key, value in obj.items()
-        )
-        return self.OBJECT_WRAPPER_HTML.format(
-            title=descriptor.title(),
-            display_html=display,
-            obj_type=descriptor.lower(),
-        )
-
-    def _format_exc(self, exc):
-        frames = extract_tb(exc.__traceback__)
-        frame_html = "".join(
-            self.TRACEBACK_LINE_HTML.format(frame) for frame in frames
-        )
-        return self.TRACEBACK_WRAPPER_HTML.format(
-            exc_name=escape(exc.__class__.__name__),
-            exc_value=escape(exc),
-            frame_html=frame_html,
-        )
+        return self.full()
 
 
 class TextRenderer(BaseRenderer):
@@ -258,8 +148,7 @@ class TextRenderer(BaseRenderer):
                 text=self.text,
                 bar=("=" * len(self.title)),
                 body=self._generate_body(full=True),
-            ),
-            status=self.status,
+            )
         )
 
     def minimal(self) -> HTTPResponse:
@@ -269,9 +158,7 @@ class TextRenderer(BaseRenderer):
                 text=self.text,
                 bar=("=" * len(self.title)),
                 body=self._generate_body(full=False),
-            ),
-            status=self.status,
-            headers=self.headers,
+            )
         )
 
     @property
@@ -330,11 +217,11 @@ class JSONRenderer(BaseRenderer):
 
     def full(self) -> HTTPResponse:
         output = self._generate_output(full=True)
-        return json(output, status=self.status, dumps=self.dumps)
+        return json(output, dumps=self.dumps)
 
     def minimal(self) -> HTTPResponse:
         output = self._generate_output(full=False)
-        return json(output, status=self.status, dumps=self.dumps)
+        return json(output, dumps=self.dumps)
 
     def _generate_output(self, *, full):
         output = {
@@ -388,32 +275,26 @@ def escape(text):
     return f"{text}".replace("&", "&amp;").replace("<", "&lt;")
 
 
-RENDERERS_BY_CONFIG = {
-    "html": HTMLRenderer,
-    "json": JSONRenderer,
-    "text": TextRenderer,
+MIME_BY_CONFIG = {
+    "text": "text/plain",
+    "json": "application/json",
+    "html": "text/html",
 }
-
+CONFIG_BY_MIME = {v: k for k, v in MIME_BY_CONFIG.items()}
 RENDERERS_BY_CONTENT_TYPE = {
     "text/plain": TextRenderer,
     "application/json": JSONRenderer,
     "multipart/form-data": HTMLRenderer,
     "text/html": HTMLRenderer,
 }
-CONTENT_TYPE_BY_RENDERERS = {
-    v: k for k, v in RENDERERS_BY_CONTENT_TYPE.items()
-}
 
+# Handler source code is checked for which response types it returns with the
+# route error_format="auto" (default) to determine which format to use.
 RESPONSE_MAPPING = {
-    "empty": "html",
     "json": "json",
     "text": "text",
-    "raw": "text",
     "html": "html",
-    "file": "html",
-    "file_stream": "text",
-    "stream": "text",
-    "redirect": "html",
+    "JSONResponse": "json",
     "text/plain": "text",
     "text/html": "html",
     "application/json": "json",
@@ -421,7 +302,7 @@ RESPONSE_MAPPING = {
 
 
 def check_error_format(format):
-    if format not in RENDERERS_BY_CONFIG and format != "auto":
+    if format not in MIME_BY_CONFIG and format != "auto":
         raise SanicException(f"Unknown format: {format}")
 
 
@@ -436,98 +317,68 @@ def exception_response(
     """
     Render a response for the default FALLBACK exception handler.
     """
-    content_type = None
-
     if not renderer:
-        # Make sure we have something set
-        renderer = base
-        render_format = fallback
-
-        if request:
-            # If there is a request, try and get the format
-            # from the route
-            if request.route:
-                try:
-                    if request.route.extra.error_format:
-                        render_format = request.route.extra.error_format
-                except AttributeError:
-                    ...
-
-            content_type = request.headers.getone("content-type", "").split(
-                ";"
-            )[0]
-
-            acceptable = request.accept
-
-            # If the format is auto still, make a guess
-            if render_format == "auto":
-                # First, if there is an Accept header, check if text/html
-                # is the first option
-                # According to MDN Web Docs, all major browsers use text/html
-                # as the primary value in Accept (with the exception of IE 8,
-                # and, well, if you are supporting IE 8, then you have bigger
-                # problems to concern yourself with than what default exception
-                # renderer is used)
-                # Source:
-                # https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation/List_of_default_Accept_values
-
-                if acceptable and acceptable[0].match(
-                    "text/html",
-                    allow_type_wildcard=False,
-                    allow_subtype_wildcard=False,
-                ):
-                    renderer = HTMLRenderer
-
-                # Second, if there is an Accept header, check if
-                # application/json is an option, or if the content-type
-                # is application/json
-                elif (
-                    acceptable
-                    and acceptable.match(
-                        "application/json",
-                        allow_type_wildcard=False,
-                        allow_subtype_wildcard=False,
-                    )
-                    or content_type == "application/json"
-                ):
-                    renderer = JSONRenderer
-
-                # Third, if there is no Accept header, assume we want text.
-                # The likely use case here is a raw socket.
-                elif not acceptable:
-                    renderer = TextRenderer
-                else:
-                    # Fourth, look to see if there was a JSON body
-                    # When in this situation, the request is probably coming
-                    # from curl, an API client like Postman or Insomnia, or a
-                    # package like requests or httpx
-                    try:
-                        # Give them the benefit of the doubt if they did:
-                        # $ curl localhost:8000 -d '{"foo": "bar"}'
-                        # And provide them with JSONRenderer
-                        renderer = JSONRenderer if request.json else base
-                    except BadRequest:
-                        renderer = base
-            else:
-                renderer = RENDERERS_BY_CONFIG.get(render_format, renderer)
-
-            # Lastly, if there is an Accept header, make sure
-            # our choice is okay
-            if acceptable:
-                type_ = CONTENT_TYPE_BY_RENDERERS.get(renderer)  # type: ignore
-                if type_ and type_ not in acceptable:
-                    # If the renderer selected is not in the Accept header
-                    # look through what is in the Accept header, and select
-                    # the first option that matches. Otherwise, just drop back
-                    # to the original default
-                    for accept in acceptable:
-                        mtype = f"{accept.type_}/{accept.subtype}"
-                        maybe = RENDERERS_BY_CONTENT_TYPE.get(mtype)
-                        if maybe:
-                            renderer = maybe
-                            break
-                    else:
-                        renderer = base
+        mt = guess_mime(request, fallback)
+        renderer = RENDERERS_BY_CONTENT_TYPE.get(mt, base)
 
     renderer = t.cast(t.Type[BaseRenderer], renderer)
     return renderer(request, exception, debug).render()
+
+
+def guess_mime(req: Request, fallback: str) -> str:
+    # Attempt to find a suitable MIME format for the response.
+    # Insertion-ordered map of formats["html"] = "source of that suggestion"
+    formats = {}
+    name = ""
+    # Route error_format (by magic from handler code if auto, the default)
+    if req.route:
+        name = req.route.name
+        f = req.route.extra.error_format
+        if f in MIME_BY_CONFIG:
+            formats[f] = name
+
+    if not formats and fallback in MIME_BY_CONFIG:
+        formats[fallback] = "FALLBACK_ERROR_FORMAT"
+
+    # If still not known, check for the request for clues of JSON
+    if not formats and fallback == "auto" and req.accept.match(JSON):
+        if JSON in req.accept:  # Literally, not wildcard
+            formats["json"] = "request.accept"
+        elif JSON in req.headers.getone("content-type", ""):
+            formats["json"] = "content-type"
+        # DEPRECATION: Remove this block in 24.3
+        else:
+            c = None
+            try:
+                c = req.json
+            except BadRequest:
+                pass
+            if c:
+                formats["json"] = "request.json"
+                deprecation(
+                    "Response type was determined by the JSON content of "
+                    "the request. This behavior is deprecated and will be "
+                    "removed in v24.3. Please specify the format either by\n"
+                    f'  error_format="json" on route {name}, by\n'
+                    '  FALLBACK_ERROR_FORMAT = "json", or by adding header\n'
+                    "  accept: application/json to your requests.",
+                    24.3,
+                )
+
+    # Any other supported formats
+    if fallback == "auto":
+        for k in MIME_BY_CONFIG:
+            if k not in formats:
+                formats[k] = "any"
+
+    mimes = [MIME_BY_CONFIG[k] for k in formats]
+    m = req.accept.match(*mimes)
+    if m:
+        format = CONFIG_BY_MIME[m.mime]
+        source = formats[format]
+        logger.debug(
+            f"The client accepts {m.header}, using '{format}' from {source}"
+        )
+    else:
+        logger.debug(f"No format found, the client accepts {req.accept!r}")
+    return m.mime

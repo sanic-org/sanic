@@ -303,6 +303,10 @@ def test_bp_with_host_list(app: Sanic):
 
     assert response.text == "Hello subdomain!"
 
+    route_names = [r.name for r in app.router.routes]
+    assert "test_bp_with_host_list.test_bp_host.handler1" in route_names
+    assert "test_bp_with_host_list.test_bp_host.handler2" in route_names
+
 
 def test_several_bp_with_host_list(app: Sanic):
     bp = Blueprint(

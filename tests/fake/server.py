@@ -49,6 +49,6 @@ def create_app_with_args(args):
     try:
         logger.info(f"foo={args.foo}")
     except AttributeError:
-        logger.info(f"module={args.module}")
+        logger.info(f"target={args.target}")
 
     return app

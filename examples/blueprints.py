@@ -37,4 +37,5 @@ app.blueprint(blueprint)
 app.blueprint(blueprint2)
 app.blueprint(blueprint3)
 
-app.run(host="0.0.0.0", port=9999, debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=9999, debug=True)

@@ -5,7 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict
 from warnings import warn
 
-from sanic.compat import is_atty
+from sanic.helpers import is_atty
 
 
 # Python 3.11 changed the way Enum formatting works for mixed-in types.
@@ -62,13 +62,13 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     },
     formatters={
         "generic": {
-            "format": "%(asctime)s [%(process)d] [%(levelname)s] %(message)s",
+            "format": "%(asctime)s [%(process)s] [%(levelname)s] %(message)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },
         "access": {
             "format": "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: "
-            + "%(request)s %(message)s %(status)d %(byte)d",
+            + "%(request)s %(message)s %(status)s %(byte)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },
@@ -126,7 +126,26 @@ logger.addFilter(_verbosity_filter)
 
 
 def deprecation(message: str, version: float):  # no cov
-    version_info = f"[DEPRECATION v{version}] "
+    """
+    Add a deprecation notice
+
+    Example when a feature is being removed. In this case, version
+    should be AT LEAST next version + 2
+
+        deprecation("Helpful message", 99.9)
+
+    Example when a feature is deprecated but not being removed:
+
+        deprecation("Helpful message", 0)
+
+    :param message: The message of the notice
+    :type message: str
+    :param version: The version when the feature will be removed. If it is
+      not being removed, then set version=0.
+    :type version: float
+    """
+    version_display = f" v{version}" if version else ""
+    version_info = f"[DEPRECATION{version_display}] "
     if is_atty():
         version_info = f"{Colors.RED}{version_info}"
         message = f"{Colors.YELLOW}{message}{Colors.END}"

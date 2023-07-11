@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 import sys
@@ -10,16 +9,7 @@ from time import gmtime, strftime
 import pytest
 
 from sanic import Sanic, text
-from sanic.exceptions import FileNotFound
-
-
-@pytest.fixture(scope="module")
-def static_file_directory():
-    """The static directory to serve"""
-    current_file = inspect.getfile(inspect.currentframe())
-    current_directory = os.path.dirname(os.path.abspath(current_file))
-    static_directory = os.path.join(current_directory, "static")
-    return static_directory
+from sanic.exceptions import FileNotFound, ServerError
 
 
 @pytest.fixture(scope="module")
@@ -113,14 +103,39 @@ def test_static_file_pathlib(app, static_file_directory, file_name):
 
 @pytest.mark.parametrize(
     "file_name",
+    [
+        "test.file",
+        "decode me.txt",
+        "python.png",
+        "symlink",
+        "hard_link",
+    ],
+)
+def test_static_file_pathlib_relative_path_traversal(
+    app, static_file_directory, file_name
+):
+    """Get the current working directory and check if it ends with "sanic" """
+    cwd = Path.cwd()
+    if not str(cwd).endswith("sanic"):
+        pytest.skip("Current working directory does not end with 'sanic'")
+
+    file_path = "./tests/static/../static/"
+    app.static("/", file_path)
+    _, response = app.test_client.get(f"/{file_name}")
+    assert response.status == 200
+    assert response.body == get_file_content(static_file_directory, file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
     [b"test.file", b"decode me.txt", b"python.png"],
 )
 def test_static_file_bytes(app, static_file_directory, file_name):
     bsep = os.path.sep.encode("utf-8")
     file_path = static_file_directory.encode("utf-8") + bsep + file_name
-    app.static("/testing.file", file_path)
-    request, response = app.test_client.get("/testing.file")
-    assert response.status == 200
+    message = "Static file or directory must be a path-like object or string"
+    with pytest.raises(TypeError, match=message):
+        app.static("/testing.file", file_path)
 
 
 @pytest.mark.parametrize(
@@ -431,7 +446,6 @@ def test_static_stream_large_file(
     "file_name", ["test.file", "decode me.txt", "python.png"]
 )
 def test_use_modified_since(app, static_file_directory, file_name):
-
     file_stat = os.stat(get_file_path(static_file_directory, file_name))
     modified_since = strftime(
         "%a, %d %b %Y %H:%M:%S GMT", gmtime(file_stat.st_mtime)
@@ -529,9 +543,25 @@ def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
     assert response.text == "No file: /static/non_existing_file.file"
 
 
-def test_multiple_statics(app, static_file_directory):
+@pytest.mark.asyncio
+async def test_multiple_statics_error(app, static_file_directory):
     app.static("/file", get_file_path(static_file_directory, "test.file"))
     app.static("/png", get_file_path(static_file_directory, "python.png"))
+
+    message = (
+        r"Duplicate route names detected: test_multiple_statics_error\.static"
+    )
+    with pytest.raises(ServerError, match=message):
+        await app._startup()
+
+
+def test_multiple_statics(app, static_file_directory):
+    app.static(
+        "/file", get_file_path(static_file_directory, "test.file"), name="file"
+    )
+    app.static(
+        "/png", get_file_path(static_file_directory, "python.png"), name="png"
+    )
 
     _, response = app.test_client.get("/file")
     assert response.status == 200
@@ -546,9 +576,21 @@ def test_multiple_statics(app, static_file_directory):
     )
 
 
-def test_resource_type_default(app, static_file_directory):
+@pytest.mark.asyncio
+async def test_resource_type_default_error(app, static_file_directory):
     app.static("/static", static_file_directory)
     app.static("/file", get_file_path(static_file_directory, "test.file"))
+
+    message = r"Duplicate route names detected: test_resource_type_default_error\.static"
+    with pytest.raises(ServerError, match=message):
+        await app._startup()
+
+
+def test_resource_type_default(app, static_file_directory):
+    app.static("/static", static_file_directory, name="static")
+    app.static(
+        "/file", get_file_path(static_file_directory, "test.file"), name="file"
+    )
 
     _, response = app.test_client.get("/static")
     assert response.status == 404

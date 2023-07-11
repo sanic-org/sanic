@@ -9,6 +9,7 @@ omit =
     sanic/simple.py
     sanic/utils.py
     sanic/cli
+    sanic/pages
 
 [html]
 directory = coverage

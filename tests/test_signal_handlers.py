@@ -4,15 +4,18 @@ import signal
 
 from queue import Queue
 from types import SimpleNamespace
+from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
 
 from sanic_testing.testing import HOST, PORT
 
+from sanic import Sanic
 from sanic.compat import ctrlc_workaround_for_windows
-from sanic.exceptions import BadRequest
+from sanic.exceptions import BadRequest, ServerError
 from sanic.response import HTTPResponse
+from sanic.signals import Event
 
 
 async def stop(app, loop):
@@ -66,8 +69,8 @@ def test_no_register_system_signals_fails(app):
     app.listener("after_server_stop")(after)
 
     message = (
-        "Cannot run Sanic.serve with register_sys_signals=False. Use "
-        "either Sanic.serve_single or Sanic.serve_legacy."
+        r"Cannot run Sanic\.serve with register_sys_signals=False\. Use "
+        r"Sanic.serve_single\."
     )
     with pytest.raises(RuntimeError, match=message):
         app.prepare(HOST, PORT, register_sys_signals=False)
@@ -93,6 +96,7 @@ def test_dont_register_system_signals(app):
 @pytest.mark.skipif(os.name == "nt", reason="windows cannot SIGINT processes")
 def test_windows_workaround():
     """Test Windows workaround (on any other OS)"""
+
     # At least some code coverage, even though this test doesn't work on
     # Windows...
     class MockApp:
@@ -147,3 +151,26 @@ def test_signals_with_invalid_invocation(app):
         BadRequest, match="Invalid event registration: Missing event name"
     ):
         app.listener(stop)
+
+
+def test_signal_server_lifecycle_exception(app: Sanic):
+    trigger: Optional[Exception] = None
+
+    @app.route("/hello")
+    async def hello_route(request):
+        return HTTPResponse()
+
+    @app.signal(Event.SERVER_LIFECYCLE_EXCEPTION)
+    async def test_signal(exception: Exception):
+        nonlocal trigger
+        trigger = exception
+
+    @app.before_server_start
+    async def test_before_server_start(app):
+        raise ServerError("test_before_server_start")
+
+    with pytest.raises(ServerError, match="test_before_server_start"):
+        app.run(single_process=True)
+
+    assert isinstance(trigger, ServerError)
+    assert str(trigger) == "test_before_server_start"

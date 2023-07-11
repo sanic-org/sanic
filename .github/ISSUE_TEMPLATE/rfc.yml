@@ -1,0 +1,33 @@
+name: 💡 Request for Comments
+description: Open an RFC for discussion
+labels: ["RFC"]
+body:
+  - type: input
+    id: compare
+    attributes:
+      label: Link to code
+      description: If available, share a [comparison](https://github.com/sanic-org/sanic/compare) from a POC branch to main
+      placeholder: https://github.com/sanic-org/sanic/compare/main...some-new-branch
+    validations:
+      required: false
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: A thorough discussion of the proposal discussing the problem it solves, potential code, use cases, and impacts
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add any other context that is relevant
+    validations:
+      required: false
+  - type: checkboxes
+    id: breaking
+    attributes:
+      label: Is this a breaking change?
+      options:
+        - label: "Yes"
+          required: false

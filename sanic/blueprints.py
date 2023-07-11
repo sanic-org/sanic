@@ -93,6 +93,8 @@ class Blueprint(BaseSanic):
         "_future_listeners",
         "_future_exceptions",
         "_future_signals",
+        "_allow_route_overwrite",
+        "copied_from",
         "ctx",
         "exceptions",
         "host",
@@ -118,6 +120,8 @@ class Blueprint(BaseSanic):
     ):
         super().__init__(name=name)
         self.reset()
+        self._allow_route_overwrite = False
+        self.copied_from = ""
         self.ctx = SimpleNamespace()
         self.host = host
         self.strict_slashes = strict_slashes
@@ -167,6 +171,7 @@ class Blueprint(BaseSanic):
 
     def reset(self):
         self._apps: Set[Sanic] = set()
+        self._allow_route_overwrite = False
         self.exceptions: List[RouteHandler] = []
         self.listeners: Dict[str, List[ListenerType[Any]]] = {}
         self.middlewares: List[MiddlewareType] = []
@@ -180,6 +185,7 @@ class Blueprint(BaseSanic):
         url_prefix: Optional[Union[str, Default]] = _default,
         version: Optional[Union[int, str, float, Default]] = _default,
         version_prefix: Union[str, Default] = _default,
+        allow_route_overwrite: Union[bool, Default] = _default,
         strict_slashes: Optional[Union[bool, Default]] = _default,
         with_registration: bool = True,
         with_ctx: bool = False,
@@ -213,6 +219,7 @@ class Blueprint(BaseSanic):
         self.reset()
         new_bp = deepcopy(self)
         new_bp.name = name
+        new_bp.copied_from = self.name
 
         if not isinstance(url_prefix, Default):
             new_bp.url_prefix = url_prefix
@@ -222,6 +229,8 @@ class Blueprint(BaseSanic):
             new_bp.strict_slashes = strict_slashes
         if not isinstance(version_prefix, Default):
             new_bp.version_prefix = version_prefix
+        if not isinstance(allow_route_overwrite, Default):
+            new_bp._allow_route_overwrite = allow_route_overwrite
 
         for key, value in attrs_backup.items():
             setattr(self, key, value)
@@ -247,6 +256,7 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
+        name_prefix: Optional[str] = "",
     ) -> BlueprintGroup:
         """
         Create a list of blueprints, optionally grouping them under a
@@ -272,6 +282,7 @@ class Blueprint(BaseSanic):
             version=version,
             strict_slashes=strict_slashes,
             version_prefix=version_prefix,
+            name_prefix=name_prefix,
         )
         for bp in chain(blueprints):
             bps.append(bp)
@@ -292,6 +303,7 @@ class Blueprint(BaseSanic):
         opt_version = options.get("version", None)
         opt_strict_slashes = options.get("strict_slashes", None)
         opt_version_prefix = options.get("version_prefix", self.version_prefix)
+        opt_name_prefix = options.get("name_prefix", None)
         error_format = options.get(
             "error_format", app.config.FALLBACK_ERROR_FORMAT
         )
@@ -306,6 +318,10 @@ class Blueprint(BaseSanic):
         for future in self._future_routes:
             # Prepend the blueprint URI prefix if available
             uri = self._setup_uri(future.uri, url_prefix)
+
+            route_error_format = (
+                future.error_format if future.error_format else error_format
+            )
 
             version_prefix = self.version_prefix
             for prefix in (
@@ -323,7 +339,10 @@ class Blueprint(BaseSanic):
                 future.strict_slashes, opt_strict_slashes, self.strict_slashes
             )
 
-            name = app._generate_name(future.name)
+            name = future.name
+            if opt_name_prefix:
+                name = f"{opt_name_prefix}_{future.name}"
+            name = app._generate_name(name)
             host = future.host or self.host
             if isinstance(host, list):
                 host = tuple(host)
@@ -343,7 +362,7 @@ class Blueprint(BaseSanic):
                 future.unquote,
                 future.static,
                 version_prefix,
-                error_format,
+                route_error_format,
                 future.route_context,
             )
 
@@ -351,7 +370,19 @@ class Blueprint(BaseSanic):
                 continue
 
             registered.add(apply_route)
-            route = app._apply_route(apply_route)
+            route = app._apply_route(
+                apply_route, overwrite=self._allow_route_overwrite
+            )
+
+            # If it is a copied BP, then make sure all of the names of routes
+            # matchup with the new BP name
+            if self.copied_from:
+                for r in route:
+                    r.name = r.name.replace(self.copied_from, self.name)
+                    r.extra.ident = r.extra.ident.replace(
+                        self.copied_from, self.name
+                    )
+
             operation = (
                 routes.extend if isinstance(route, list) else routes.append
             )

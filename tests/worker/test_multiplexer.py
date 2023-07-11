@@ -72,24 +72,6 @@ def test_not_have_multiplexer_single(app: Sanic):
     assert not event.is_set()
 
 
-def test_not_have_multiplexer_legacy(app: Sanic):
-    event = Event()
-
-    @app.main_process_start
-    async def setup(app, _):
-        app.shared_ctx.event = event
-
-    @app.after_server_start
-    def stop(app):
-        if hasattr(app, "m") and isinstance(app.m, WorkerMultiplexer):
-            app.shared_ctx.event.set()
-        app.stop()
-
-    app.run(legacy=True)
-
-    assert not event.is_set()
-
-
 def test_ack(worker_state: Dict[str, Any], m: WorkerMultiplexer):
     worker_state["Test"] = {"foo": "bar"}
     m.ack()

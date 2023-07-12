@@ -104,8 +104,24 @@ def test_check_app_default(
     for text, number in expected:
         current = CURRENT_DIR / f"samples/{path_location}"
         path = current.relative_to(CURRENT_DIR.parent)
-        relative_to_cwd = current.relative_to(Path.cwd())
-        prefix = ".".join(relative_to_cwd.parts[:-1])
-        text = text.replace(path.stem, f"{prefix}.{path.stem}")
-        note = f'{path}:{number}: note: Revealed type is "{text}"'
-        assert note in output, output
+
+        target = Path.cwd()
+        while True:
+            note = _text_from_path(current, path, target, number, text)
+            try:
+                assert note in output, output
+            except AssertionError:
+                target = target.parent
+                if not target.exists():
+                    raise
+            else:
+                break
+
+
+def _text_from_path(
+    base: Path, path: Path, target: Path, number: int, text: str
+) -> str:
+    relative_to_cwd = base.relative_to(target)
+    prefix = ".".join(relative_to_cwd.parts[:-1])
+    text = text.replace(path.stem, f"{prefix}.{path.stem}")
+    return f'{path}:{number}: note: Revealed type is "{text}"'

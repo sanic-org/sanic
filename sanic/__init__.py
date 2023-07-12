@@ -1,5 +1,6 @@
 from types import SimpleNamespace
-from typing import TypeAlias
+
+from typing_extensions import TypeAlias
 
 from sanic.__version__ import __version__
 from sanic.app import Sanic

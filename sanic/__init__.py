@@ -35,6 +35,7 @@ from sanic.response import (
 )
 from sanic.server.websockets.impl import WebsocketImplProtocol as Websocket
 
+
 SimpleRequest: TypeAlias = Request[
     Sanic[Config, SimpleNamespace], SimpleNamespace
 ]

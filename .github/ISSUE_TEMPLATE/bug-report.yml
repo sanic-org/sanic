@@ -24,11 +24,11 @@ body:
       description: |
           Relevant source code, make sure to remove what is not necessary. Please try and format your code so that it is easier to read. For example:
 
-          ```python
-          from sanic import Sanic
+              ```python
+              from sanic import Sanic
 
-          app = Sanic("Example")
-          ```
+              app = Sanic("Example")
+              ```
     validations:
       required: false
   - type: textarea
@@ -49,11 +49,16 @@ body:
         - ASGI
     validations:
       required: true
-  - type: input
+  - type: dropdown
     id: os
     attributes:
       label: Operating System
       description: What OS?
+      options:
+        - Linux
+        - MacOS
+        - Windows
+        - Other (tell us in the description)
     validations:
       required: true
   - type: input

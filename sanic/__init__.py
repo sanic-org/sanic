@@ -36,9 +36,15 @@ from sanic.response import (
 from sanic.server.websockets.impl import WebsocketImplProtocol as Websocket
 
 
-SimpleRequest: TypeAlias = Request[
-    Sanic[Config, SimpleNamespace], SimpleNamespace
-]
+SimpleSanic: TypeAlias = "Sanic[Config, SimpleNamespace]"
+"""
+A type alias for a Sanic app with a default config and namespace.
+"""
+
+SimpleRequest: TypeAlias = Request[SimpleSanic, SimpleNamespace]
+"""
+A type alias for a request with a default Sanic app and namespace.
+"""
 
 __all__ = (
     "__version__",
@@ -49,8 +55,10 @@ __all__ = (
     "HTTPMethod",
     "HTTPResponse",
     "Request",
-    "SimpleRequest",
     "Websocket",
+    # Common types
+    "SimpleSanic",
+    "SimpleRequest",
     # Common exceptions
     "BadRequest",
     "ExpectationFailed",

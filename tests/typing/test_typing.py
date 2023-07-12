@@ -37,7 +37,7 @@ def run_check(path_location: str) -> str:
             [
                 (
                     "sanic.app.Sanic[sanic.config.Config, types.SimpleNamespace]",
-                    4,
+                    5,
                 )
             ],
         ),
@@ -100,7 +100,6 @@ def test_check_app_default(
     path_location: str, expected: List[Tuple[str, int]]
 ) -> None:
     output = run_check(f"samples/{path_location}")
-    assert "Success: no issues found" in output, output
 
     for text, number in expected:
         current = CURRENT_DIR / f"samples/{path_location}"

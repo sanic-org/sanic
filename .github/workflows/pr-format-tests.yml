@@ -1,0 +1,30 @@
+name: Run format tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - current-release
+      - "*LTS"
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  run_format_tests:
+    name: "Format - ${{ matrix.config.tox-env }} - Python ${{ matrix.config.python-version }}"
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+          - { python-version: "3.10", tox-env: lint }
+          - { python-version: "3.10", tox-env: docs }
+          - { python-version: "3.8", tox-env: type-checking }
+          - { python-version: "3.9", tox-env: type-checking }
+          - { python-version: "3.10", tox-env: type-checking }
+          - { python-version: "3.11", tox-env: type-checking }
+    steps:
+      - name: Run format tests
+        uses: prryplatypus/simple-tox@main
+        with:
+          python-version: ${{ matrix.config.python-version }}
+          tox-env: ${{ matrix.config.tox-env }}

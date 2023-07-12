@@ -21,7 +21,14 @@ body:
     id: code
     attributes:
       label: Code snippet
-      description: Relevant source code, make sure to remove what is not necessary.
+      description: |
+          Relevant source code, make sure to remove what is not necessary. Please try and format your code so that it is easier to read. For example:
+
+          ```python
+          from sanic import Sanic
+
+          app = Sanic("Example")
+          ```
     validations:
       required: false
   - type: textarea

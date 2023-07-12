@@ -25,25 +25,13 @@ jobs:
           - { python-version: "3.10", tox-env: py310-no-ext }
           - { python-version: "3.11", tox-env: py311 }
           - { python-version: "3.11", tox-env: py311-no-ext }
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Python ${{ matrix.config.python-version }}
-        uses: actions/setup-python@v4
+      - name: Run unit tests
+        uses: prryplatypus/simple-tox@main
         with:
           python-version: ${{ matrix.config.python-version }}
-
-      - name: Install tox
-        run: pip install tox
-
-      - name: Run unit tests
-        uses: nick-fields/retry@v2
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          command: tox -e ${{ matrix.config.tox-env }}
+          tox-env: ${{ matrix.config.tox-env }}
+          max-attempts: 3
 
   run_windows_unit_tests:
     name: "Windows - ${{ matrix.config.tox-env }}"
@@ -57,23 +45,11 @@ jobs:
           - { python-version: "3.9", tox-env: py39-no-ext }
           - { python-version: "3.10", tox-env: py310-no-ext }
           - { python-version: "3.11", tox-env: py310-no-ext }
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Python ${{ matrix.config.python-version }}
-        uses: actions/setup-python@v4
+      - name: Run unit tests
+        id: run-unit-tests
+        uses: prryplatypus/simple-tox@main
         with:
           python-version: ${{ matrix.config.python-version }}
-
-      - name: Install tox
-        run: pip install tox
-
-      - name: Run unit tests
-        run: |
-          tox -e ${{ matrix.config.tox-env }}
-          if ($LASTEXITCODE -ne 0) {
-              Write-Host "::warning::Unit tests failed, but exiting with success code"
-              exit 0
-          }
+          tox-env: ${{ matrix.config.tox-env }}
+          ignore-errors: true

@@ -43,14 +43,14 @@ DEFAULT_CONFIG = {
     "DEPRECATION_FILTER": "once",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
-    "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,  # 15 sec
+    "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,
     "INSPECTOR": False,
     "INSPECTOR_HOST": "localhost",
     "INSPECTOR_PORT": 6457,
     "INSPECTOR_TLS_KEY": _default,
     "INSPECTOR_TLS_CERT": _default,
     "INSPECTOR_API_KEY": "",
-    "KEEP_ALIVE_TIMEOUT": 5,  # 5 seconds
+    "KEEP_ALIVE_TIMEOUT": 120,
     "KEEP_ALIVE": True,
     "LOCAL_CERT_CREATOR": LocalCertCreator.AUTO,
     "LOCAL_TLS_KEY": _default,
@@ -61,16 +61,16 @@ DEFAULT_CONFIG = {
     "NOISY_EXCEPTIONS": False,
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
-    "REQUEST_BUFFER_SIZE": 65536,  # 64 KiB
-    "REQUEST_MAX_HEADER_SIZE": 8192,  # 8 KiB, but cannot exceed 16384
+    "REQUEST_BUFFER_SIZE": 65536,
+    "REQUEST_MAX_HEADER_SIZE": 8192,  # Cannot exceed 16384
     "REQUEST_ID_HEADER": "X-Request-ID",
-    "REQUEST_MAX_SIZE": 100000000,  # 100 megabytes
-    "REQUEST_TIMEOUT": 60,  # 60 seconds
-    "RESPONSE_TIMEOUT": 60,  # 60 seconds
+    "REQUEST_MAX_SIZE": 100_000_000,
+    "REQUEST_TIMEOUT": 60,
+    "RESPONSE_TIMEOUT": 60,
     "TLS_CERT_PASSWORD": "",
     "TOUCHUP": _default,
     "USE_UVLOOP": _default,
-    "WEBSOCKET_MAX_SIZE": 2**20,  # 1 megabyte
+    "WEBSOCKET_MAX_SIZE": 2**20,  # 1 MiB
     "WEBSOCKET_PING_INTERVAL": 20,
     "WEBSOCKET_PING_TIMEOUT": 20,
 }

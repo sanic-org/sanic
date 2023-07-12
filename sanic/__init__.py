@@ -37,12 +37,12 @@ from sanic.response import (
 from sanic.server.websockets.impl import WebsocketImplProtocol as Websocket
 
 
-SimpleSanic: TypeAlias = "Sanic[Config, SimpleNamespace]"
+DefaultSanic: TypeAlias = "Sanic[Config, SimpleNamespace]"
 """
 A type alias for a Sanic app with a default config and namespace.
 """
 
-SimpleRequest: TypeAlias = Request[SimpleSanic, SimpleNamespace]
+DefaultRequest: TypeAlias = Request[DefaultSanic, SimpleNamespace]
 """
 A type alias for a request with a default Sanic app and namespace.
 """
@@ -58,8 +58,8 @@ __all__ = (
     "Request",
     "Websocket",
     # Common types
-    "SimpleSanic",
-    "SimpleRequest",
+    "DefaultSanic",
+    "DefaultRequest",
     # Common exceptions
     "BadRequest",
     "ExpectationFailed",

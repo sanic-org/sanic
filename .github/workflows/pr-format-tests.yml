@@ -1,4 +1,4 @@
-name: Run format tests
+name: Format tests
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   run_format_tests:
-    name: "Format - ${{ matrix.config.tox-env }} - Python ${{ matrix.config.python-version }}"
+    name: "${{ matrix.config.tox-env }} - Python ${{ matrix.config.python-version }}"
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:

@@ -1,4 +1,4 @@
-name: Run security tests
+name: Security tests
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   run_format_tests:
-    name: "Security - Python ${{ matrix.config.python-version }}"
+    name: "Python ${{ matrix.config.python-version }}"
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:

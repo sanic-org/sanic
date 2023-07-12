@@ -112,6 +112,7 @@ requirements = [
     "multidict>=5.0,<7.0",
     "html5tagger>=1.2.1",
     "tracerite>=1.0.0",
+    "typing-extensions>=4.4.0",
 ]
 
 tests_require = [
@@ -126,7 +127,7 @@ tests_require = [
     "black",
     "isort>=5.0.0",
     "bandit",
-    "mypy>=0.901,<0.910",
+    "mypy",
     "docutils",
     "pygments",
     "uvicorn<0.15.0",

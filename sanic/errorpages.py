@@ -312,7 +312,7 @@ def exception_response(
     debug: bool,
     fallback: str,
     base: t.Type[BaseRenderer],
-    renderer: t.Type[t.Optional[BaseRenderer]] = None,
+    renderer: t.Optional[t.Type[BaseRenderer]] = None,
 ) -> HTTPResponse:
     """
     Render a response for the default FALLBACK exception handler.

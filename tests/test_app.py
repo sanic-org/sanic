@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import re
-
 from collections import Counter
 from inspect import isawaitable
 from os import environ
@@ -10,7 +9,6 @@ from unittest.mock import Mock, patch
 import pytest
 
 import sanic
-
 from sanic import Sanic
 from sanic.compat import OS_IS_WINDOWS
 from sanic.config import Config
@@ -293,7 +291,7 @@ def test_handle_request_with_nested_sanic_exception(
 
 
 def test_app_name_required():
-    with pytest.raises(SanicException):
+    with pytest.raises(TypeError):
         Sanic()
 
 

@@ -1,13 +1,11 @@
 import asyncio
 import codecs
-
 from typing import TYPE_CHECKING, AsyncIterator, List, Optional
 
 from websockets.frames import Frame, Opcode
 from websockets.typing import Data
 
 from sanic.exceptions import ServerError
-
 
 if TYPE_CHECKING:
     from .impl import WebsocketImplProtocol
@@ -96,6 +94,7 @@ class WebsocketFrameAssembler:
         If ``timeout`` is set and elapses before a complete message is
         received, :meth:`get` returns ``None``.
         """
+        completed: bool
         async with self.read_mutex:
             if timeout is not None and timeout <= 0:
                 if not self.message_complete.is_set():

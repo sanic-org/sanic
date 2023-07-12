@@ -1,6 +1,10 @@
+from types import SimpleNamespace
+from typing import TypeAlias
+
 from sanic.__version__ import __version__
 from sanic.app import Sanic
 from sanic.blueprints import Blueprint
+from sanic.config import Config
 from sanic.constants import HTTPMethod
 from sanic.exceptions import (
     BadRequest,
@@ -31,15 +35,20 @@ from sanic.response import (
 )
 from sanic.server.websockets.impl import WebsocketImplProtocol as Websocket
 
+SimpleRequest: TypeAlias = Request[
+    Sanic[Config, SimpleNamespace], SimpleNamespace
+]
 
 __all__ = (
     "__version__",
     # Common objects
     "Sanic",
+    "Config",
     "Blueprint",
     "HTTPMethod",
     "HTTPResponse",
     "Request",
+    "SimpleRequest",
     "Websocket",
     # Common exceptions
     "BadRequest",

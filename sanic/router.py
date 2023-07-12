@@ -15,7 +15,6 @@ from sanic.errorpages import check_error_format
 from sanic.exceptions import MethodNotAllowed, NotFound, SanicException
 from sanic.models.handler_types import RouteHandler
 
-
 ROUTER_CACHE_SIZE = 1024
 ALLOWED_LABELS = ("__file_uri__",)
 
@@ -75,7 +74,7 @@ class Router(BaseRouter):
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
-        version: Union[str, float, int] = None,
+        version: Optional[Union[str, float, int]] = None,
         name: Optional[str] = None,
         unquote: bool = False,
         static: bool = False,

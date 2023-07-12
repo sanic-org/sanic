@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-
 from collections import defaultdict
 from copy import deepcopy
 from functools import wraps
@@ -34,7 +33,6 @@ from sanic.models.handler_types import (
     MiddlewareType,
     RouteHandler,
 )
-
 
 if TYPE_CHECKING:
     from sanic import Sanic
@@ -111,7 +109,7 @@ class Blueprint(BaseSanic):
 
     def __init__(
         self,
-        name: str = None,
+        name: str,
         url_prefix: Optional[str] = None,
         host: Optional[Union[List[str], str]] = None,
         version: Optional[Union[int, str, float]] = None,

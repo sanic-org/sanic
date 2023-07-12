@@ -90,7 +90,7 @@ class SanicException(Exception):
 
         super().__init__(message)
 
-        self.status_code = status_code
+        self.status_code = status_code or self.status_code
         self.quiet = quiet
         self.headers = headers
 

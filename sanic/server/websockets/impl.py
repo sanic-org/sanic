@@ -1,7 +1,6 @@
 import asyncio
 import random
 import struct
-
 from typing import (
     AsyncIterator,
     Dict,
@@ -19,9 +18,8 @@ from websockets.exceptions import (
 )
 from websockets.frames import Frame, Opcode
 
-
 try:  # websockets < 11.0
-    from websockets.connection import Event, State
+    from websockets.connection import Event, State  # type: ignore
     from websockets.server import ServerConnection as ServerProtocol
 except ImportError:  # websockets >= 11.0
     from websockets.protocol import Event, State  # type: ignore
@@ -34,7 +32,6 @@ from sanic.server.protocols.base_protocol import SanicProtocol
 
 from ...exceptions import ServerError, WebsocketClosed
 from .frame import WebsocketFrameAssembler
-
 
 OPEN = State.OPEN
 CLOSING = State.CLOSING

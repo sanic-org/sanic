@@ -513,6 +513,7 @@ def test_standard_forwarded(app):
     request, response = app.test_client.get("/", headers=headers)
     assert response.json == {"for": "127.0.0.2", "proto": "ws"}
     assert request.remote_addr == "127.0.0.2"
+    assert request.client_ip == "127.0.0.2"
     assert request.scheme == "ws"
     assert request.server_name == "local.site"
     assert request.server_port == 80
@@ -737,6 +738,7 @@ def test_remote_addr_with_two_proxies(app):
     headers = {"X-Forwarded-For": "127.0.1.1"}
     request, response = app.test_client.get("/", headers=headers)
     assert request.remote_addr == ""
+    assert request.client_ip == "127.0.0.1"
     assert response.body == b""
 
     headers = {"X-Forwarded-For": "127.0.0.1, 127.0.1.2"}

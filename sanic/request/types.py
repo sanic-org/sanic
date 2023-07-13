@@ -838,18 +838,30 @@ class Request(Generic[sanic_type, ctx_type]):
     @property
     def remote_addr(self) -> str:
         """
-        Client IP address, if available.
-        1. proxied remote address `self.forwarded['for']`
-        2. local remote address `self.ip`
+        Client IP address, if available from proxy.
 
         :return: IPv4, bracketed IPv6, UNIX socket name or arbitrary string
         :rtype: str
         """
         if not hasattr(self, "_remote_addr"):
-            self._remote_addr = str(
-                self.forwarded.get("for", "")
-            )  # or self.ip
+            self._remote_addr = str(self.forwarded.get("for", ""))
         return self._remote_addr
+
+    @property
+    def client_ip(self) -> str:
+        """
+        Client IP address.
+        1. proxied remote address `self.forwarded['for']`
+        2. local peer address `self.ip`
+
+        New in Sanic 23.6. Prefer this over `remote_addr` for determining the
+        client address regardless of whether the service runs behind a proxy
+        or not (proxy deployment needs separate configuration).
+
+        :return: IPv4, bracketed IPv6, UNIX socket name or arbitrary string
+        :rtype: str
+        """
+        return self.remote_addr or self.ip
 
     @property
     def scheme(self) -> str:

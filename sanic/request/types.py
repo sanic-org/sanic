@@ -862,7 +862,7 @@ class Request(Generic[sanic_type, ctx_type]):
         :rtype: str
         """
         return self.remote_addr or self.ip
-        
+
     @property
     def scheme(self) -> str:
         """

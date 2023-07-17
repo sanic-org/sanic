@@ -890,6 +890,7 @@ class Sanic(
         """
         response = None
         if not getattr(exception, "__dispatched__", False):
+            ...  # DO NOT REMOVE THIS LINE. IT IS NEEDED FOR TOUCHUP.
             await self.dispatch(
                 "server.exception.report",
                 context={"exception": exception},

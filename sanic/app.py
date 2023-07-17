@@ -613,7 +613,7 @@ class Sanic(
             await handler(self, exception)
 
         self.add_signal(
-            handler=report, event=Event.SERVER_GLOBAL_EXCEPTION.value
+            handler=report, event=Event.SERVER_EXCEPTION_REPORT.value
         )
 
         return report
@@ -890,7 +890,7 @@ class Sanic(
         """
         response = None
         await self.dispatch(
-            "server.lifecycle.exception",
+            "server.exception.report",
             context={"exception": exception},
         )
         await self.dispatch(

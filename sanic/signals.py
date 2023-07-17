@@ -16,7 +16,7 @@ from sanic.models.handler_types import SignalHandler
 
 
 class Event(Enum):
-    SERVER_GLOBAL_EXCEPTION = "server.global.exception"
+    SERVER_EXCEPTION_REPORT = "server.exception.report"
     SERVER_INIT_AFTER = "server.init.after"
     SERVER_INIT_BEFORE = "server.init.before"
     SERVER_SHUTDOWN_AFTER = "server.shutdown.after"
@@ -40,7 +40,7 @@ class Event(Enum):
 
 RESERVED_NAMESPACES = {
     "server": (
-        Event.SERVER_GLOBAL_EXCEPTION.value,
+        Event.SERVER_EXCEPTION_REPORT.value,
         Event.SERVER_INIT_AFTER.value,
         Event.SERVER_INIT_BEFORE.value,
         Event.SERVER_SHUTDOWN_AFTER.value,
@@ -174,9 +174,9 @@ class SignalRouter(BaseRouter):
             if self.ctx.app.debug and self.ctx.app.state.verbosity >= 1:
                 error_logger.exception(e)
 
-            if event != Event.SERVER_GLOBAL_EXCEPTION.value:
+            if event != Event.SERVER_EXCEPTION_REPORT.value:
                 await self.dispatch(
-                    Event.SERVER_GLOBAL_EXCEPTION.value,
+                    Event.SERVER_EXCEPTION_REPORT.value,
                     context={"exception": e},
                 )
             raise e

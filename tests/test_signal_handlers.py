@@ -160,7 +160,7 @@ def test_signal_server_lifecycle_exception(app: Sanic):
     async def hello_route(request):
         return HTTPResponse()
 
-    @app.signal(Event.SERVER_LIFECYCLE_EXCEPTION)
+    @app.signal(Event.SERVER_EXCEPTION_REPORT)
     async def test_signal(exception: Exception):
         nonlocal trigger
         trigger = exception

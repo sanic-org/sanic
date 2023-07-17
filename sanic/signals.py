@@ -16,11 +16,11 @@ from sanic.models.handler_types import SignalHandler
 
 
 class Event(Enum):
+    SERVER_GLOBAL_EXCEPTION = "server.global.exception"
     SERVER_INIT_AFTER = "server.init.after"
     SERVER_INIT_BEFORE = "server.init.before"
     SERVER_SHUTDOWN_AFTER = "server.shutdown.after"
     SERVER_SHUTDOWN_BEFORE = "server.shutdown.before"
-    SERVER_GLOBAL_EXCEPTION = "server.lifecycle.exception"
     HTTP_LIFECYCLE_BEGIN = "http.lifecycle.begin"
     HTTP_LIFECYCLE_COMPLETE = "http.lifecycle.complete"
     HTTP_LIFECYCLE_EXCEPTION = "http.lifecycle.exception"
@@ -40,11 +40,11 @@ class Event(Enum):
 
 RESERVED_NAMESPACES = {
     "server": (
+        Event.SERVER_GLOBAL_EXCEPTION.value,
         Event.SERVER_INIT_AFTER.value,
         Event.SERVER_INIT_BEFORE.value,
         Event.SERVER_SHUTDOWN_AFTER.value,
         Event.SERVER_SHUTDOWN_BEFORE.value,
-        Event.SERVER_GLOBAL_EXCEPTION.value,
     ),
     "http": (
         Event.HTTP_LIFECYCLE_BEGIN.value,

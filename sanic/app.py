@@ -1338,6 +1338,7 @@ class Sanic(
                 error_logger.warning(
                     f"Task {task} was cancelled before it completed."
                 )
+                raise
             except Exception as e:
                 await app.dispatch(
                     "server.exception.report",

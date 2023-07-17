@@ -179,6 +179,7 @@ class SignalRouter(BaseRouter):
                     Event.SERVER_EXCEPTION_REPORT.value,
                     context={"exception": e},
                 )
+                e.__dispatched__ = True
             raise e
         finally:
             for signal_event in events:

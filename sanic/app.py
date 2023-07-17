@@ -889,10 +889,12 @@ class Sanic(
         :raises ServerError: response 500
         """
         response = None
-        await self.dispatch(
-            "server.exception.report",
-            context={"exception": exception},
-        )
+        print(">>>>")
+        if not getattr(exception, "__dispatched__", False):
+            await self.dispatch(
+                "server.exception.report",
+                context={"exception": exception},
+            )
         await self.dispatch(
             "http.lifecycle.exception",
             inline=True,

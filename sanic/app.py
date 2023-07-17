@@ -17,7 +17,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from contextlib import contextmanager, suppress
-from functools import partial
+from functools import partial, wraps
 from inspect import isawaitable
 from os import environ
 from socket import socket
@@ -87,7 +87,7 @@ from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
-from sanic.signals import Signal, SignalRouter
+from sanic.signals import Event, Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
@@ -604,6 +604,17 @@ class Sanic(
             else:
                 raise NotFound("Could not find signal %s" % event)
         return await wait_for(signal.ctx.event.wait(), timeout=timeout)
+
+    def report_exception(
+        self, handler: Callable[[Sanic, Exception], Coroutine[Any, Any, None]]
+    ):
+        @wraps(handler)
+        async def report(exception: Exception) -> None:
+            await handler(self, exception)
+
+        self.add_signal(handler=report, event=Event.SERVER_LIFECYCLE_EXCEPTION)
+
+        return report
 
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.

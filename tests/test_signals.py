@@ -9,6 +9,7 @@ from sanic_routing.exceptions import NotFound
 
 from sanic import Blueprint, Sanic, empty
 from sanic.exceptions import InvalidSignal, SanicException
+from sanic.signals import Event
 
 
 def test_add_signal(app):
@@ -427,3 +428,41 @@ def test_signal_reservation(app, event, expected):
             app.signal(event)(lambda: ...)
     else:
         app.signal(event)(lambda: ...)
+
+
+@pytest.mark.asyncio
+async def test_report_exception(app: Sanic):
+    @app.report_exception
+    async def catch_any_exception(app: Sanic, exception: Exception):
+        ...
+
+    @app.route("/")
+    async def handler(request):
+        1 / 0
+
+    app.signal_router.finalize()
+
+    registered_signal_handlers = [
+        handler
+        for handler, *_ in app.signal_router.get(
+            Event.SERVER_LIFECYCLE_EXCEPTION.value
+        )
+    ]
+
+    assert catch_any_exception in registered_signal_handlers
+
+
+def test_report_exception_runs(app: Sanic):
+    event = asyncio.Event()
+
+    @app.report_exception
+    async def catch_any_exception(app: Sanic, exception: Exception):
+        event.set()
+
+    @app.route("/")
+    async def handler(request):
+        1 / 0
+
+    app.test_client.get("/")
+
+    assert event.is_set()

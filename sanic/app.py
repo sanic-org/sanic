@@ -1324,13 +1324,27 @@ class Sanic(
         app,
         loop,
     ):
-        if callable(task):
+        async def do(task):
             try:
-                task = task(app)
-            except TypeError:
-                task = task()
+                if callable(task):
+                    try:
+                        task = task(app)
+                    except TypeError:
+                        task = task()
+                if isawaitable(task):
+                    await task
+            except CancelledError:
+                error_logger.warning(
+                    f"Task {task} was cancelled before it completed."
+                )
+            except Exception as e:
+                await app.dispatch(
+                    "server.exception.report",
+                    context={"exception": e},
+                )
+                raise
 
-        return task
+        return do(task)
 
     @classmethod
     def _loop_add_task(

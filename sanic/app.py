@@ -612,7 +612,9 @@ class Sanic(
         async def report(exception: Exception) -> None:
             await handler(self, exception)
 
-        self.add_signal(handler=report, event=Event.SERVER_LIFECYCLE_EXCEPTION)
+        self.add_signal(
+            handler=report, event=Event.SERVER_LIFECYCLE_EXCEPTION.value
+        )
 
         return report
 

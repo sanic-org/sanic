@@ -889,7 +889,6 @@ class Sanic(
         :raises ServerError: response 500
         """
         response = None
-        print(">>>>")
         if not getattr(exception, "__dispatched__", False):
             await self.dispatch(
                 "server.exception.report",

@@ -613,7 +613,7 @@ class Sanic(
             await handler(self, exception)
 
         self.add_signal(
-            handler=report, event=Event.SERVER_LIFECYCLE_EXCEPTION.value
+            handler=report, event=Event.SERVER_GLOBAL_EXCEPTION.value
         )
 
         return report

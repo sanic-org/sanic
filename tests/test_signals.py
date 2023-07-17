@@ -445,7 +445,7 @@ async def test_report_exception(app: Sanic):
     registered_signal_handlers = [
         handler
         for handler, *_ in app.signal_router.get(
-            Event.SERVER_LIFECYCLE_EXCEPTION.value
+            Event.SERVER_GLOBAL_EXCEPTION.value
         )
     ]
 

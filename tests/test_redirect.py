@@ -126,7 +126,7 @@ def test_redirect_with_params(app, test_str):
 
     @app.route("/api/v2/test/<test>/", unquote=True)
     async def target_handler(request, test):
-        assert test == test_str
+        assert test == quote(test_str)
         return text("OK")
 
     _, response = app.test_client.get(f"/api/v1/test/{use_in_uri}/")

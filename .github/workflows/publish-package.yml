@@ -1,28 +1,39 @@
-name: Publish Artifacts
+name: Upload Python Package
+
 on:
   release:
     types: [created]
-
+  workflow_dispatch:
 jobs:
-  publishPythonPackage:
-    name: Publishing Sanic Release Artifacts
+  build-n-publish:
+    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ["3.10"]
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Publish Python Package
-        uses: harshanarayana/custom-actions@main
-        with:
-          python-version: ${{ matrix.python-version }}
-          package-infra-name: "twine"
-          pypi-user: __token__
-          pypi-access-token: ${{ secrets.PYPI_ACCESS_TOKEN }}
-          action: "package-publish"
-          pypi-verify-metadata: "true"
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+    - name: Install pypa/build
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+    - name: Build a binary wheel and a source tarball
+      run: >-
+        python3 -m
+        build
+        --sdist
+        --wheel
+        --outdir dist/
+        .
+    - name: Publish distribution 📦 to Test PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.SANIC_TEST_PYPI_API_TOKEN }}
+        repository-url: https://test.pypi.org/legacy/
+    - name: Publish distribution 📦 to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.SANIC_PYPI_API_TOKEN }}

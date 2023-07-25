@@ -2,6 +2,7 @@ import asyncio
 
 from enum import Enum
 from inspect import isawaitable
+from itertools import count
 
 import pytest
 
@@ -9,6 +10,7 @@ from sanic_routing.exceptions import NotFound
 
 from sanic import Blueprint, Sanic, empty
 from sanic.exceptions import InvalidSignal, SanicException
+from sanic.signals import Event
 
 
 def test_add_signal(app):
@@ -427,3 +429,114 @@ def test_signal_reservation(app, event, expected):
             app.signal(event)(lambda: ...)
     else:
         app.signal(event)(lambda: ...)
+
+
+@pytest.mark.asyncio
+async def test_report_exception(app: Sanic):
+    @app.report_exception
+    async def catch_any_exception(app: Sanic, exception: Exception):
+        ...
+
+    @app.route("/")
+    async def handler(request):
+        1 / 0
+
+    app.signal_router.finalize()
+
+    registered_signal_handlers = [
+        handler
+        for handler, *_ in app.signal_router.get(
+            Event.SERVER_EXCEPTION_REPORT.value
+        )
+    ]
+
+    assert catch_any_exception in registered_signal_handlers
+
+
+def test_report_exception_runs(app: Sanic):
+    event = asyncio.Event()
+
+    @app.report_exception
+    async def catch_any_exception(app: Sanic, exception: Exception):
+        event.set()
+
+    @app.route("/")
+    async def handler(request):
+        1 / 0
+
+    app.test_client.get("/")
+
+    assert event.is_set()
+
+
+def test_report_exception_runs_once_inline(app: Sanic):
+    event = asyncio.Event()
+    c = count()
+
+    @app.report_exception
+    async def catch_any_exception(app: Sanic, exception: Exception):
+        event.set()
+        next(c)
+
+    @app.route("/")
+    async def handler(request):
+        ...
+
+    @app.signal(Event.HTTP_ROUTING_AFTER.value)
+    async def after_routing(**_):
+        1 / 0
+
+    app.test_client.get("/")
+
+    assert event.is_set()
+    assert next(c) == 1
+
+
+def test_report_exception_runs_once_custom(app: Sanic):
+    event = asyncio.Event()
+    c = count()
+
+    @app.report_exception
+    async def catch_any_exception(app: Sanic, exception: Exception):
+        event.set()
+        next(c)
+
+    @app.route("/")
+    async def handler(request):
+        await app.dispatch("one.two.three")
+        return empty()
+
+    @app.signal("one.two.three")
+    async def one_two_three(**_):
+        1 / 0
+
+    app.test_client.get("/")
+
+    assert event.is_set()
+    assert next(c) == 1
+
+
+def test_report_exception_runs_task(app: Sanic):
+    c = count()
+
+    async def task_1():
+        next(c)
+
+    async def task_2(app):
+        next(c)
+
+    @app.report_exception
+    async def catch_any_exception(app: Sanic, exception: Exception):
+        next(c)
+
+    @app.route("/")
+    async def handler(request):
+        app.add_task(task_1)
+        app.add_task(task_1())
+        app.add_task(task_2)
+        app.add_task(task_2(app))
+        return empty()
+
+    app.test_client.get("/")
+
+    assert next(c) == 4

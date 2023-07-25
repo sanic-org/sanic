@@ -17,7 +17,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from contextlib import contextmanager, suppress
-from functools import partial
+from functools import partial, wraps
 from inspect import isawaitable
 from os import environ
 from socket import socket
@@ -87,7 +87,7 @@ from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
-from sanic.signals import Signal, SignalRouter
+from sanic.signals import Event, Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
@@ -605,6 +605,19 @@ class Sanic(
                 raise NotFound("Could not find signal %s" % event)
         return await wait_for(signal.ctx.event.wait(), timeout=timeout)
 
+    def report_exception(
+        self, handler: Callable[[Sanic, Exception], Coroutine[Any, Any, None]]
+    ):
+        @wraps(handler)
+        async def report(exception: Exception) -> None:
+            await handler(self, exception)
+
+        self.add_signal(
+            handler=report, event=Event.SERVER_EXCEPTION_REPORT.value
+        )
+
+        return report
+
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
 
@@ -876,10 +889,12 @@ class Sanic(
         :raises ServerError: response 500
         """
         response = None
-        await self.dispatch(
-            "server.lifecycle.exception",
-            context={"exception": exception},
-        )
+        if not getattr(exception, "__dispatched__", False):
+            ...  # DO NOT REMOVE THIS LINE. IT IS NEEDED FOR TOUCHUP.
+            await self.dispatch(
+                "server.exception.report",
+                context={"exception": exception},
+            )
         await self.dispatch(
             "http.lifecycle.exception",
             inline=True,
@@ -1310,13 +1325,28 @@ class Sanic(
         app,
         loop,
     ):
-        if callable(task):
+        async def do(task):
             try:
-                task = task(app)
-            except TypeError:
-                task = task()
+                if callable(task):
+                    try:
+                        task = task(app)
+                    except TypeError:
+                        task = task()
+                if isawaitable(task):
+                    await task
+            except CancelledError:
+                error_logger.warning(
+                    f"Task {task} was cancelled before it completed."
+                )
+                raise
+            except Exception as e:
+                await app.dispatch(
+                    "server.exception.report",
+                    context={"exception": e},
+                )
+                raise
 
-        return task
+        return do(task)
 
     @classmethod
     def _loop_add_task(

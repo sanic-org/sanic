@@ -28,11 +28,11 @@ jobs:
         --wheel
         --outdir dist/
         .
-    - name: Publish distribution 📦 to Test PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.SANIC_TEST_PYPI_API_TOKEN }}
-        repository-url: https://test.pypi.org/legacy/
+    # - name: Publish distribution 📦 to Test PyPI
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     password: ${{ secrets.SANIC_TEST_PYPI_API_TOKEN }}
+    #     repository-url: https://test.pypi.org/legacy/
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:

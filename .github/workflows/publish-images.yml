@@ -2,7 +2,7 @@ name: Publish Docker Images
 on:
   workflow_run:
     workflows:
-      - 'Publish Artifacts'
+      - 'Upload Python Package'
     types:
       - completed
 

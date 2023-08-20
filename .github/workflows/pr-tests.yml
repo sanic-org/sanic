@@ -45,5 +45,5 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version }}
           tox-env: ${{ matrix.config.tox-env }}
-          max-attempts: ${{ matrix.max-attempts || 1 }}
-          ignore-errors: ${{ matrix.ignore-errors || false }}
+          max-attempts: ${{ matrix.config.max-attempts || 1 }}
+          ignore-errors: ${{ matrix.config.ignore-errors || false }}

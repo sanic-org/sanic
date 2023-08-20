@@ -46,7 +46,7 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version }}
           tox-env: ${{ matrix.config.tox-env }}
-          max-attempts: ${{ matrix.max-attempts ?? 1 }}
+          max-attempts: ${{ matrix.max-attempts || 1 }}
 
   run_windows_tests:
     name: "Windows / Python ${{ matrix.config.python-version }} / tox -e ${{ matrix.config.tox-env }}"

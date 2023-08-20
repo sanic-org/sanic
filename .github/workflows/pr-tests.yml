@@ -10,7 +10,7 @@ on:
 
 jobs:
   run_pr_tests:
-    name: "${{ matrix.platform == 'windows-latest' ? 'Windows' : 'Linux' }} / Python ${{ matrix.config.python-version }} / tox -e ${{ matrix.config.tox-env }}"
+    name: "${{ matrix.platform == 'windows-latest' && 'Windows' || 'Linux' }} / Python ${{ matrix.config.python-version }} / tox -e ${{ matrix.config.tox-env }}"
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:

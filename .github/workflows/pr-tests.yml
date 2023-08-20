@@ -12,7 +12,7 @@ jobs:
   run_pr_tests:
     name: "${{ matrix.platform == 'windows-latest' && 'Windows' || 'Linux' }} / Python ${{ matrix.config.python-version }} / tox -e ${{ matrix.config.tox-env }}"
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform || 'ubuntu-latest' }}
     strategy:
       fail-fast: true
       matrix:
@@ -40,6 +40,11 @@ jobs:
           - { python-version: "3.10", tox-env: py310-no-ext,  platform: windows-latest, ignore-errors: true }
           - { python-version: "3.11", tox-env: py310-no-ext,  platform: windows-latest, ignore-errors: true }
     steps:
+      - name: Echo platform
+        run: |
+          echo "Platform: ${{ matrix.platform || 'ubuntu-latest' }}"
+          echo "${{ matrix.platform == 'windows-latest' && 'Windows' || 'Linux' }}"
+
       - name: Run tests
         uses: prryplatypus/simple-tox@main
         with:

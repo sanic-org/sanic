@@ -24,11 +24,17 @@ jobs:
     - name: Install dependencies
       run: pip install build twine
 
+    - name: Update package version
+      run: |
+        tag_name="${{ github.event.release.tag_name }}"
+        version="${tag_name#v}"
+        echo "__version__ = \"${version}\"" > sanic/__version__.py
+
     - name: Build a binary wheel and a source tarball
       run: python -m build --sdist --wheel --outdir dist/ .
 
     - name: Publish to PyPi 🚀
-      run: twine upload --non-interactive dist/*
+      run: twine upload --non-interactive --disable-progress-bar dist/*
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.SANIC_PYPI_API_TOKEN }}

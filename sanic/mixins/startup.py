@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import platform
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -71,7 +70,6 @@ from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
 from sanic.worker.serve import worker_serve
 
-
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.application.state import ApplicationState
@@ -90,6 +88,7 @@ else:  # no cov
 class StartupMixin(metaclass=SanicMeta):
     _app_registry: ClassVar[Dict[str, Sanic]]
 
+    name: str
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
@@ -605,6 +604,7 @@ class StartupMixin(metaclass=SanicMeta):
             server = "ASGI" if self.asgi else "unknown"  # type: ignore
 
         display = {
+            "app": self.name,
             "mode": " ".join(mode),
             "server": server,
             "python": platform.python_version(),

@@ -73,6 +73,14 @@ class MOTDTTY(MOTD):
             self.value_width = min(
                 max(map(len, self.data.values())), self.max_value_width
             )
+        if self.extra:
+            self.key_width = max(
+                self.key_width, max(map(len, self.extra.keys()))
+            )
+            self.value_width = min(
+                max((*map(len, self.extra.values()), self.value_width)),
+                self.max_value_width,
+            )
         self.logo_lines = self.logo.split("\n") if self.logo else []
         self.logo_line_length = 24
         self.centering_length = (

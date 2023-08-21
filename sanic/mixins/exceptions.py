@@ -38,3 +38,15 @@ class ExceptionMixin(metaclass=SanicMeta):
             return handler
 
         return decorator
+
+    def all_exceptions(self, handler):
+        """
+        This method enables the process of creating a global exception
+        handler for the current blueprint under question.
+
+        :param handler: A coroutine function to handle exceptions
+
+        :return a decorated method to handle global exceptions for any
+            route registered under this blueprint.
+        """
+        return self.exception(Exception)(handler)

@@ -96,6 +96,7 @@ class WebsocketFrameAssembler:
         If ``timeout`` is set and elapses before a complete message is
         received, :meth:`get` returns ``None``.
         """
+        completed: bool
         async with self.read_mutex:
             if timeout is not None and timeout <= 0:
                 if not self.message_complete.is_set():

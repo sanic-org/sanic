@@ -111,7 +111,7 @@ class Blueprint(BaseSanic):
 
     def __init__(
         self,
-        name: str = None,
+        name: str,
         url_prefix: Optional[str] = None,
         host: Optional[Union[List[str], str]] = None,
         version: Optional[Union[int, str, float]] = None,

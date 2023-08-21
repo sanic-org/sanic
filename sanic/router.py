@@ -75,7 +75,7 @@ class Router(BaseRouter):
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
-        version: Union[str, float, int] = None,
+        version: Optional[Union[str, float, int]] = None,
         name: Optional[str] = None,
         unquote: bool = False,
         static: bool = False,

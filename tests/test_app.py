@@ -293,7 +293,7 @@ def test_handle_request_with_nested_sanic_exception(
 
 
 def test_app_name_required():
-    with pytest.raises(SanicException):
+    with pytest.raises(TypeError):
         Sanic()
 
 

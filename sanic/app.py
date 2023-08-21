@@ -17,7 +17,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from contextlib import contextmanager, suppress
-from functools import partial
+from functools import partial, wraps
 from inspect import isawaitable
 from os import environ
 from socket import socket
@@ -33,6 +33,7 @@ from typing import (
     Coroutine,
     Deque,
     Dict,
+    Generic,
     Iterable,
     Iterator,
     List,
@@ -42,6 +43,8 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
+    overload,
 )
 from urllib.parse import urlencode, urlunparse
 
@@ -84,7 +87,7 @@ from sanic.request import Request
 from sanic.response import BaseHTTPResponse, HTTPResponse, ResponseStream
 from sanic.router import Router
 from sanic.server.websockets.impl import ConnectionClosed
-from sanic.signals import Signal, SignalRouter
+from sanic.signals import Event, Signal, SignalRouter
 from sanic.touchup import TouchUp, TouchUpMeta
 from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
@@ -103,8 +106,17 @@ if TYPE_CHECKING:
 if OS_IS_WINDOWS:  # no cov
     enable_windows_color_support()
 
+ctx_type = TypeVar("ctx_type")
+config_type = TypeVar("config_type", bound=Config)
 
-class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
+
+class Sanic(
+    Generic[config_type, ctx_type],
+    StaticHandleMixin,
+    BaseSanic,
+    StartupMixin,
+    metaclass=TouchUpMeta,
+):
     """
     The main application instance
     """
@@ -162,11 +174,99 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
     _app_registry: ClassVar[Dict[str, "Sanic"]] = {}
     test_mode: ClassVar[bool] = False
 
+    @overload
+    def __init__(
+        self: Sanic[Config, SimpleNamespace],
+        name: str,
+        config: None = None,
+        ctx: None = None,
+        router: Optional[Router] = None,
+        signal_router: Optional[SignalRouter] = None,
+        error_handler: Optional[ErrorHandler] = None,
+        env_prefix: Optional[str] = SANIC_PREFIX,
+        request_class: Optional[Type[Request]] = None,
+        strict_slashes: bool = False,
+        log_config: Optional[Dict[str, Any]] = None,
+        configure_logging: bool = True,
+        dumps: Optional[Callable[..., AnyStr]] = None,
+        loads: Optional[Callable[..., Any]] = None,
+        inspector: bool = False,
+        inspector_class: Optional[Type[Inspector]] = None,
+        certloader_class: Optional[Type[CertLoader]] = None,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self: Sanic[config_type, SimpleNamespace],
+        name: str,
+        config: Optional[config_type] = None,
+        ctx: None = None,
+        router: Optional[Router] = None,
+        signal_router: Optional[SignalRouter] = None,
+        error_handler: Optional[ErrorHandler] = None,
+        env_prefix: Optional[str] = SANIC_PREFIX,
+        request_class: Optional[Type[Request]] = None,
+        strict_slashes: bool = False,
+        log_config: Optional[Dict[str, Any]] = None,
+        configure_logging: bool = True,
+        dumps: Optional[Callable[..., AnyStr]] = None,
+        loads: Optional[Callable[..., Any]] = None,
+        inspector: bool = False,
+        inspector_class: Optional[Type[Inspector]] = None,
+        certloader_class: Optional[Type[CertLoader]] = None,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self: Sanic[Config, ctx_type],
+        name: str,
+        config: None = None,
+        ctx: Optional[ctx_type] = None,
+        router: Optional[Router] = None,
+        signal_router: Optional[SignalRouter] = None,
+        error_handler: Optional[ErrorHandler] = None,
+        env_prefix: Optional[str] = SANIC_PREFIX,
+        request_class: Optional[Type[Request]] = None,
+        strict_slashes: bool = False,
+        log_config: Optional[Dict[str, Any]] = None,
+        configure_logging: bool = True,
+        dumps: Optional[Callable[..., AnyStr]] = None,
+        loads: Optional[Callable[..., Any]] = None,
+        inspector: bool = False,
+        inspector_class: Optional[Type[Inspector]] = None,
+        certloader_class: Optional[Type[CertLoader]] = None,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(
+        self: Sanic[config_type, ctx_type],
+        name: str,
+        config: Optional[config_type] = None,
+        ctx: Optional[ctx_type] = None,
+        router: Optional[Router] = None,
+        signal_router: Optional[SignalRouter] = None,
+        error_handler: Optional[ErrorHandler] = None,
+        env_prefix: Optional[str] = SANIC_PREFIX,
+        request_class: Optional[Type[Request]] = None,
+        strict_slashes: bool = False,
+        log_config: Optional[Dict[str, Any]] = None,
+        configure_logging: bool = True,
+        dumps: Optional[Callable[..., AnyStr]] = None,
+        loads: Optional[Callable[..., Any]] = None,
+        inspector: bool = False,
+        inspector_class: Optional[Type[Inspector]] = None,
+        certloader_class: Optional[Type[CertLoader]] = None,
+    ) -> None:
+        ...
+
     def __init__(
         self,
-        name: Optional[str] = None,
-        config: Optional[Config] = None,
-        ctx: Optional[Any] = None,
+        name: str,
+        config: Optional[config_type] = None,
+        ctx: Optional[ctx_type] = None,
         router: Optional[Router] = None,
         signal_router: Optional[SignalRouter] = None,
         error_handler: Optional[ErrorHandler] = None,
@@ -194,7 +294,9 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             )
 
         # First setup config
-        self.config: Config = config or Config(env_prefix=env_prefix)
+        self.config: config_type = cast(
+            config_type, config or Config(env_prefix=env_prefix)
+        )
         if inspector:
             self.config.INSPECTOR = inspector
 
@@ -218,7 +320,7 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
             certloader_class or CertLoader
         )
         self.configure_logging: bool = configure_logging
-        self.ctx: Any = ctx or SimpleNamespace()
+        self.ctx: ctx_type = cast(ctx_type, ctx or SimpleNamespace())
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.inspector_class: Type[Inspector] = inspector_class or Inspector
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
@@ -503,6 +605,19 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
                 raise NotFound("Could not find signal %s" % event)
         return await wait_for(signal.ctx.event.wait(), timeout=timeout)
 
+    def report_exception(
+        self, handler: Callable[[Sanic, Exception], Coroutine[Any, Any, None]]
+    ):
+        @wraps(handler)
+        async def report(exception: Exception) -> None:
+            await handler(self, exception)
+
+        self.add_signal(
+            handler=report, event=Event.SERVER_EXCEPTION_REPORT.value
+        )
+
+        return report
+
     def enable_websocket(self, enable=True):
         """Enable or disable the support for websocket.
 
@@ -774,10 +889,12 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         :raises ServerError: response 500
         """
         response = None
-        await self.dispatch(
-            "server.lifecycle.exception",
-            context={"exception": exception},
-        )
+        if not getattr(exception, "__dispatched__", False):
+            ...  # DO NOT REMOVE THIS LINE. IT IS NEEDED FOR TOUCHUP.
+            await self.dispatch(
+                "server.exception.report",
+                context={"exception": exception},
+            )
         await self.dispatch(
             "http.lifecycle.exception",
             inline=True,
@@ -1208,13 +1325,28 @@ class Sanic(StaticHandleMixin, BaseSanic, StartupMixin, metaclass=TouchUpMeta):
         app,
         loop,
     ):
-        if callable(task):
+        async def do(task):
             try:
-                task = task(app)
-            except TypeError:
-                task = task()
+                if callable(task):
+                    try:
+                        task = task(app)
+                    except TypeError:
+                        task = task()
+                if isawaitable(task):
+                    await task
+            except CancelledError:
+                error_logger.warning(
+                    f"Task {task} was cancelled before it completed."
+                )
+                raise
+            except Exception as e:
+                await app.dispatch(
+                    "server.exception.report",
+                    context={"exception": e},
+                )
+                raise
 
-        return task
+        return do(task)
 
     @classmethod
     def _loop_add_task(

@@ -103,7 +103,7 @@ ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.15.0" + env_dependency
 types_ujson = "types-ujson" + env_dependency
 requirements = [
-    "sanic-routing>=22.8.0",
+    "sanic-routing>=23.6.0",
     "httptools>=0.0.10",
     uvloop,
     ujson,
@@ -112,10 +112,11 @@ requirements = [
     "multidict>=5.0,<7.0",
     "html5tagger>=1.2.1",
     "tracerite>=1.0.0",
+    "typing-extensions>=4.4.0",
 ]
 
 tests_require = [
-    "sanic-testing>=23.3.0",
+    "sanic-testing>=23.6.0",
     "pytest==7.1.*",
     "coverage",
     "beautifulsoup4",
@@ -126,7 +127,7 @@ tests_require = [
     "black",
     "isort>=5.0.0",
     "bandit",
-    "mypy>=0.901,<0.910",
+    "mypy",
     "docutils",
     "pygments",
     "uvicorn<0.15.0",

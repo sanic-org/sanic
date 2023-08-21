@@ -436,7 +436,7 @@ def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
 
 def parse_credentials(
     header: Optional[str],
-    prefixes: Union[List, Tuple, Set] = None,
+    prefixes: Optional[Union[List, Tuple, Set]] = None,
 ) -> Tuple[Optional[str], Optional[str]]:
     """Parses any header with the aim to retrieve any credentials from it."""
     if not prefixes or not isinstance(prefixes, (list, tuple, set)):

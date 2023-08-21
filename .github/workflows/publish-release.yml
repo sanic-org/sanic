@@ -1,0 +1,89 @@
+name: Publish release
+
+on:
+  release:
+    types: [created]
+
+env:
+  IS_TEST: true
+  DOCKER_ORG_NAME: sanicframework
+  DOCKER_IMAGE_NAME: sanic
+  DOCKER_BASE_IMAGE_NAME: sanic-build
+  DOCKER_IMAGE_DOCKERFILE: ./docker/Dockerfile
+  DOCKER_BASE_IMAGE_DOCKERFILE: ./docker/Dockerfile-base
+
+jobs:
+  publish_package:
+    name: Build and publish package
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+
+    - name: Install dependencies
+      run: pip install build twine
+
+    - name: Update package version
+      run: |
+        tag_name="${{ github.event.release.tag_name }}"
+        if [[ $tag_name != v* ]]; then
+          echo "::error::Tag name must start with 'v'"
+          exit 1
+        fi
+        version="${tag_name#v}"  # Removes the leading 'v'
+        echo "__version__ = \"${version}\"" > sanic/__version__.py
+
+    - name: Build a binary wheel and a source tarball
+      run: python -m build --sdist --wheel --outdir dist/ .
+
+    - name: Publish to PyPi 🚀
+      run: twine upload --non-interactive --disable-progress-bar dist/*
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.SANIC_PYPI_API_TOKEN }}
+        TWINE_REPOSITORY: ${{ env.IS_TEST == 'true' && 'testpypi' || 'pypi' }}
+
+  publish_docker:
+    name: Publish Docker / Python ${{ matrix.python-version }}
+    needs: publish_package
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_ACCESS_USER }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Build and push base image
+        uses: docker/build-push-action@v4
+        with:
+          push: ${{ env.IS_TEST == 'false' }}
+          file: ${{ env.DOCKER_BASE_IMAGE_DOCKERFILE }}
+          tags: ${{ env.DOCKER_ORG_NAME }}/${{ env.DOCKER_BASE_IMAGE_NAME }}:${{ matrix.python-version }}
+          build-args: |
+            PYTHON_VERSION=${{ matrix.python-version }}
+
+      - name: Build and push Sanic image
+        uses: docker/build-push-action@v4
+        with:
+          push: ${{ env.IS_TEST == 'false' }}
+          file: ${{ env.DOCKER_IMAGE_DOCKERFILE }}
+          # TODO: Figure out tags
+          tags: ${{ env.DOCKER_ORG_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ matrix.python-version }}
+          build-args: |
+            BASE_IMAGE_TAG=${{ matrix.python-version }}

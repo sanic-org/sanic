@@ -28,7 +28,7 @@ jobs:
       run: python -m build --sdist --wheel --outdir dist/ .
 
     - name: Publish to PyPi 🚀
-      run: twine upload --no-interactive dist/*
+      run: twine upload --non-interactive dist/*
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.SANIC_PYPI_API_TOKEN }}

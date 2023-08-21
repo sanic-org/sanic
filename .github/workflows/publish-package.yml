@@ -3,7 +3,6 @@ name: Upload Python Package
 on:
   release:
     types: [created]
-  workflow_dispatch:
 
 env:
   IS_TEST: false

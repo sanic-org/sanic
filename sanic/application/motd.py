@@ -112,7 +112,7 @@ class MOTDTTY(MOTD):
         self._render_data(lines, self.data, 0)
         if self.extra:
             logo_part = self._get_logo_part(len(lines) - 4)
-            lines.append(f"| {logo_part} ├{display_filler}┤")
+            lines.append(f"│ {logo_part} ├{display_filler}┤")
             self._render_data(lines, self.extra, len(lines) - 4)
 
         self._render_fill(lines)

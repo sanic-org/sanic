@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  IS_TEST: true
+  IS_TEST: false
 
 jobs:
   build-and-publish-package:

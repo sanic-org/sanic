@@ -16,11 +16,11 @@ from sanic.models.handler_types import SignalHandler
 
 
 class Event(Enum):
+    SERVER_EXCEPTION_REPORT = "server.exception.report"
     SERVER_INIT_AFTER = "server.init.after"
     SERVER_INIT_BEFORE = "server.init.before"
     SERVER_SHUTDOWN_AFTER = "server.shutdown.after"
     SERVER_SHUTDOWN_BEFORE = "server.shutdown.before"
-    SERVER_LIFECYCLE_EXCEPTION = "server.lifecycle.exception"
     HTTP_LIFECYCLE_BEGIN = "http.lifecycle.begin"
     HTTP_LIFECYCLE_COMPLETE = "http.lifecycle.complete"
     HTTP_LIFECYCLE_EXCEPTION = "http.lifecycle.exception"
@@ -40,11 +40,11 @@ class Event(Enum):
 
 RESERVED_NAMESPACES = {
     "server": (
+        Event.SERVER_EXCEPTION_REPORT.value,
         Event.SERVER_INIT_AFTER.value,
         Event.SERVER_INIT_BEFORE.value,
         Event.SERVER_SHUTDOWN_AFTER.value,
         Event.SERVER_SHUTDOWN_BEFORE.value,
-        Event.SERVER_LIFECYCLE_EXCEPTION.value,
     ),
     "http": (
         Event.HTTP_LIFECYCLE_BEGIN.value,
@@ -174,11 +174,12 @@ class SignalRouter(BaseRouter):
             if self.ctx.app.debug and self.ctx.app.state.verbosity >= 1:
                 error_logger.exception(e)
 
-            if event != Event.SERVER_LIFECYCLE_EXCEPTION.value:
+            if event != Event.SERVER_EXCEPTION_REPORT.value:
                 await self.dispatch(
-                    Event.SERVER_LIFECYCLE_EXCEPTION.value,
+                    Event.SERVER_EXCEPTION_REPORT.value,
                     context={"exception": e},
                 )
+                setattr(e, "__dispatched__", True)
             raise e
         finally:
             for signal_event in events:
@@ -228,14 +229,6 @@ class SignalRouter(BaseRouter):
 
         if not trigger:
             event = ".".join([*parts[:2], "<__trigger__>"])
-
-        try:
-            # Attaching __requirements__ and __trigger__ to the handler
-            # is deprecated and will be removed in v23.6.
-            handler.__requirements__ = condition  # type: ignore
-            handler.__trigger__ = trigger  # type: ignore
-        except AttributeError:
-            pass
 
         signal = super().add(
             event,

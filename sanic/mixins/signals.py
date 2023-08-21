@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Optional, Set, Union
 from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureSignal
 from sanic.models.handler_types import SignalHandler
-from sanic.signals import Signal
+from sanic.signals import Event, Signal
 from sanic.types import HashableDict
 
 
@@ -80,3 +80,9 @@ class SignalMixin(metaclass=SanicMeta):
 
     def event(self, event: str):
         raise NotImplementedError
+
+    def catch_exception(self, handler):
+        async def signal_handler(exception: Exception):
+            await handler(self, exception)
+
+        self.signal(Event.SERVER_LIFECYCLE_EXCEPTION)(signal_handler)

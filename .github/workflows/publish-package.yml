@@ -27,14 +27,11 @@ jobs:
     - name: Update package version
       run: |
         tag_name="${{ github.event.release.tag_name }}"
-
-        # Remove leading 'v' from the tag name if exists
-        if [[ $tag_name == v* ]]; then
-          version="${tag_name#v}"
-        else
-          version="$tag_name"
+        if [[ $tag_name != v* ]]; then
+          echo "::error::Tag name must start with 'v'"
+          exit 1
         fi
-
+        version="${tag_name#v}"  # Removes the leading 'v'
         echo "__version__ = \"${version}\"" > sanic/__version__.py
 
     - name: Build a binary wheel and a source tarball

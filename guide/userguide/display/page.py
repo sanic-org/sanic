@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import importlib
+import inspect
+import pkgutil
+from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from html import escape
 from pathlib import Path
 from typing import Type
 
 from frontmatter import parse
+from rich import print
 
-from html5tagger import HTML, Builder, Document
+from html5tagger import HTML, Builder, Document, E  # type: ignore
 from sanic import Request
 
 from .layouts.base import BaseLayout
@@ -22,6 +28,7 @@ _LAYOUTS_CACHE: dict[str, Type[BaseLayout]] = {
     "home": HomeLayout,
     "main": MainLayout,
 }
+DEFAULT = "en"
 
 
 @dataclass
@@ -48,6 +55,7 @@ class Page:
     def relative_path(self) -> Path:
         if self._relative_path is None:
             raise RuntimeError("Page not initialized")
+        print(self._relative_path)
         return self._relative_path
 
     @classmethod
@@ -58,6 +66,8 @@ class Page:
             path += "index.html"
         if not path.endswith(".md"):
             path = path.removesuffix(".html") + ".md"
+        if language == "api":
+            path = f"/api/{path}"
         return _PAGE_CACHE.get(language, {}).get(path, (None, None, None))
 
     @classmethod
@@ -73,6 +83,7 @@ class Page:
                 page,
                 None,
             )
+            _PAGE_CACHE["api"] = {}
         for language, pages in _PAGE_CACHE.items():
             for name, (_, current, _) in pages.items():
                 previous_page = None
@@ -81,11 +92,42 @@ class Page:
                     index = page_order.index(name)
                 except ValueError:
                     continue
-                if index > 0:
-                    previous_page = pages[page_order[index - 1]][1]
-                if index < len(page_order) - 1:
-                    next_page = pages[page_order[index + 1]][1]
+                try:
+                    if index > 0:
+                        previous_page = pages[page_order[index - 1]][1]
+                except KeyError:
+                    pass
+                try:
+                    if index < len(page_order) - 1:
+                        next_page = pages[page_order[index + 1]][1]
+                except KeyError:
+                    pass
                 pages[name] = (previous_page, current, next_page)
+            previous_page = None
+            next_page = None
+
+        api_pages = cls._load_api_pages()
+        filtered_order = [ref for ref in page_order if ref in api_pages]
+        for idx, ref in enumerate(filtered_order):
+            current_page = api_pages[ref]
+            previous_page = None
+            next_page = None
+            try:
+                if idx > 0:
+                    previous_page = api_pages[filtered_order[idx - 1]]
+            except KeyError:
+                pass
+            try:
+                if idx < len(filtered_order) - 1:
+                    next_page = api_pages[filtered_order[idx + 1]]
+            except KeyError:
+                pass
+            _PAGE_CACHE["api"][ref] = (previous_page, current_page, next_page)
+
+        for section, items in _PAGE_CACHE.items():
+            print(f"[bold yellow]{section}[/bold yellow]")
+            for name, (prev, current, next) in items.items():
+                print(f"\t[cyan]{name}[/cyan]")
 
     @staticmethod
     def _load_page(path: Path) -> Page:
@@ -106,6 +148,26 @@ class Page:
                 page.anchors.append(line)
 
         return page
+
+    @staticmethod
+    def _load_api_pages() -> dict[str, Page]:
+        docstring_content = _organize_docobjects("sanic")
+        output: dict[str, Page] = {}
+
+        for module, content in docstring_content.items():
+            page = Page(
+                path=Path(module),
+                content=content,
+                meta=PageMeta(
+                    title=module,
+                    description="",
+                    layout="main",
+                ),
+            )
+            page._relative_path = Path(f"./{module}")
+            output[module] = page
+
+        return output
 
 
 class PageRenderer:
@@ -142,7 +204,7 @@ class PageRenderer:
         self, request: Request, builder: Builder, language: str, path: str
     ):
         prev_page, current_page, next_page = Page.get(language, path)
-        request.ctx.language = language
+        request.ctx.language = DEFAULT if language == "api" else language
         request.ctx.current_page = current_page
         request.ctx.previous_page = prev_page
         request.ctx.next_page = next_page
@@ -160,3 +222,157 @@ class PageRenderer:
         layout = layout_type(builder)
         with layout(request, builder.full):
             yield
+
+
+@dataclass
+class DocObject:
+    name: str
+    module_name: str
+    signature: inspect.Signature | None
+    docstring: str
+    methods: list[DocObject] = field(default_factory=list)
+    decorators: list[str] = field(default_factory=list)
+
+
+def _extract_docobjects(package_name: str) -> dict[str, DocObject]:
+    docstrings = {}
+    package = importlib.import_module(package_name)
+    signature: inspect.Signature | None
+    for _, name, _ in pkgutil.walk_packages(
+        package.__path__, package_name + "."
+    ):
+        module = importlib.import_module(name)
+        for obj_name, obj in inspect.getmembers(module):
+            if inspect.getmodule(obj) == module and callable(obj):
+                try:
+                    signature = inspect.signature(obj)
+                    docstring = inspect.getdoc(obj)
+                    docstrings[f"{name}.{obj_name}"] = DocObject(
+                        name=obj_name,
+                        module_name=name,
+                        signature=signature,
+                        docstring=docstring or "",
+                    )
+                    if inspect.isclass(obj):
+                        methods: list[DocObject] = []
+                        for method_name, method in inspect.getmembers(
+                            obj, is_public_member
+                        ):
+                            try:
+                                signature = inspect.signature(method)
+                            except TypeError:
+                                signature = None
+                            docstring = inspect.getdoc(method)
+                            methods.append(
+                                DocObject(
+                                    name=method_name,
+                                    module_name="",
+                                    signature=signature,
+                                    docstring=docstring or "",
+                                    decorators=_detect_decorators(obj, method),
+                                )
+                            )
+                        docstrings[f"{name}.{obj_name}"].methods = methods
+                except ValueError:
+                    pass
+    return docstrings
+
+
+def is_public_member(obj):
+    return not getattr(obj, "__name__", "").startswith("_") and (
+        inspect.ismethod(obj)
+        or inspect.isfunction(obj)
+        or isinstance(obj, property)
+        or isinstance(obj, property)
+    )
+
+
+def _organize_docobjects(package_name: str) -> dict[str, str]:
+    page_content: defaultdict[str, str] = defaultdict(str)
+    docobjects = _extract_docobjects(package_name)
+    for module, docobject in docobjects.items():
+        ref = module.rsplit(".", module.count(".") - 1)[0]
+        page_content[f"/api/{ref}.md"] += _docobject_to_html(docobject)
+    return page_content
+
+
+def _docobject_to_html(docobject: DocObject) -> str:
+    builder = Builder(name="Partial")
+    body = render_markdown(docobject.docstring)
+    with builder.div(class_="docobject"):
+        builder.h2(
+            E.span(docobject.module_name, class_="has-text-weight-light"),
+            ".",
+            E.span(docobject.name, class_="has-text-weight-bold"),
+            class_="is-size-2",
+        ).p(
+            HTML(_signature_to_html(docobject.name, docobject.signature, [])),
+            class_="signature notification is-family-monospace",
+        )(
+            HTML(body)
+        )
+        if docobject.methods:
+            with builder.div(class_="methods"):
+                for method in docobject.methods:
+                    builder.h3(
+                        method.name,
+                        class_="is-size-4 has-text-weight-bold mt-6",
+                    ).p(
+                        HTML(
+                            _signature_to_html(
+                                method.name,
+                                method.signature,
+                                method.decorators,
+                            )
+                        ),
+                        class_="signature notification is-family-monospace",
+                    )(
+                        HTML(render_markdown(method.docstring))
+                    )
+    return str(builder)
+
+
+def _signature_to_html(
+    name: str, signature: inspect.Signature | None, decorators: list[str]
+) -> str:
+    parts = []
+    parts.append("<span class='function-signature'>")
+    for decorator in decorators:
+        parts.append(f"@{decorator}<br>")
+    parts.append(f"{name}(")
+    if not signature:
+        parts.append("<span class='param-name'>self</span>)")
+        parts.append("</span>")
+        return "".join(parts)
+    for i, param in enumerate(signature.parameters.values()):
+        parts.append(f"<span class='param-name'>{escape(param.name)}</span>")
+        if param.annotation != inspect.Parameter.empty:
+            annotation = escape(str(param.annotation))
+            parts.append(
+                f": <span class='param-annotation'>{annotation}</span>"
+            )
+        if param.default != inspect.Parameter.empty:
+            default = escape(str(param.default))
+            parts.append(f" = <span class='param-default'>{default}</span>")
+        if i < len(signature.parameters) - 1:
+            parts.append(", ")
+    parts.append(")")
+    if signature.return_annotation != inspect.Signature.empty:
+        return_annotation = escape(str(signature.return_annotation))
+        parts.append(
+            f": -> <span class='return-annotation'>{return_annotation}</span>"
+        )
+    parts.append("</span>")
+    return "".join(parts)
+
+
+def _detect_decorators(cls, method):
+    decorators = []
+    method_name = getattr(method, "__name__", None)
+    if isinstance(cls.__dict__.get(method_name), classmethod):
+        decorators.append("classmethod")
+    if isinstance(cls.__dict__.get(method_name), staticmethod):
+        decorators.append("staticmethod")
+    if isinstance(method, property):
+        decorators.append("property")
+    return decorators

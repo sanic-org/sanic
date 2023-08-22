@@ -12804,6 +12804,25 @@ p + p {
   .introduction-table th {
     display: none; }
 
+.function-signature {
+  color: #1e2024; }
+  .function-signature .param-name {
+    color: #ff0d68;
+    font-weight: bold; }
+  .function-signature .param-annotation {
+    color: #0092FF; }
+  .function-signature .param-default {
+    color: #833FE3;
+    font-style: italic; }
+  .function-signature .return-annotation {
+    color: #37ae6f; }
+
+@media (prefers-color-scheme: dark) {
+  .function-signature {
+    color: #b5b5b5; }
+    .function-signature .param-default {
+      color: #FFE900; } }
+
 footer .level,
 footer .level .level-right,
 footer .level .level-left {

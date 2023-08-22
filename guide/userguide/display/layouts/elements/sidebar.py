@@ -1,7 +1,7 @@
 from userguide.display.layouts.models import MenuItem
 from userguide.display.text import slugify
 
-from html5tagger import Builder, E
+from html5tagger import Builder, E  # type: ignore
 from sanic import Request
 
 
@@ -64,7 +64,10 @@ def _render_sidebar_item(
 
 
 def _single_sidebar_item(item: MenuItem, request: Request) -> Builder:
-    path = f"/{request.ctx.language}/{item.path}" if item.path else ""
+    if item.path and item.path.startswith("/"):
+        path = item.path
+    else:
+        path = f"/{request.ctx.language}/{item.path}" if item.path else ""
     kwargs = {}
     classes: list[str] = []
     li_classes = "menu-item"

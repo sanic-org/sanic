@@ -36,6 +36,9 @@ def create_app(root: Path) -> Sanic:
     async def setup(app: Sanic):
         app.ext.dependency(PageRenderer(base_title="TestApp"))
         page_order = _compile_sidebar_order(app.config.SIDEBAR)
+        from rich import print
+
+        print(page_order)
         Page.load_pages(app.config.CONTENT_DIR, page_order)
         app.ctx.get_page = Page.get
 

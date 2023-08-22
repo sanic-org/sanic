@@ -55,3 +55,31 @@
     a[target=_blank]::after { display: none; }
     th { display: none; }
 }
+
+.function-signature {
+  color: $dark_1;
+
+  .param-name {
+    color: $primary;
+    font-weight: bold;
+  }
+
+  .param-annotation {
+    color: $blue;
+  }
+
+  .param-default {
+    color: $purple;
+    font-style: italic;
+  }
+
+  .return-annotation {
+    color: $green_1;
+  }
+}
+@media (prefers-color-scheme: dark) {
+    .function-signature {
+        color: $grey-light;
+        .param-default { color: $yellow; }
+    }
+}

@@ -1,2 +1,2 @@
 run:
-	sanic server:app --dev
+	sanic server:app -r

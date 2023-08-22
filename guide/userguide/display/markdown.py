@@ -1,11 +1,19 @@
+import re
+from textwrap import dedent
+
 from mistune import HTMLRenderer, create_markdown, escape
-from mistune.directives import RSTDirective, TableOfContents
+from mistune.directives import (
+    Admonition,
+    FencedDirective,
+    RSTDirective,
+    TableOfContents,
+)
 from mistune.util import safe_entity
 from pygments import highlight
 from pygments.formatters import html
 from pygments.lexers import get_lexer_by_name
 
-from html5tagger import HTML, E
+from html5tagger import HTML, E  # type: ignore
 
 from .code_style import SanicCodeStyle
 from .plugins.attrs import Attributes
@@ -80,11 +88,16 @@ class DocsRenderer(HTMLRenderer):
         return f"<{tag} {attrs}>{text}</{tag}>"
 
 
-render_markdown = create_markdown(
+RST_CODE_BLOCK_PATTERN = re.compile(
+    r"\.\.\scode-block::\s(\w+)\n\n((?:\n|(?:\s\s\s\s[^\n]*))+)"
+)
+
+_render_markdown = create_markdown(
     renderer=DocsRenderer(),
     plugins=[
         RSTDirective(
             [
+                Admonition(),
                 Attributes(),
                 Notification(),
                 TableOfContents(),
@@ -98,3 +111,13 @@ render_markdown = create_markdown(
         "table",
     ],
 )
+
+
+def render_markdown(text: str) -> str:
+    def replacer(match):
+        language = match.group(1)
+        code_block = dedent(match.group(2)).strip()
+        return f"```{language}\n{code_block}\n```\n\n"
+
+    text = RST_CODE_BLOCK_PATTERN.sub(replacer, text)
+    return _render_markdown(text)

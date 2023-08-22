@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-
 from abc import ABCMeta
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
@@ -15,7 +14,6 @@ from sanic.helpers import Default, _default
 from sanic.http import Http
 from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
-
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -86,6 +84,13 @@ class DescriptorMeta(ABCMeta):
 
 
 class Config(dict, metaclass=DescriptorMeta):
+    """
+    Configuration object for Sanic.
+
+    You can use this object to both: (1) configure how Sanic will operate, and
+    (2) manage your application's custom configuration values.
+    """
+
     ACCESS_LOG: bool
     AUTO_EXTEND: bool
     AUTO_RELOAD: bool

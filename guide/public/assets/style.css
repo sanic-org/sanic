@@ -1,4 +1,7 @@
 @charset "UTF-8";
+.has-text-purple {
+  color: #833FE3; }
+
 /*! bulma.io v0.9.4 | MIT License | github.com/jgthms/bulma */
 /* Bulma Utilities */
 .pagination-previous,
@@ -12782,6 +12785,9 @@ p + p {
   .notification .notification-title {
     font-size: 1.25rem;
     font-weight: 700; }
+  .notification.is-note {
+    background-color: #833FE3;
+    color: white; }
 
 .ol, .ul,
 .list {
@@ -12804,26 +12810,70 @@ p + p {
   .introduction-table th {
     display: none; }
 
-.function-signature {
+.docobject h2 :last-child {
+  color: #363636; }
+
+.docobject .function-signature {
   color: #1e2024; }
-  .function-signature .param-name {
+  .docobject .function-signature .param-name {
     color: #ff0d68;
     font-weight: bold; }
-  .function-signature .param-annotation {
-    color: #0092FF; }
-  .function-signature .param-default {
+  .docobject .function-signature .param-default {
     color: #833FE3;
     font-style: italic; }
-  .function-signature .return-annotation {
+  .docobject .function-signature .function-decorator {
+    font-style: italic;
+    color: #7a7a7a; }
+  .docobject .function-signature .param-annotation {
+    color: #0092FF; }
+  .docobject .function-signature .return-annotation {
     color: #37ae6f; }
 
+.docobject dl {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0; }
+
+.docobject dt {
+  flex: 0 0 25%;
+  padding: 5px 10px;
+  font-weight: bold;
+  color: #0092FF; }
+
+.docobject dd {
+  flex: 1;
+  padding: 5px 10px;
+  margin: 0; }
+
+.docobject .long-description div.highlight + p,
+.docobject .long-description p + div.highlight {
+  margin-top: 1rem; }
+
+.docobject .method {
+  padding-left: 1rem; }
+  .docobject .method h3 {
+    margin-left: -1rem; }
+
+.docobject .ol, .docobject .ul, .docobject .list {
+  margin: 1rem; }
+
 @media (prefers-color-scheme: dark) {
-  .function-signature {
+  .docobject h2 :last-child {
+    color: #fafafa; }
+  .docobject .function-signature {
     color: #b5b5b5; }
-    .function-signature .param-default {
+    .docobject .function-signature .param-default {
       color: #FFE900; } }
 
 footer .level,
 footer .level .level-right,
 footer .level .level-left {
   display: flex !important; }
+
+.box {
+  box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1); }
+
+@media (prefers-color-scheme: dark) {
+  .box {
+    box-shadow: 0 2px 3px rgba(128, 128, 128, 0.1), 0 0 0 1px rgba(128, 128, 128, 0.1); } }

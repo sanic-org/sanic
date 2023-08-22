@@ -36,6 +36,10 @@
         font-size: 1.25rem;
         font-weight: 700;
     }
+    &.is-note {
+        background-color: $purple;
+        color: $white;
+    }
 }
 
 .ol, .ul,
@@ -56,30 +60,66 @@
     th { display: none; }
 }
 
-.function-signature {
-  color: $dark_1;
-
-  .param-name {
-    color: $primary;
-    font-weight: bold;
-  }
-
-  .param-annotation {
-    color: $blue;
-  }
-
-  .param-default {
-    color: $purple;
-    font-style: italic;
-  }
-
-  .return-annotation {
-    color: $green_1;
-  }
-}
-@media (prefers-color-scheme: dark) {
+.docobject {
+    h2 :last-child { color: $dark; }
     .function-signature {
-        color: $grey-light;
-        .param-default { color: $yellow; }
+        color: $dark_1;
+
+        .param-name {
+            color: $primary;
+            font-weight: bold;
+        }
+        .param-default {
+            color: $purple;
+            font-style: italic;
+        }
+        .function-decorator {
+            font-style: italic;
+            color: $grey
+        }
+        .param-annotation { color: $blue; }
+        .return-annotation { color: $green_1; }
+
+    }
+
+    dl {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+    }
+    dt {
+        flex: 0 0 25%;
+        padding: 5px 10px;
+        font-weight: bold;
+        color: $blue;
+    }
+    dd {
+        flex: 1;
+        padding: 5px 10px;
+        margin: 0;
+    }
+
+    .long-description {
+        div.highlight + p,
+        p + div.highlight { margin-top: 1rem; }
+    }
+
+    .method {
+        padding-left: 1rem;
+
+        h3 { margin-left: -1rem; }
+    }
+
+    .ol, .ul, .list { margin: 1rem; }
+}
+
+@media (prefers-color-scheme: dark) {
+    .docobject {
+        h2 :last-child { color: $white-bis; }
+        .function-signature {
+            color: $grey-light;
+            .param-default { color: $yellow; }
+        }
     }
 }

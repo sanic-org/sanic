@@ -10,6 +10,8 @@ from html import escape
 from pathlib import Path
 from typing import Type
 
+from docstring_parser import Docstring
+from docstring_parser import parse as parse_docstring
 from frontmatter import parse
 from rich import print
 
@@ -19,7 +21,7 @@ from sanic import Request
 from .layouts.base import BaseLayout
 from .layouts.home import HomeLayout
 from .layouts.main import MainLayout
-from .markdown import render_markdown
+from .markdown import render_markdown, slugify
 
 _PAGE_CACHE: dict[
     str, dict[str, tuple[Page | None, Page | None, Page | None]]
@@ -155,11 +157,12 @@ class Page:
         output: dict[str, Page] = {}
 
         for module, content in docstring_content.items():
+            path = Path(module)
             page = Page(
-                path=Path(module),
+                path=path,
                 content=content,
                 meta=PageMeta(
-                    title=module,
+                    title=path.stem,
                     description="",
                     layout="main",
                 ),
@@ -228,8 +231,9 @@ class PageRenderer:
 class DocObject:
     name: str
     module_name: str
+    full_name: str
     signature: inspect.Signature | None
-    docstring: str
+    docstring: Docstring
     methods: list[DocObject] = field(default_factory=list)
     decorators: list[str] = field(default_factory=list)
 
@@ -243,15 +247,19 @@ def _extract_docobjects(package_name: str) -> dict[str, DocObject]:
     ):
         module = importlib.import_module(name)
         for obj_name, obj in inspect.getmembers(module):
+            if obj_name.startswith("_"):
+                continue
             if inspect.getmodule(obj) == module and callable(obj):
                 try:
                     signature = inspect.signature(obj)
                     docstring = inspect.getdoc(obj)
-                    docstrings[f"{name}.{obj_name}"] = DocObject(
+                    full_name = f"{name}.{obj_name}"
+                    docstrings[full_name] = DocObject(
                         name=obj_name,
+                        full_name=full_name,
                         module_name=name,
                         signature=signature,
-                        docstring=docstring or "",
+                        docstring=parse_docstring(docstring or ""),
                     )
                     if inspect.isclass(obj):
                         methods: list[DocObject] = []
@@ -262,16 +270,21 @@ def _extract_docobjects(package_name: str) -> dict[str, DocObject]:
                                 signature = inspect.signature(method)
                             except TypeError:
                                 signature = None
+                                if func := getattr(method, "fget", None):
+                                    signature = inspect.signature(func)
                             docstring = inspect.getdoc(method)
+                            decorators = _detect_decorators(obj, method)
                             methods.append(
                                 DocObject(
                                     name=method_name,
                                     module_name="",
+                                    full_name=f"{full_name}.{method_name}",
                                     signature=signature,
-                                    docstring=docstring or "",
-                                    decorators=_detect_decorators(obj, method),
+                                    docstring=parse_docstring(docstring or ""),
+                                    decorators=decorators,
                                 )
                             )
+
                         docstrings[f"{name}.{obj_name}"].methods = methods
                 except ValueError:
                     pass
@@ -291,45 +304,140 @@ def _organize_docobjects(package_name: str) -> dict[str, str]:
     page_content: defaultdict[str, str] = defaultdict(str)
     docobjects = _extract_docobjects(package_name)
     for module, docobject in docobjects.items():
+        builder = Builder(name="Partial")
+        _docobject_to_html(docobject, builder)
         ref = module.rsplit(".", module.count(".") - 1)[0]
-        page_content[f"/api/{ref}.md"] += _docobject_to_html(docobject)
+        page_content[f"/api/{ref}.md"] += str(builder)
     return page_content
 
 
-def _docobject_to_html(docobject: DocObject) -> str:
-    builder = Builder(name="Partial")
-    body = render_markdown(docobject.docstring)
-    with builder.div(class_="docobject"):
-        builder.h2(
+def _docobject_to_html(
+    docobject: DocObject, builder: Builder, as_method: bool = False
+) -> None:
+    anchor_id = slugify(docobject.full_name.replace(".", "-"))
+    anchor = E.a("#", class_="anchor", href=f"#{anchor_id}")
+    if as_method:
+        class_name = "method"
+        heading = E.h3(
+            docobject.name,
+            anchor,
+            class_="is-size-4 has-text-weight-bold mt-6",
+            id_=anchor_id,
+        )
+    else:
+        class_name = "docobject"
+        heading = E.h2(
             E.span(docobject.module_name, class_="has-text-weight-light"),
             ".",
-            E.span(docobject.name, class_="has-text-weight-bold"),
+            E.span(docobject.name, class_="has-text-weight-bold is-size-1"),
+            anchor,
             class_="is-size-2",
-        ).p(
-            HTML(_signature_to_html(docobject.name, docobject.signature, [])),
-            class_="signature notification is-family-monospace",
-        )(
-            HTML(body)
+            id_=anchor_id,
         )
-        if docobject.methods:
-            with builder.div(class_="methods"):
-                for method in docobject.methods:
-                    builder.h3(
-                        method.name,
-                        class_="is-size-4 has-text-weight-bold mt-6",
-                    ).p(
-                        HTML(
-                            _signature_to_html(
-                                method.name,
-                                method.signature,
-                                method.decorators,
+
+    with builder.div(class_=class_name):
+        builder(heading)
+
+        if docobject.docstring.short_description:
+            builder.div(
+                HTML(
+                    render_markdown(docobject.docstring.short_description),
+                ),
+                class_="short-description mt-3 is-size-5",
+            )
+
+        builder.p(
+            HTML(
+                _signature_to_html(
+                    docobject.name, docobject.signature, docobject.decorators
+                )
+            ),
+            class_="signature notification is-family-monospace",
+        )
+
+        if docobject.docstring.long_description:
+            builder.div(
+                HTML(
+                    render_markdown(docobject.docstring.long_description),
+                ),
+                class_="long-description mt-3",
+            )
+
+        if docobject.docstring.params:
+            with builder.div(class_="box mt-5"):
+                builder.h5(
+                    "Parameters", class_="is-size-5 has-text-weight-bold"
+                )
+                for param in docobject.docstring.params:
+                    with builder.dl(class_="mt-2"):
+                        dt_args = [param.arg_name]
+                        if param.type_name:
+                            dt_args.extend(
+                                [
+                                    E.br(),
+                                    E.span(
+                                        param.type_name,
+                                        class_=(
+                                            "has-text-weight-normal "
+                                            "has-text-purple ml-2"
+                                        ),
+                                    ),
+                                ]
                             )
-                        ),
-                        class_="signature notification is-family-monospace",
-                    )(
-                        HTML(render_markdown(method.docstring))
+                        builder.dt(*dt_args, class_="is-family-monospace")
+                        builder.dd(
+                            HTML(
+                                render_markdown(
+                                    param.description
+                                    or param.arg_name
+                                    or param.type_name
+                                    or ""
+                                ),
+                            )
+                        )
+
+        if docobject.docstring.raises:
+            with builder.div(class_="box mt-5"):
+                builder.h5("Raises", class_="is-size-5 has-text-weight-bold")
+                for raise_ in docobject.docstring.raises:
+                    with builder.dl(class_="mt-2"):
+                        builder.dt(
+                            raise_.type_name, class_="is-family-monospace"
+                        )
+                        builder.dd(
+                            HTML(
+                                render_markdown(
+                                    raise_.description
+                                    or raise_.type_name
+                                    or ""
+                                ),
+                            )
+                        )
+
+        if docobject.docstring.returns:
+            with builder.div(class_="box mt-5"):
+                return_type = docobject.docstring.returns.type_name
+                if not return_type and docobject.signature:
+                    return_type = docobject.signature.return_annotation
+
+                if not return_type or return_type == inspect.Signature.empty:
+                    return_type = "N/A"
+
+                builder.h5("Returns", class_="is-size-5 has-text-weight-bold")
+                with builder.dl(class_="mt-2"):
+                    builder.dt(return_type, class_="is-family-monospace")
+                    builder.dd(
+                        HTML(
+                            render_markdown(
+                                docobject.docstring.returns.description
+                                or docobject.docstring.returns.type_name
+                                or ""
+                            ),
+                        )
                     )
-    return str(builder)
+
+        for method in docobject.methods:
+            _docobject_to_html(method, builder, as_method=True)
 
 
 def _signature_to_html(
@@ -338,7 +446,9 @@ def _signature_to_html(
     parts = []
     parts.append("<span class='function-signature'>")
     for decorator in decorators:
-        parts.append(f"@{decorator}<br>")
+        parts.append(
+            f"<span class='function-decorator'>@{decorator}</span><br>"
+        )
     parts.append(f"{name}(")
     if not signature:
         parts.append("<span class='param-name'>self</span>)")
@@ -346,6 +456,7 @@ def _signature_to_html(
         return "".join(parts)
     for i, param in enumerate(signature.parameters.values()):
         parts.append(f"<span class='param-name'>{escape(param.name)}</span>")
+        annotation = ""
         if param.annotation != inspect.Parameter.empty:
             annotation = escape(str(param.annotation))
             parts.append(
@@ -353,6 +464,8 @@ def _signature_to_html(
             )
         if param.default != inspect.Parameter.empty:
             default = escape(str(param.default))
+            if annotation == "str":
+                default = f'"{default}"'
             parts.append(f" = <span class='param-default'>{default}</span>")
         if i < len(signature.parameters) - 1:
             parts.append(", ")

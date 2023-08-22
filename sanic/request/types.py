@@ -24,14 +24,12 @@ from sanic.http.stream import Stream
 from sanic.models.asgi import ASGIScope
 from sanic.models.http_types import Credentials
 
-
 if TYPE_CHECKING:
     from sanic.app import Sanic
     from sanic.config import Config
     from sanic.server import ConnInfo
 
 import uuid
-
 from collections import defaultdict
 from urllib.parse import parse_qs, parse_qsl, urlunparse
 
@@ -64,7 +62,6 @@ from sanic.response import BaseHTTPResponse, HTTPResponse
 
 from .form import parse_multipart_form
 from .parameters import RequestParameters
-
 
 try:
     from ujson import loads as json_loads  # type: ignore
@@ -205,15 +202,14 @@ class Request(Generic[sanic_type, ctx_type]):
         <https://docs.python.org/3/library/contextvars.html>`_
         to allow for accessing the current request from anywhere.
 
-        Raises :exc:`sanic.exceptions.ServerError` if it is outside of
-        a request lifecycle.
-
         .. code-block:: python
 
             from sanic import Request
 
             current_request = Request.get_current()
 
+        :raises sanic.exceptions.ServerError: if it is outside of
+            a request lifecycle.
         :return: the current :class:`sanic.request.Request`
         """
         request = cls._current.get(None)

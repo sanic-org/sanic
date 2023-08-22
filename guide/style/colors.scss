@@ -9,8 +9,11 @@ $yellow: #FFE900;
 $menu-item-active-background-color: $sanic;
 
 
- $green_1: #37ae6f;
- $green_2: #16DB93;
- $purple: #833FE3;
- $dark_1: #1e2024;
- $orange: #d98404;
+$green_1: #37ae6f;
+$green_2: #16DB93;
+$purple: #833FE3;
+$dark_1: #1e2024;
+$orange: #d98404;
+
+
+.has-text-purple { color: $purple; }

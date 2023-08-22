@@ -20,7 +20,7 @@ class ExceptionMixin(metaclass=SanicMeta):
         :param kwargs: Additional optional arguments to be passed to the
             exception handler
 
-        :return a decorated method to handle global exceptions for any
+        :return: a decorated method to handle global exceptions for any
             route registered under this blueprint.
         """
 
@@ -46,7 +46,7 @@ class ExceptionMixin(metaclass=SanicMeta):
 
         :param handler: A coroutine function to handle exceptions
 
-        :return a decorated method to handle global exceptions for any
+        :return: a decorated method to handle global exceptions for any
             route registered under this blueprint.
         """
         return self.exception(Exception)(handler)

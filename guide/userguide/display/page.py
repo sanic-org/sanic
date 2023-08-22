@@ -234,64 +234,81 @@ class DocObject:
     full_name: str
     signature: inspect.Signature | None
     docstring: Docstring
+    object_type: str = ""
     methods: list[DocObject] = field(default_factory=list)
     decorators: list[str] = field(default_factory=list)
+
+
+def _extract_classes_methods(obj, full_name, docstrings):
+    methods = []
+    for method_name, method in inspect.getmembers(obj, is_public_member):
+        try:
+            signature = _get_method_signature(method)
+            docstring = inspect.getdoc(method)
+            decorators = _detect_decorators(obj, method)
+            methods.append(
+                DocObject(
+                    name=method_name,
+                    module_name="",
+                    full_name=f"{full_name}.{method_name}",
+                    signature=signature,
+                    docstring=parse_docstring(docstring or ""),
+                    decorators=decorators,
+                    object_type=_get_object_type(method),
+                )
+            )
+        except ValueError:
+            pass
+
+    docstrings[full_name].methods = methods
+
+
+def _get_method_signature(method):
+    try:
+        return inspect.signature(method)
+    except TypeError:
+        signature = None
+        if func := getattr(method, "fget", None):
+            signature = inspect.signature(func)
+    return signature
 
 
 def _extract_docobjects(package_name: str) -> dict[str, DocObject]:
     docstrings = {}
     package = importlib.import_module(package_name)
-    signature: inspect.Signature | None
+
     for _, name, _ in pkgutil.walk_packages(
         package.__path__, package_name + "."
     ):
         module = importlib.import_module(name)
         for obj_name, obj in inspect.getmembers(module):
-            if obj_name.startswith("_"):
+            if (
+                obj_name.startswith("_")
+                or inspect.getmodule(obj) != module
+                or not callable(obj)
+            ):
                 continue
-            if inspect.getmodule(obj) == module and callable(obj):
-                try:
-                    signature = inspect.signature(obj)
-                    docstring = inspect.getdoc(obj)
-                    full_name = f"{name}.{obj_name}"
-                    docstrings[full_name] = DocObject(
-                        name=obj_name,
-                        full_name=full_name,
-                        module_name=name,
-                        signature=signature,
-                        docstring=parse_docstring(docstring or ""),
-                    )
-                    if inspect.isclass(obj):
-                        methods: list[DocObject] = []
-                        for method_name, method in inspect.getmembers(
-                            obj, is_public_member
-                        ):
-                            try:
-                                signature = inspect.signature(method)
-                            except TypeError:
-                                signature = None
-                                if func := getattr(method, "fget", None):
-                                    signature = inspect.signature(func)
-                            docstring = inspect.getdoc(method)
-                            decorators = _detect_decorators(obj, method)
-                            methods.append(
-                                DocObject(
-                                    name=method_name,
-                                    module_name="",
-                                    full_name=f"{full_name}.{method_name}",
-                                    signature=signature,
-                                    docstring=parse_docstring(docstring or ""),
-                                    decorators=decorators,
-                                )
-                            )
+            try:
+                signature = inspect.signature(obj)
+                docstring = inspect.getdoc(obj)
+                full_name = f"{name}.{obj_name}"
+                docstrings[full_name] = DocObject(
+                    name=obj_name,
+                    full_name=full_name,
+                    module_name=name,
+                    signature=signature,
+                    docstring=parse_docstring(docstring or ""),
+                    object_type=_get_object_type(obj),
+                )
+                if inspect.isclass(obj):
+                    _extract_classes_methods(obj, full_name, docstrings)
+            except ValueError:
+                pass
 
-                        docstrings[f"{name}.{obj_name}"].methods = methods
-                except ValueError:
-                    pass
     return docstrings
 
 
-def is_public_member(obj):
+def is_public_member(obj: object) -> bool:
     return not getattr(obj, "__name__", "").startswith("_") and (
         inspect.ismethod(obj)
         or inspect.isfunction(obj)
@@ -311,9 +328,74 @@ def _organize_docobjects(package_name: str) -> dict[str, str]:
     return page_content
 
 
-def _docobject_to_html(
-    docobject: DocObject, builder: Builder, as_method: bool = False
-) -> None:
+def _render_params(builder: Builder, params: list[Docstring.Param]) -> None:
+    for param in params:
+        with builder.dl(class_="mt-2"):
+            dt_args = [param.arg_name]
+            if param.type_name:
+                dt_args.extend(
+                    [
+                        E.br(),
+                        E.span(
+                            param.type_name,
+                            class_="has-text-weight-normal has-text-purple ml-2",
+                        ),
+                    ]
+                )
+            builder.dt(*dt_args, class_="is-family-monospace")
+            builder.dd(
+                HTML(
+                    render_markdown(
+                        param.description
+                        or param.arg_name
+                        or param.type_name
+                        or ""
+                    )
+                )
+            )
+
+
+def _render_raises(builder: Builder, raises: list[Docstring.Raise]) -> None:
+    with builder.div(class_="box mt-5"):
+        builder.h5("Raises", class_="is-size-5 has-text-weight-bold")
+        for raise_ in raises:
+            with builder.dl(class_="mt-2"):
+                builder.dt(raise_.type_name, class_="is-family-monospace")
+                builder.dd(
+                    HTML(
+                        render_markdown(
+                            raise_.description or raise_.type_name or ""
+                        )
+                    )
+                )
+
+
+def _render_returns(builder: Builder, docobject: DocObject) -> None:
+    with builder.div(class_="box mt-5"):
+        return_type = docobject.docstring.returns.type_name
+        if not return_type and docobject.signature:
+            return_type = docobject.signature.return_annotation
+
+        if not return_type or return_type == inspect.Signature.empty:
+            return_type = "N/A"
+
+        builder.h5("Returns", class_="is-size-5 has-text-weight-bold")
+        with builder.dl(class_="mt-2"):
+            builder.dt(return_type, class_="is-family-monospace")
+            builder.dd(
+                HTML(
+                    render_markdown(
+                        docobject.docstring.returns.description
+                        or docobject.docstring.returns.type_name
+                        or ""
+                    )
+                )
+            )
+
+
+def _define_heading_and_class(
+    docobject: DocObject, anchor: Builder, as_method: bool
+) -> tuple[str, Builder]:
     anchor_id = slugify(docobject.full_name.replace(".", "-"))
     anchor = E.a("#", class_="anchor", href=f"#{anchor_id}")
     if as_method:
@@ -334,22 +416,34 @@ def _docobject_to_html(
             class_="is-size-2",
             id_=anchor_id,
         )
+    return class_name, heading
+
+
+def _docobject_to_html(
+    docobject: DocObject, builder: Builder, as_method: bool = False
+) -> None:
+    anchor_id = slugify(docobject.full_name.replace(".", "-"))
+    anchor = E.a("#", class_="anchor", href=f"#{anchor_id}")
+    class_name, heading = _define_heading_and_class(
+        docobject, anchor, as_method
+    )
 
     with builder.div(class_=class_name):
         builder(heading)
 
         if docobject.docstring.short_description:
             builder.div(
-                HTML(
-                    render_markdown(docobject.docstring.short_description),
-                ),
+                HTML(render_markdown(docobject.docstring.short_description)),
                 class_="short-description mt-3 is-size-5",
             )
 
         builder.p(
             HTML(
                 _signature_to_html(
-                    docobject.name, docobject.signature, docobject.decorators
+                    docobject.name,
+                    docobject.object_type,
+                    docobject.signature,
+                    docobject.decorators,
                 )
             ),
             class_="signature notification is-family-monospace",
@@ -357,9 +451,7 @@ def _docobject_to_html(
 
         if docobject.docstring.long_description:
             builder.div(
-                HTML(
-                    render_markdown(docobject.docstring.long_description),
-                ),
+                HTML(render_markdown(docobject.docstring.long_description)),
                 class_="long-description mt-3",
             )
 
@@ -368,80 +460,23 @@ def _docobject_to_html(
                 builder.h5(
                     "Parameters", class_="is-size-5 has-text-weight-bold"
                 )
-                for param in docobject.docstring.params:
-                    with builder.dl(class_="mt-2"):
-                        dt_args = [param.arg_name]
-                        if param.type_name:
-                            dt_args.extend(
-                                [
-                                    E.br(),
-                                    E.span(
-                                        param.type_name,
-                                        class_=(
-                                            "has-text-weight-normal "
-                                            "has-text-purple ml-2"
-                                        ),
-                                    ),
-                                ]
-                            )
-                        builder.dt(*dt_args, class_="is-family-monospace")
-                        builder.dd(
-                            HTML(
-                                render_markdown(
-                                    param.description
-                                    or param.arg_name
-                                    or param.type_name
-                                    or ""
-                                ),
-                            )
-                        )
+                _render_params(builder, docobject.docstring.params)
 
         if docobject.docstring.raises:
-            with builder.div(class_="box mt-5"):
-                builder.h5("Raises", class_="is-size-5 has-text-weight-bold")
-                for raise_ in docobject.docstring.raises:
-                    with builder.dl(class_="mt-2"):
-                        builder.dt(
-                            raise_.type_name, class_="is-family-monospace"
-                        )
-                        builder.dd(
-                            HTML(
-                                render_markdown(
-                                    raise_.description
-                                    or raise_.type_name
-                                    or ""
-                                ),
-                            )
-                        )
+            _render_raises(builder, docobject.docstring.raises)
 
         if docobject.docstring.returns:
-            with builder.div(class_="box mt-5"):
-                return_type = docobject.docstring.returns.type_name
-                if not return_type and docobject.signature:
-                    return_type = docobject.signature.return_annotation
-
-                if not return_type or return_type == inspect.Signature.empty:
-                    return_type = "N/A"
-
-                builder.h5("Returns", class_="is-size-5 has-text-weight-bold")
-                with builder.dl(class_="mt-2"):
-                    builder.dt(return_type, class_="is-family-monospace")
-                    builder.dd(
-                        HTML(
-                            render_markdown(
-                                docobject.docstring.returns.description
-                                or docobject.docstring.returns.type_name
-                                or ""
-                            ),
-                        )
-                    )
+            _render_returns(builder, docobject)
 
         for method in docobject.methods:
             _docobject_to_html(method, builder, as_method=True)
 
 
 def _signature_to_html(
-    name: str, signature: inspect.Signature | None, decorators: list[str]
+    name: str,
+    object_type: str,
+    signature: inspect.Signature | None,
+    decorators: list[str],
 ) -> str:
     parts = []
     parts.append("<span class='function-signature'>")
@@ -449,7 +484,10 @@ def _signature_to_html(
         parts.append(
             f"<span class='function-decorator'>@{decorator}</span><br>"
         )
-    parts.append(f"{name}(")
+    parts.append(
+        f"<span class='is-italic'>{object_type}</span> "
+        f"<span class='has-text-weight-bold'>{name}</span>("
+    )
     if not signature:
         parts.append("<span class='param-name'>self</span>)")
         parts.append("</span>")
@@ -489,3 +527,18 @@ def _detect_decorators(cls, method):
     if isinstance(method, property):
         decorators.append("property")
     return decorators
+
+
+def _get_object_type(obj) -> str:
+    if inspect.isclass(obj):
+        return "class"
+
+    # If the object is a method, get the underlying function
+    if inspect.ismethod(obj):
+        obj = obj.__func__
+
+    # If the object is a coroutine or a coroutine function
+    if inspect.iscoroutine(obj) or inspect.iscoroutinefunction(obj):
+        return "async def"
+
+    return "def"

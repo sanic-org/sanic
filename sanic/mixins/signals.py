@@ -66,7 +66,24 @@ class SignalMixin(metaclass=SanicMeta):
         event: str,
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
-    ):
+    ) -> Callable[..., Any]:
+        """Registers a signal handler for a specific event.
+
+        Args:
+            handler (Optional[Callable[..., Any]]): The function to be called
+                when the event occurs. Defaults to a noop if not provided.
+            event (str): The name of the event to listen for.
+            condition (Optional[Dict[str, Any]]): Optional condition to filter
+                the event triggering. Defaults to `None`.
+            exclusive (bool): Whether or not the handler is exclusive. When
+                `True`, the signal can only be dispatched when the
+                `condition` has been met. *This is inapplicable to blueprint
+                signals, which are **ALWAYS** non-exclusive.* Defaults
+                to `True`.
+
+        Returns:
+            Callable[..., Any]: The handler that was registered.
+        """
         if not handler:
 
             async def noop():

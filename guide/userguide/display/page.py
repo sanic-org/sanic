@@ -10,8 +10,9 @@ from html import escape
 from pathlib import Path
 from typing import Type
 
-from docstring_parser import Docstring
+from docstring_parser import Docstring, DocstringParam, DocstringRaises
 from docstring_parser import parse as parse_docstring
+from docstring_parser.common import DocstringExample
 from frontmatter import parse
 from rich import print
 
@@ -328,20 +329,19 @@ def _organize_docobjects(package_name: str) -> dict[str, str]:
     return page_content
 
 
-def _render_params(builder: Builder, params: list[Docstring.Param]) -> None:
+def _render_params(builder: Builder, params: list[DocstringParam]) -> None:
     for param in params:
         with builder.dl(class_="mt-2"):
             dt_args = [param.arg_name]
             if param.type_name:
-                dt_args.extend(
-                    [
-                        E.br(),
-                        E.span(
-                            param.type_name,
-                            class_="has-text-weight-normal has-text-purple ml-2",
-                        ),
-                    ]
-                )
+                parts = [
+                    E.br(),
+                    E.span(
+                        param.type_name,
+                        class_="has-text-weight-normal has-text-purple ml-2",
+                    ),
+                ]
+                dt_args.extend(parts)
             builder.dt(*dt_args, class_="is-family-monospace")
             builder.dd(
                 HTML(
@@ -355,7 +355,7 @@ def _render_params(builder: Builder, params: list[Docstring.Param]) -> None:
             )
 
 
-def _render_raises(builder: Builder, raises: list[Docstring.Raise]) -> None:
+def _render_raises(builder: Builder, raises: list[DocstringRaises]) -> None:
     with builder.div(class_="box mt-5"):
         builder.h5("Raises", class_="is-size-5 has-text-weight-bold")
         for raise_ in raises:
@@ -371,6 +371,7 @@ def _render_raises(builder: Builder, raises: list[Docstring.Raise]) -> None:
 
 
 def _render_returns(builder: Builder, docobject: DocObject) -> None:
+    assert docobject.docstring.returns
     with builder.div(class_="box mt-5"):
         return_type = docobject.docstring.returns.type_name
         if not return_type and docobject.signature:
@@ -391,6 +392,22 @@ def _render_returns(builder: Builder, docobject: DocObject) -> None:
                     )
                 )
             )
+
+
+def _render_examples(
+    builder: Builder, examples: list[DocstringExample]
+) -> None:
+    with builder.div(class_="box mt-5"):
+        builder.h5("Examples", class_="is-size-5 has-text-weight-bold")
+        for example in examples:
+            with builder.div(class_="mt-2"):
+                builder(
+                    HTML(
+                        render_markdown(
+                            example.description or example.snippet or ""
+                        )
+                    )
+                )
 
 
 def _define_heading_and_class(
@@ -462,11 +479,14 @@ def _docobject_to_html(
                 )
                 _render_params(builder, docobject.docstring.params)
 
+        if docobject.docstring.returns:
+            _render_returns(builder, docobject)
+
         if docobject.docstring.raises:
             _render_raises(builder, docobject.docstring.raises)
 
-        if docobject.docstring.returns:
-            _render_returns(builder, docobject)
+        if docobject.docstring.examples:
+            _render_examples(builder, docobject.docstring.examples)
 
         for method in docobject.methods:
             _docobject_to_html(method, builder, as_method=True)

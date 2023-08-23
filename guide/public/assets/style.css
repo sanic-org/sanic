@@ -12846,8 +12846,8 @@ p + p {
   padding: 5px 10px;
   margin: 0; }
 
-.docobject .long-description div.highlight + p,
-.docobject .long-description p + div.highlight {
+.docobject div.highlight + p,
+.docobject p + div.highlight {
   margin-top: 1rem; }
 
 .docobject .method {

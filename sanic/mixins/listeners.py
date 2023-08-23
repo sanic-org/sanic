@@ -99,11 +99,48 @@ class ListenerMixin(metaclass=SanicMeta):
     def main_process_start(
         self, listener: ListenerType[Sanic]
     ) -> ListenerType[Sanic]:
+        """Decorator for registering a listener for the main_process_start event.
+
+        This event is fired only on the main process and **NOT** on any
+        worker processes. You should typically use this event to initialize
+        resources that are shared across workers, or to initialize resources
+        that are not safe to be initialized in a worker process.
+
+        Args:
+            listener (ListenerType[Sanic]): The listener handler to attach.
+
+        Examples:
+            ```python
+            @app.main_process_start
+            async def on_main_process_start(app: Sanic):
+                print("Main process started")
+            ```
+        """  # noqa: E501
         return self.listener(listener, "main_process_start")
 
     def main_process_ready(
         self, listener: ListenerType[Sanic]
     ) -> ListenerType[Sanic]:
+        """Decorator for registering a listener for the main_process_ready event.
+
+        This event is fired only on the main process and **NOT** on any
+        worker processes. It is fired after the main process has started and
+        the Worker Manager has been initialized (ie, you will have access to
+        `app.manager` instance). The typical use case for this event is to
+        add a managed process to the Worker Manager.
+
+        See [Running custom processes](/en/guide/deployment/manager.html#running-custom-processes) for more details.
+
+        Args:
+            listener (ListenerType[Sanic]): The listener handler to attach.
+
+        Examples:
+            ```python
+            @app.main_process_ready
+            async def on_main_process_ready(app: Sanic):
+                print("Main process ready")
+            ```
+        """  # noqa: E501
         return self.listener(listener, "main_process_ready")
 
     def main_process_stop(

@@ -5,7 +5,6 @@ import logging
 import logging.config
 import re
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -93,7 +92,6 @@ from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
-
 
 if TYPE_CHECKING:
     try:
@@ -1385,17 +1383,28 @@ class Sanic(
         name: Optional[str] = None,
         register: bool = True,
     ) -> Optional[Task[Any]]:
-        """
-        Schedule a task to run later, after the loop has started.
-        Different from asyncio.ensure_future in that it does not
-        also return a future, and the actual ensure_future call
-        is delayed until before server start.
+        """Schedule a task to run later, after the loop has started.
 
-        `See user guide re: background tasks
-        <https://sanicframework.org/guide/basics/tasks.html#background-tasks>`__
+        While this is somewhat similar to `asyncio.create_task`, it can be
+        used before the loop has started (in which case it will run after the
+        loop has started in the `before_server_start` listener).
 
-        :param task: future, coroutine or awaitable
-        """
+        Naming tasks is a good practice as it allows you to cancel them later,
+        and allows Sanic to manage them when the server is stopped, if needed.
+
+        [See user guide re: background tasks](/en/guide/basics/tasks.html#background-tasks)
+
+        Args:
+            task (Union[Future[Any], Coroutine[Any, Any, Any], Awaitable[Any]]):
+                The future, coroutine, or awaitable to schedule.
+            name (Optional[str], optional): The name of the task, if needed for
+                later reference. Defaults to `None`.
+            register (bool, optional): Whether to register the task. Defaults
+                to `True`.
+
+        Returns:
+            Optional[Task[Any]]: The task that was scheduled, if applicable.
+        """  # noqa: E501
         try:
             loop = self.loop  # Will raise SanicError if loop is not started
             return self._loop_add_task(
@@ -1739,7 +1748,13 @@ class Sanic(
 
         self.state.is_started = True
 
-    def ack(self):
+    def ack(self) -> None:
+        """Shorthand to send an ack message to the Server Manager.
+
+        In general, this should usually not need to be called manually.
+        It is used to tell the Manager that a process is operational and
+        ready to begin operation.
+        """
         if hasattr(self, "multiplexer"):
             self.multiplexer.ack()
 

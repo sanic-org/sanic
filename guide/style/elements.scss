@@ -100,10 +100,8 @@
         margin: 0;
     }
 
-    .long-description {
-        div.highlight + p,
-        p + div.highlight { margin-top: 1rem; }
-    }
+    div.highlight + p,
+    p + div.highlight { margin-top: 1rem; }
 
     .method {
         padding-left: 1rem;

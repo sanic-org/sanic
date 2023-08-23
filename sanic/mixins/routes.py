@@ -25,7 +25,6 @@ from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.types import HashableDict
 
-
 RouteWrapper = Callable[
     [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
 ]
@@ -209,25 +208,56 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         unquote: bool = False,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """A helper method to register class instance or
-        functions as a handler to the application url
-        routes.
+        """A helper method to register class-based view or functions as a handler to the application url routes.
 
-        :param handler: function or class instance
-        :param uri: path of the URL
-        :param methods: list or tuple of methods allowed, these are overridden
-                        if using a HTTPMethodView
-        :param host:
-        :param strict_slashes:
-        :param version:
-        :param name: user defined route name for url_for
-        :param stream: boolean specifying if the handler is a stream handler
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: function or class instance
-        """
+        Args:
+            handler (RouteHandler): Function or class-based view used as a route handler.
+            uri (str): Path of the URL.
+            methods (Iterable[str]): List or tuple of methods allowed; these are overridden if using an HTTPMethodView.
+            host (Optional[Union[str, List[str]]]): Hostname or hostnames to match for this route.
+            strict_slashes (Optional[bool]): If set, a route's slashes will be strict. E.g. `/foo` will not match `/foo/`.
+            version (Optional[Union[int, str, float]]): Version of the API for this route.
+            name (Optional[str]): User-defined route name for `url_for`.
+            stream (bool): Boolean specifying if the handler is a stream handler.
+            version_prefix (str): URL path that should be before the version value; default: ``/v``.
+            error_format (Optional[str]): Custom error format string.
+            unquote (bool): Boolean specifying if the handler requires unquoting.
+            ctx_kwargs (Any): Keyword arguments that begin with a `ctx_*` prefix will be appended to the route context (``route.ctx``). See below for examples.
+
+        Returns:
+            RouteHandler: The route handler.
+
+        Examples:
+            ```python
+            from sanic import Sanic, text
+
+            app = Sanic("test")
+
+            async def handler(request):
+                return text("OK")
+
+            app.add_route(handler, "/test", methods=["GET", "POST"])
+            ```
+
+            You can use `ctx_kwargs` to add custom context to the route. This
+            can often be useful when wanting to add metadata to a route that
+            can be used by other parts of the application (like middleware).
+
+            ```python
+            from sanic import Sanic, text
+
+            app = Sanic("test")
+
+            async def handler(request):
+                return text("OK")
+
+            async def custom_middleware(request):
+                if request.route.ctx.monitor:
+                    do_some_monitoring()
+
+            app.add_route(handler, "/test", methods=["GET", "POST"], ctx_monitor=True)
+            app.register_middleware(custom_middleware)
+        """  # noqa: E501
         # Handle HTTPMethodView differently
         if hasattr(handler, "view_class"):
             methods = set()
@@ -643,26 +673,27 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ):
-        """
-        A helper method to register a function as a websocket route.
+        """A helper method to register a function as a websocket route.
 
-        :param handler: a callable function or instance of a class
-                        that can handle the websocket request
-        :param host: Host IP or FQDN details
-        :param uri: URL path that will be mapped to the websocket
-                    handler
-                    handler
-        :param strict_slashes: If the API endpoint needs to terminate
-                with a "/" or not
-        :param subprotocols: Subprotocols to be used with websocket
-                handshake
-        :param name: A unique name assigned to the URL so that it can
-                be used with :func:`url_for`
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Objected decorated by :func:`websocket`
+        Args:
+            handler (Callable): A callable function or instance of a class
+                that can handle the websocket request.
+            uri (str): URL path that will be mapped to the websocket handler.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN details.
+            strict_slashes (Optional[bool]): If the API endpoint needs to
+                terminate with a `"/"` or not.
+            subprotocols (Optional[List[str]]): Subprotocols to be used with
+                websocket handshake.
+            version (Optional[Union[int, str, float]]): Versioning information.
+            name (Optional[str]): A unique name assigned to the URL.
+            version_prefix (str): URL path before the version value.
+                Defaults to `"/v"`.
+            error_format (Optional[str]): Format for error handling.
+            **ctx_kwargs (Any): Keyword arguments beginning with `ctx_*`
+                prefix will be appended to the route context (`route.ctx`).
+
+        Returns:
+            Callable: Object passed as the handler.
         """
         return self.websocket(
             uri=uri,

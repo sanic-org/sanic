@@ -6,7 +6,7 @@ on:
 
 env:
   IS_TEST: true
-  DOCKER_ORG_NAME: sanicframework
+  DOCKER_ORG_NAME: prryplatypus
   DOCKER_IMAGE_NAME: sanic
   DOCKER_BASE_IMAGE_NAME: sanic-build
   DOCKER_IMAGE_DOCKERFILE: ./docker/Dockerfile
@@ -138,7 +138,7 @@ jobs:
       - name: Build and push base image
         uses: docker/build-push-action@v4
         with:
-          push: ${{ env.IS_TEST == 'false' }}
+          push: true # ${{ env.IS_TEST == 'false' }}
           file: ${{ env.DOCKER_BASE_IMAGE_DOCKERFILE }}
           tags: ${{ env.DOCKER_ORG_NAME }}/${{ env.DOCKER_BASE_IMAGE_NAME }}:${{ matrix.python-version }}
           build-args: |
@@ -162,9 +162,12 @@ jobs:
       - name: Build and push Sanic image
         uses: docker/build-push-action@v4
         with:
-          push: ${{ env.IS_TEST == 'false' }}
+          push: true # ${{ env.IS_TEST == 'false' }}
           file: ${{ env.DOCKER_IMAGE_DOCKERFILE }}
           tags: ${{ steps.parse_tags.outputs.tag_args }}
           build-args: |
+            BASE_IMAGE_ORG=${{ env.DOCKER_ORG_NAME }}
+            BASE_IMAGE_NAME=${{ env.DOCKER_BASE_IMAGE_NAME }}
             BASE_IMAGE_TAG=${{ matrix.python-version }}
-            SANIC_PYPI_VERSION=${{ needs.generate_info.outputs.pypi-version }}
+            SANIC_PYPI_VERSION=23.6.0
+          # SANIC_PYPI_VERSION=${{ needs.generate_info.outputs.pypi-version }}

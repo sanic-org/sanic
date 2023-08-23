@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       docker-tags: ${{ steps.generate_docker_info.outputs.tags }}
-      pypi-version: ${{ steps.parse_version_tag.outputs.pypi_version }}
+      pypi-version: ${{ steps.parse_version_tag.outputs.pypi-version }}
     steps:
       - name: Parse version tag
         id: parse_version_tag

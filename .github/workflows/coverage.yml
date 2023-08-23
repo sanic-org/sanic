@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Run coverage
-        uses: prryplatypus/simple-tox@main
+        uses: prryplatypus/simple-tox@v1
         with:
           python-version: "3.9"
           tox-env: coverage

@@ -41,7 +41,7 @@ jobs:
           - { python-version: "3.11", tox-env: py310-no-ext,  platform: windows-latest, ignore-errors: true }
     steps:
       - name: Run tests
-        uses: prryplatypus/simple-tox@main
+        uses: prryplatypus/simple-tox@v1
         with:
           python-version: ${{ matrix.config.python-version }}
           tox-env: ${{ matrix.config.tox-env }}

@@ -169,5 +169,5 @@ jobs:
             BASE_IMAGE_ORG=${{ env.DOCKER_ORG_NAME }}
             BASE_IMAGE_NAME=${{ env.DOCKER_BASE_IMAGE_NAME }}
             BASE_IMAGE_TAG=${{ matrix.python-version }}
-            SANIC_PYPI_VERSION="23.6.0"
+            SANIC_PYPI_VERSION=23.6.0
           # SANIC_PYPI_VERSION=${{ needs.generate_info.outputs.pypi-version }}

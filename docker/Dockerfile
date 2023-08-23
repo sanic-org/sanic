@@ -9,5 +9,5 @@ RUN update-ca-certificates
 
 ARG SANIC_PYPI_VERSION
 
-RUN pip install "sanic==${SANIC_PYPI_VERSION}"
+RUN pip install sanic==${SANIC_PYPI_VERSION}
 RUN apk del build-base

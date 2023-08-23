@@ -8,5 +8,5 @@ FROM ${BASE_IMAGE_ORG}/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG}
 RUN apk update
 RUN update-ca-certificates
 
-RUN pip install "sanic==${SANIC_PYPI_VERSION}"
+RUN pip install sanic==${SANIC_PYPI_VERSION}
 RUN apk del build-base

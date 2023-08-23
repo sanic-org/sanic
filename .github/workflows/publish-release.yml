@@ -61,15 +61,22 @@ jobs:
           tag_year="${{ steps.parse_version_tag.outputs.year }}"
           tag_month="${{ steps.parse_version_tag.outputs.month }}"
           latest_tag="${{ steps.get_latest_release.outputs.latest_tag }}"
+          tag="${{ github.event.release.tag_name }}"
 
           tags="${tag_year}.${tag_month}"
 
           if [[ "${tag_month}" == "12" ]]; then
             tags+=",LTS"
+            echo "::notice::Tag ${tag} is LTS version"
+          else
+            echo "::notice::Tag ${tag} is not LTS version"
           fi
 
           if [[ "${latest_tag}" == "${{ github.event.release.tag_name }}" ]]; then
             tags+=",latest"
+            echo "::notice::Tag ${tag} is marked as latest"
+          else
+            echo "::notice::Tag ${tag} is not marked as latest"
           fi
 
           tags_output="tags=${tags}"

@@ -13,17 +13,30 @@ env:
   DOCKER_BASE_IMAGE_DOCKERFILE: ./docker/Dockerfile-base
 
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check releases
+      run: |
+        latest_tag=$(
+          curl -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/releases/latest \
+            | jq -r '.tag_name'
+        )
+        echo "Latest tag: $latest_tag"
+        exit 1
+
   publish_package:
     name: Build and publish package
     runs-on: ubuntu-latest
+    needs: test
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-
-    - name: Echo release data
-      run: |
-        echo "${{ toJSON(github) }}"
-        exit 1
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -88,7 +101,6 @@ jobs:
         with:
           push: ${{ env.IS_TEST == 'false' }}
           file: ${{ env.DOCKER_IMAGE_DOCKERFILE }}
-          # TODO: Figure out tags
           tags: ${{ env.DOCKER_ORG_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ matrix.python-version }}
           build-args: |
             BASE_IMAGE_TAG=${{ matrix.python-version }}

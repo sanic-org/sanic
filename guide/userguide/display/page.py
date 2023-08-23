@@ -372,15 +372,22 @@ def _render_raises(builder: Builder, raises: list[DocstringRaises]) -> None:
 
 def _render_returns(builder: Builder, docobject: DocObject) -> None:
     assert docobject.docstring.returns
+    return_type = docobject.docstring.returns.type_name
+    if not return_type or return_type == "None":
+        return
     with builder.div(class_="box mt-5"):
-        return_type = docobject.docstring.returns.type_name
         if not return_type and docobject.signature:
             return_type = docobject.signature.return_annotation
 
         if not return_type or return_type == inspect.Signature.empty:
             return_type = "N/A"
 
-        builder.h5("Returns", class_="is-size-5 has-text-weight-bold")
+        term = (
+            "Return"
+            if not docobject.docstring.returns.is_generator
+            else "Yields"
+        )
+        builder.h5(term, class_="is-size-5 has-text-weight-bold")
         with builder.dl(class_="mt-2"):
             builder.dt(return_type, class_="is-family-monospace")
             builder.dd(

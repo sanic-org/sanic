@@ -12847,7 +12847,8 @@ p + p {
   margin: 0; }
 
 .docobject div.highlight + p,
-.docobject p + div.highlight {
+.docobject p + div.highlight,
+.docobject div.highlight + div.highlight {
   margin-top: 1rem; }
 
 .docobject .method {

@@ -54,7 +54,7 @@ from sanic.helpers import Default, _default, is_atty
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
 from sanic.http.tls.context import SanicSSLContext
-from sanic.log import Colors, error_logger, logger
+from sanic.log import Colors, deprecation, error_logger, logger
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
@@ -90,6 +90,7 @@ else:  # no cov
 class StartupMixin(metaclass=SanicMeta):
     _app_registry: ClassVar[Dict[str, Sanic]]
 
+    asgi: bool
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
     state: ApplicationState
@@ -100,7 +101,15 @@ class StartupMixin(metaclass=SanicMeta):
     start_method: ClassVar[StartMethod] = _default
     START_METHOD_SET: ClassVar[bool] = False
 
-    def setup_loop(self):
+    def setup_loop(self) -> None:
+        """Set up the event loop.
+
+        An internal method that sets up the event loop to uvloop if
+        possible, or a Windows selector loop if on Windows.
+
+        Returns:
+            None
+        """
         if not self.asgi:
             if self.config.USE_UVLOOP is True or (
                 isinstance(self.config.USE_UVLOOP, Default)
@@ -112,10 +121,39 @@ class StartupMixin(metaclass=SanicMeta):
 
     @property
     def m(self) -> WorkerMultiplexer:
-        """Interface for interacting with the worker processes"""
+        """Interface for interacting with the worker processes
+
+        This is a shortcut for `app.multiplexer`. It is available only in a
+        worker process using the Sanic server. It allows you to interact with
+        the worker processes, such as sending messages and commands.
+
+        See [Access to the multiplexer](/en/guide/deployment/manager#access-to-the-multiplexer) for more information.
+
+        Returns:
+            WorkerMultiplexer: The worker multiplexer instance
+
+        Examples:
+            ```python
+            app.m.restart()    # restarts the worker
+            app.m.terminate()  # terminates the worker
+            app.m.scale(4)     # scales the number of workers to 4
+        ```
+        """  # noqa: E501
         return self.multiplexer
 
     def make_coffee(self, *args, **kwargs):
+        """
+        Try for yourself! `sanic server:app --coffee`
+
+         ```
+         ▄████████▄
+        ██       ██▀▀▄
+        ███████████  █
+        ███████████▄▄▀
+         ▀███████▀
+
+         ```
+        """
         self.state.coffee = True
         self.run(*args, **kwargs)
 
@@ -146,42 +184,77 @@ class StartupMixin(metaclass=SanicMeta):
         auto_tls: bool = False,
         single_process: bool = False,
     ) -> None:
-        """
-        Run the HTTP Server and listen until keyboard interrupt or term
-        signal. On termination, drain connections before closing.
+        """Run the HTTP Server and listen until keyboard interrupt or term signal. On termination, drain connections before closing.
 
-        :param host: Address to host on
-        :type host: str
-        :param port: Port to host on
-        :type port: int
-        :param debug: Enables debug output (slows server)
-        :type debug: bool
-        :param auto_reload: Reload app whenever its source code is changed.
-                            Enabled by default in debug mode.
-        :type auto_relaod: bool
-        :param ssl: SSLContext, or location of certificate and key
-                    for SSL encryption of worker(s)
-        :type ssl: str, dict, SSLContext or list
-        :param sock: Socket for the server to accept connections from
-        :type sock: socket
-        :param workers: Number of processes received before it is respected
-        :type workers: int
-        :param protocol: Subclass of asyncio Protocol class
-        :type protocol: type[Protocol]
-        :param backlog: a number of unaccepted connections that the system
-                        will allow before refusing new connections
-        :type backlog: int
-        :param register_sys_signals: Register SIG* events
-        :type register_sys_signals: bool
-        :param access_log: Enables writing access logs (slows server)
-        :type access_log: bool
-        :param unix: Unix socket to listen on instead of TCP port
-        :type unix: str
-        :param noisy_exceptions: Log exceptions that are normally considered
-                                 to be quiet/silent
-        :type noisy_exceptions: bool
-        :return: Nothing
-        """
+        .. note::
+            When you need control over running the Sanic instance, this is the method to use.
+            However, in most cases the preferred method is to use the CLI command:
+
+            ```sh
+            sanic server:app`
+            ```
+
+        If you are using this method to run Sanic, make sure you do the following:
+
+        1. Use `if __name__ == "__main__"` to guard the code.
+        2. Do **NOT** define the app instance inside the `if` block.
+
+        See [Dynamic Applications](/en/guide/deployment/app-loader) for more information about the second point.
+
+        Args:
+            host (Optional[str]): Address to host on.
+            port (Optional[int]): Port to host on.
+            dev (bool): Run the server in development mode.
+            debug (bool): Enables debug output (slows server).
+            auto_reload (Optional[bool]): Reload app whenever its source code is changed.
+                Enabled by default in debug mode.
+            version (HTTPVersion): HTTP Version.
+            ssl (Union[None, SSLContext, dict, str, list, tuple]): SSLContext, or location of certificate and key
+                for SSL encryption of worker(s).
+            sock (Optional[socket]): Socket for the server to accept connections from.
+            workers (int): Number of processes received before it is respected.
+            protocol (Optional[Type[Protocol]]): Subclass of asyncio Protocol class.
+            backlog (int): A number of unaccepted connections that the system will allow
+                before refusing new connections.
+            register_sys_signals (bool): Register SIG* events.
+            access_log (Optional[bool]): Enables writing access logs (slows server).
+            unix (Optional[str]): Unix socket to listen on instead of TCP port.
+            loop (Optional[AbstractEventLoop]): AsyncIO event loop.
+            reload_dir (Optional[Union[List[str], str]]): Directory to watch for code changes, if auto_reload is True.
+            noisy_exceptions (Optional[bool]): Log exceptions that are normally considered to be quiet/silent.
+            motd (bool): Display Message of the Day.
+            fast (bool): Enable fast mode.
+            verbosity (int): Verbosity level.
+            motd_display (Optional[Dict[str, str]]): Customize Message of the Day display.
+            auto_tls (bool): Enable automatic TLS certificate handling.
+            single_process (bool): Enable single process mode.
+
+        Returns:
+            None
+
+        Raises:
+            RuntimeError: Raised when attempting to serve HTTP/3 as a secondary server.
+            RuntimeError: Raised when attempting to use both `fast` and `workers`.
+            RuntimeError: Raised when attempting to use `single_process` with `fast`, `workers`, or `auto_reload`.
+            TypeError: Raised when attempting to use `loop` with `create_server`.
+            ValueError: Raised when `PROXIES_COUNT` is negative.
+
+        Examples:
+            ```python
+            from sanic import Sanic, Request, json
+
+            app = Sanic("TestApp")
+
+
+            @app.get("/")
+            async def handler(request: Request):
+                return json({"foo": "bar"})
+
+
+            if __name__ == "__main__":
+                app.run(port=9999, dev=True)
+            ```
+        """  # noqa: E501
         self.prepare(
             host=host,
             port=port,
@@ -242,6 +315,53 @@ class StartupMixin(metaclass=SanicMeta):
         auto_tls: bool = False,
         single_process: bool = False,
     ) -> None:
+        """Prepares one or more Sanic applications to be served simultaneously.
+
+        This low-level API is typically used when you need to run multiple Sanic applications at the same time. Once prepared, `Sanic.serve()` should be called in the `if __name__ == "__main__"` block.
+
+        .. note::
+            "Preparing" and "serving" with this function is equivalent to using `app.run` for a single instance. This should only be used when running multiple applications at the same time.
+
+        Args:
+            host (Optional[str], optional): Hostname to listen on. Defaults to `None`.
+            port (Optional[int], optional): Port to listen on. Defaults to `None`.
+            dev (bool, optional): Development mode. Defaults to `False`.
+            debug (bool, optional): Debug mode. Defaults to `False`.
+            auto_reload (Optional[bool], optional): Auto reload feature. Defaults to `None`.
+            version (HTTPVersion, optional): HTTP version to use. Defaults to `HTTP.VERSION_1`.
+            ssl (Union[None, SSLContext, dict, str, list, tuple], optional): SSL configuration. Defaults to `None`.
+            sock (Optional[socket], optional): Socket to bind to. Defaults to `None`.
+            workers (int, optional): Number of worker processes. Defaults to `1`.
+            protocol (Optional[Type[Protocol]], optional): Custom protocol class. Defaults to `None`.
+            backlog (int, optional): Maximum number of pending connections. Defaults to `100`.
+            register_sys_signals (bool, optional): Register system signals. Defaults to `True`.
+            access_log (Optional[bool], optional): Access log. Defaults to `None`.
+            unix (Optional[str], optional): Unix socket. Defaults to `None`.
+            loop (Optional[AbstractEventLoop], optional): Event loop. Defaults to `None`.
+            reload_dir (Optional[Union[List[str], str]], optional): Reload directory. Defaults to `None`.
+            noisy_exceptions (Optional[bool], optional): Display exceptions. Defaults to `None`.
+            motd (bool, optional): Display message of the day. Defaults to `True`.
+            fast (bool, optional): Fast mode. Defaults to `False`.
+            verbosity (int, optional): Verbosity level. Defaults to `0`.
+            motd_display (Optional[Dict[str, str]], optional): Custom MOTD display. Defaults to `None`.
+            coffee (bool, optional): Coffee mode. Defaults to `False`.
+            auto_tls (bool, optional): Auto TLS. Defaults to `False`.
+            single_process (bool, optional): Single process mode. Defaults to `False`.
+
+        Raises:
+            RuntimeError: Raised when attempting to serve HTTP/3 as a secondary server.
+            RuntimeError: Raised when attempting to use both `fast` and `workers`.
+            RuntimeError: Raised when attempting to use `single_process` with `fast`, `workers`, or `auto_reload`.
+            TypeError: Raised when attempting to use `loop` with `create_server`.
+            ValueError: Raised when `PROXIES_COUNT` is negative.
+
+        Examples:
+            ```python
+            if __name__ == "__main__":
+                app.prepare()
+                app.serve()
+            ```
+        """  # noqa: E501
         if version == 3 and self.state.server_info:
             raise RuntimeError(
                 "Serving HTTP/3 instances as a secondary server is "
@@ -361,50 +481,77 @@ class StartupMixin(metaclass=SanicMeta):
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
-        return_asyncio_server: bool = False,
+        return_asyncio_server: bool = True,
         asyncio_server_kwargs: Optional[Dict[str, Any]] = None,
         noisy_exceptions: Optional[bool] = None,
     ) -> Optional[AsyncioServer]:
         """
-        Asynchronous version of :func:`run`.
+        Low level API for creating a Sanic Server instance.
 
-        This method will take care of the operations necessary to invoke
-        the *before_start* events via :func:`trigger_events` method invocation
-        before starting the *sanic* app in Async mode.
+        This method will create a Sanic Server instance, but will not start
+        it. This is useful for integrating Sanic into other systems. But, you
+        should take caution when using it as it is a low level API and does
+        not perform any of the lifecycle events.
 
         .. note::
             This does not support multiprocessing and is not the preferred
-            way to run a :class:`Sanic` application.
+            way to run a Sanic application. Proceed with caution.
 
-        :param host: Address to host on
-        :type host: str
-        :param port: Port to host on
-        :type port: int
-        :param debug: Enables debug output (slows server)
-        :type debug: bool
-        :param ssl: SSLContext, or location of certificate and key
-                    for SSL encryption of worker(s)
-        :type ssl: SSLContext or dict
-        :param sock: Socket for the server to accept connections from
-        :type sock: socket
-        :param protocol: Subclass of asyncio Protocol class
-        :type protocol: type[Protocol]
-        :param backlog: a number of unaccepted connections that the system
-                        will allow before refusing new connections
-        :type backlog: int
-        :param access_log: Enables writing access logs (slows server)
-        :type access_log: bool
-        :param return_asyncio_server: flag that defines whether there's a need
-                                      to return asyncio.Server or
-                                      start it serving right away
-        :type return_asyncio_server: bool
-        :param asyncio_server_kwargs: key-value arguments for
-                                      asyncio/uvloop create_server method
-        :type asyncio_server_kwargs: dict
-        :param noisy_exceptions: Log exceptions that are normally considered
-                                 to be quiet/silent
-        :type noisy_exceptions: bool
-        :return: AsyncioServer if return_asyncio_server is true, else Nothing
+        You will need to start the server yourself as shown in the example
+        below. You are responsible for the lifecycle of the server, including
+        app startup using `await app.startup()`. No events will be triggered
+        for you, so you will need to trigger them yourself if wanted.
+
+        Args:
+            host (Optional[str]): Address to host on.
+            port (Optional[int]): Port to host on.
+            debug (bool): Enables debug output (slows server).
+            ssl (Union[None, SSLContext, dict, str, list, tuple]): SSLContext,
+                or location of certificate and key for SSL encryption
+                of worker(s).
+            sock (Optional[socket]): Socket for the server to accept
+                connections from.
+            protocol (Optional[Type[Protocol]]): Subclass of
+                `asyncio.Protocol` class.
+            backlog (int): Number of unaccepted connections that the system
+                will allow before refusing new connections.
+            access_log (Optional[bool]): Enables writing access logs
+                (slows server).
+            return_asyncio_server (bool): _DEPRECATED_
+            asyncio_server_kwargs (Optional[Dict[str, Any]]): Key-value
+                arguments for asyncio/uvloop `create_server` method.
+            noisy_exceptions (Optional[bool]): Log exceptions that are normally
+                considered to be quiet/silent.
+
+        Returns:
+            Optional[AsyncioServer]: AsyncioServer if `return_asyncio_server`
+                is `True` else `None`.
+
+        Examples:
+            ```python
+            import asyncio
+            import uvloop
+            from sanic import Sanic, response
+
+
+            app = Sanic("Example")
+
+
+            @app.route("/")
+            async def test(request):
+                return response.json({"answer": "42"})
+
+
+            async def main():
+                server = await app.create_server()
+                await server.startup()
+                await server.serve_forever()
+
+
+            if __name__ == "__main__":
+                asyncio.set_event_loop(uvloop.new_event_loop())
+                asyncio.run(main())
+            ```
         """
 
         if sock is None:
@@ -422,6 +569,14 @@ class StartupMixin(metaclass=SanicMeta):
         }.items():
             if value is not None:
                 setattr(self.config, attribute, value)
+
+        if not return_asyncio_server:
+            return_asyncio_server = True
+            deprecation(
+                "The `return_asyncio_server` argument is deprecated and "
+                "ignored. It will be removed in v24.3.",
+                24.3,
+            )
 
         server_settings = self._helper(
             host=host,
@@ -456,9 +611,16 @@ class StartupMixin(metaclass=SanicMeta):
             asyncio_server_kwargs=asyncio_server_kwargs, **server_settings
         )
 
-    def stop(self, terminate: bool = True, unregister: bool = False):
-        """
-        This kills the Sanic
+    def stop(self, terminate: bool = True, unregister: bool = False) -> None:
+        """This kills the Sanic server, cleaning up after itself.
+
+        Args:
+            terminate (bool): Force kill all requests immediately without
+                allowing them to finish processing.
+            unregister (bool): Unregister the app from the global registry.
+
+        Returns:
+            None
         """
         if terminate and hasattr(self, "multiplexer"):
             self.multiplexer.terminate()
@@ -565,7 +727,19 @@ class StartupMixin(metaclass=SanicMeta):
     def motd(
         self,
         server_settings: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
+        """Outputs the message of the day (MOTD).
+
+        It generally can only be called once per process, and is usually
+        called by the `run` method in the main process.
+
+        Args:
+            server_settings (Optional[Dict[str, Any]], optional): Settings for
+                the server. Defaults to `None`.
+
+        Returns:
+            None
+        """
         if (
             os.environ.get("SANIC_WORKER_NAME")
             or os.environ.get("SANIC_MOTD_OUTPUT")
@@ -583,6 +757,17 @@ class StartupMixin(metaclass=SanicMeta):
     def get_motd_data(
         self, server_settings: Optional[Dict[str, Any]] = None
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """Retrieves the message of the day (MOTD) data.
+
+        Args:
+            server_settings (Optional[Dict[str, Any]], optional): Settings for
+                the server. Defaults to `None`.
+
+        Returns:
+            Tuple[Dict[str, Any], Dict[str, Any]]: A tuple containing two
+                dictionaries with the relevant MOTD data.
+        """
+
         mode = [f"{self.state.mode},"]
         if self.state.fast:
             mode.append("goin' fast")
@@ -646,6 +831,11 @@ class StartupMixin(metaclass=SanicMeta):
 
     @property
     def serve_location(self) -> str:
+        """Retrieve the server location.
+
+        Returns:
+            str: The server location.
+        """
         try:
             server_settings = self.state.server_info[0].settings
             return self.get_server_location(server_settings)
@@ -657,6 +847,15 @@ class StartupMixin(metaclass=SanicMeta):
     def get_server_location(
         server_settings: Optional[Dict[str, Any]] = None
     ) -> str:
+        """Using the server settings, retrieve the server location.
+
+        Args:
+            server_settings (Optional[Dict[str, Any]], optional): Settings for
+                the server. Defaults to `None`.
+
+        Returns:
+            str: The server location.
+        """
         serve_location = ""
         proto = "http"
         if not server_settings:
@@ -686,12 +885,29 @@ class StartupMixin(metaclass=SanicMeta):
         version: HTTPVersion = HTTP.VERSION_1,
         auto_tls: bool = False,
     ) -> Tuple[str, int]:
+        """Retrieve the host address and port, with default values based on the given parameters.
+
+        Args:
+            host (Optional[str]): Host IP or FQDN for the service to use. Defaults to `"127.0.0.1"`.
+            port (Optional[int]): Port number. Defaults to `8443` if version is 3 or `auto_tls=True`, else `8000`
+            version (HTTPVersion, optional): HTTP Version. Defaults to `HTTP.VERSION_1` (HTTP/1.1).
+            auto_tls (bool, optional): Automatic TLS flag. Defaults to `False`.
+
+        Returns:
+            Tuple[str, int]: Tuple containing the host and port
+        """  # noqa: E501
         host = host or "127.0.0.1"
         port = port or (8443 if (version == 3 or auto_tls) else 8000)
         return host, port
 
     @classmethod
     def should_auto_reload(cls) -> bool:
+        """Check if any applications have auto-reload enabled.
+
+        Returns:
+            bool: `True` if any applications have auto-reload enabled, else
+                `False`.
+        """
         return any(app.state.auto_reload for app in cls._app_registry.values())
 
     @classmethod
@@ -731,6 +947,42 @@ class StartupMixin(metaclass=SanicMeta):
         app_loader: Optional[AppLoader] = None,
         factory: Optional[Callable[[], Sanic]] = None,
     ) -> None:
+        """Serve one or more Sanic applications.
+
+        This is the main entry point for running Sanic applications. It
+        should be called in the `if __name__ == "__main__"` block.
+
+        Args:
+            primary (Optional[Sanic], optional): The primary Sanic application
+                to serve. Defaults to `None`.
+            app_loader (Optional[AppLoader], optional): An AppLoader instance
+                to use for loading applications. Defaults to `None`.
+            factory (Optional[Callable[[], Sanic]], optional): A factory
+                function to use for loading applications. Defaults to `None`.
+
+        Raises:
+            RuntimeError: Raised when no applications are found.
+            RuntimeError: Raised when no server information is found for the
+                primary application.
+            RuntimeError: Raised when attempting to use `loop` with
+                `create_server`.
+            RuntimeError: Raised when attempting to use `single_process` with
+                `fast`, `workers`, or `auto_reload`.
+            RuntimeError: Raised when attempting to serve HTTP/3 as a
+                secondary server.
+            RuntimeError: Raised when attempting to use both `fast` and
+                `workers`.
+            TypeError: Raised when attempting to use `loop` with
+                `create_server`.
+            ValueError: Raised when `PROXIES_COUNT` is negative.
+
+        Examples:
+            ```python
+            if __name__ == "__main__":
+                app.prepare()
+                Sanic.serve()
+            ```
+        """
         cls._set_startup_method()
         os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())
@@ -913,6 +1165,39 @@ class StartupMixin(metaclass=SanicMeta):
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:
+        """Serve a single process of a Sanic application.
+
+        Similar to `serve`, but only serves a single process. When used,
+        certain features are disabled, such as `fast`, `workers`,
+        `multiplexer`, `auto_reload`, and the Inspector. It is almost
+        never needed to use this method directly. Instead, you should
+        use the CLI:
+
+        ```sh
+        sanic app.sanic:app --single-process
+        ```
+
+        Or, if you need to do it programmatically, you should use the
+        `single_process` argument of `run`:
+
+        ```python
+        app.run(single_process=True)
+        ```
+
+        Args:
+            primary (Optional[Sanic], optional): The primary Sanic application
+                to serve. Defaults to `None`.
+
+        Raises:
+            RuntimeError: Raised when no applications are found.
+            RuntimeError: Raised when no server information is found for the
+                primary application.
+            RuntimeError: Raised when attempting to serve HTTP/3 as a
+                secondary server.
+            RuntimeError: Raised when attempting to use both `fast` and
+                `workers`.
+            ValueError: Raised when `PROXIES_COUNT` is negative.
+        """
         os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-
 from abc import ABCMeta
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
@@ -15,7 +14,6 @@ from sanic.helpers import Default, _default
 from sanic.http import Http
 from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
-
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -77,6 +75,8 @@ DEFAULT_CONFIG = {
 
 
 class DescriptorMeta(ABCMeta):
+    """Metaclass for Config."""
+
     def __init__(cls, *_):
         cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}
 
@@ -86,8 +86,7 @@ class DescriptorMeta(ABCMeta):
 
 
 class Config(dict, metaclass=DescriptorMeta):
-    """
-    Configuration object for Sanic.
+    """Configuration object for Sanic.
 
     You can use this object to both: (1) configure how Sanic will operate, and
     (2) manage your application's custom configuration values.
@@ -178,6 +177,35 @@ class Config(dict, metaclass=DescriptorMeta):
         self.update({attr: value})
 
     def update(self, *other: Any, **kwargs: Any) -> None:
+        """Update the config with new values.
+
+        This method will update the config with the values from the provided
+        `other` objects, and then update the config with the provided
+        `kwargs`. The `other` objects can be any object that can be converted
+        to a dictionary, such as a `dict`, `Config` object, or `str` path to a
+        Python file. The `kwargs` must be a dictionary of key-value pairs.
+
+        .. note::
+            Only upper case settings are considered
+
+        Args:
+            *other: Any number of objects that can be converted to a
+                dictionary.
+            **kwargs: Any number of key-value pairs.
+
+        Raises:
+            AttributeError: If a key is not in the config.
+
+        Examples:
+            ```python
+            config.update(
+                {"A": 1, "B": 2},
+                {"C": 3, "D": 4},
+                E=5,
+                F=6,
+            )
+            ```
+        """
         kwargs.update({k: v for item in other for k, v in dict(item).items()})
         setters: Dict[str, Any] = {
             k: kwargs.pop(k)
@@ -250,7 +278,8 @@ class Config(dict, metaclass=DescriptorMeta):
         check_error_format(format or self.FALLBACK_ERROR_FORMAT)
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
-        """
+        """Load environment variables into the config.
+
         Looks for prefixed environment variables and applies them to the
         configuration if present. This is called automatically when Sanic
         starts up to load environment variables into config. Environment
@@ -268,19 +297,26 @@ class Config(dict, metaclass=DescriptorMeta):
         :meth:`sanic.config.Config.register_type`. Just make sure that they
         are registered before you instantiate your application.
 
-        .. code-block:: python
+        You likely won't need to call this method directly.
 
-            class Foo:
-                def __init__(self, name) -> None:
-                    self.name = name
+        See [Configuration](/en/guide/deployment/configuration) for more details.
+
+        Args:
+            prefix (str): The prefix to use when looking for environment
+                variables. Defaults to `SANIC_`.
 
 
-            config = Config(converters=[Foo])
-            app = Sanic(__name__, config=config)
+        Examples:
+            ```python
+            # Environment variables
+            # SANIC_SERVER_NAME=example.com
+            # SANIC_SERVER_PORT=9999
+            # SANIC_SERVER_AUTORELOAD=true
 
-        `See user guide re: config
-        <https://sanicframework.org/guide/deployment/configuration.html>`__
-        """
+            # Python
+            app.config.load_environment_vars()
+            ```
+        """  # noqa: E501
         for key, value in environ.items():
             if not key.startswith(prefix) or not key.isupper():
                 continue
@@ -295,52 +331,55 @@ class Config(dict, metaclass=DescriptorMeta):
                     pass
 
     def update_config(self, config: Union[bytes, str, dict, Any]):
-        """
-        Update app.config.
+        """Update app.config.
 
         .. note::
 
             Only upper case settings are considered
 
-        You can upload app config by providing path to py file
-        holding settings.
+        See [Configuration](/en/guide/deployment/configuration) for more details.
 
-        .. code-block:: python
+        Args:
+            config (Union[bytes, str, dict, Any]): Path to py file holding
+                settings, dict holding settings, or any object holding
+                settings.
 
+        Examples:
+            You can upload app config by providing path to py file
+            holding settings.
+
+            ```python
             # /some/py/file
             A = 1
             B = 2
+            ```
 
-        .. code-block:: python
-
+            ```python
             config.update_config("${some}/py/file")
+            ```
 
-        Yes you can put environment variable here, but they must be provided
-        in format: ``${some_env_var}``, and mark that ``$some_env_var`` is
-        treated as plain string.
+            Yes you can put environment variable here, but they must be provided
+            in format: ``${some_env_var}``, and mark that ``$some_env_var`` is
+            treated as plain string.
 
-        You can upload app config by providing dict holding settings.
+            You can upload app config by providing dict holding settings.
 
-        .. code-block:: python
-
+            ```python
             d = {"A": 1, "B": 2}
             config.update_config(d)
+            ```
 
-        You can upload app config by providing any object holding settings,
-        but in such case config.__dict__ will be used as dict holding settings.
+            You can upload app config by providing any object holding settings,
+            but in such case config.__dict__ will be used as dict holding settings.
 
-        .. code-block:: python
-
+            ```python
             class C:
                 A = 1
                 B = 2
 
             config.update_config(C)
-
-        `See user guide re: config
-        <https://sanicframework.org/guide/deployment/configuration.html>`__
-        """
-
+            ```
+        """  # noqa: E501
         if isinstance(config, (bytes, str, Path)):
             config = load_module_from_file_location(location=config)
 
@@ -364,10 +403,24 @@ class Config(dict, metaclass=DescriptorMeta):
     load = update_config
 
     def register_type(self, converter: Callable[[str], Any]) -> None:
-        """
+        """Register a custom type converter.
+
         Allows for adding custom function to cast from a string value to any
         other type. The function should raise ValueError if it is not the
         correct type.
+
+        Args:
+            converter (Callable[[str], Any]): A function that takes a string
+                and returns a value of any type.
+
+        Examples:
+            ```python
+            def my_converter(value: str) -> Any:
+                # Do something to convert the value
+                return value
+
+            config.register_type(my_converter)
+            ```
         """
         if converter in self._converters:
             error_logger.warning(

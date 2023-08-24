@@ -1,34 +1,32 @@
 from __future__ import annotations
 
+import os
+from typing import TYPE_CHECKING
+
 from sanic.exceptions import (
+    ContentRange,
     HeaderNotFound,
     InvalidRangeType,
     RangeNotSatisfiable,
 )
 
+if TYPE_CHECKING:
+    from sanic import Request
 
-class ContentRangeHandler:
-    """
-    A mechanism to parse and process the incoming request headers to
-    extract the content range information.
 
-    :param request: Incoming api request
-    :param stats: Stats related to the content
+class ContentRangeHandler(ContentRange):
+    """Parse and process the incoming request headers to extract the content range information.
 
-    :type request: :class:`sanic.request.Request`
-    :type stats: :class:`posix.stat_result`
-
-    :ivar start: Content Range start
-    :ivar end: Content Range end
-    :ivar size: Length of the content
-    :ivar total: Total size identified by the :class:`posix.stat_result`
-        instance
-    :ivar ContentRangeHandler.headers: Content range header ``dict``
-    """
+    Args:
+        request (Request): The incoming request object.
+        stats (os.stat_result): The stats of the file being served.
+    """  # noqa: E501
 
     __slots__ = ("start", "end", "size", "total", "headers")
 
-    def __init__(self, request, stats):
+    total: int
+
+    def __init__(self, request: Request, stats: os.stat_result) -> None:
         self.total = stats.st_size
         _range = request.headers.getone("range", None)
         if _range is None:

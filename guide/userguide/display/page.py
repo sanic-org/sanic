@@ -291,30 +291,37 @@ def _extract_docobjects(package_name: str) -> dict[str, DocObject]:
                 continue
             try:
                 signature = inspect.signature(obj)
-                docstring = inspect.getdoc(obj)
-                full_name = f"{name}.{obj_name}"
-                docstrings[full_name] = DocObject(
-                    name=obj_name,
-                    full_name=full_name,
-                    module_name=name,
-                    signature=signature,
-                    docstring=parse_docstring(docstring or ""),
-                    object_type=_get_object_type(obj),
-                )
-                if inspect.isclass(obj):
-                    _extract_classes_methods(obj, full_name, docstrings)
             except ValueError:
-                pass
+                signature = None
+            docstring = inspect.getdoc(obj)
+            full_name = f"{name}.{obj_name}"
+            docstrings[full_name] = DocObject(
+                name=obj_name,
+                full_name=full_name,
+                module_name=name,
+                signature=signature,
+                docstring=parse_docstring(docstring or ""),
+                object_type=_get_object_type(obj),
+            )
+            if inspect.isclass(obj):
+                _extract_classes_methods(obj, full_name, docstrings)
 
     return docstrings
 
 
 def is_public_member(obj: object) -> bool:
-    return not getattr(obj, "__name__", "").startswith("_") and (
-        inspect.ismethod(obj)
-        or inspect.isfunction(obj)
-        or isinstance(obj, property)
-        or isinstance(obj, property)
+    obj_name = getattr(obj, "__name__", "")
+    if func := getattr(obj, "fget", None):
+        obj_name = getattr(func, "__name__", "")
+    return (
+        not obj_name.startswith("_")
+        and not obj_name.isupper()
+        and (
+            inspect.ismethod(obj)
+            or inspect.isfunction(obj)
+            or isinstance(obj, property)
+            or isinstance(obj, property)
+        )
     )
 
 
@@ -460,6 +467,29 @@ def _docobject_to_html(
                 HTML(render_markdown(docobject.docstring.short_description)),
                 class_="short-description mt-3 is-size-5",
             )
+
+        if docobject.object_type == "class":
+            mro = [
+                item
+                for idx, item in enumerate(
+                    inspect.getmro(
+                        getattr(
+                            importlib.import_module(docobject.module_name),
+                            docobject.name,
+                        )
+                    )
+                )
+                if idx > 0 and item not in (object, type)
+            ]
+            if mro:
+                builder.div(
+                    E.span("Inherits from: ", class_="is-italic"),
+                    E.span(
+                        ", ".join([cls.__name__ for cls in mro]),
+                        class_="has-text-weight-bold",
+                    ),
+                    class_="short-description mt-3 is-size-5",
+                )
 
         builder.p(
             HTML(

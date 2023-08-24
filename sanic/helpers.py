@@ -1,11 +1,9 @@
 """Defines basics of HTTP standard."""
 
 import sys
-
 from importlib import import_module
 from inspect import ismodule
 from typing import Dict
-
 
 STATUS_CODES: Dict[int, bytes] = {
     100: b"Continue",
@@ -171,7 +169,11 @@ class Default:
     default value, and `object()` is hard to be typed.
     """
 
-    pass
+    def __repr__(self):
+        return "<Default>"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
 
 _default = Default()

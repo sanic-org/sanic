@@ -25,7 +25,6 @@ from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.types import HashableDict
 
-
 RouteWrapper = Callable[
     [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
 ]
@@ -322,7 +321,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """Add an API URL using the **GET** HTTP method.
+        """Decorate a function handler to create a route definition using the **GET** HTTP method.
 
         Args:
             uri (str): URL to be tagged to GET method of HTTP.
@@ -346,7 +345,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         Returns:
             RouteHandler: Object decorated with route method.
-        """
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -375,7 +374,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """Add an API URL using the **POST** HTTP method.
+        """Decorate a function handler to create a route definition using the **POST** HTTP method.
 
         Args:
             uri (str): URL to be tagged to POST method of HTTP.
@@ -397,7 +396,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         Returns:
             RouteHandler: Object decorated with route method.
-        """
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -426,7 +425,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """Add an API URL using the **PUT** HTTP method.
+        """Decorate a function handler to create a route definition using the **PUT** HTTP method.
 
         Args:
             uri (str): URL to be tagged to PUT method of HTTP.
@@ -448,8 +447,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         Returns:
             RouteHandler: Object decorated with route method.
-        """
-
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -478,7 +476,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """Add an API URL using the **HEAD** HTTP method.
+        """Decorate a function handler to create a route definition using the **HEAD** HTTP method.
 
         Args:
             uri (str): URL to be tagged to HEAD method of HTTP.
@@ -502,8 +500,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         Returns:
             RouteHandler: Object decorated with route method.
-        """
-
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -532,7 +529,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """Add an API URL using the **OPTIONS** HTTP method.
+        """Decorate a function handler to create a route definition using the **OPTIONS** HTTP method.
 
         Args:
             uri (str): URL to be tagged to OPTIONS method of HTTP.
@@ -556,8 +553,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         Returns:
             RouteHandler: Object decorated with route method.
-        """
-
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -586,7 +582,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """Add an API URL using the **PATCH** HTTP method.
+        """Decorate a function handler to create a route definition using the **PATCH** HTTP method.
 
         Args:
             uri (str): URL to be tagged to PATCH method of HTTP.
@@ -608,8 +604,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         Returns:
             RouteHandler: Object decorated with route method.
-        """
-
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -638,7 +633,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """Add an API URL using the **DELETE** HTTP method.
+        """Decorate a function handler to create a route definition using the **DELETE** HTTP method.
 
         Args:
             uri (str): URL to be tagged to the DELETE method of HTTP.
@@ -659,7 +654,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         Returns:
             RouteHandler: Object decorated with route method.
-        """
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -714,7 +709,6 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         Returns:
             tuple: Tuple of routes, decorated function.
         """
-
         return self.route(
             uri=uri,
             host=host,

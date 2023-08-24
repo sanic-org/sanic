@@ -12,16 +12,16 @@ from sanic.response.types import HTTPResponse
 
 
 class ErrorHandler:
-    """
-    Provide :class:`sanic.app.Sanic` application with a mechanism to handle
-    and process any and all uncaught exceptions in a way the application
-    developer will set fit.
+    """Process and handle all uncaught exceptions.
 
     This error handling framework is built into the core that can be extended
     by the developers to perform a wide range of tasks from recording the error
     stats to reporting them to an external service that can be used for
     realtime alerting system.
-    """
+
+    Args:
+        base (BaseRenderer): The renderer to use for the error pages.
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -54,18 +54,18 @@ class ErrorHandler:
         self.cached_handlers[key] = handler
 
     def add(self, exception, handler, route_names: Optional[List[str]] = None):
-        """
-        Add a new exception handler to an already existing handler object.
+        """Add a new exception handler to an already existing handler object.
 
-        :param exception: Type of exception that need to be handled
-        :param handler: Reference to the method that will handle the exception
+        Args:
+            exception (sanic.exceptions.SanicException or Exception): Type
+                of exception that needs to be handled.
+            handler (function): Reference to the function that will
+                handle the exception.
 
-        :type exception: :class:`sanic.exceptions.SanicException` or
-            :class:`Exception`
-        :type handler: ``function``
+        Returns:
+            None
 
-        :return: None
-        """
+        """  # noqa: E501
         if route_names:
             for route in route_names:
                 self._add((exception, route), handler)
@@ -73,19 +73,18 @@ class ErrorHandler:
             self._add((exception, None), handler)
 
     def lookup(self, exception, route_name: Optional[str] = None):
-        """
-        Lookup the existing instance of :class:`ErrorHandler` and fetch the
-        registered handler for a specific type of exception.
+        """Lookup the existing instance of `ErrorHandler` and fetch the registered handler for a specific type of exception.
 
         This method leverages a dict lookup to speedup the retrieval process.
 
-        :param exception: Type of exception
+        Args:
+            exception (sanic.exceptions.SanicException or Exception): Type
+                of exception.
 
-        :type exception: :class:`sanic.exceptions.SanicException` or
-            :class:`Exception`
+        Returns:
+            Registered function if found, ``None`` otherwise.
 
-        :return: Registered function if found ``None`` otherwise
-        """
+        """  # noqa: E501
         exception_class = type(exception)
 
         for name in (route_name, None):
@@ -113,19 +112,16 @@ class ErrorHandler:
     _lookup = _full_lookup
 
     def response(self, request, exception):
-        """Fetches and executes an exception handler and returns a response
-        object
+        """Fetch and executes an exception handler and returns a response object.
 
-        :param request: Instance of :class:`sanic.request.Request`
-        :param exception: Exception to handle
+        Args:
+            request (sanic.request.Request): Instance of the request.
+            exception (sanic.exceptions.SanicException or Exception): Exception to handle.
 
-        :type request: :class:`sanic.request.Request`
-        :type exception: :class:`sanic.exceptions.SanicException` or
-            :class:`Exception`
+        Returns:
+            Wrap the return value obtained from the `default` function or the registered handler for that type of exception.
 
-        :return: Wrap the return value obtained from :func:`default`
-            or registered handler for that type of exception.
-        """
+        """  # noqa: E501
         route_name = request.name if request else None
         handler = self._lookup(exception, route_name)
         response = None
@@ -151,20 +147,30 @@ class ErrorHandler:
         return response
 
     def default(self, request: Request, exception: Exception) -> HTTPResponse:
-        """
-        Provide a default behavior for the objects of :class:`ErrorHandler`.
-        If a developer chooses to extent the :class:`ErrorHandler` they can
+        """Provide a default behavior for the objects of ErrorHandler.
+
+        If a developer chooses to extend the ErrorHandler, they can
         provide a custom implementation for this method to behave in a way
         they see fit.
 
-        :param request: Incoming request
-        :param exception: Exception object
+        Args:
+            request (sanic.request.Request): Incoming request.
+            exception (sanic.exceptions.SanicException or Exception): Exception object.
 
-        :type request: :class:`sanic.request.Request`
-        :type exception: :class:`sanic.exceptions.SanicException` or
-            :class:`Exception`
-        :return:
-        """
+        Returns:
+            HTTPResponse: The response object.
+
+        Examples:
+            ```python
+            class CustomErrorHandler(ErrorHandler):
+                def default(self, request: Request, exception: Exception) -> HTTPResponse:
+                    # Custom logic for handling the exception and creating a response
+                    custom_response = my_custom_logic(request, exception)
+                    return custom_response
+
+            app = Sanic("MyApp", error_handler=CustomErrorHandler())
+            ```
+        """  # noqa: E501
         self.log(request, exception)
         fallback = request.app.config.FALLBACK_ERROR_FORMAT
         return exception_response(
@@ -176,7 +182,16 @@ class ErrorHandler:
         )
 
     @staticmethod
-    def log(request, exception):
+    def log(request: Request, exception: Exception) -> None:
+        """Logs information about an incoming request and the associated exception.
+
+        Args:
+            request (Request): The incoming request to be logged.
+            exception (Exception): The exception that occurred during the handling of the request.
+
+        Returns:
+            None
+        """  # noqa: E501
         quiet = getattr(exception, "quiet", False)
         noisy = getattr(request.app.config, "NOISY_EXCEPTIONS", False)
         if quiet is False or noisy is True:

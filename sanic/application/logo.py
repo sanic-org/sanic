@@ -1,10 +1,8 @@
 import re
 import sys
-
 from os import environ
 
 from sanic.helpers import is_atty
-
 
 BASE_LOGO = """
 
@@ -45,7 +43,18 @@ SVG_LOGO_SIMPLE = """<svg id=logo-simple viewBox="0 0 964 279"><desc>Sanic</desc
 ansi_pattern = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
-def get_logo(full=False, coffee=False):
+def get_logo(full: bool = False, coffee: bool = False) -> str:
+    """Get the Sanic logo.
+
+    Will return the full color logo if the terminal supports it.
+
+    Args:
+        full (bool, optional): Use the full color logo. Defaults to `False`.
+        coffee (bool, optional): Use the coffee logo. Defaults to `False`.
+
+    Returns:
+        str: Sanic logo.
+    """
     logo = (
         (FULL_COLOR_LOGO if full else (COFFEE_LOGO if coffee else COLOR_LOGO))
         if is_atty()

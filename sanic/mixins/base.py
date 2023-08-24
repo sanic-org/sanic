@@ -4,6 +4,8 @@ from sanic.base.meta import SanicMeta
 
 
 class BaseMixin(metaclass=SanicMeta):
+    """Base class for some other mixins."""
+
     name: str
     strict_slashes: Optional[bool]
 

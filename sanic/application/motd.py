@@ -9,6 +9,8 @@ from sanic.log import logger
 
 
 class MOTD(ABC):
+    """Base class for the Message of the Day (MOTD) display."""
+
     def __init__(
         self,
         logo: Optional[str],
@@ -25,7 +27,7 @@ class MOTD(ABC):
 
     @abstractmethod
     def display(self):
-        ...  # noqa
+        """Display the MOTD."""
 
     @classmethod
     def output(
@@ -35,11 +37,24 @@ class MOTD(ABC):
         data: Dict[str, str],
         extra: Dict[str, str],
     ) -> None:
+        """Output the MOTD.
+
+        Args:
+            logo (Optional[str]): Logo to display.
+            serve_location (str): Location to serve.
+            data (Dict[str, str]): Data to display.
+            extra (Dict[str, str]): Extra data to display.
+        """
         motd_class = MOTDTTY if is_atty() else MOTDBasic
         motd_class(logo, serve_location, data, extra).display()
 
 
 class MOTDBasic(MOTD):
+    """A basic MOTD display.
+
+    This is used when the terminal does not support ANSI escape codes.
+    """
+
     def display(self):
         if self.logo:
             logger.debug(self.logo)
@@ -55,11 +70,14 @@ class MOTDBasic(MOTD):
 
 
 class MOTDTTY(MOTD):
+    """A MOTD display for terminals that support ANSI escape codes."""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.set_variables()
 
     def set_variables(self):  # no  cov
+        """Set the variables used for display."""
         fallback = (108, 24)
         terminal_width = max(
             get_terminal_size(fallback=fallback).columns, fallback[0]
@@ -81,6 +99,15 @@ class MOTDTTY(MOTD):
         self.display_length = self.key_width + self.value_width + 2
 
     def display(self, version=True, action="Goin' Fast", out=None):
+        """Display the MOTD.
+
+        Args:
+            version (bool, optional): Display the version. Defaults to `True`.
+            action (str, optional): Action to display. Defaults to
+                `"Goin' Fast"`.
+            out (Optional[Callable], optional): Output function. Defaults to
+                `None`.
+        """
         if not out:
             out = logger.info
         header = "Sanic"

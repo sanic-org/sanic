@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import sys
-
 from asyncio import BaseTransport
 from typing import TYPE_CHECKING, Any, AnyStr
 
-
 if TYPE_CHECKING:
+    from sanic.http.constants import HTTP
     from sanic.models.asgi import ASGIScope
 
 
@@ -40,4 +39,5 @@ else:
 
 class TransportProtocol(BaseTransport):
     scope: ASGIScope
+    version: HTTP
     __slots__ = ()

@@ -24,7 +24,7 @@ jobs:
       - name: Run coverage
         uses: prryplatypus/simple-tox@v1
         with:
-          python-version: "3.9"
+          python-version: "3.11"
           tox-env: coverage
           ignore-errors: true
       - name: Run Codecov

@@ -185,6 +185,7 @@ class PageRenderer:
                 "/assets/style.css",
                 "/assets/docs.js",
                 "https://unpkg.com/htmx.org@1.9.2/dist/htmx.min.js",
+                "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js",
             ]
             builder = Document(
                 self.base_title, lang=language, _urls=urls, _viewport=True

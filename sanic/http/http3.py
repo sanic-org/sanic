@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-
 from abc import ABC, abstractmethod
 from ssl import SSLContext
 from typing import (
@@ -32,7 +31,6 @@ from sanic.log import Colors, logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.models.server_types import ConnInfo
 
-
 try:
     from aioquic.h0.connection import H0_ALPN, H0Connection
     from aioquic.h3.connection import H3_ALPN, H3Connection
@@ -60,6 +58,8 @@ if TYPE_CHECKING:
 
 
 class HTTP3Transport(TransportProtocol):
+    """HTTP/3 transport implementation."""
+
     __slots__ = ("_protocol",)
 
     def __init__(self, protocol: Http3Protocol):
@@ -82,6 +82,8 @@ class HTTP3Transport(TransportProtocol):
 
 
 class Receiver(ABC):
+    """HTTP/3 receiver base class."""
+
     future: asyncio.Future
 
     def __init__(self, transmit, protocol, request: Request) -> None:
@@ -95,6 +97,8 @@ class Receiver(ABC):
 
 
 class HTTPReceiver(Receiver, Stream):
+    """HTTP/3 receiver implementation."""
+
     stage: Stage
     request: Request
 
@@ -108,6 +112,7 @@ class HTTPReceiver(Receiver, Stream):
         self.request_bytes = 0
 
     async def run(self, exception: Optional[Exception] = None):
+        """Handle the request and response cycle."""
         self.stage = Stage.HANDLER
         self.head_only = self.request.method.upper() == "HEAD"
 
@@ -133,9 +138,7 @@ class HTTPReceiver(Receiver, Stream):
         self.stage = Stage.IDLE
 
     async def error_response(self, exception: Exception) -> None:
-        """
-        Handle response when exception encountered
-        """
+        """Handle response when exception encountered"""
         # From request and handler states we can respond, otherwise be silent
         app = self.protocol.app
 
@@ -172,6 +175,7 @@ class HTTPReceiver(Receiver, Stream):
         return headers
 
     def send_headers(self) -> None:
+        """Send response headers to client"""
         logger.debug(  # no cov
             f"{Colors.BLUE}[send]: {Colors.GREEN}HEADERS{Colors.END}",
             extra={"verbosity": 2},
@@ -195,6 +199,7 @@ class HTTPReceiver(Receiver, Stream):
             self.future.cancel()
 
     def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
+        """Prepare response to client"""
         logger.debug(  # no cov
             f"{Colors.BLUE}[respond]:{Colors.END} {response}",
             extra={"verbosity": 2},
@@ -213,6 +218,7 @@ class HTTPReceiver(Receiver, Stream):
         return response
 
     def receive_body(self, data: bytes) -> None:
+        """Receive request body from client"""
         self.request_bytes += len(data)
         if self.request_bytes > self.request_max_size:
             raise PayloadTooLarge("Request body exceeds the size limit")
@@ -220,6 +226,7 @@ class HTTPReceiver(Receiver, Stream):
         self.request.body += data
 
     async def send(self, data: bytes, end_stream: bool) -> None:
+        """Send data to client"""
         logger.debug(  # no cov
             f"{Colors.BLUE}[send]: {Colors.GREEN}data={data.decode()} "
             f"end_stream={end_stream}{Colors.END}",
@@ -264,19 +271,21 @@ class HTTPReceiver(Receiver, Stream):
 
 
 class WebsocketReceiver(Receiver):  # noqa
+    """Websocket receiver implementation."""
+
     async def run(self):
         ...
 
 
 class WebTransportReceiver(Receiver):  # noqa
+    """WebTransport receiver implementation."""
+
     async def run(self):
         ...
 
 
 class Http3:
-    """
-    Internal helper for managing the HTTP/3 request/response cycle
-    """
+    """Internal helper for managing the HTTP/3 request/response cycle"""
 
     if HTTP3_AVAILABLE:
         HANDLER_PROPERTY_MAPPING = {

@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 
 from html5tagger import HTML, Builder, Document
-
 from sanic import __version__ as VERSION
 from sanic.application.logo import SVG_LOGO_SIMPLE
 from sanic.pages.css import CSS
 
 
 class BasePage(ABC, metaclass=CSS):  # no cov
+    """Base page for Sanic pages."""
+
     TITLE = "Sanic"
     HEADING = None
     CSS: str
@@ -18,9 +19,19 @@ class BasePage(ABC, metaclass=CSS):  # no cov
 
     @property
     def style(self) -> str:
+        """Returns the CSS for the page.
+
+        Returns:
+            str: The CSS for the page.
+        """
         return self.CSS
 
     def render(self) -> str:
+        """Renders the page.
+
+        Returns:
+            str: The rendered page.
+        """
         self.doc = Document(self.TITLE, lang="en", id="sanic")
         self._head()
         self._body()

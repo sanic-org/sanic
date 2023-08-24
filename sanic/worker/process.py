@@ -1,5 +1,4 @@
 import os
-
 from datetime import datetime, timezone
 from multiprocessing.context import BaseContext
 from signal import SIGINT
@@ -17,6 +16,8 @@ def get_now():
 
 
 class WorkerProcess:
+    """A worker process."""
+
     THRESHOLD = 300  # == 30 seconds
     SERVER_LABEL = "Server"
 

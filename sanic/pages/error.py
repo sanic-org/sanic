@@ -1,14 +1,11 @@
 from typing import Any, Mapping
 
 import tracerite.html
-
 from html5tagger import E
+from sanic.request import Request
 from tracerite import html_traceback, inspector
 
-from sanic.request import Request
-
 from .base import BasePage
-
 
 # Avoid showing the request in the traceback variable inspectors
 inspector.blacklist_types += (Request,)
@@ -22,6 +19,8 @@ for the inconvenience and appreciate your patience.\
 
 
 class ErrorPage(BasePage):
+    """Page for displaying an error."""
+
     STYLE_APPEND = tracerite.html.style
 
     def __init__(

@@ -8,14 +8,12 @@ from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context
 
-
 if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import asyncio
 import os
 import socket
-
 from functools import partial
 from signal import SIG_IGN, SIGINT, SIGTERM
 from signal import signal as signal_func
@@ -28,7 +26,6 @@ from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
 from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
 from sanic.server.socket import bind_unix_socket, remove_unix_socket
-
 
 try:
     from aioquic.asyncio import serve as quic_serve
@@ -82,7 +79,44 @@ def serve(
     :param asyncio_server_kwargs: key-value args for asyncio/uvloop
                                   create_server method
     :return: Nothing
-    """
+
+    Args:
+        host (str): Address to host on
+        port (int): Port to host on
+        app (Sanic): Sanic app instance
+        ssl (Optional[SSLContext], optional): SSLContext. Defaults to `None`.
+        sock (Optional[socket.socket], optional): Socket for the server to
+            accept connections from. Defaults to `None`.
+        unix (Optional[str], optional): Unix socket to listen on instead of
+            TCP port. Defaults to `None`.
+        reuse_port (bool, optional): `True` for multiple workers. Defaults
+            to `False`.
+        loop: asyncio compatible event loop. Defaults
+            to `None`.
+        protocol (Type[asyncio.Protocol], optional): Protocol to use. Defaults
+            to `HttpProtocol`.
+        backlog (int, optional): The maximum number of queued connections
+            passed to socket.listen(). Defaults to `100`.
+        register_sys_signals (bool, optional): Register SIGINT and SIGTERM.
+            Defaults to `True`.
+        run_multiple (bool, optional): Run multiple workers. Defaults
+            to `False`.
+        run_async (bool, optional): Return an AsyncServer object.
+            Defaults to `False`.
+        connections: Connections. Defaults to `None`.
+        signal (Signal, optional): Signal. Defaults to `Signal()`.
+        state: State. Defaults to `None`.
+        asyncio_server_kwargs (Optional[Dict[str, Union[int, float]]], optional):
+            key-value args for asyncio/uvloop create_server method. Defaults
+            to `None`.
+        version (str, optional): HTTP version. Defaults to `HTTP.VERSION_1`.
+
+    Raises:
+        ServerError: Cannot run HTTP/3 server without aioquic installed.
+
+    Returns:
+        AsyncioServer: AsyncioServer object if `run_async` is `True`.
+    """  # noqa: E501
     if not run_async and not loop:
         # create new event_loop after fork
         loop = asyncio.new_event_loop()

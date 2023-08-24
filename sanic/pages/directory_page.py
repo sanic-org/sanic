@@ -1,11 +1,9 @@
 import sys
-
 from typing import Dict, Iterable
 
 from html5tagger import E
 
 from .base import BasePage
-
 
 if sys.version_info < (3, 8):  # no cov
     FileInfo = Dict
@@ -14,6 +12,8 @@ else:
     from typing import TypedDict
 
     class FileInfo(TypedDict):
+        """Type for file info."""
+
         icon: str
         file_name: str
         file_access: str
@@ -21,6 +21,8 @@ else:
 
 
 class DirectoryPage(BasePage):  # no cov
+    """Page for viewing a directory."""
+
     TITLE = "Directory Viewer"
 
     def __init__(

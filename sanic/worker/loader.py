@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-
 from contextlib import suppress
 from importlib import import_module
 from inspect import isfunction
@@ -13,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union, cast
 from sanic.http.tls.context import process_to_context
 from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
 
-
 if TYPE_CHECKING:
     from sanic import Sanic as SanicApp
 
@@ -21,6 +19,20 @@ DEFAULT_APP_NAME = "app"
 
 
 class AppLoader:
+    """A helper to load application instances.
+
+    Generally used by the worker to load the application instance.
+
+    See [Dynamic Applications](/en/guide/deployment/app-loader) for information on when you may need to use this.
+
+    Args:
+        module_input (str): The module to load the application from.
+        as_factory (bool): Whether the application is a factory.
+        as_simple (bool): Whether the application is a simple server.
+        args (Any): Arguments to pass to the application factory.
+        factory (Callable[[], SanicApp]): A callable that returns a Sanic application instance.
+    """  # noqa: E501
+
     def __init__(
         self,
         module_input: str = "",

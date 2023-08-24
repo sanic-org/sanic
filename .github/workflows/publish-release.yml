@@ -121,7 +121,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -151,7 +151,7 @@ jobs:
           tag_args=""
 
           for tag in "${tags[@]}"; do
-              tag_args+=",${{ env.DOCKER_ORG_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ matrix.python-version }}-${tag}"
+              tag_args+=",${{ env.DOCKER_ORG_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${tag}-py${{ matrix.python-version }}"
           done
 
           tag_args_output="tag_args=${tag_args:1}"

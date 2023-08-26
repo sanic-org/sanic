@@ -11,7 +11,7 @@ Sanic | Build fast. Run fast.
     :stub-columns: 1
 
     * - Build
-      - | |Py310Test| |Py39Test| |Py38Test| |Py37Test|
+      - | |Py310Test| |Py39Test| |Py38Test|
     * - Docs
       - | |UserGuide| |Documentation|
     * - Package

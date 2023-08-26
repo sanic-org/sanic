@@ -19,7 +19,7 @@ Sanic | Build fast. Run fast.
     * - Support
       - | |Forums| |Discord| |Awesome|
     * - Stats
-      - | |Downloads| |WkDownloads| |Conda downloads|
+      - | |Monthly Downloads| |Weekly Downloads| |Conda downloads|
 
 .. |UserGuide| image:: https://img.shields.io/badge/user%20guide-sanic-ff0068
    :target: https://sanicframework.org/
@@ -50,10 +50,10 @@ Sanic | Build fast. Run fast.
 .. |Awesome| image:: https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg
     :alt: Awesome Sanic List
     :target: https://github.com/mekicha/awesome-sanic
-.. |Downloads| image:: https://pepy.tech/badge/sanic/month
+.. |Monthly Downloads| image:: https://pepy.tech/badge/sanic/month
     :alt: Downloads
     :target: https://pepy.tech/project/sanic
-.. |WkDownloads| image:: https://pepy.tech/badge/sanic/week
+.. |Weekly Downloads| image:: https://pepy.tech/badge/sanic/week
     :alt: Downloads
     :target: https://pepy.tech/project/sanic
 .. |Conda downloads| image:: https://img.shields.io/conda/dn/conda-forge/sanic.svg

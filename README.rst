@@ -33,8 +33,6 @@ Sanic | Build fast. Run fast.
    :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
 .. |Py38Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml/badge.svg?branch=main
    :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml
-.. |Py37Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml/badge.svg?branch=main
-   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest
    :target: http://sanic.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/sanic.svg
@@ -64,7 +62,7 @@ Sanic | Build fast. Run fast.
 
 .. end-badges
 
-Sanic is a **Python 3.7+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic is a **Python 3.8+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
 Sanic is also ASGI compliant, so you can deploy it with an `alternative ASGI webserver <https://sanicframework.org/en/guide/deployment/running.html#asgi>`_.
 
@@ -77,7 +75,7 @@ The goal of the project is to provide a simple way to get up and running a highl
 Sponsor
 -------
 
-Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic. 
+Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
 
 Thanks to `Linode <https://www.linode.com>`_ for their contribution towards the development and community of Sanic.
 
@@ -141,12 +139,12 @@ And, we can verify it is working: ``curl localhost:8000 -i``
 
 **Now, let's go build something fast!**
 
-Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12LTS.
+Minimum Python version is 3.8. If you need Python 3.7 support, please use v22.12LTS.
 
 Documentation
 -------------
 
-`User Guide <https://sanicframework.org>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
+`User Guide <https://sanic.dev>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
 
 Changelog
 ---------

@@ -50,10 +50,10 @@ Sanic | Build fast. Run fast.
 .. |Awesome| image:: https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg
     :alt: Awesome Sanic List
     :target: https://github.com/mekicha/awesome-sanic
-.. |Monthly Downloads| image:: https://pepy.tech/badge/sanic/month
+.. |Monthly Downloads| image:: https://img.shields.io/pypi/dm/sanic.svg
     :alt: Downloads
     :target: https://pepy.tech/project/sanic
-.. |Weekly Downloads| image:: https://pepy.tech/badge/sanic/week
+.. |Weekly Downloads| image:: https://img.shields.io/pypi/dw/sanic.svg
     :alt: Downloads
     :target: https://pepy.tech/project/sanic
 .. |Conda downloads| image:: https://img.shields.io/conda/dn/conda-forge/sanic.svg

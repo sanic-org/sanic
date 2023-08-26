@@ -22,8 +22,10 @@ jobs:
     steps:
       - name: Parse version tag
         id: parse_version_tag
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
-          tag_name="${{ github.event.release.tag_name }}"
+          tag_name="${{ env.TAG_NAME }}"
 
           if [[ ! "${tag_name}" =~ ^v([0-9]{2})\.([0-9]{1,2})\.([0-9]+)$ ]]; then
             echo "::error::Tag name must be in the format vYY.MM.MICRO"
@@ -111,7 +113,7 @@ jobs:
       run: twine upload --non-interactive --disable-progress-bar dist/*
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.SANIC_PYPI_API_TOKEN }}
+        TWINE_PASSWORD: ${{ env.IS_TEST == 'true' && secrets.SANIC_TEST_PYPI_API_TOKEN || secrets.SANIC_PYPI_API_TOKEN }}
         TWINE_REPOSITORY: ${{ env.IS_TEST == 'true' && 'testpypi' || 'pypi' }}
 
   publish_docker:

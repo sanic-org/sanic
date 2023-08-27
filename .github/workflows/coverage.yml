@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Run coverage
-        uses: prryplatypus/simple-tox@v1
+        uses: sanic-org/simple-tox-action@v1
         with:
           python-version: "3.11"
           tox-env: coverage

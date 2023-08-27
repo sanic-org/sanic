@@ -11,7 +11,7 @@ Sanic | Build fast. Run fast.
     :stub-columns: 1
 
     * - Build
-      - | |Py310Test| |Py39Test| |Py38Test| |Py37Test|
+      - | |Py310Test| |Py39Test| |Py38Test|
     * - Docs
       - | |UserGuide| |Documentation|
     * - Package
@@ -19,7 +19,7 @@ Sanic | Build fast. Run fast.
     * - Support
       - | |Forums| |Discord| |Awesome|
     * - Stats
-      - | |Downloads| |WkDownloads| |Conda downloads|
+      - | |Monthly Downloads| |Weekly Downloads| |Conda downloads|
 
 .. |UserGuide| image:: https://img.shields.io/badge/user%20guide-sanic-ff0068
    :target: https://sanicframework.org/
@@ -33,8 +33,6 @@ Sanic | Build fast. Run fast.
    :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
 .. |Py38Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml/badge.svg?branch=main
    :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml
-.. |Py37Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml/badge.svg?branch=main
-   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest
    :target: http://sanic.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/sanic.svg
@@ -52,19 +50,23 @@ Sanic | Build fast. Run fast.
 .. |Awesome| image:: https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg
     :alt: Awesome Sanic List
     :target: https://github.com/mekicha/awesome-sanic
-.. |Downloads| image:: https://pepy.tech/badge/sanic/month
+.. |Monthly Downloads| image:: https://img.shields.io/pypi/dm/sanic.svg
     :alt: Downloads
     :target: https://pepy.tech/project/sanic
-.. |WkDownloads| image:: https://pepy.tech/badge/sanic/week
+.. |Weekly Downloads| image:: https://img.shields.io/pypi/dw/sanic.svg
     :alt: Downloads
     :target: https://pepy.tech/project/sanic
 .. |Conda downloads| image:: https://img.shields.io/conda/dn/conda-forge/sanic.svg
     :alt: Downloads
     :target: https://anaconda.org/conda-forge/sanic
+.. |Linode| image:: https://www.linode.com/wp-content/uploads/2021/01/Linode-Logo-Black.svg
+    :alt: Linode
+    :target: https://www.linode.com
+    :width: 200px
 
 .. end-badges
 
-Sanic is a **Python 3.7+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic is a **Python 3.8+** web server and web framework that's written to go fast. It allows the usage of the ``async/await`` syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
 Sanic is also ASGI compliant, so you can deploy it with an `alternative ASGI webserver <https://sanicframework.org/en/guide/deployment/running.html#asgi>`_.
 
@@ -77,7 +79,7 @@ The goal of the project is to provide a simple way to get up and running a highl
 Sponsor
 -------
 
-Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic. 
+Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
 
 Thanks to `Linode <https://www.linode.com>`_ for their contribution towards the development and community of Sanic.
 
@@ -141,17 +143,17 @@ And, we can verify it is working: ``curl localhost:8000 -i``
 
 **Now, let's go build something fast!**
 
-Minimum Python version is 3.7. If you need Python 3.6 support, please use v20.12LTS.
+Minimum Python version is 3.8. If you need Python 3.7 support, please use v22.12LTS.
 
 Documentation
 -------------
 
-`User Guide <https://sanicframework.org>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
+`User Guide <https://sanic.dev>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
 
 Changelog
 ---------
 
-`Release Changelogs <https://github.com/sanic-org/sanic/blob/master/CHANGELOG.rst>`__.
+`Release Changelogs <https://sanic.readthedocs.io/en/stable/sanic/changelog.html>`__.
 
 
 Questions and Discussion
@@ -163,8 +165,3 @@ Contribution
 ------------
 
 We are always happy to have new contributions. We have `marked issues good for anyone looking to get started <https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner>`_, and welcome `questions on the forums <https://community.sanicframework.org/>`_. Please take a look at our `Contribution guidelines <https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst>`_.
-
-.. |Linode| image:: https://www.linode.com/wp-content/uploads/2021/01/Linode-Logo-Black.svg
-    :alt: Linode
-    :target: https://www.linode.com
-    :width: 200px

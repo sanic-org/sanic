@@ -11,7 +11,7 @@ Sanic | Build fast. Run fast.
     :stub-columns: 1
 
     * - Build
-      - | |Py310Test| |Py39Test| |Py38Test| |Py37Test|
+      - | |Tests|
     * - Docs
       - | |UserGuide| |Documentation|
     * - Package
@@ -27,14 +27,8 @@ Sanic | Build fast. Run fast.
    :target: https://community.sanicframework.org/
 .. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
    :target: https://discord.gg/FARQzAEMAA
-.. |Py310Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python310.yml/badge.svg?branch=main
-   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python310.yml
-.. |Py39Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml/badge.svg?branch=main
-   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python39.yml
-.. |Py38Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml/badge.svg?branch=main
-   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python38.yml
-.. |Py37Test| image:: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml/badge.svg?branch=main
-   :target: https://github.com/sanic-org/sanic/actions/workflows/pr-python37.yml
+.. |Tests| image:: https://github.com/sanic-org/sanic/actions/workflows/tests.yml/badge.svg?branch=main
+   :target: https://github.com/sanic-org/sanic/actions/workflows/tests.yml
 .. |Documentation| image:: https://readthedocs.org/projects/sanic/badge/?version=latest
    :target: http://sanic.readthedocs.io/en/latest/?badge=latest
 .. |PyPI| image:: https://img.shields.io/pypi/v/sanic.svg
@@ -77,7 +71,7 @@ The goal of the project is to provide a simple way to get up and running a highl
 Sponsor
 -------
 
-Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic. 
+Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
 
 Thanks to `Linode <https://www.linode.com>`_ for their contribution towards the development and community of Sanic.
 

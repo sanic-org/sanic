@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import platform
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -65,12 +64,12 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve
 from sanic.server.socket import configure_socket, remove_unix_socket
+from sanic.worker.constants import ProcessState
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
 from sanic.worker.serve import worker_serve
-
 
 if TYPE_CHECKING:
     from sanic import Sanic
@@ -893,7 +892,6 @@ class StartupMixin(metaclass=SanicMeta):
                 app.router.reset()
                 app.signal_router.reset()
 
-            sync_manager.shutdown()
             for sock in socks:
                 try:
                     sock.shutdown(SHUT_RDWR)
@@ -905,11 +903,32 @@ class StartupMixin(metaclass=SanicMeta):
             loop.close()
             cls._cleanup_env_vars()
             cls._cleanup_apps()
+
+            from time import sleep
+
+            limit = 100
+            while cls._get_process_states(worker_state):
+                sleep(0.1)
+                limit -= 1
+                if limit <= 0:
+                    error_logger.warning(
+                        "Worker shutdown timed out. "
+                        "Some processes may still be running."
+                    )
+                    break
+            sync_manager.shutdown()
             unix = kwargs.get("unix")
             if unix:
                 remove_unix_socket(unix)
+            logger.info("Goodbye.")
         if exit_code:
             os._exit(exit_code)
+
+    @staticmethod
+    def _get_process_states(worker_state) -> List[str]:
+        return [
+            state for s in worker_state.values() if (state := s.get("state"))
+        ]
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:

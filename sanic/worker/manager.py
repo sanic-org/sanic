@@ -122,6 +122,7 @@ class WorkerManager:
         self.monitor()
         self.join()
         self.terminate()
+        self.cleanup()
 
     def start(self):
         for process in self.processes:
@@ -146,6 +147,11 @@ class WorkerManager:
         if not self._shutting_down:
             for process in self.processes:
                 process.terminate()
+
+    def cleanup(self):
+        """Cleanup the worker processes."""
+        for process in self.processes:
+            process.exit()
 
     def restart(
         self,

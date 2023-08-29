@@ -5,7 +5,6 @@ import logging
 import logging.config
 import re
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -93,7 +92,6 @@ from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
-
 
 if TYPE_CHECKING:
     try:
@@ -1742,6 +1740,20 @@ class Sanic(
     def ack(self):
         if hasattr(self, "multiplexer"):
             self.multiplexer.ack()
+
+    def set_serving(self, serving: bool) -> None:
+        """Set the serving state of the application.
+
+        This method is used to set the serving state of the application.
+        It is used internally by Sanic and should not typically be called
+        manually.
+
+        Args:
+            serving (bool): Whether the application is serving.
+        """
+        self.state.is_running = serving
+        if hasattr(self, "multiplexer"):
+            self.multiplexer.set_serving(serving)
 
     async def _server_event(
         self,

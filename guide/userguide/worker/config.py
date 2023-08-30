@@ -54,6 +54,42 @@ SIDEBAR = [
                         label="Sanic Application",
                         path="guide/basics/app.html",
                     ),
+                    MenuItem(
+                        label="Handlers",
+                        path="guide/basics/handlers.html",
+                    ),
+                    MenuItem(
+                        label="Request",
+                        path="guide/basics/request.html",
+                    ),
+                    MenuItem(
+                        label="Response",
+                        path="guide/basics/response.html",
+                    ),
+                    MenuItem(
+                        label="Routing",
+                        path="guide/basics/routing.html",
+                    ),
+                    MenuItem(
+                        label="Listeners",
+                        path="guide/basics/listeners.html",
+                    ),
+                    MenuItem(
+                        label="Middleware",
+                        path="guide/basics/middleware.html",
+                    ),
+                    MenuItem(
+                        label="Headers",
+                        path="guide/basics/headers.html",
+                    ),
+                    MenuItem(
+                        label="Cookies",
+                        path="guide/basics/cookies.html",
+                    ),
+                    MenuItem(
+                        label="Background Tasks",
+                        path="guide/basics/tasks.html",
+                    ),
                 ],
             ),
             MenuItem(
@@ -62,6 +98,26 @@ SIDEBAR = [
                     MenuItem(
                         label="Class Based Views",
                         path="guide/advanced/class-based-views.html",
+                    ),
+                    MenuItem(
+                        label="Proxy Configuration",
+                        path="guide/advanced/proxy-headers.html",
+                    ),
+                    MenuItem(
+                        label="Streaming",
+                        path="guide/advanced/streaming.html",
+                    ),
+                    MenuItem(
+                        label="Websockets",
+                        path="guide/advanced/websockets.html",
+                    ),
+                    MenuItem(
+                        label="Versioning",
+                        path="guide/advanced/versioning.html",
+                    ),
+                    MenuItem(
+                        label="Signals",
+                        path="guide/advanced/signals.html",
                     ),
                 ],
             ),
@@ -72,6 +128,22 @@ SIDEBAR = [
                         label="Blueprints",
                         path="guide/best-practices/blueprints.html",
                     ),
+                    MenuItem(
+                        label="Exceptions",
+                        path="guide/best-practices/exceptions.html",
+                    ),
+                    MenuItem(
+                        label="Decorators",
+                        path="guide/best-practices/decorators.html",
+                    ),
+                    MenuItem(
+                        label="Logging",
+                        path="guide/best-practices/logging.html",
+                    ),
+                    MenuItem(
+                        label="Testing",
+                        path="guide/best-practices/testing.html",
+                    ),
                 ],
             ),
             MenuItem(
@@ -81,14 +153,46 @@ SIDEBAR = [
                         label="Configuration",
                         path="guide/running/configuration.html",
                     ),
+                    MenuItem(
+                        label="Development",
+                        path="guide/running/development.html",
+                    ),
+                    MenuItem(
+                        label="Server",
+                        path="guide/running/running.html",
+                    ),
+                    MenuItem(
+                        label="Worker Manager",
+                        path="guide/running/manager.html",
+                    ),
+                    MenuItem(
+                        label="Dynamic Applications",
+                        path="guide/running/app-loader.html",
+                    ),
+                    MenuItem(
+                        label="Inspector",
+                        path="guide/running/inspector.html",
+                    ),
                 ],
             ),
             MenuItem(
                 label="Deployment",
                 items=[
                     MenuItem(
+                        label="Caddy",
+                        path="guide/running/caddy.html",
+                    ),
+                    MenuItem(
+                        label="Nginx",
+                        path="guide/running/nginx.html",
+                    ),
+                    # MenuItem(
+                    #     label="Systemd",
+                    #     path="guide/running/systemd.html",
+                    # ),
+                    MenuItem(
                         label="Docker",
-                        path="guide/deployment/docker.html",
+                        path="guide/running/docker.html",
                     ),
                 ],
             ),
@@ -98,6 +202,34 @@ SIDEBAR = [
                     MenuItem(
                         label="Table of Contents",
                         path="guide/how-to/table-of-contents.html",
+                    ),
+                    MenuItem(
+                        label="Application Mounting",
+                        path="guide/how-to/mounting.html",
+                    ),
+                    MenuItem(
+                        label="Authentication",
+                        path="guide/how-to/authentication.html",
+                    ),
+                    MenuItem(
+                        label="Autodiscovery",
+                        path="guide/how-to/autodiscovery.html",
+                    ),
+                    MenuItem(
+                        label="CORS",
+                        path="guide/how-to/cors.html",
+                    ),
+                    MenuItem(
+                        label="ORM",
+                        path="guide/how-to/orm.html",
+                    ),
+                    MenuItem(
+                        label="Static Redirects",
+                        path="guide/how-to/static-redirects.html",
+                    ),
+                    MenuItem(
+                        label="TLS/SSL/HTTPS",
+                        path="guide/how-to/tls.html",
                     ),
                 ],
             ),

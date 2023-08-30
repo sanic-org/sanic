@@ -12649,7 +12649,8 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
   .menu .is-anchor {
     font-size: 0.85em; }
     .menu .is-anchor a::before {
-      content: '# '; }
+      content: '# ';
+      color: var(--menu-contrast); }
   .menu .menu-label {
     margin-bottom: 1rem; }
   .menu li.is-group > a::after {
@@ -12742,6 +12743,15 @@ h3:not(:first-child) {
 article {
   margin-left: 2rem; }
 
+p + pre,
+pre + p,
+div.additional-attributes + p,
+p + div.additional-attributes,
+div.additional-attributes + div.additional-attributes,
+div.highlight + p,
+p + div.highlight,
+div.highlight + div.highlight,
+p + h4,
 p + p {
   margin-top: 1rem; }
 
@@ -12788,6 +12798,21 @@ p + p {
   .notification.is-note {
     background-color: #833FE3;
     color: white; }
+  .notification.is-new {
+    background-color: #ff0d68;
+    color: white; }
+    .notification.is-new::after {
+      content: '🌟';
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 2rem; }
+  .notification.is-tip::after {
+    content: '💡';
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem; }
 
 .ol, .ul,
 .list {
@@ -12859,13 +12884,35 @@ p + p {
 .docobject .ol, .docobject .ul, .docobject .list {
   margin: 1rem; }
 
+.mermaid {
+  margin-top: 2rem; }
+  .mermaid .actor {
+    stroke: #ff0d68 !important;
+    fill: #ffd9e7 !important; }
+  .mermaid .labelBox {
+    fill: #cce9ff !important;
+    stroke: #0092FF !important; }
+  .mermaid .note {
+    fill: #fffbcc !important;
+    stroke: #FFE900 !important; }
+
 @media (prefers-color-scheme: dark) {
   .docobject h2 :last-child {
     color: #fafafa; }
   .docobject .function-signature {
     color: #b5b5b5; }
     .docobject .function-signature .param-default {
-      color: #FFE900; } }
+      color: #FFE900; }
+  .mermaid text.messageText {
+    fill: #fafafa !important; }
+  .mermaid .actor {
+    fill: #ff0d68 !important; }
+  .mermaid .labelBox {
+    fill: #0092FF !important; }
+  .mermaid .labelText {
+    fill: #fafafa !important; }
+  .mermaid .note {
+    fill: #FFE900 !important; } }
 
 footer .level,
 footer .level .level-right,

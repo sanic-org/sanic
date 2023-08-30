@@ -40,6 +40,26 @@
         background-color: $purple;
         color: $white;
     }
+    &.is-new {
+        background-color: $primary;
+        color: $white;
+        &::after {
+            content: '🌟';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+        }
+    }
+    &.is-tip {
+        &::after {
+            content: '💡';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+        }
+    }
 }
 
 .ol, .ul,
@@ -113,6 +133,25 @@
     .ol, .ul, .list { margin: 1rem; }
 }
 
+.mermaid {
+    margin-top: 2rem;
+    .actor {
+        stroke: $primary !important;
+        fill: lighten($primary, 40%) !important;
+    }
+    .labelBox {
+        fill: lighten($blue, 40%) !important;
+        stroke: $blue !important;
+    }
+    // .labelText {
+    //     fill: $white-bis !important;
+    // }
+    .note {
+        fill: lighten($yellow, 40%) !important;
+        stroke: $yellow !important;
+    }
+}
+
 @media (prefers-color-scheme: dark) {
     .docobject {
         h2 :last-child { color: $white-bis; }
@@ -120,5 +159,12 @@
             color: $grey-light;
             .param-default { color: $yellow; }
         }
+    }
+    .mermaid {
+        text.messageText { fill: $white-bis !important; }
+        .actor { fill: $primary !important; }
+        .labelBox { fill: $blue !important; }
+        .labelText { fill: $white-bis !important; }
+        .note { fill: $yellow !important; }
     }
 }

@@ -1,6 +1,6 @@
 # Getting Started
 
-Before we begin, make sure you are running Python 3.7 or higher. Currently, Sanic is works with Python versions 3.7 – 3.11.
+Before we begin, make sure you are running Python 3.8 or higher. Currently, Sanic is works with Python versions 3.8 – 3.11.
 
 ## Install
 
@@ -14,6 +14,12 @@ pip install sanic
 
     If you have ever used one of the many decorator based frameworks, this probably looks somewhat familiar to you.
 
+    
+
+.. tip:: If you are coming from Flask or another framework, there are a few important things to point out. Remember, Sanic aims for performance, flexibility, and ease of use. These guiding principles have tangible impact on the API and how it works.
+
+
+
 .. column::
 
     ```python
@@ -26,16 +32,6 @@ pip install sanic
     async def hello_world(request):
         return text("Hello, world.")
     ```
-
-
-
-
-.. info:: Tip
-
-    If you are coming from Flask or another framework, there are a few important things to point out. Remember, Sanic aims for **performance**, **flexibility**, and **ease of use**. These guiding principles have tangible impact on the API and how it works.
-    
-    - Sanic does not use a global context. You do not need to import a `request` object from somewhere else. Instead, that object is passed to your handler.
-    - Route handlers must return a response object. This is a very important distinction. Other frameworks allow you to return a string or a dictionary and they will try to figure out what you meant. Sanic requires you to be explicit about what you want to return, therefore saving valuable time in the request/response cycle.
 
 ### Important to note
 
@@ -55,17 +51,18 @@ pip install sanic
     sanic server
     ```
 
-.. info:: Tip
 
-    This **another** important distinction. Other frameworks come with a built in development server and explicitly say that it is _only_ intended for development use. The opposite is true with Sanic. 
+
+.. tip:: This **another** important distinction. Other frameworks come with a built in development server and explicitly say that it is _only_ intended for development use. The opposite is true with Sanic. 
 
     **The packaged server is production ready.**
+
 
 ## Sanic Extensions
 
 Sanic intentionally aims for a clean and unopinionated feature list. The project does not want to require you to build your application in a certain way, and tries to avoid prescribing specific development patterns. There are a number of third-party plugins that are built and maintained by the community to add additional features that do not otherwise meet the requirements of the core repository.
 
-However, in order **to help API developers**, the Sanic organization maintains an official plugin called [Sanic Extensions](/en/plugins/sanic-ext/getting-started.md) to provide all sorts of goodies, including:
+However, in order **to help API developers**, the Sanic organization maintains an official plugin called [Sanic Extensions](../plugins/sanic-ext/getting-started.md) to provide all sorts of goodies, including:
 
 - **OpenAPI** documentation with Redoc and/or Swagger
 - **CORS** protection
@@ -93,4 +90,4 @@ Starting in v21.12, Sanic will automatically setup Sanic Extensions if it is in 
 - `app.extend()` - used to configure Sanic Extensions
 - `app.ext` - the `Extend` instance attached to the application
 
-See [the plugin documentation](/en/plugins/sanic-ext/getting-started.md) for more information about how to use and work with the plugin
+See [the plugin documentation](../plugins/sanic-ext/getting-started.md) for more information about how to use and work with the plugin

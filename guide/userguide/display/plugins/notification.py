@@ -9,6 +9,8 @@ class Notification(Admonition):
         "info",
         "warning",
         "danger",
+        "tip",
+        "new",
     }
 
     def __call__(self, directive, md):

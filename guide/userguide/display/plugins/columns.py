@@ -51,7 +51,11 @@ class Column(DirectivePlugin):
             prev = token
 
     def _render_column(self, renderer: HTMLRenderer, text: str, **attrs):
-        start = '<div class="columns mt-3">\n' if attrs.get("first") else ""
+        start = (
+            '<div class="columns mt-3 is-multiline">\n'
+            if attrs.get("first")
+            else ""
+        )
         end = "</div>\n" if attrs.get("last") else ""
-        col = f'<div class="column">{text}</div>\n'
+        col = f'<div class="column is-half">{text}</div>\n'
         return start + (col) + end

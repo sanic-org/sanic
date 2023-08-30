@@ -2,12 +2,7 @@ import re
 from textwrap import dedent
 
 from mistune import HTMLRenderer, create_markdown, escape
-from mistune.directives import (
-    Admonition,
-    FencedDirective,
-    RSTDirective,
-    TableOfContents,
-)
+from mistune.directives import Admonition, RSTDirective, TableOfContents
 from mistune.util import safe_entity
 from pygments import highlight
 from pygments.formatters import html
@@ -18,6 +13,7 @@ from html5tagger import HTML, E  # type: ignore
 from .code_style import SanicCodeStyle
 from .plugins.attrs import Attributes
 from .plugins.columns import Column
+from .plugins.mermaid import Mermaid
 from .plugins.notification import Notification
 from .text import slugify
 
@@ -74,7 +70,7 @@ class DocsRenderer(HTMLRenderer):
         return self._make_tag("li", attrs, text)
 
     def table(self, text: str, **attrs) -> str:
-        attrs["class"] = "table"
+        attrs["class"] = "table is-fullwidth is-bordered"
         return self._make_tag("table", attrs, text)
 
     def _make_tag(
@@ -97,11 +93,12 @@ _render_markdown = create_markdown(
     plugins=[
         RSTDirective(
             [
-                Admonition(),
+                # Admonition(),
                 Attributes(),
                 Notification(),
                 TableOfContents(),
                 Column(),
+                Mermaid(),
             ]
         ),
         "abbr",

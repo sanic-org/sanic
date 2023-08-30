@@ -6,7 +6,7 @@ from userguide.worker import config
 from userguide.worker.reload import setup_livereload
 from userguide.worker.style import setup_style
 
-from sanic import Request, Sanic, file, html
+from sanic import Request, Sanic, html, redirect
 
 
 def _compile_sidebar_order(items: list[MenuItem]) -> list[str]:
@@ -45,7 +45,7 @@ def create_app(root: Path) -> Sanic:
     @app.get("/", name="root")
     @app.get("/index.html", name="index")
     async def index(request: Request):
-        return await file(request.app.config.PUBLIC_DIR / "index.html")
+        return redirect(request.app.url_for("page", language="en", path=""))
 
     @app.get("/<language:str>", name="page-without-path")
     @app.get("/<language:str>/<path:path>")

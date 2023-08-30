@@ -61,7 +61,10 @@ $menu-width: 360px;
 
     .is-anchor {
         font-size: 0.85em;
-        & a::before { content: '# '; }
+        & a::before {
+            content: '# ';
+            color: var(--menu-contrast);
+        }
     }
     .menu-label { margin-bottom: 1rem; }
     li.is-group > a {

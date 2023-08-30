@@ -58,7 +58,6 @@ class Page:
     def relative_path(self) -> Path:
         if self._relative_path is None:
             raise RuntimeError("Page not initialized")
-        print(self._relative_path)
         return self._relative_path
 
     @classmethod
@@ -146,7 +145,7 @@ class Page:
             page.meta.title = page.path.stem.replace("-", " ").title()
 
         for line in raw.splitlines():
-            if line.startswith("#") and line.count("#") == 2:
+            if line.startswith("##") and not line.startswith("###"):
                 line = line.lstrip("#").strip()
                 page.anchors.append(line)
 
@@ -217,7 +216,7 @@ class PageRenderer:
             if current_page is None:
                 builder.h1("Not found")
                 return
-            builder.raw(HTML(current_page.content))
+            builder(HTML(current_page.content))
 
     @contextmanager
     def _base(self, request: Request, builder: Builder, page: Page | None):

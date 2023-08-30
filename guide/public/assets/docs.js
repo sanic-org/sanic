@@ -86,3 +86,19 @@ function afterSwap(e) {
 }
 document.addEventListener("DOMContentLoaded", init);
 document.body.addEventListener("htmx:afterSwap", afterSwap);
+function copyCode(button) {
+    const codeBlock = button.parentElement;
+    const code = codeBlock.querySelector("code").innerText;
+    const textarea = document.createElement("textarea");
+    textarea.value = code;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    button.classList.add("clicked"); // Add class for animation
+
+    setTimeout(() => {
+        button.classList.remove("clicked"); // Remove class to revert to original state
+    }, 1500);
+}

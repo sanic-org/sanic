@@ -8,7 +8,7 @@ from pygments import highlight
 from pygments.formatters import html
 from pygments.lexers import get_lexer_by_name
 
-from html5tagger import HTML, E  # type: ignore
+from html5tagger import HTML, Builder, E  # type: ignore
 
 from .code_style import SanicCodeStyle
 from .plugins.attrs import Attributes
@@ -20,17 +20,26 @@ from .text import slugify
 
 class DocsRenderer(HTMLRenderer):
     def block_code(self, code: str, info: str | None = None):
-        if info:
-            lexer = get_lexer_by_name(info, stripall=False)
-            formatter = html.HtmlFormatter(
-                style=SanicCodeStyle,
-                wrapcode=True,
-                cssclass=f"highlight language-{info}",
-            )
-            pre = HTML(highlight(code, lexer, formatter))
-        else:
-            pre = E.pre(E.code(escape(code)))
-        return str(pre)
+        builder = Builder("Block")
+        with builder.div(class_="code-block"):
+            if info:
+                lexer = get_lexer_by_name(info, stripall=False)
+                formatter = html.HtmlFormatter(
+                    style=SanicCodeStyle,
+                    wrapcode=True,
+                    cssclass=f"highlight language-{info}",
+                )
+                builder(HTML(highlight(code, lexer, formatter)))
+                with builder.div(
+                    class_="code-block__copy",
+                    onclick="copyCode(this)",
+                ):
+                    builder.div(
+                        class_="code-block__rectangle code-block__filled"
+                    ).div(class_="code-block__rectangle code-block__outlined")
+            else:
+                builder.pre(E.code(escape(code)))
+        return str(builder)
 
     def heading(self, text: str, level: int, **attrs) -> str:
         ident = slugify(text)

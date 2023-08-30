@@ -12914,6 +12914,49 @@ p + p {
   .mermaid .note {
     fill: #FFE900 !important; } }
 
+.code-block {
+  position: relative;
+  padding: 10px; }
+  .code-block:hover .code-block__copy {
+    opacity: 1; }
+  .code-block .code-block__copy {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 36px;
+    height: 52px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s; }
+    .code-block .code-block__copy::before {
+      content: "copied";
+      position: absolute;
+      top: -17.33333px;
+      margin: auto;
+      opacity: 0;
+      right: 9px; }
+    .code-block .code-block__copy.clicked::before {
+      opacity: 1;
+      animation: all 0.3s ease-in-out; }
+  .code-block .code-block__rectangle {
+    position: absolute;
+    width: 18px;
+    height: 23.29412px;
+    transition: all 0.3s ease; }
+  .code-block .code-block__filled {
+    background-color: #ff0d68;
+    left: 5px;
+    top: 13px; }
+  .code-block .code-block__outlined {
+    border: 2px solid #ff0d68;
+    background-color: transparent;
+    left: -3px;
+    top: 5px; }
+  .code-block .code-block__copy.clicked .code-block__outlined {
+    left: -19px;
+    top: 13px;
+    background-color: #ff0d68; }
+
 footer .level,
 footer .level .level-right,
 footer .level .level-left {

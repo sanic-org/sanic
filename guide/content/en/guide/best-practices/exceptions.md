@@ -572,10 +572,9 @@ This is information **that we want** to always be passed in the error (when it i
         print("Caught exception:", exception)
     ```
 
- tip NOTE
-This handler will be dispatched into a background task and **IS NOT** intended for use to manipulate any response data. It is intended to be used for logging or reporting purposes only, and should not impact the ability of your application to return the error response to the client.
-:::
+.. note::
+
+    This handler will be dispatched into a background task and **IS NOT** intended for use to manipulate any response data. It is intended to be used for logging or reporting purposes only, and should not impact the ability of your application to return the error response to the client.
 
 *Added in v23.6*
-:::
 

@@ -1,6 +1,13 @@
 name: Tests
 
 on:
+  push:
+    branches:
+      - main
+      - current-release
+      - "*LTS"
+    tags:
+      - "!*"
   pull_request:
     branches:
       - main

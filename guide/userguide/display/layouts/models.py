@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+# from dataclasses import dataclass, field
+from msgspec import Struct, field
 
 
-@dataclass
-class MenuItem:
+# @dataclass
+class MenuItem(Struct, kw_only=False, omit_defaults=True):
     label: str
     path: str | None = None
     href: str | None = None

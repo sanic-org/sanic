@@ -29,8 +29,10 @@
     async def bar(request):
         if request.method == "GET":
             ...
+
         elif request.method == "POST":
             ...
+            
         elif request.method == "PATCH":
             ...
     ```

@@ -158,7 +158,9 @@ version_prefix + version + url_prefix + URI definition
 ```
 
 
-.. tip:: Just like with `url_prefix`, it is possible to define path parameters inside a `version_prefix`. It is perfectly legitimate to do this. Just remember that every route will have that parameter injected into the handler.
+.. tip:: 
+    
+    Just like with `url_prefix`, it is possible to define path parameters inside a `version_prefix`. It is perfectly legitimate to do this. Just remember that every route will have that parameter injected into the handler.
 
     ```python
     version_prefix="/<foo:str>/v"

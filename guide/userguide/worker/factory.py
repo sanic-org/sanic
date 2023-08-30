@@ -2,7 +2,7 @@ from pathlib import Path
 
 from userguide.display.layouts.models import MenuItem
 from userguide.display.page import Page, PageRenderer
-from userguide.worker import config
+from userguide.worker.config import load_menu
 from userguide.worker.reload import setup_livereload
 from userguide.worker.style import setup_style
 
@@ -23,9 +23,14 @@ def create_app(root: Path) -> Sanic:
     app = Sanic("Documentation")
     app.config.PUBLIC_DIR = root / "public"
     app.config.CONTENT_DIR = root / "content"
+    app.config.CONFIG_DIR = root / "config"
     app.config.STYLE_DIR = root / "style"
     app.config.NODE_MODULES_DIR = root / "node_modules"
-    app.update_config(config)
+    app.config.LANGUAGES = ["en"]
+    app.config.SIDEBAR = load_menu(
+        app.config.CONFIG_DIR / "en" / "sidebar.yaml"
+    )
+    app.config.NAVBAR = load_menu(app.config.CONFIG_DIR / "en" / "navbar.yaml")
 
     setup_livereload(app)
     setup_style(app)
@@ -36,9 +41,6 @@ def create_app(root: Path) -> Sanic:
     async def setup(app: Sanic):
         app.ext.dependency(PageRenderer(base_title="TestApp"))
         page_order = _compile_sidebar_order(app.config.SIDEBAR)
-        from rich import print
-
-        print(page_order)
         Page.load_pages(app.config.CONTENT_DIR, page_order)
         app.ctx.get_page = Page.get
 

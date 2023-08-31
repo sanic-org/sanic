@@ -16,9 +16,9 @@ pip install sanic
 
     
 
-.. tip:: If you are coming from Flask or another framework, there are a few important things to point out. Remember, Sanic aims for performance, flexibility, and ease of use. These guiding principles have tangible impact on the API and how it works.
+    .. note:: 
 
-
+        If you are coming from Flask or another framework, there are a few important things to point out. Remember, Sanic aims for performance, flexibility, and ease of use. These guiding principles have tangible impact on the API and how it works.
 
 .. column::
 
@@ -51,9 +51,9 @@ pip install sanic
     sanic server
     ```
 
+.. note:: 
 
-
-.. tip:: This **another** important distinction. Other frameworks come with a built in development server and explicitly say that it is _only_ intended for development use. The opposite is true with Sanic. 
+    This **another** important distinction. Other frameworks come with a built in development server and explicitly say that it is _only_ intended for development use. The opposite is true with Sanic. 
 
     **The packaged server is production ready.**
 

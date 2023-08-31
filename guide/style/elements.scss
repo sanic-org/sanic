@@ -37,11 +37,11 @@
         font-weight: 700;
     }
     &.is-note {
-        background-color: $purple;
+        background-color: $primary;
         color: $white;
     }
     &.is-new {
-        background-color: $primary;
+        background-color: $purple;
         color: $white;
         &::after {
             content: '🌟';

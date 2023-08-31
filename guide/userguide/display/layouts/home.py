@@ -44,6 +44,7 @@ class HomeLayout(BaseLayout):
             builder.a(
                 "GitHub",
                 class_="button is-outlined",
-                href="",
+                href="https://github.com/sanic-org/sanic",
+                target="_blank",
             )
         return builder

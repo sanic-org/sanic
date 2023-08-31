@@ -12801,10 +12801,10 @@ p + p {
     font-size: 1.25rem;
     font-weight: 700; }
   .notification.is-note {
-    background-color: #833FE3;
+    background-color: #ff0d68;
     color: white; }
   .notification.is-new {
-    background-color: #ff0d68;
+    background-color: #833FE3;
     color: white; }
     .notification.is-new::after {
       content: '🌟';

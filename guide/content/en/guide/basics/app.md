@@ -116,7 +116,7 @@ Most applications will have the need to share/reuse data or objects across diffe
 
 
 
-.. tip:: Heads up
+.. note:: Heads up
 
     Config keys _should_ be uppercase. But, this is mainly by convention, and lowercase will work most of the time.
     ```
@@ -224,9 +224,9 @@ The Sanic application instance can be customized for your application needs in a
 
     
 
-.. tip:: Important
+    .. note:: Important
 
-    It is important to remember that you are passing the *class* not an instance of the class.
+        It is important to remember that you are passing the *class* not an instance of the class.
 
 
 .. column::

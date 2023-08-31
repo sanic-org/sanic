@@ -26,6 +26,9 @@ function refreshMenuGroups() {
     menuGroups = document.querySelectorAll(".menu li.is-group a:not([href])");
 }
 function hasActiveLink(element) {
+    if (!element || element.parent) {
+        return false;
+    }
     const menuList = element.parent.querySelector("ul.menu-list");
     if (menuList) {
         const siblinkLinks = [...menuList.querySelectorAll("a")];
@@ -89,6 +92,16 @@ function initTabs() {
         firstTabTrigger.click();
     });
 }
+function initSearch() {
+    const searchInput = document.querySelector("#search");
+    searchInput.addEventListener("keyup", () => {
+        const value = searchInput.value;
+        searchInput.setAttribute(
+            "hx-vals",
+            `{"q": "${encodeURIComponent(value)}"}`
+        );
+    });
+}
 function setMenuLinkActive(href) {
     burger.classList.remove("is-active");
     menu.classList.remove("is-active");
@@ -133,6 +146,7 @@ function init() {
     initMenuGroups();
     initDetails();
     initTabs();
+    initSearch();
 }
 
 function afterSwap(e) {

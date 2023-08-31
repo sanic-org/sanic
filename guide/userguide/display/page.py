@@ -45,7 +45,7 @@ class PageMeta:
 class Page:
     path: Path
     content: str
-    meta: PageMeta
+    meta: PageMeta = field(default_factory=PageMeta)
     _relative_path: Path | None = None
     next_page: Page | None = None
     previous_page: Page | None = None
@@ -73,12 +73,14 @@ class Page:
         return _PAGE_CACHE.get(language, {}).get(path, (None, None, None))
 
     @classmethod
-    def load_pages(cls, base_path: Path, page_order: list[str]) -> None:
+    def load_pages(cls, base_path: Path, page_order: list[str]) -> list[Page]:
+        output: list[Page] = []
         for path in base_path.glob("**/*.md"):
             relative = path.relative_to(base_path)
             language = relative.parts[0]
             name = "/".join(relative.parts[1:])
             page = cls._load_page(path)
+            output.append(page)
             page._relative_path = relative
             _PAGE_CACHE.setdefault(language, {})[name] = (
                 None,
@@ -125,6 +127,8 @@ class Page:
             except KeyError:
                 pass
             _PAGE_CACHE["api"][ref] = (previous_page, current_page, next_page)
+
+        return output
 
     @staticmethod
     def _load_page(path: Path) -> Page:

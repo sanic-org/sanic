@@ -2,6 +2,7 @@ from pathlib import Path
 
 from userguide.display.layouts.models import MenuItem
 from userguide.display.page import Page, PageRenderer
+from userguide.endpoint.view import bp
 from userguide.worker.config import load_config, load_menu
 from userguide.worker.reload import setup_livereload
 from userguide.worker.style import setup_style
@@ -37,6 +38,7 @@ def create_app(root: Path) -> Sanic:
 
     setup_livereload(app)
     setup_style(app)
+    app.blueprint(bp)
 
     app.static("/assets/", app.config.PUBLIC_DIR / "assets")
 
@@ -44,7 +46,7 @@ def create_app(root: Path) -> Sanic:
     async def setup(app: Sanic):
         app.ext.dependency(PageRenderer(base_title="TestApp"))
         page_order = _compile_sidebar_order(app.config.SIDEBAR)
-        Page.load_pages(app.config.CONTENT_DIR, page_order)
+        app.ctx.pages = Page.load_pages(app.config.CONTENT_DIR, page_order)
         app.ctx.get_page = Page.get
 
     @app.get("/", name="root")

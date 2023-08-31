@@ -143,6 +143,7 @@ docs_require = [
     "m2r2",
     "enum-tools[sphinx]",
     "mistune<2.0.0",
+    "autodocsumm>=0.2.11",
 ]
 
 dev_require = tests_require + [

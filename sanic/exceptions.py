@@ -1,8 +1,9 @@
-from asyncio import CancelledError, Protocol
+from asyncio import CancelledError
 from os import PathLike
 from typing import Any, Dict, Optional, Sequence, Union
 
 from sanic.helpers import STATUS_CODES
+from sanic.models.protocol_types import Range
 
 
 class RequestCancelled(CancelledError):
@@ -404,12 +405,6 @@ class InvalidHeader(BadRequest):
     """  # noqa: E501
 
 
-class ContentRange(Protocol):
-    total: int
-
-    __slots__ = ()
-
-
 class RangeNotSatisfiable(HTTPException):
     """416 Range Not Satisfiable
 
@@ -434,7 +429,7 @@ class RangeNotSatisfiable(HTTPException):
     def __init__(
         self,
         message: Optional[Union[str, bytes]] = None,
-        content_range: Optional[ContentRange] = None,
+        content_range: Optional[Range] = None,
         *,
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,

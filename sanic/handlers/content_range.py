@@ -5,18 +5,18 @@ import os
 from typing import TYPE_CHECKING
 
 from sanic.exceptions import (
-    ContentRange,
     HeaderNotFound,
     InvalidRangeType,
     RangeNotSatisfiable,
 )
+from sanic.models.protocol_types import Range
 
 
 if TYPE_CHECKING:
     from sanic import Request
 
 
-class ContentRangeHandler(ContentRange):
+class ContentRangeHandler(Range):
     """Parse and process the incoming request headers to extract the content range information.
 
     Args:
@@ -25,8 +25,6 @@ class ContentRangeHandler(ContentRange):
     """  # noqa: E501
 
     __slots__ = ("start", "end", "size", "total", "headers")
-
-    total: int
 
     def __init__(self, request: Request, stats: os.stat_result) -> None:
         self.total = stats.st_size

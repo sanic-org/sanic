@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 
 from asyncio import BaseTransport
-from typing import TYPE_CHECKING, Any, AnyStr
+from typing import TYPE_CHECKING, Any, AnyStr, Optional
 
 
 if TYPE_CHECKING:
@@ -26,17 +26,12 @@ else:
             ...
 
     class Range(Protocol):
-        def start(self) -> int:
-            ...
+        start: Optional[int]
+        end: Optional[int]
+        size: Optional[int]
+        total: Optional[int]
 
-        def end(self) -> int:
-            ...
-
-        def size(self) -> int:
-            ...
-
-        def total(self) -> int:
-            ...
+        __slots__ = ()
 
 
 class TransportProtocol(BaseTransport):

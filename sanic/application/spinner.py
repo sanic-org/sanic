@@ -1,9 +1,11 @@
 import os
 import sys
 import time
+
 from contextlib import contextmanager
 from queue import Queue
 from threading import Thread
+
 
 if os.name == "nt":  # noqa
     import ctypes  # noqa

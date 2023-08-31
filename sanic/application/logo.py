@@ -1,8 +1,10 @@
 import re
 import sys
+
 from os import environ
 
 from sanic.helpers import is_atty
+
 
 BASE_LOGO = """
 

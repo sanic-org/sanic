@@ -3,6 +3,7 @@ import os
 import platform
 import signal
 import sys
+
 from contextlib import contextmanager
 from enum import Enum
 from typing import Awaitable, Union
@@ -11,6 +12,7 @@ from multidict import CIMultiDict  # type: ignore
 
 from sanic.helpers import Default
 from sanic.log import error_logger
+
 
 if sys.version_info < (3, 8):  # no cov
     StartMethod = Union[Default, str]

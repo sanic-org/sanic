@@ -15,6 +15,7 @@ from sanic.errorpages import check_error_format
 from sanic.exceptions import MethodNotAllowed, NotFound, SanicException
 from sanic.models.handler_types import RouteHandler
 
+
 ROUTER_CACHE_SIZE = 1024
 ALLOWED_LABELS = ("__file_uri__",)
 

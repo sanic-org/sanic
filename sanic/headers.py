@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import re
+
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 from urllib.parse import unquote
 
 from sanic.exceptions import InvalidHeader
 from sanic.helpers import STATUS_CODES
+
 
 # TODO:
 # - the Options object should be a typed object to allow for less casting

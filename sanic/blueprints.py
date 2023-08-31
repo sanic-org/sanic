@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+
 from collections import defaultdict
 from collections.abc import MutableSequence
 from copy import deepcopy
@@ -36,6 +37,7 @@ from sanic.models.handler_types import (
     MiddlewareType,
     RouteHandler,
 )
+
 
 if TYPE_CHECKING:
     from sanic import Sanic

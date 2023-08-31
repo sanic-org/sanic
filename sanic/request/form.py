@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import email.utils
 import unicodedata
+
 from typing import NamedTuple
 from urllib.parse import unquote
 

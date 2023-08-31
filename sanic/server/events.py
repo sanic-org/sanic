@@ -3,6 +3,7 @@ from __future__ import annotations
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional
 
+
 if TYPE_CHECKING:
     from sanic import Sanic
 

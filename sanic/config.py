@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+
 from abc import ABCMeta
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
@@ -14,6 +15,7 @@ from sanic.helpers import Default, _default
 from sanic.http import Http
 from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
+
 
 if sys.version_info >= (3, 8):
     from typing import Literal

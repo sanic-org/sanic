@@ -13,6 +13,7 @@ from typing import (
 from sanic.models.handler_types import RouteHandler
 from sanic.request.types import Request
 
+
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.blueprints import Blueprint

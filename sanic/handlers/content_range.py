@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 from typing import TYPE_CHECKING
 
 from sanic.exceptions import (
@@ -9,6 +10,7 @@ from sanic.exceptions import (
     InvalidRangeType,
     RangeNotSatisfiable,
 )
+
 
 if TYPE_CHECKING:
     from sanic import Request

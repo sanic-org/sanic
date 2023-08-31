@@ -30,7 +30,6 @@ else:
         end: Optional[int]
         size: Optional[int]
         total: Optional[int]
-
         __slots__ = ()
 
 

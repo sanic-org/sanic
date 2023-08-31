@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 
 from collections import defaultdict
 from collections.abc import MutableSequence
@@ -577,7 +578,13 @@ class Blueprint(BaseSanic):
             app._future_registry.update(set((bp, item) for item in futures))
 
 
-class BlueprintGroup(MutableSequence[Blueprint]):
+if sys.version_info < (3, 9):
+    bpg_base = MutableSequence
+else:
+    bpg_base = MutableSequence[Blueprint]
+
+
+class BlueprintGroup(bpg_base):
     """This class provides a mechanism to implement a Blueprint Group.
 
     The `BlueprintGroup` class allows grouping blueprints under a common

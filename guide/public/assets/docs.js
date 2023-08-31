@@ -26,10 +26,18 @@ function refreshMenuGroups() {
     menuGroups = document.querySelectorAll(".menu li.is-group a:not([href])");
 }
 function hasActiveLink(element) {
-    if (!element || element.parent) {
+    if (!element) {
         return false;
     }
-    const menuList = element.parent.querySelector("ul.menu-list");
+    let nextElementSibling = element.nextElementSibling;
+    let menuList = null;
+    while (!menuList && nextElementSibling) {
+        if (nextElementSibling.classList.contains("menu-list")) {
+            menuList = nextElementSibling;
+        } else {
+            nextElementSibling = nextElementSibling.nextElementSibling;
+        }
+    }
     if (menuList) {
         const siblinkLinks = [...menuList.querySelectorAll("a")];
         return siblinkLinks.some((el) => el.classList.contains("is-active"));
@@ -113,7 +121,6 @@ function setMenuLinkActive(href) {
         }
     });
     menuGroups.forEach((g) => {
-        console.log(hasActiveLink(g), g.innerText);
         if (hasActiveLink(g)) {
             g.classList.add("is-open");
         } else {

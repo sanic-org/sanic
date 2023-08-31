@@ -1,0 +1,39 @@
+$progress-bar-background-color-dark: $border-dark !default
+$progress-value-background-color-dark: $text-dark !default
+
+.progress
+  &::-webkit-progress-bar
+    background-color: $progress-bar-background-color-dark
+  &::-webkit-progress-value
+    background-color: $progress-value-background-color-dark
+  &::-moz-progress-bar
+    background-color: $progress-value-background-color-dark
+  &::-ms-fill
+    background-color: $progress-value-background-color-dark
+  &:indeterminate
+    background-color: $progress-bar-background-color-dark
+    background-image: linear-gradient(to right, $text 30%, $progress-bar-background-color-dark 30%)
+  // Colors
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    &.is-#{$name}
+      &::-webkit-progress-value
+        background-color: $color
+      &::-moz-progress-bar
+        background-color: $color
+      &::-ms-fill
+        background-color: $color
+      &:indeterminate
+        background-image: linear-gradient(to right, $color 30%, $progress-bar-background-color-dark 30%)
+  // Colors Dark
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    &.is-#{$name}-dark
+      &::-webkit-progress-value
+        background-color: $color
+      &::-moz-progress-bar
+        background-color: $color
+      &::-ms-fill
+        background-color: $color
+      &:indeterminate
+        background-image: linear-gradient(to right, $color 30%, $progress-bar-background-color-dark 30%)

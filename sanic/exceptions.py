@@ -407,6 +407,8 @@ class InvalidHeader(BadRequest):
 class ContentRange(Protocol):
     total: int
 
+    __slots__ = ()
+
 
 class RangeNotSatisfiable(HTTPException):
     """416 Range Not Satisfiable

@@ -11,36 +11,53 @@ However, there are a few more configuration options that should be considered.
 
 ## Manual `extend`
 
----:1
-Even though Sanic Extensions will automatically attach to your application, you can manually choose `extend`. When you do that, you can pass all of the configuration values as a keyword arguments (lowercase).
-:--:
-```python
-app = Sanic("MyApp")
-app.extend(oas_url_prefix="/apidocs")
-```
-:---
+.. column:: 
 
----:1
-Or, alternatively they could be passed all at once as a single `dict`.
-:--:
-```python
-app = Sanic("MyApp")
-app.extend(config={"oas_url_prefix": "/apidocs"})
-```
-:---
+    Even though Sanic Extensions will automatically attach to your application, you can manually choose `extend`. When you do that, you can pass all of the configuration values as a keyword arguments (lowercase).
 
----:1
-Both of these solutions suffers from the fact that the names of the configuration settings are not discoverable by an IDE. Therefore, there is also a type annotated object that you can use. This should help the development experience.
-:--:
-```python
-from sanic_ext import Config
+.. column:: 
 
-app = Sanic("MyApp")
-app.extend(config=Config(oas_url_prefix="/apidocs"))
-```
-:---
+    ```python
+    app = Sanic("MyApp")
+    app.extend(oas_url_prefix="/apidocs")
+    ```
+
+.. column:: 
+
+    Or, alternatively they could be passed all at once as a single `dict`.
+
+.. column:: 
+
+    ```python
+    app = Sanic("MyApp")
+    app.extend(config={"oas_url_prefix": "/apidocs"})
+    ```
+
+.. column:: 
+
+    Both of these solutions suffers from the fact that the names of the configuration settings are not discoverable by an IDE. Therefore, there is also a type annotated object that you can use. This should help the development experience.
+
+.. column:: 
+
+    ```python
+    from sanic_ext import Config
+
+    app = Sanic("MyApp")
+    app.extend(config=Config(oas_url_prefix="/apidocs"))
+    ```
 
 ## Settings
+
+.. note::
+
+    Often, the easiest way to change these for an application (since they likely are not going to change dependent upon an environment), is to set them directly on the `app.config` object.
+
+    Simply use the capitalized version of the configuration key as shown here:
+
+    ```python
+    app = Sanic("MyApp")
+    app.config.OAS_URL_PREFIX = "/apidocs"
+    ```
 
 ### `cors`
 
@@ -91,8 +108,9 @@ app.extend(config=Config(oas_url_prefix="/apidocs"))
 - **Description**: Value of the header: `access-control-allow-origin`
 
 
-.. warning:: Be very careful if you place `*` here. Do not do this unless you know what you are doing as it can be a security issue.
-
+.. warning:: 
+    
+    Be very careful if you place `*` here. Do not do this unless you know what you are doing as it can be a security issue.
 
 
 ### `cors_send_wildcard`

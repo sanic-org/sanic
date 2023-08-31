@@ -14,7 +14,6 @@ from docstring_parser import Docstring, DocstringParam, DocstringRaises
 from docstring_parser import parse as parse_docstring
 from docstring_parser.common import DocstringExample
 from frontmatter import parse
-from rich import print
 
 from html5tagger import HTML, Builder, Document, E  # type: ignore
 from sanic import Request
@@ -39,6 +38,7 @@ class PageMeta:
     title: str = ""
     description: str = ""
     layout: str = "main"
+    features: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -125,11 +125,6 @@ class Page:
             except KeyError:
                 pass
             _PAGE_CACHE["api"][ref] = (previous_page, current_page, next_page)
-
-        for section, items in _PAGE_CACHE.items():
-            print(f"[bold yellow]{section}[/bold yellow]")
-            for name, (prev, current, next) in items.items():
-                print(f"\t[cyan]{name}[/cyan]")
 
     @staticmethod
     def _load_page(path: Path) -> Page:

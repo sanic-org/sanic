@@ -179,9 +179,12 @@ $left-offset-outlined: -3px;
 $top-offset-outlined: 5px;
 $animation-slide: -$button-width / 1.5; // space for sliding and the gap
 
+h1 + .code-block,
+h2 + .code-block,
+h3 + .code-block { margin-top: 1rem; }
 .code-block {
   position: relative;
-  padding: 10px;
+  & + .code-block { margin-top: 1rem; }
 
   &:hover {
     .code-block__copy {
@@ -240,4 +243,50 @@ $animation-slide: -$button-width / 1.5; // space for sliding and the gap
       background-color: $primary;
     }
   }
+}
+
+.additional-attributes.details {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  .code-block {
+    display: none;
+    width: 100%;
+  }
+
+  &::before {
+    content: "▼ " attr(title);
+    display: block;
+    background-color: $grey-light;
+    padding: 10px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  &.is-active {
+    .code-block {
+      display: block;
+    }
+
+    &::before {
+      content: "▲ " attr(title);
+      background-color: $grey-lighter;
+    }
+  }
+}
+
+// dark mode
+@media (prefers-color-scheme: dark) {
+    .additional-attributes.details{
+        &::before { background-color: $grey-darker; }
+        &.is-active {
+            &::before { background-color: $grey-dark; }
+        }
+    }
+}
+
+.tabs {
+    .tab-content { display: none; }
 }

@@ -22,7 +22,9 @@ The `Extend` instance has two basic methods on it used for dependency injection:
 Let's explore some use cases here.
 
 
-.. warning:: If you used dependency injection prior to v21.12, the lower level API method was called `injection`. It has since been renamed to `add_dependency` and starting in v21.12 `injection` is an alias for `add_dependency`. The `injection` method has been deprecated for removal in v22.6.
+.. warning:: 
+
+    If you used dependency injection prior to v21.12, the lower level API method was called `injection`. It has since been renamed to `add_dependency` and starting in v21.12 `injection` is an alias for `add_dependency`. The `injection` method has been deprecated for removal in v22.6.
 
 
 
@@ -149,21 +151,21 @@ When a `constructor` is passed to `ext.add_dependency` (like in this example) th
 
     Sometimes you may want to extract details from the request and preprocess them. You could, for example, cast the request JSON to a Python object, and then add some additional logic based upon DB queries.
 
-    
+    .. warning:: 
 
-.. warning:: If you plan to use this method, you should note that the injection actually happens *before* Sanic has had a chance to read the request body. The headers should already have been consumed. So, if you do want access to the body, you will need to manually consume as seen in this example.
+        If you plan to use this method, you should note that the injection actually happens *before* Sanic has had a chance to read the request body. The headers should already have been consumed. So, if you do want access to the body, you will need to manually consume as seen in this example.
 
-    ```python
-        await request.receive_body()
+        ```python
+            await request.receive_body()
         ```
 
 
-    This could be used in cases where you otherwise might:
+        This could be used in cases where you otherwise might:
 
-    - use middleware to preprocess and add something to the `request.ctx`
-    - use decorators to preprocess and inject arguments into the request handler
+        - use middleware to preprocess and add something to the `request.ctx`
+        - use decorators to preprocess and inject arguments into the request handler
 
-    In this example, we are using the `Request` object in the `compile_profile` constructor to run a fake DB query to generate and return a `UserProfile` object.
+        In this example, we are using the `Request` object in the `compile_profile` constructor to run a fake DB query to generate and return a `UserProfile` object.
 
 .. column::
 
@@ -223,9 +225,10 @@ When a `constructor` is passed to `ext.add_dependency` (like in this example) th
 
 It is a common pattern to create things like database connection pools and store them on the `app.ctx` object. This makes them available throughout your application, which is certainly a convenience. One downside, however, is that you no longer have a typed object to work with. You can use dependency injections to fix this. First we will show the concept using the lower level `add_dependency` like we have been using in the previous examples. But, there is a better way using the higher level `dependency` method.
 
+### The lower level API using `add_dependency`
+
 .. column::
 
-    ### The lower level API using `add_dependency`
 
     This works very similar to the [last example](#objects-from-the-request) where the goal is the extract something from the `Request` object. In this example, a database object was created on the `app.ctx` instance, and is being returned in the dependency injection constructor.
 
@@ -256,10 +259,9 @@ It is a common pattern to create things like database connection pools and store
     result
     ```
 
+### The higher level API using `dependency`
 
 .. column::
-
-    ### The higher level API using `dependency`
 
     Since we have an actual *object* that is available when adding the dependency injection, we can use the higher level `dependency` method. This will make the pattern much easier to write.
 

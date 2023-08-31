@@ -6,15 +6,17 @@ The default behavior is to automatically generate `HEAD` endpoints for all `GET`
 routes. Additionally, there is the option to automatically generate `TRACE` endpoints. However, these are not enabled by
 default.
 
-:
+### HEAD
 
-.. tabs:: :::tab HEAD
+.. column::
 
     - **Configuration**: `AUTO_HEAD` (default `True`)
     - **MDN**: [Read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD)
 
     A `HEAD` request provides the headers and an otherwise identical response to what a `GET` request would provide.
     However, it does not actually return the body.
+
+.. column::
 
     ```python
     @app.get("/")
@@ -33,15 +35,17 @@ default.
     content-type: text/plain; charset=utf-8
     ```
 
+### OPTIONS
 
-
-.. tab:: OPTIONS
+.. column::
 
     - **Configuration**: `AUTO_OPTIONS` (default `True`)
     - **MDN**: [Read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS)
 
     `OPTIONS` requests provide the recipient with details about how the client is allowed to communicate with a given
     endpoint.
+
+.. column::
 
     ```python
     @app.get("/")
@@ -62,18 +66,21 @@ default.
     connection: keep-alive
     ```
 
- tip Even though Sanic Extensions will setup these routes for you automatically, if you decide to manually create
-an `@app.options` route, it will *not* be overridden.
-:::
+.. tip::
+    
+    Even though Sanic Extensions will setup these routes for you automatically, if you decide to manually create an `@app.options` route, it will *not* be overridden.
 
+### TRACE
 
-.. tab:: TRACE
+.. column::
 
     - **Configuration**: `AUTO_TRACE` (default `False`)
     - **MDN**: [Read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/TRACE)
 
     By default, `TRACE` endpoints will **not** be automatically created. However, Sanic Extensions **will allow** you to
     create them if you wanted. This is something that is not allowed in vanilla Sanic.
+
+.. column::
 
     ```python
     @app.route("/", methods=["trace"])
@@ -99,11 +106,9 @@ an `@app.options` route, it will *not* be overridden.
     Accept: */*
     ```
 
- tip Setting up `AUTO_TRACE` can be super helpful, especially when your application is deployed behind a proxy since
-it will help you determine how the proxy is behaving.
-:::
+.. tip:: 
 
-::::
+    Setting up `AUTO_TRACE` can be super helpful, especially when your application is deployed behind a proxy since it will help you determine how the proxy is behaving.
 
 ## Additional method support
 

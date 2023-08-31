@@ -88,359 +88,339 @@ keyword argument.*
 
 All the following decorators are based on `@openapi`
 
-:
+### body
 
-.. tabs:: :::tab body
+**Arguments**
 
-    **Arguments**
+| Field       | Type                               |
+| ----------- | ---------------------------------- |
+| **content** | ***YourModel*, dict, RequestBody** |
 
-    | Field       | Type                               |
-    | ----------- | ---------------------------------- |
-    | **content** | ***YourModel*, dict, RequestBody** |
+**Examples**
 
-    **Examples**
+.. column::
 
-    .. column::
+    ```python
+    @openapi.body(UserProfile)
+    ```
 
-        ```python
-        @openapi.body(UserProfile)
-        ```
+    ```python
+    @openapi.body({"application/json": UserProfile})
+    ```
 
-        ```python
-        @openapi.body({"application/json": UserProfile})
-        ```
+    ```python
+    @openapi.body(RequestBody({"application/json": UserProfile}))
+    ```
 
-        ```python
-        @openapi.body(RequestBody({"application/json": UserProfile}))
-        ```
+.. column::
 
-    .. column::
+    ```python
+    @openapi.body({"content": UserProfile})
+    ```
 
-        ```python
-        @openapi.body({"content": UserProfile})
-        ```
+    ```python
+    @openapi.body(RequestBody(UserProfile))
+    ```
 
-        ```python
-        @openapi.body(RequestBody(UserProfile))
-        ```
+    ```python
+    @openapi.body({"application/json": {"description": ...}})
+    ```
 
-        ```python
-        @openapi.body({"application/json": {"description": ...}})
-        ```
+### deprecated
 
+**Arguments**
 
+*None*
 
-.. tab:: deprecated
+**Examples**
 
-    **Arguments**
+.. column::
 
-    *None*
+    ```python
+    @openapi.deprecated()
+    ```
 
-    **Examples**
+.. column::
 
-    .. column::
+    ```python
+    @openapi.deprecated
+    ```
 
-        ```python
-        @openapi.deprecated()
-        ```
+### description
 
-    .. column::
+**Arguments**
 
-        ```python
-        @openapi.deprecated
-        ```
+| Field  | Type    |
+| ------ | ------- |
+| `text` | **str** |
 
+**Examples**
 
+.. column::
 
-.. tab:: description
+    ```python
+    @openapi.description(
+        """This is a **description**.
 
-    **Arguments**
+    ## You can use `markdown`
 
-    | Field  | Type    |
-    | ------ | ------- |
-    | `text` | **str** |
+    - And
+    - make
+    - lists.
+    """
+    )
+    ```
 
-    **Examples**
+.. column::
 
-    .. column::
 
-        ```python
-        @openapi.description(
-            """This is a **description**.
+### document
 
-        ## You can use `markdown`
+**Arguments**
 
-        - And
-        - make
-        - lists.
-        """
-        )
-        ```
+| Field         | Type    |
+| ------------- | ------- |
+| `url`         | **str** |
+| `description` | **str** |
 
-    .. column::
+**Examples**
 
+.. column::
 
+    ```python
+    @openapi.document("http://example.com/docs")
+    ```
 
-.. tab:: document
+.. column::
 
-    **Arguments**
+    ```python
+    @openapi.document(ExternalDocumentation("http://example.com/more"))
+    ```
 
-    | Field         | Type    |
-    | ------------- | ------- |
-    | `url`         | **str** |
-    | `description` | **str** |
+### exclude
 
-    **Examples**
+Can be used on route definitions like all of the other decorators, or can be called on a Blueprint
 
-    .. column::
+**Arguments**
 
-        ```python
-        @openapi.document("http://example.com/docs")
-        ```
+| Field  | Type          | Default  |
+| ------ | ------------- | -------- |
+| `flag` | **bool**      | **True** |
+| `bp`   | **Blueprint** |          |
 
-    .. column::
+**Examples**
 
-        ```python
-        @openapi.document(ExternalDocumentation("http://example.com/more"))
-        ```
+.. column::
 
+    ```python
+    @openapi.exclude()
+    ```
 
+.. column::
 
-.. tab:: exclude
+    ```python
+    openapi.exclude(bp=some_blueprint)
+    ```
 
-    Can be used on route definitions like all of the other decorators, or can be called on a Blueprint
+### operation
 
-    **Arguments**
+Sets the operation ID.
 
-    | Field  | Type          | Default  |
-    | ------ | ------------- | -------- |
-    | `flag` | **bool**      | **True** |
-    | `bp`   | **Blueprint** |          |
+**Arguments**
 
-    **Examples**
+| Field  | Type    |
+| ------ | ------- |
+| `name` | **str** |
 
-    .. column::
+**Examples**
 
-        ```python
-        @openapi.exclude()
-        ```
+.. column::
 
-    .. column::
+    ```python
+    @openapi.operation("doNothing")
+    ```
 
-        ```python
-        openapi.exclude(bp=some_blueprint)
-        ```
+.. column::
 
 
 
-.. tab:: operation
 
-    Sets the operation ID.
+**Arguments**
 
-    **Arguments**
+| Field      | Type                                      | Default     |
+| ---------- | ----------------------------------------- | ----------- |
+| `name`     | **str**                                   |             |
+| `schema`   | ***type***                                | **str**     |
+| `location` | **"query", "header", "path" or "cookie"** | **"query"** |
 
-    | Field  | Type    |
-    | ------ | ------- |
-    | `name` | **str** |
+**Examples**
 
-    **Examples**
+.. column::
 
-    .. column::
+    ```python
+    @openapi.parameter("thing")
+    ```
 
-        ```python
-        @openapi.operation("doNothing")
-        ```
+    ```python
+    @openapi.parameter(parameter=Parameter("foobar", deprecated=True))
+    ```
 
-    .. column::
+.. column::
 
+    ```python
+    @openapi.parameter("Authorization", str, "header")
+    ```
 
+    ```python
+    @openapi.parameter("thing", required=True, allowEmptyValue=False)
+    ```
 
-.. tab:: parameter
+### response
 
-    **Arguments**
+**Arguments**
 
-    | Field      | Type                                      | Default     |
-    | ---------- | ----------------------------------------- | ----------- |
-    | `name`     | **str**                                   |             |
-    | `schema`   | ***type***                                | **str**     |
-    | `location` | **"query", "header", "path" or "cookie"** | **"query"** |
+If using a `Response` object, you should not pass any other arguments.
 
-    **Examples**
+| Field         | Type                          |
+| ------------- | ----------------------------- |
+| `status`      | **int**                       |
+| `content`     | ***type*, *YourModel*, dict** |
+| `description` | **str**                       |
+| `response`    | **Response**                  |
 
-    .. column::
+**Examples**
 
-        ```python
-        @openapi.parameter("thing")
-        ```
+.. column::
 
-        ```python
-        @openapi.parameter(parameter=Parameter("foobar", deprecated=True))
-        ```
+    ```python
+    @openapi.response(200, str, "This is endpoint returns a string")
+    ```
 
-    .. column::
+    ```python
+    @openapi.response(200, {"text/plain": str}, "...")
+    ```
 
-        ```python
-        @openapi.parameter("Authorization", str, "header")
-        ```
+    ```python
+    @openapi.response(response=Response(UserProfile, description="..."))
+    ```
 
-        ```python
-        @openapi.parameter("thing", required=True, allowEmptyValue=False)
-        ```
-
-
-
-.. tab:: response
-
-    **Arguments**
-
-    If using a `Response` object, you should not pass any other arguments.
-
-    | Field         | Type                          |
-    | ------------- | ----------------------------- |
-    | `status`      | **int**                       |
-    | `content`     | ***type*, *YourModel*, dict** |
-    | `description` | **str**                       |
-    | `response`    | **Response**                  |
-
-    **Examples**
-
-    .. column::
-
-        ```python
-        @openapi.response(200, str, "This is endpoint returns a string")
-        ```
-
-        ```python
-        @openapi.response(200, {"text/plain": str}, "...")
-        ```
-
-        ```python
-        @openapi.response(response=Response(UserProfile, description="..."))
-        ```
-
-        ```python
-        @openapi.response(
-            response=Response(
-                {
-                    "application/json": UserProfile,
-                },
-                description="...",
-                status=201,
-            )
-        )
-        ```
-
-    .. column::
-
-        ```python
-        @openapi.response(200, UserProfile, "...")
-        ```
-
-        ```python
-        @openapi.response(
-            200,
+    ```python
+    @openapi.response(
+        response=Response(
             {
                 "application/json": UserProfile,
             },
-            "Description...",
+            description="...",
+            status=201,
         )
-        ```
+    )
+    ```
+
+.. column::
+
+    ```python
+    @openapi.response(200, UserProfile, "...")
+    ```
+
+    ```python
+    @openapi.response(
+        200,
+        {
+            "application/json": UserProfile,
+        },
+        "Description...",
+    )
+    ```
+
+### summary
+
+**Arguments**
+
+| Field  | Type    |
+| ------ | ------- |
+| `text` | **str** |
+
+**Examples**
+
+.. column::
+
+    ```python
+    @openapi.summary("This is an endpoint")
+    ```
+
+.. column::
+
+
+### tag
+
+**Arguments**
+
+| Field   | Type         |
+| ------- | ------------ |
+| `*args` | **str, Tag** |
+
+**Examples**
+
+.. column::
+
+    ```python
+    @openapi.tag("foo")
+    ```
+
+.. column::
+
+    ```python
+    @openapi.tag("foo", Tag("bar"))
+    ```
+
+
+### secured
+
+**Arguments**
+
+| Field             | Type                    |
+| ----------------- | ----------------------- |
+| `*args, **kwargs` | **str, Dict[str, Any]** |
+
+**Examples**
+
+.. column::
+
+    ```python
+    @openapi.secured()
+    ```
+
+.. column::
 
 
 
-.. tab:: summary
+.. column::
 
-    **Arguments**
+    ```python
+    @openapi.secured("foo")
+    ```
 
-    | Field  | Type    |
-    | ------ | ------- |
-    | `text` | **str** |
+.. column::
 
-    **Examples**
-
-    .. column::
-
-        ```python
-        @openapi.summary("This is an endpoint")
-        ```
-
-    .. column::
+    ```python
+    @openapi.secured("token1", "token2")
+    ```
 
 
+.. column::
 
-.. tab:: tag
+    ```python
+    @openapi.secured({"my_api_key": []})
+    ```
 
-    **Arguments**
+.. column::
 
-    | Field   | Type         |
-    | ------- | ------------ |
-    | `*args` | **str, Tag** |
+    ```python
+    @openapi.secured(my_api_key=[])
+    ```
 
-    **Examples**
-
-    .. column::
-
-        ```python
-        @openapi.tag("foo")
-        ```
-
-    .. column::
-
-        ```python
-        @openapi.tag("foo", Tag("bar"))
-        ```
-
-
-
-.. tab:: secured
-
-    **Arguments**
-
-    | Field             | Type                    |
-    | ----------------- | ----------------------- |
-    | `*args, **kwargs` | **str, Dict[str, Any]** |
-
-    **Examples**
-
-    .. column::
-
-        ```python
-        @openapi.secured()
-        ```
-
-    .. column::
-
-
-
-    .. column::
-
-        ```python
-        @openapi.secured("foo")
-        ```
-
-    .. column::
-
-        ```python
-        @openapi.secured("token1", "token2")
-        ```
-
-
-    .. column::
-
-        ```python
-        @openapi.secured({"my_api_key": []})
-        ```
-
-    .. column::
-
-        ```python
-        @openapi.secured(my_api_key=[])
-        ```
-
-    Do not forget to use `add_security_scheme`. See [security](./security.md) for more details.
-
-
-::::
+Do not forget to use `add_security_scheme`. See [security](./security.md) for more details.
+``
 
 ## Integration with Pydantic
 
@@ -457,19 +437,32 @@ Pydantic models have the ability to [generate OpenAPI schema](https://pydantic-d
     from sanic_ext import validate, openapi
     from pydantic import BaseModel, Field
 
-    class Test(BaseModel):
-        foo: str = Field(description="Foo Description", example="FOOO")
-        bar: str = "test"
+    @openapi.component
+    class Item(BaseModel):
+        name: str
+        description: str = None
+        price: float
+        tax: float = None
+
+    class ItemList(BaseModel):
+        items: List[Item]
 
     app = Sanic("test")
 
     @app.get("/")
     @openapi.definition(
-        body={'application/json': Test.schema()},
+        body={
+            "application/json": ItemList.schema(
+                ref_template="#/components/schemas/{model}"
+            )
+        },
     )
-    @validate(json=Test)
     async def get(request):
         return json({})
     ```
+
+.. note::
+
+    It is important to set that `ref_template`. By default Pydantic will select a template that is not standard OAS. This will cause the schema to not be found when generating the final document.
 
 *Added in v22.9*

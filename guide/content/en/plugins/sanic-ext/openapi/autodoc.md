@@ -112,7 +112,9 @@ To make documenting endpoints easier, Sanic Extensions will use a function's doc
 
 
 
-.. tip:: When both YAML documentation and decorators are used, it is the content from the decorators that will take priority when generating the documentation.
+.. note:: 
+
+    When both YAML documentation and decorators are used, it is the content from the decorators that will take priority when generating the documentation.
 
 
 

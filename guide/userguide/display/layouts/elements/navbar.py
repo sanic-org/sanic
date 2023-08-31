@@ -1,6 +1,6 @@
 from userguide.display.layouts.models import MenuItem
 
-from html5tagger import Builder, E
+from html5tagger import Builder, E  # type: ignore
 from sanic import Request
 
 
@@ -18,6 +18,19 @@ def do_navbar(builder: Builder, request: Request) -> None:
 
 
 def _render_navbar_item(item: MenuItem, request: Request) -> Builder:
+    if item.items:
+        return E.div(
+            E.a(item.label, class_="navbar-link"),
+            E.div(
+                *(
+                    _render_navbar_item(subitem, request)
+                    for subitem in item.items
+                ),
+                class_="navbar-dropdown",
+            ),
+            class_="navbar-item has-dropdown is-hoverable",
+        )
+
     kwargs = {
         "class_": "navbar-item",
     }
@@ -27,4 +40,5 @@ def _render_navbar_item(item: MenuItem, request: Request) -> Builder:
         kwargs["rel"] = "nofollow noopener noreferrer"
     elif item.path:
         kwargs["href"] = f"/{request.ctx.language}/{item.path}"
-    return E.a(item.label, **kwargs)
+    internal = [item.label]
+    return E.a(*internal, **kwargs)

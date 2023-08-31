@@ -26,11 +26,9 @@ The monitor sets up a new background process that will periodically receive ackn
 
     The health monitor will also enable a diagnostics endpoint that outputs the [worker state](../../guide/deployment/manager.md#worker-state). By default is id disabled.
 
-    
+    .. danger:: 
 
-.. warning:: The diagnostics endpoint is not secured. If you are deploying it in a production environment, you should take steps to protect it with a proxy server if you are using one. If not, you may want to consider disabling this feature in production since it will leak details about your server state.
-
-
+        The diagnostics endpoint is not secured. If you are deploying it in a production environment, you should take steps to protect it with a proxy server if you are using one. If not, you may want to consider disabling this feature in production since it will leak details about your server state.
 
 .. column::
 

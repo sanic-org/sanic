@@ -76,12 +76,9 @@ If you do not have TLS certificates yet, [see the end of this page](./tls.md#get
         --tls-strict-host
     ```
 
+.. tip:: 
 
-
-.. tip:: You may also use `None` in front of a single certificate if you do not wish to reveal your certificate, true hostname or site content to anyone connecting to the IP address instead of the proper DNS name.
-
-
-
+    You may also use `None` in front of a single certificate if you do not wish to reveal your certificate, true hostname or site content to anyone connecting to the IP address instead of the proper DNS name.
 
 .. column::
 
@@ -176,4 +173,4 @@ sudo certbot certonly --key-type ecdsa --preferred-chain "ISRG Root X1" -d examp
 
 Multiple domain names may be added by further `-d` arguments, all stored into a single certificate which gets saved to `/etc/letsencrypt/live/example.com/` as per **the first domain** that you list here.
 
-The key type and preferred chain options are necessary for getting a minimal size certificate file, essential for making your server run as *fast* as possible. The chain will still contain one RSA certificate until when Let's Encrypt gets their new EC chain trusted in all major browsers, possibly around 2023.
+The key type and preferred chain options are necessary for getting a minimal size certificate file, essential for making your server run as *fast* as possible. The chain will still contain one RSA certificate until when Let's Encrypt gets their new EC chain trusted in all major browsers.

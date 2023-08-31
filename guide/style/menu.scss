@@ -81,7 +81,7 @@ $menu-width: 360px;
             border-bottom: $arrow-size * 2/3 solid transparent;
             transform: rotate(90deg);
         }
-        & + .menu-list {
+        & ~ .menu-list {
             transition: all .15s ease-in-out;
             transform: scaleY(1);
             transform-origin: top;
@@ -91,7 +91,7 @@ $menu-width: 360px;
         }
         &:not(.is-open) {
             &::after { transform: rotate(0deg); }
-            & + .menu-list {
+            & ~ .menu-list {
                 transform: scaleY(0);
                 opacity: 0;
                 font-size: 0;

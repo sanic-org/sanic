@@ -38,7 +38,9 @@ The inspector is disabled by default. To enable it, you have two options.
 
 
 
-.. warning:: If you are using the configuration value, it *must* be done early and before the main worker process starts. This means that it should either be an environment variable, or it should be set shortly after creating the application instance as shown above.
+.. warning:: 
+
+    If you are using the configuration value, it *must* be done early and before the main worker process starts. This means that it should either be an environment variable, or it should be set shortly after creating the application instance as shown above.
 
 
 
@@ -62,7 +64,9 @@ Once the inspector is running, you will have access to it via the CLI or by dire
 
 
 
-.. tip:: Remember, the Inspector is not running on your Sanic application. It is a seperate process, with a seperate application, and exposed on a seperate socket.
+.. note:: 
+
+    Remember, the Inspector is not running on your Sanic application. It is a seperate process, with a seperate application, and exposed on a seperate socket.
 
 
 
@@ -145,8 +149,9 @@ It is important to note that the arguments that the new method accepts are deriv
 ## Using in production
 
 
-.. warning:: Before exposing the Inspector on a product, please consider all of the options in this section carefully.
+.. danger:: 
 
+    Before exposing the Inspector on a product, please consider all of the options in this section carefully.
 
 
 When running Inspector on a remote production instance, you can protect the endpoints by requiring TLS encryption, and requiring API key authentication.

@@ -74,7 +74,9 @@ In version 22.9, Sanic introduced a new worker manager to provide more consisten
 Use `sanic --help` to see all the options.
 
 
-.. details:: Sanic CLI help output
+.. attrs::
+    :title: Sanic CLI help output
+    :class: details
 
     ```text
     $ sanic --help
@@ -243,7 +245,9 @@ When using `app.run` you will just call your Python file like any other script.
 
 
 
-.. danger:: Be *careful* when using this pattern. A very common mistake is to put too much logic inside of the `if __name__ == "__main__":` block.
+.. danger:: 
+
+    Be *careful* when using this pattern. A very common mistake is to put too much logic inside of the `if __name__ == "__main__":` block.
 
     🚫 This is a mistake
 
@@ -443,7 +447,9 @@ Because HTTP/3 requires TLS, you cannot start a HTTP/3 server without a TLS cert
 Sanic is also ASGI-compliant. This means you can use your preferred ASGI webserver to run Sanic. The three main implementations of ASGI are [Daphne](http://github.com/django/daphne), [Uvicorn](https://www.uvicorn.org/), and [Hypercorn](https://pgjones.gitlab.io/hypercorn/index.html).
 
 
-.. warning:: Daphne does not support the ASGI `lifespan` protocol, and therefore cannot be used to run Sanic. See [Issue #264](https://github.com/django/daphne/issues/264) for more details.
+.. warning:: 
+
+    Daphne does not support the ASGI `lifespan` protocol, and therefore cannot be used to run Sanic. See [Issue #264](https://github.com/django/daphne/issues/264) for more details.
 
 
 
@@ -482,7 +488,9 @@ gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class uvicorn.workers.UvicornWor
 See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
 
 
-.. warning:: It is generally advised to not use `gunicorn` unless you need it. The Sanic Server is primed for running Sanic in production. Weigh your considerations carefully before making this choice. Gunicorn does provide a lot of configuration options, but it is not the best choice for getting Sanic to run at its fastest.
+.. warning:: 
+
+    It is generally advised to not use `gunicorn` unless you need it. The Sanic Server is primed for running Sanic in production. Weigh your considerations carefully before making this choice. Gunicorn does provide a lot of configuration options, but it is not the best choice for getting Sanic to run at its fastest.
 
 
 

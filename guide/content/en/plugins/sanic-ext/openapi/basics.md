@@ -1,7 +1,7 @@
 # Basics
 
 
-.. tip:: Side note
+.. note::
 
     The OpenAPI implementation in Sanic Extensions is based upon the OAS3 implementation from [`sanic-openapi`](https://github.com/sanic-org/sanic-openapi). In fact, Sanic Extensions is in a large way the successor to that project, which entered maintenance mode upon the release of Sanic Extensions. If you were previously using OAS3 with `sanic-openapi` you should have an easy path to upgrading to Sanic Extensions. Unfortunately, this project does *NOT* support the OAS2 specification.
 
@@ -33,13 +33,13 @@ Checkout the [section on configuration](../configuration.md) to learn about chan
 
     Using [Redoc](https://github.com/Redocly/redoc)
 
-    ![Redoc](~@assets/images/sanic-ext-redoc.png)
+    ![Redoc](/assets/images/sanic-ext-redoc.png)
 
 .. column::
 
     or [Swagger UI](https://github.com/swagger-api/swagger-ui)
 
-    ![Swagger UI](~@assets/images/sanic-ext-swagger.png)
+    ![Swagger UI](/assets/images/sanic-ext-swagger.png)
 
 ## Changing specification metadata
 

@@ -15,7 +15,9 @@ def _menu_items(request: Request) -> list[Builder]:
         _sanic_logo(request),
         *_sidebar_items(request),
         E.hr(),
-        E.p("Current with version ").strong("99.9"),
+        E.p("Current with version ").strong(
+            request.app.config.GENERAL.current_version
+        ),
         E.hr(),
         E.p("Want more? ").a(
             "sanicbook.com", href="https://sanicbook.com", target="_blank"
@@ -100,7 +102,7 @@ def _single_sidebar_item(item: MenuItem, request: Request) -> Builder:
         with inner.ul(class_="anchor-list"):
             for anchor in page.anchors:
                 inner.li(
-                    E.a(anchor, href=f"{path}#{slugify(anchor)}"),
+                    E.a(anchor.strip("`"), href=f"{path}#{slugify(anchor)}"),
                     class_="is-anchor",
                 )
     return E.li(inner, class_=li_classes)

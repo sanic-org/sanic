@@ -35,13 +35,13 @@ h3:not(:first-child) { margin-top: 2rem; }
 article { margin-left: 2rem; }
 p + pre,
 pre + p,
-div.additional-attributes + p,
-p + div.additional-attributes,
-div.additional-attributes + div.additional-attributes,
 div.highlight + p,
 p + div.highlight,
 div.highlight + div.highlight,
 p + h4,
+p + .code-block,
+.code-block + p,
+.code-block + .code-block,
 p + p { margin-top: 1rem; }
 
 @media screen and (max-width: $tablet) {

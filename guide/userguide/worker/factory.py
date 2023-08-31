@@ -2,7 +2,7 @@ from pathlib import Path
 
 from userguide.display.layouts.models import MenuItem
 from userguide.display.page import Page, PageRenderer
-from userguide.worker.config import load_menu
+from userguide.worker.config import load_config, load_menu
 from userguide.worker.reload import setup_livereload
 from userguide.worker.style import setup_style
 
@@ -31,6 +31,9 @@ def create_app(root: Path) -> Sanic:
         app.config.CONFIG_DIR / "en" / "sidebar.yaml"
     )
     app.config.NAVBAR = load_menu(app.config.CONFIG_DIR / "en" / "navbar.yaml")
+    app.config.GENERAL = load_config(
+        app.config.CONFIG_DIR / "en" / "general.yaml"
+    )
 
     setup_livereload(app)
     setup_style(app)

@@ -9,7 +9,7 @@ from mistune.directives import DirectivePlugin, RSTDirective
 from mistune.markdown import Markdown
 
 
-class Column(DirectivePlugin):
+class Tabs(DirectivePlugin):
     def parse(
         self, block: BlockParser, m: Match, state: BlockState
     ) -> dict[str, Any]:
@@ -20,26 +20,31 @@ class Column(DirectivePlugin):
         block.parse(new_state)
 
         return {
-            "type": "column",
+            "type": "tab",
             "text": info["text"],
             "children": new_state.tokens,
-            "attrs": {},
+            "attrs": {
+                "title": info["title"],
+            },
         }
 
     def __call__(  # type: ignore
-        self, directive: RSTDirective, md: Markdown
+        self,
+        directive: RSTDirective,
+        md: Markdown,
     ) -> None:
-        directive.register("column", self.parse)
+        directive.register("tab", self.parse)
 
         if md.renderer.NAME == "html":
-            md.renderer.register("column", self._render_column)
+            md.renderer.register("tab", self._render_tab)
 
-    def _render_column(self, renderer: HTMLRenderer, text: str, **attrs):
-        start = (
-            '<div class="columns mt-3 is-multiline">\n'
-            if attrs.get("first")
+    def _render_tab(self, renderer: HTMLRenderer, text: str, **attrs):
+        start = '<div class="tabs mt-6"><ul>\n' if attrs.get("first") else ""
+        end = (
+            '</ul></div><div class="tab-display"></div>\n'
+            if attrs.get("last")
             else ""
         )
-        end = "</div>\n" if attrs.get("last") else ""
-        col = f'<div class="column is-half">{text}</div>\n'
-        return start + (col) + end
+        content = f'<div class="tab-content">{text}</div>\n'
+        tab = f'<li><a>{attrs["title"]}</a>{content}</li>\n'
+        return start + tab + end

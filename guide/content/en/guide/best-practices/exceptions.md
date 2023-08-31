@@ -284,7 +284,7 @@ app.config.FALLBACK_ERROR_FORMAT = "html"
     app.config.DEBUG = True
     ```
 
-    ![Error](~@assets/images/error-display-html-debug.png)
+    ![Error](/assets/images/error-display-html-debug.png)
 
 .. column::
 
@@ -292,7 +292,7 @@ app.config.FALLBACK_ERROR_FORMAT = "html"
     app.config.DEBUG = False
     ```
 
-    ![Error](~@assets/images/error-display-html-prod.png)
+    ![Error](/assets/images/error-display-html-prod.png)
 
 ### Text
 

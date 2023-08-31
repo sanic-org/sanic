@@ -138,7 +138,9 @@ Let's see how you could render it with Sanic + Jinja.
 
 
 
-.. tip:: In this example, we use `textwrap.dedent` to remove the whitespace in the beginning of each line of the multi-line string. It is not necessary, but just a nice touch to keep both the code and the generated source clean.
+.. note:: 
+
+    In this example, we use `textwrap.dedent` to remove the whitespace in the beginning of each line of the multi-line string. It is not necessary, but just a nice touch to keep both the code and the generated source clean.
 
 
 

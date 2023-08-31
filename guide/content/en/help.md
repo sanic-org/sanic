@@ -1,5 +1,5 @@
 ---
-layout: BlankLayout
+layout: main
 ---
 
 # Need some help?

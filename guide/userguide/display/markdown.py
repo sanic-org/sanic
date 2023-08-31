@@ -2,7 +2,7 @@ import re
 from textwrap import dedent
 
 from mistune import HTMLRenderer, create_markdown, escape
-from mistune.directives import Admonition, RSTDirective, TableOfContents
+from mistune.directives import RSTDirective, TableOfContents
 from mistune.util import safe_entity
 from pygments import highlight
 from pygments.formatters import html
@@ -13,8 +13,11 @@ from html5tagger import HTML, Builder, E  # type: ignore
 from .code_style import SanicCodeStyle
 from .plugins.attrs import Attributes
 from .plugins.columns import Column
+from .plugins.hook import Hook
 from .plugins.mermaid import Mermaid
 from .plugins.notification import Notification
+from .plugins.span import span
+from .plugins.tabs import Tabs
 from .text import slugify
 
 
@@ -69,6 +72,11 @@ class DocsRenderer(HTMLRenderer):
             attributes["hx-push-url"] = "true"
         return self._make_tag("a", attributes, text)
 
+    def span(self, text, classes, **attrs) -> str:
+        if classes:
+            attrs["class"] = classes
+        return self._make_tag("span", attrs, text)
+
     def list(self, text: str, ordered: bool, **attrs) -> str:
         tag = "ol" if ordered else "ul"
         attrs["class"] = tag
@@ -108,6 +116,8 @@ _render_markdown = create_markdown(
                 TableOfContents(),
                 Column(),
                 Mermaid(),
+                Tabs(),
+                Hook(),
             ]
         ),
         "abbr",
@@ -115,6 +125,7 @@ _render_markdown = create_markdown(
         "footnotes",
         "mark",
         "table",
+        span,
     ],
 )
 

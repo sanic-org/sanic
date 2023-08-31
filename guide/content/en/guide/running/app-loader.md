@@ -44,7 +44,7 @@ Running Sanic has been optimized to work with the CLI. If you have not read it y
     ```
 
 
-**Sometimes, this is not enough ... :thinking:**
+**Sometimes, this is not enough ... 🤔**
 
 Introduced in [v22.9](../release-notes/v22.9.md), Sanic has an `AppLoader` object that is responsible for creating an application in the various [worker processes](./manager.md#how-sanic-server-starts-processes). You can take advantage of this if you need to create a more dynamic startup experience for your application.
 

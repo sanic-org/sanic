@@ -42,7 +42,9 @@ Let's start with a simple project. We will use a Sanic project as an example. As
 
 
 
-.. tip:: Please note that the host cannot be 127.0.0.1 . In docker container, 127.0.0.1 is the default network interface of the container, only the container can communicate with other containers. more information please visit [Docker network](https://docs.docker.com/engine/reference/commandline/network/)
+.. note:: 
+
+    Please note that the host cannot be 127.0.0.1 . In docker container, 127.0.0.1 is the default network interface of the container, only the container can communicate with other containers. more information please visit [Docker network](https://docs.docker.com/engine/reference/commandline/network/)
 
 
 

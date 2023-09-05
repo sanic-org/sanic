@@ -112,6 +112,16 @@ def configure_socket(
                 server_settings["port"],
                 backlog=backlog,
             )
+        except PermissionError as e:
+            p = server_settings["port"]
+            if p and server_settings["port"] < 1024:
+                addr = f"{server_settings['host']}:{p}"
+                e = ServerError(
+                    f"Permission denied binding to {addr}.\n\n"
+                    "Use `sudo sanic` to run on a privileged port.\n"
+                )
+                e.quiet = True
+            raise e from None
         except OSError as e:  # no cov
             error = ServerError(
                 f"Sanic server could not start: {e}.\n\n"

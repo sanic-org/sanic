@@ -49,7 +49,7 @@ from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS, StartMethod
-from sanic.exceptions import ServerKilled
+from sanic.exceptions import SanicException, ServerKilled
 from sanic.helpers import Default, _default, is_atty
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
@@ -880,12 +880,17 @@ class StartupMixin(metaclass=SanicMeta):
             manager.run()
         except ServerKilled:
             exit_code = 1
+        except SanicException as e:
+            kwargs = {}
+            if e.quiet:
+                error_logger.error(str(e))
+            else:
+                raise
         except BaseException:
             kwargs = primary_server_info.settings
             error_logger.exception(
                 "Experienced exception while trying to serve"
             )
-            raise
         finally:
             logger.info("Server Stopped")
             for app in apps:

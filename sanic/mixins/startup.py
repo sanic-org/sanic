@@ -657,10 +657,9 @@ class StartupMixin(metaclass=SanicMeta):
     def get_server_location(
         server_settings: Optional[Dict[str, Any]] = None
     ) -> str:
-        serve_location = ""
         proto = "http"
         if not server_settings:
-            return serve_location
+            return ""
 
         host = server_settings["host"]
         port = server_settings["port"]
@@ -668,16 +667,33 @@ class StartupMixin(metaclass=SanicMeta):
         if server_settings.get("ssl") is not None:
             proto = "https"
         if server_settings.get("unix"):
-            serve_location = f'{server_settings["unix"]} {proto}://...'
-        elif server_settings.get("sock"):
+            return f'{server_settings["unix"]} {proto}://localhost'
+        if server_settings.get("sock"):
             host, port, *_ = server_settings["sock"].getsockname()
+        if not host or not port:
+            return ""
 
-        if not serve_location and host and port:
-            # colon(:) is legal for a host only in an ipv6 address
-            display_host = f"[{host}]" if ":" in host else host
-            serve_location = f"{proto}://{display_host}:{port}"
+        # colon(:) is legal for a host only in an ipv6 address
+        url_host = f"[{host}]" if ":" in host else host
+        url_port = (
+            ""
+            if (
+                (proto == "https" and port == 443)
+                or (proto == "http" and port == 80)
+            )
+            else f":{port}"
+        )
 
-        return serve_location
+        special = {
+            "127.0.0.1": "IPv4",
+            "0.0.0.0": "IPv4 wildcard",
+            "::1": "IPv6",
+            "::": "IPv6 wildcard",
+        }.get(host, "")
+        if special:
+            return f"({special}) {proto}://localhost{url_port}"
+
+        return f"{proto}://{url_host}{url_port}"
 
     @staticmethod
     def get_address(

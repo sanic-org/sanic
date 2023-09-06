@@ -14,6 +14,8 @@ else:
     from typing import TypedDict
 
     class FileInfo(TypedDict):
+        """Type for file info."""
+
         icon: str
         file_name: str
         file_access: str
@@ -21,6 +23,8 @@ else:
 
 
 class DirectoryPage(BasePage):  # no cov
+    """Page for viewing a directory."""
+
     TITLE = "Directory Viewer"
 
     def __init__(

@@ -12,29 +12,23 @@ on:
       - main
       - current-release
       - "*LTS"
+
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
+  coverage:
+    name: Check coverage
+    runs-on: ubuntu-latest
     strategy:
-      matrix:
-        python-version: [3.9]
-        os: [ubuntu-latest]
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies 🔨
-        run: |
-          python -m pip install --upgrade pip
-          pip install tox
       - name: Run coverage
-        run: tox -e coverage
-        continue-on-error: true
-      - uses: codecov/codecov-action@v2
+        uses: sanic-org/simple-tox-action@v1
+        with:
+          python-version: "3.11"
+          tox-env: coverage
+          ignore-errors: true
+      - name: Run Codecov
+        uses: codecov/codecov-action@v3
         with:
           files: ./coverage.xml
           fail_ci_if_error: false

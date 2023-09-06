@@ -1,0 +1,292 @@
+.footer {
+    a[target=_blank]::after { display: none; }
+    margin-bottom: 4rem;
+}
+@media screen and (max-width: $desktop) {
+    .footer .level { align-items: baseline; }
+    .footer a { font-size: 0.75em; }
+}
+.hero {
+    .subtitle {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    .tagline {
+        font-family: Fira Code,Source Code Pro,Menlo,Monaco,Consolas,Lucisa Console,monospace;
+        font-size: 2rem;
+        font-weight: 300;
+        margin-bottom: 2rem
+    }
+}
+
+.language-sh {
+    code {
+        display: inline-block;
+        &::before {
+            content: '▶ '
+        }
+
+    }
+}
+
+.notification {
+    margin-top: 2rem;
+    .notification-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    &.is-note {
+        background-color: $primary;
+        color: $white;
+    }
+    &.is-new {
+        background-color: $purple;
+        color: $white;
+        &::after {
+            content: '🌟';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+        }
+    }
+    &.is-tip {
+        &::after {
+            content: '💡';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+        }
+    }
+}
+
+.ol, .ul,
+.list {
+    margin: 1rem 0;
+    .li,
+    .list-item {
+        padding: 0.5rem 0;
+    }
+}
+.ul .li {
+    margin-left: 1.5rem;
+    list-style-type: disc;
+}
+.introduction-table {
+    margin: 2rem 0;
+    a[target=_blank]::after { display: none; }
+    th { display: none; }
+}
+
+.docobject {
+    h2 :last-child { color: $dark; }
+    .function-signature {
+        color: $dark_1;
+
+        .param-name {
+            color: $primary;
+            font-weight: bold;
+        }
+        .param-default {
+            color: $purple;
+            font-style: italic;
+        }
+        .function-decorator {
+            font-style: italic;
+            color: $grey
+        }
+        .param-annotation { color: $blue; }
+        .return-annotation { color: $green_1; }
+
+    }
+
+    dl {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+    }
+    dt {
+        flex: 0 0 25%;
+        padding: 5px 10px;
+        font-weight: bold;
+        color: $blue;
+    }
+    dd {
+        flex: 1;
+        padding: 5px 10px;
+        margin: 0;
+    }
+
+    div.highlight + p,
+    p + div.highlight,
+    div.highlight + div.highlight { margin-top: 1rem; }
+
+    .method {
+        padding-left: 1rem;
+
+        h3 { margin-left: -1rem; }
+    }
+
+    .ol, .ul, .list { margin: 1rem; }
+}
+
+.mermaid {
+    margin-top: 2rem;
+    .actor {
+        stroke: $primary !important;
+        fill: lighten($primary, 40%) !important;
+    }
+    .labelBox {
+        fill: lighten($blue, 40%) !important;
+        stroke: $blue !important;
+    }
+    // .labelText {
+    //     fill: $white-bis !important;
+    // }
+    .note {
+        fill: lighten($yellow, 40%) !important;
+        stroke: $yellow !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .docobject {
+        h2 :last-child { color: $white-bis; }
+        .function-signature {
+            color: $grey-light;
+            .param-default { color: $yellow; }
+        }
+    }
+    .mermaid {
+        text.messageText { fill: $white-bis !important; }
+        .actor { fill: $primary !important; }
+        .labelBox { fill: $blue !important; }
+        .labelText { fill: $white-bis !important; }
+        .note { fill: $yellow !important; }
+    }
+}
+
+$button-width: 36px;
+$button-height: 52px; // 36 x 52 for portrait paper ratio
+$rectangle-width: $button-width / 2;
+$rectangle-height: $rectangle-width / 8.5 * 11;
+$left-offset-filled: 5px;
+$top-offset-filled: 13px;
+$left-offset-outlined: -3px;
+$top-offset-outlined: 5px;
+$animation-slide: -$button-width / 1.5; // space for sliding and the gap
+
+h1 + .code-block,
+h2 + .code-block,
+h3 + .code-block { margin-top: 1rem; }
+.code-block {
+  position: relative;
+  & + .code-block { margin-top: 1rem; }
+
+  &:hover {
+    .code-block__copy {
+      opacity: 1;
+    }
+  }
+
+  .code-block__copy {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: $button-width;
+    height: $button-height;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s;
+
+    &::before {
+        content: "copied";
+        position: absolute;
+        top: -$button-height / 3;
+        margin: auto;
+        opacity: 0;
+        right: $button-width / 4;
+    }
+    &.clicked::before {
+        opacity: 1;
+        animation: all 0.3s ease-in-out;
+    }
+  }
+
+  .code-block__rectangle {
+    position: absolute;
+    width: $rectangle-width;
+    height: $rectangle-height;
+    transition: all 0.3s ease;
+  }
+
+  .code-block__filled {
+    background-color: $primary;
+    left: $left-offset-filled;
+    top: $top-offset-filled;
+  }
+
+  .code-block__outlined {
+    border: 2px solid $primary;
+    background-color: transparent;
+    left: $left-offset-outlined;
+    top: $top-offset-outlined;
+  }
+
+  .code-block__copy.clicked {
+    .code-block__outlined {
+      left: $left-offset-filled + $animation-slide;
+      top: $top-offset-filled;
+      background-color: $primary;
+    }
+  }
+}
+
+.additional-attributes.details {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  .code-block {
+    display: none;
+    width: 100%;
+  }
+
+  &::before {
+    content: "▼ " attr(title);
+    display: block;
+    background-color: $grey-light;
+    padding: 10px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  &.is-active {
+    .code-block {
+      display: block;
+    }
+
+    &::before {
+      content: "▲ " attr(title);
+      background-color: $grey-lighter;
+    }
+  }
+}
+
+// dark mode
+@media (prefers-color-scheme: dark) {
+    .additional-attributes.details{
+        &::before { background-color: $grey-darker; }
+        &.is-active {
+            &::before { background-color: $grey-dark; }
+        }
+    }
+}
+
+.tabs {
+    .tab-content { display: none; }
+}

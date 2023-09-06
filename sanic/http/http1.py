@@ -30,22 +30,16 @@ HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 
 
 class Http(Stream, metaclass=TouchUpMeta):
-    """
-    Internal helper for managing the HTTP/1.1 request/response cycle
+    """ "Internal helper for managing the HTTP/1.1 request/response cycle.
 
-    :raises ServerError:
-    :raises PayloadTooLarge:
-    :raises Exception:
-    :raises BadRequest:
-    :raises ExpectationFailed:
-    :raises RuntimeError:
-    :raises ServerError:
-    :raises ServerError:
-    :raises BadRequest:
-    :raises BadRequest:
-    :raises BadRequest:
-    :raises PayloadTooLarge:
-    :raises RuntimeError:
+    Raises:
+        BadRequest: If the request body is malformed.
+        Exception: If the request is malformed.
+        ExpectationFailed: If the request is malformed.
+        PayloadTooLarge: If the request body exceeds the size limit.
+        RuntimeError: If the response status is invalid.
+        ServerError: If the handler does not produce a response.
+        ServerError: If the response is bigger than the content-length.
     """
 
     HEADER_CEILING = 16_384
@@ -106,9 +100,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         return self.stage in (Stage.HANDLER, Stage.RESPONSE)
 
     async def http1(self):
-        """
-        HTTP 1.1 connection handler
-        """
+        """HTTP 1.1 connection handler"""
         # Handle requests while the connection stays reusable
         while self.keep_alive and self.stage is Stage.IDLE:
             self.init_for_request()
@@ -178,9 +170,7 @@ class Http(Stream, metaclass=TouchUpMeta):
                     self.response.stream = None
 
     async def http1_request_header(self):  # no cov
-        """
-        Receive and parse request header into self.request.
-        """
+        """Receive and parse request header into self.request."""
         # Receive until full header is in buffer
         buf = self.recv_buffer
         pos = 0
@@ -291,6 +281,7 @@ class Http(Stream, metaclass=TouchUpMeta):
     async def http1_response_header(
         self, data: bytes, end_stream: bool
     ) -> None:  # no cov
+        """Format response header and send it."""
         res = self.response
 
         # Compatibility with simple response body
@@ -367,9 +358,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
 
     def head_response_ignored(self, data: bytes, end_stream: bool) -> None:
-        """
-        HEAD response: body data silently ignored.
-        """
+        """HEAD response: body data silently ignored."""
         if end_stream:
             self.response_func = None
             self.stage = Stage.IDLE
@@ -377,9 +366,7 @@ class Http(Stream, metaclass=TouchUpMeta):
     async def http1_response_chunked(
         self, data: bytes, end_stream: bool
     ) -> None:
-        """
-        Format a part of response body in chunked encoding.
-        """
+        """Format a part of response body in chunked encoding."""
         # Chunked encoding
         size = len(data)
         if end_stream:
@@ -396,9 +383,7 @@ class Http(Stream, metaclass=TouchUpMeta):
     async def http1_response_normal(
         self, data: bytes, end_stream: bool
     ) -> None:
-        """
-        Format / keep track of non-chunked response.
-        """
+        """Format / keep track of non-chunked response."""
         bytes_left = self.response_bytes_left - len(data)
         if bytes_left <= 0:
             if bytes_left < 0:
@@ -415,9 +400,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         self.response_bytes_left = bytes_left
 
     async def error_response(self, exception: Exception) -> None:
-        """
-        Handle response when exception encountered
-        """
+        """Handle response when exception encountered"""
         # Disconnect after an error if in any other state than handler
         if self.stage is not Stage.HANDLER:
             self.keep_alive = False
@@ -444,7 +427,8 @@ class Http(Stream, metaclass=TouchUpMeta):
                 await app.handle_exception(self.request, e, False)
 
     def create_empty_request(self) -> None:
-        """
+        """Create an empty request object for error handling use.
+
         Current error handling code needs a request object that won't exist
         if an error occurred during before a request was received. Create a
         bogus response for error handling use.
@@ -471,10 +455,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         self.request.stream = self
 
     def log_response(self) -> None:
-        """
-        Helper method provided to enable the logging of responses in case if
-        the :attr:`HttpProtocol.access_log` is enabled.
-        """
+        """Helper method provided to enable the logging of responses in case if the `HttpProtocol.access_log` is enabled."""  # noqa: E501
         req, res = self.request, self.response
         extra = {
             "status": getattr(res, "status", 0),
@@ -493,9 +474,7 @@ class Http(Stream, metaclass=TouchUpMeta):
     # Request methods
 
     async def __aiter__(self):
-        """
-        Async iterate over request body.
-        """
+        """Async iterate over request body."""
         while self.request_body:
             data = await self.read()
 
@@ -503,9 +482,7 @@ class Http(Stream, metaclass=TouchUpMeta):
                 yield data
 
     async def read(self) -> Optional[bytes]:  # no cov
-        """
-        Read some bytes of request body.
-        """
+        """Read some bytes of request body."""
 
         # Send a 100-continue if needed
         if self.expecting_continue:
@@ -587,8 +564,7 @@ class Http(Stream, metaclass=TouchUpMeta):
     # Response methods
 
     def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
-        """
-        Initiate new streaming response.
+        """Initiate new streaming response.
 
         Nothing is sent until the first send() call on the returned object, and
         calling this function multiple times will just alter the response to be

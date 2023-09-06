@@ -21,10 +21,7 @@ ALLOWED_LABELS = ("__file_uri__",)
 
 
 class Router(BaseRouter):
-    """
-    The router implementation responsible for routing a :class:`Request` object
-    to the appropriate handler.
-    """
+    """The router implementation responsible for routing a `Request` object to the appropriate handler."""  # noqa: E501
 
     DEFAULT_METHOD = "GET"
     ALLOWED_METHODS = HTTP_METHODS
@@ -53,16 +50,26 @@ class Router(BaseRouter):
     def get(  # type: ignore
         self, path: str, method: str, host: Optional[str]
     ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
-        """
-        Retrieve a `Route` object containing the details about how to handle
-        a response for a given request
+        """Retrieve a `Route` object containing the details about how to handle a response for a given request
 
         :param request: the incoming request object
         :type request: Request
         :return: details needed for handling the request and returning the
             correct response
         :rtype: Tuple[ Route, RouteHandler, Dict[str, Any]]
-        """
+
+        Args:
+            path (str): the path of the route
+            method (str): the HTTP method of the route
+            host (Optional[str]): the host of the route
+
+        Raises:
+            NotFound: if the route is not found
+            MethodNotAllowed: if the method is not allowed for the route
+
+        Returns:
+            Tuple[Route, RouteHandler, Dict[str, Any]]: the route, handler, and match info
+        """  # noqa: E501
         __tracebackhide__ = True
         return self._get(path, method, host)
 
@@ -83,33 +90,25 @@ class Router(BaseRouter):
         overwrite: bool = False,
         error_format: Optional[str] = None,
     ) -> Union[Route, List[Route]]:
-        """
-        Add a handler to the router
+        """Add a handler to the router
 
-        :param uri: the path of the route
-        :type uri: str
-        :param methods: the types of HTTP methods that should be attached,
-            example: ``["GET", "POST", "OPTIONS"]``
-        :type methods: Iterable[str]
-        :param handler: the sync or async function to be executed
-        :type handler: RouteHandler
-        :param host: host that the route should be on, defaults to None
-        :type host: Optional[str], optional
-        :param strict_slashes: whether to apply strict slashes, defaults
-            to False
-        :type strict_slashes: bool, optional
-        :param stream: whether to stream the response, defaults to False
-        :type stream: bool, optional
-        :param ignore_body: whether the incoming request body should be read,
-            defaults to False
-        :type ignore_body: bool, optional
-        :param version: a version modifier for the uri, defaults to None
-        :type version: Union[str, float, int], optional
-        :param name: an identifying name of the route, defaults to None
-        :type name: Optional[str], optional
-        :return: the route object
-        :rtype: Route
-        """
+        Args:
+            uri (str): The path of the route.
+            methods (Iterable[str]): The types of HTTP methods that should be attached,
+                example: ["GET", "POST", "OPTIONS"].
+            handler (RouteHandler): The sync or async function to be executed.
+            host (Optional[str], optional): Host that the route should be on. Defaults to None.
+            strict_slashes (bool, optional): Whether to apply strict slashes. Defaults to False.
+            stream (bool, optional): Whether to stream the response. Defaults to False.
+            ignore_body (bool, optional): Whether the incoming request body should be read.
+                Defaults to False.
+            version (Union[str, float, int], optional): A version modifier for the uri. Defaults to None.
+            name (Optional[str], optional): An identifying name of the route. Defaults to None.
+
+        Returns:
+            Route: The route object.
+        """  # noqa: E501
+
         if version is not None:
             version = str(version).strip("/").lstrip("v")
             uri = "/".join([f"{version_prefix}{version}", uri.lstrip("/")])
@@ -163,14 +162,18 @@ class Router(BaseRouter):
         return routes
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
-    def find_route_by_view_name(self, view_name, name=None):
-        """
-        Find a route in the router based on the specified view name.
+    def find_route_by_view_name(
+        self, view_name: str, name: Optional[str] = None
+    ) -> Optional[Route]:
+        """Find a route in the router based on the specified view name.
 
-        :param view_name: string of view name to search by
-        :param kwargs: additional params, usually for static files
-        :return: tuple containing (uri, Route)
-        """
+        Args:
+            view_name (str): the name of the view to search for
+            name (Optional[str], optional): the name of the route. Defaults to `None`.
+
+        Returns:
+            Optional[Route]: the route object
+        """  # noqa: E501
         if not view_name:
             return None
 
@@ -185,22 +188,56 @@ class Router(BaseRouter):
         return route
 
     @property
-    def routes_all(self):
+    def routes_all(self) -> Dict[Tuple[str, ...], Route]:
+        """Return all routes in the router.
+
+        Returns:
+            Dict[Tuple[str, ...], Route]: a dictionary of routes
+        """
         return {route.parts: route for route in self.routes}
 
     @property
-    def routes_static(self):
+    def routes_static(self) -> Dict[Tuple[str, ...], Route]:
+        """Return all static routes in the router.
+
+        _In this context "static" routes do not refer to the `app.static()`
+        method. Instead, they refer to routes that do not contain
+        any path parameters._
+
+        Returns:
+            Dict[Tuple[str, ...], Route]: a dictionary of routes
+        """
         return self.static_routes
 
     @property
-    def routes_dynamic(self):
+    def routes_dynamic(self) -> Dict[Tuple[str, ...], Route]:
+        """Return all dynamic routes in the router.
+
+        _Dynamic routes are routes that contain path parameters._
+
+        Returns:
+            Dict[Tuple[str, ...], Route]: a dictionary of routes
+        """
         return self.dynamic_routes
 
     @property
-    def routes_regex(self):
+    def routes_regex(self) -> Dict[Tuple[str, ...], Route]:
+        """Return all regex routes in the router.
+
+        _Regex routes are routes that contain path parameters with regex
+        expressions, or otherwise need regex to resolve._
+
+        Returns:
+            Dict[Tuple[str, ...], Route]: a dictionary of routes
+        """
         return self.regex_routes
 
-    def finalize(self, *args, **kwargs):
+    def finalize(self, *args, **kwargs) -> None:
+        """Finalize the router.
+
+        Raises:
+            SanicException: if a route contains a parameter name that starts with "__" and is not in ALLOWED_LABELS
+        """  # noqa: E501
         super().finalize(*args, **kwargs)
 
         for route in self.dynamic_routes.values():

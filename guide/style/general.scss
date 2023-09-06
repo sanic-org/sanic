@@ -1,0 +1,52 @@
+code { color: #{$grey-dark}; }
+.notification code { background-color: #{rgba($grey-lightest, 0.6)}; }
+@media (prefers-color-scheme: dark) {
+    code { color: #{$grey-lighter}; }
+    .notification code {
+        background-color: #{rgba($black-ter, 0.6)};
+    }
+}
+
+a[target=_blank]::after {
+    content: "⇗";
+    margin-left: 0.25em;
+}
+h1 a.anchor,
+h2 a.anchor,
+h3 a.anchor,
+h4 a.anchor,
+h5 a.anchor,
+h6 a.anchor {
+    display: none;
+    padding-left: 0.375em;
+}
+h1:hover a.anchor,
+h2:hover a.anchor,
+h3:hover a.anchor,
+h4:hover a.anchor,
+h5:hover a.anchor,
+h6:hover a.anchor {
+    display: inline;
+}
+
+h1 { margin-left: -2rem; }
+h2 { margin-left: -1rem; margin-top: 3rem; }
+h3:not(:first-child) { margin-top: 2rem; }
+article { margin-left: 2rem; }
+p + pre,
+pre + p,
+div.highlight + p,
+p + div.highlight,
+div.highlight + div.highlight,
+p + h4,
+p + .code-block,
+.code-block + p,
+.code-block + .code-block,
+p + p { margin-top: 1rem; }
+
+@media screen and (max-width: $tablet) {
+    h1 { margin-left: 0; }
+    h2 { margin-left: 0; }
+    article { margin-left: 0; }
+}
+

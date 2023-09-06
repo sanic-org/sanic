@@ -16,6 +16,8 @@ from sanic.models.handler_types import SignalHandler
 
 
 class Event(Enum):
+    """Event names for the SignalRouter"""
+
     SERVER_EXCEPTION_REPORT = "server.exception.report"
     SERVER_INIT_AFTER = "server.init.after"
     SERVER_INIT_BEFORE = "server.init.before"
@@ -71,14 +73,16 @@ def _blank():
 
 
 class Signal(Route):
-    ...
+    """A `Route` that is used to dispatch signals to handlers"""
 
 
 class SignalGroup(RouteGroup):
-    ...
+    """A `RouteGroup` that is used to dispatch signals to handlers"""
 
 
 class SignalRouter(BaseRouter):
+    """A `BaseRouter` that is used to dispatch signals to handlers"""
+
     def __init__(self) -> None:
         super().__init__(
             delimiter=".",
@@ -94,6 +98,18 @@ class SignalRouter(BaseRouter):
         event: str,
         condition: Optional[Dict[str, str]] = None,
     ):
+        """Get the handlers for a signal
+
+        Args:
+            event (str): The event to get the handlers for
+            condition (Optional[Dict[str, str]], optional): A dictionary of conditions to match against the handlers. Defaults to `None`.
+
+        Returns:
+            Tuple[SignalGroup, List[SignalHandler], Dict[str, Any]]: A tuple of the `SignalGroup` that matched, a list of the handlers that matched, and a dictionary of the params that matched
+
+        Raises:
+            NotFound: If no handlers are found
+        """  # noqa: E501
         extra = condition or {}
         try:
             group, param_basket = self.find_route(
@@ -195,6 +211,23 @@ class SignalRouter(BaseRouter):
         inline: bool = False,
         reverse: bool = False,
     ) -> Union[asyncio.Task, Any]:
+        """Dispatch a signal to all handlers that match the event
+
+        Args:
+            event (str): The event to dispatch
+            context (Optional[Dict[str, Any]], optional): A dictionary of context to pass to the handlers. Defaults to `None`.
+            condition (Optional[Dict[str, str]], optional): A dictionary of conditions to match against the handlers. Defaults to `None`.
+            fail_not_found (bool, optional): Whether to raise an exception if no handlers are found. Defaults to `True`.
+            inline (bool, optional): Whether to run the handlers inline. An inline run means it will return the value of the signal handler. When `False` (which is the default) the signal handler will run in a background task. Defaults to `False`.
+            reverse (bool, optional): Whether to run the handlers in reverse order. Defaults to `False`.
+
+        Returns:
+            Union[asyncio.Task, Any]: If `inline` is `True` then the return value of the signal handler will be returned. If `inline` is `False` then an `asyncio.Task` will be returned.
+
+        Raises:
+            RuntimeError: If the signal is dispatched outside of an event loop
+        """  # noqa: E501
+
         dispatch = self._dispatch(
             event,
             context=context,
@@ -245,6 +278,18 @@ class SignalRouter(BaseRouter):
         return cast(Signal, signal)
 
     def finalize(self, do_compile: bool = True, do_optimize: bool = False):
+        """Finalize the router and compile the routes
+
+        Args:
+            do_compile (bool, optional): Whether to compile the routes. Defaults to `True`.
+            do_optimize (bool, optional): Whether to optimize the routes. Defaults to `False`.
+
+        Returns:
+            SignalRouter: The router
+
+        Raises:
+            RuntimeError: If the router is finalized outside of an event loop
+        """  # noqa: E501
         self.add(_blank, "sanic.__signal__.__init__")
 
         try:

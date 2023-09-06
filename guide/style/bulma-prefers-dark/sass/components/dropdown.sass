@@ -1,0 +1,30 @@
+$dropdown-content-background-color-dark: $black !default
+$dropdown-content-arrow: $link-dark !default
+$dropdown-content-shadow-dark: 0 2px 3px rgba($white, 0.1), 0 0 0 1px rgba($white, 0.1) !default
+
+$dropdown-item-color-dark: $grey-light !default
+$dropdown-item-hover-color-dark: $white !default
+$dropdown-item-hover-background-color-dark: $background-dark !default
+$dropdown-item-active-color-dark: $link-invert-dark !default
+$dropdown-item-active-background-color-dark: $link-dark !default
+
+$dropdown-divider-background-color-dark: $border-dark !default
+
+.dropdown-content
+  background-color: $dropdown-content-background-color-dark
+  box-shadow: $dropdown-content-shadow-dark
+
+.dropdown-item
+  color: $dropdown-item-color-dark
+
+a.dropdown-item,
+button.dropdown-item
+  &:hover
+    background-color: $dropdown-item-hover-background-color-dark
+    color: $dropdown-item-hover-color-dark
+  &.is-active
+    background-color: $dropdown-item-active-background-color-dark
+    color: $dropdown-item-active-color-dark
+
+.dropdown-divider
+  background-color: $dropdown-divider-background-color-dark

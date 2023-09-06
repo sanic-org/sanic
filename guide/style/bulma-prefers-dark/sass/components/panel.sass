@@ -1,0 +1,57 @@
+$panel-item-border-dark: 1px solid $border-dark !default
+
+$panel-heading-background-color-dark: $background-dark !default
+$panel-heading-color-dark: $text-strong-dark !default
+
+$panel-tab-border-bottom-dark: 1px solid $border-dark !default
+$panel-tab-active-border-bottom-color-dark: $link-active-border-dark !default
+$panel-tab-active-color-dark: $link-active-dark !default
+
+$panel-list-item-color-dark: $text-dark !default
+$panel-list-item-hover-color-dark: $link-dark !default
+
+$panel-block-color-dark: $text-strong-dark !default
+$panel-block-hover-background-color-dark: $background-dark !default
+$panel-block-active-border-left-color-dark: $link-dark !default
+$panel-block-active-color-dark: $link-active-dark !default
+$panel-block-active-icon-color-dark: $link-dark !default
+
+.panel-heading,
+.panel-tabs,
+.panel-block
+  border-bottom: $panel-item-border-dark
+  border-left: $panel-item-border-dark
+  border-right: $panel-item-border-dark
+  &:first-child
+    border-top: $panel-item-border-dark
+
+.panel-heading
+  background-color: $panel-heading-background-color-dark
+  color: $panel-heading-color-dark
+
+.panel-tabs
+  a
+    border-bottom: $panel-tab-border-bottom-dark
+    // Modifiers
+    &.is-active
+      border-bottom-color: $panel-tab-active-border-bottom-color-dark
+      color: $panel-tab-active-color-dark
+
+.panel-list
+  a
+    color: $panel-list-item-color-dark
+    &:hover
+      color: $panel-list-item-hover-color-dark
+
+.panel-block
+  color: $panel-block-color-dark
+  &.is-active
+    border-left-color: $panel-block-active-border-left-color-dark
+    color: $panel-block-active-color-dark
+    .panel-icon
+      color: $panel-block-active-icon-color-dark
+
+a.panel-block,
+label.panel-block
+  &:hover
+    background-color: $panel-block-hover-background-color-dark

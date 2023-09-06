@@ -9,9 +9,7 @@ from sanic.utils import str_to_bool
 
 
 def try_use_uvloop() -> None:
-    """
-    Use uvloop instead of the default asyncio loop.
-    """
+    """Use uvloop instead of the default asyncio loop."""
     if OS_IS_WINDOWS:
         error_logger.warning(
             "You are trying to use uvloop, but uvloop is not compatible "
@@ -51,6 +49,7 @@ def try_use_uvloop() -> None:
 
 
 def try_windows_loop():
+    """Try to use the WindowsSelectorEventLoopPolicy instead of the default"""
     if not OS_IS_WINDOWS:
         error_logger.warning(
             "You are trying to use an event loop policy that is not "

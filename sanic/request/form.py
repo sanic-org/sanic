@@ -13,13 +13,15 @@ from .parameters import RequestParameters
 
 
 class File(NamedTuple):
-    """
-    Model for defining a file. It is a ``namedtuple``, therefore you can
-    iterate over the object, or access the parameters by name.
+    """Model for defining a file.
 
-    :param type: The mimetype, defaults to text/plain
-    :param body: Bytes of the file
-    :param name: The filename
+    It is a `namedtuple`, therefore you can iterate over the object, or
+    access the parameters by name.
+
+    Args:
+        type (str, optional): The mimetype, defaults to "text/plain".
+        body (bytes): Bytes of the file.
+        name (str): The filename.
     """
 
     type: str
@@ -28,13 +30,15 @@ class File(NamedTuple):
 
 
 def parse_multipart_form(body, boundary):
-    """
-    Parse a request body and returns fields and files
+    """Parse a request body and returns fields and files
 
-    :param body: bytes request body
-    :param boundary: bytes multipart boundary
-    :return: fields (RequestParameters), files (RequestParameters)
-    """
+    Args:
+        body (bytes): Bytes request body.
+        boundary (bytes): Bytes multipart boundary.
+
+    Returns:
+        Tuple[RequestParameters, RequestParameters]: A tuple containing fields and files as `RequestParameters`.
+    """  # noqa: E501
     files = {}
     fields = {}
 

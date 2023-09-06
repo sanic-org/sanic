@@ -47,46 +47,63 @@ JSON = "application/json"
 
 
 class BaseRenderer:
-    """
-    Base class that all renderers must inherit from.
-    """
+    """Base class that all renderers must inherit from.
+
+    This class defines the structure for rendering objects, handling the core functionality that specific renderers may extend.
+
+    Attributes:
+        request (Request): The incoming request object that needs rendering.
+        exception (Exception): Any exception that occurred and needs to be rendered.
+        debug (bool): Flag indicating whether to render with debugging information.
+
+    Methods:
+        dumps: A static method that must be overridden by subclasses to define the specific rendering.
+
+    Args:
+        request (Request): The incoming request object that needs rendering.
+        exception (Exception): Any exception that occurred and needs to be rendered.
+        debug (bool): Flag indicating whether to render with debugging information.
+    """  # noqa: E501
 
     dumps = staticmethod(dumps)
 
-    def __init__(self, request, exception, debug):
+    def __init__(self, request: Request, exception: Exception, debug: bool):
         self.request = request
         self.exception = exception
         self.debug = debug
 
     @property
-    def headers(self):
+    def headers(self) -> t.Dict[str, str]:
+        """The headers to be used for the response."""
         if isinstance(self.exception, SanicException):
             return getattr(self.exception, "headers", {})
         return {}
 
     @property
     def status(self):
+        """The status code to be used for the response."""
         if isinstance(self.exception, SanicException):
             return getattr(self.exception, "status_code", FALLBACK_STATUS)
         return FALLBACK_STATUS
 
     @property
     def text(self):
+        """The text to be used for the response."""
         if self.debug or isinstance(self.exception, SanicException):
             return str(self.exception)
         return FALLBACK_TEXT
 
     @property
     def title(self):
+        """The title to be used for the response."""
         status_text = STATUS_CODES.get(self.status, b"Error Occurred").decode()
         return f"{self.status} — {status_text}"
 
     def render(self) -> HTTPResponse:
-        """
-        Outputs the exception as a :class:`HTTPResponse`.
+        """Outputs the exception as a response.
 
-        :return: The formatted exception
-        :rtype: str
+        Returns:
+            HTTPResponse: The response object.
         """
         output = (
             self.full
@@ -98,23 +115,26 @@ class BaseRenderer:
         return output
 
     def minimal(self) -> HTTPResponse:  # noqa
-        """
-        Provide a formatted message that is meant to not show any sensitive
-        data or details.
-        """
+        """Provide a formatted message that is meant to not show any sensitive data or details.
+
+        This is the default fallback for production environments.
+
+        Returns:
+            HTTPResponse: The response object.
+        """  # noqa: E501
         raise NotImplementedError
 
     def full(self) -> HTTPResponse:  # noqa
-        """
-        Provide a formatted message that has all details and is mean to be used
-        primarily for debugging and non-production environments.
-        """
+        """Provide a formatted message that has all details and is mean to be used primarily for debugging and non-production environments.
+
+        Returns:
+            HTTPResponse: The response object.
+        """  # noqa: E501
         raise NotImplementedError
 
 
 class HTMLRenderer(BaseRenderer):
-    """
-    Render an exception as HTML.
+    """Render an exception as HTML.
 
     The default fallback type.
     """
@@ -134,9 +154,7 @@ class HTMLRenderer(BaseRenderer):
 
 
 class TextRenderer(BaseRenderer):
-    """
-    Render an exception as plain text.
-    """
+    """Render an exception as plain text."""
 
     OUTPUT_TEXT = "{title}\n{bar}\n{text}\n\n{body}"
     SPACER = "  "
@@ -211,9 +229,7 @@ class TextRenderer(BaseRenderer):
 
 
 class JSONRenderer(BaseRenderer):
-    """
-    Render an exception as JSON.
-    """
+    """Render an exception as JSON."""
 
     def full(self) -> HTTPResponse:
         output = self._generate_output(full=True)
@@ -269,9 +285,7 @@ class JSONRenderer(BaseRenderer):
 
 
 def escape(text):
-    """
-    Minimal HTML escaping, not for attribute values (unlike html.escape).
-    """
+    """Minimal HTML escaping, not for attribute values (unlike html.escape)."""
     return f"{text}".replace("&", "&amp;").replace("<", "&lt;")
 
 
@@ -302,6 +316,7 @@ RESPONSE_MAPPING = {
 
 
 def check_error_format(format):
+    """Check that the format is known."""
     if format not in MIME_BY_CONFIG and format != "auto":
         raise SanicException(f"Unknown format: {format}")
 
@@ -314,9 +329,7 @@ def exception_response(
     base: t.Type[BaseRenderer],
     renderer: t.Optional[t.Type[BaseRenderer]] = None,
 ) -> HTTPResponse:
-    """
-    Render a response for the default FALLBACK exception handler.
-    """
+    """Render a response for the default FALLBACK exception handler."""
     if not renderer:
         mt = guess_mime(request, fallback)
         renderer = RENDERERS_BY_CONTENT_TYPE.get(mt, base)
@@ -326,6 +339,7 @@ def exception_response(
 
 
 def guess_mime(req: Request, fallback: str) -> str:
+    """Guess the MIME type for the response based upon the request."""
     # Attempt to find a suitable MIME format for the response.
     # Insertion-ordered map of formats["html"] = "source of that suggestion"
     formats = {}

@@ -76,4 +76,10 @@ def test_fast(app: Sanic, caplog):
     assert app.state.workers == workers
 
     messages = [m[2] for m in caplog.record_tuples]
-    assert f"mode: production, goin' fast w/ {workers} workers" in messages
+
+    if workers == 1:
+        worker_fragment = "single worker"
+    else:
+        worker_fragment = f"w/ {workers} workers"
+
+    assert f"mode: production, goin' fast {worker_fragment}" in messages

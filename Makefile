@@ -93,6 +93,9 @@ docs-serve:
 changelog:
 	python scripts/changelog.py
 
+guide-serve:
+	cd guide && sanic server:app -r -R ./content -R ./style
+
 release:
 ifdef version
 	python scripts/release.py --release-version ${version} --generate-changelog

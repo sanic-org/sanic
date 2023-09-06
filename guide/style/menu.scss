@@ -1,0 +1,121 @@
+$arrow-size: 8px;
+$burger-size: 2rem;
+$menu-width: 360px;
+.burger {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    right: $burger-size / 2;
+    width: $burger-size;
+    height: $burger-size;
+    cursor: pointer;
+    z-index: 101;
+    span {
+        display: block;
+        position: absolute;
+        height: 2px;
+        width: 100%;
+        background: var(--menu-contrast);
+        border-radius: 2px;
+        opacity: 1;
+        left: 0;
+        transform: rotate(0deg);
+        transition: .25s ease-in-out;
+        &:nth-child(1) { top: 0px; }
+        &:nth-child(2), &:nth-child(3) { top: 8px; }
+        &:nth-child(4) { top: 16px; }
+    }
+    &.is-active {
+        span {
+            &:nth-child(1) {
+                top: 18px;
+                width: 0%;
+                left: 50%;
+            }
+            &:nth-child(2) {
+                transform: rotate(45deg);
+            }
+            &:nth-child(3) {
+                transform: rotate(-45deg);
+            }
+            &:nth-child(4) {
+                top: 18px;
+                width: 0%;
+                left: 50%;
+            }
+        }
+    }
+}
+.menu {
+    background-color: var(--menu-background);
+    width: $menu-width;
+    padding: 2rem;
+    height: 100vh;
+    overflow: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+
+    hr { background-color: var(--menu-divider); }
+
+    .is-anchor {
+        font-size: 0.85em;
+        & a::before {
+            content: '# ';
+            color: var(--menu-contrast);
+        }
+    }
+    .menu-label { margin-bottom: 1rem; }
+    li.is-group > a {
+        &::after {
+            content: '';
+            position: relative;
+            top: -$arrow-size / 4;
+            left: $arrow-size;
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-left: $arrow-size solid var(--menu-contrast);
+            border-top: $arrow-size * 2/3 solid transparent;
+            border-bottom: $arrow-size * 2/3 solid transparent;
+            transform: rotate(90deg);
+        }
+        & ~ .menu-list {
+            transition: all .15s ease-in-out;
+            transform: scaleY(1);
+            transform-origin: top;
+            overflow: hidden;
+            opacity: 1;
+            margin: 0;
+        }
+        &:not(.is-open) {
+            &::after { transform: rotate(0deg); }
+            & ~ .menu-list {
+                transform: scaleY(0);
+                opacity: 0;
+                font-size: 0;
+            }
+        }
+    }
+
+    & ~ main { margin-left: $menu-width; }
+    .anchor-list {
+        display: none;
+    }
+    .menu-item .is-active + .anchor-list {
+        display: block;
+    }
+}
+
+// On mobile breakpoints, we want to hide the menu and show the burger
+@media screen and (max-width: $desktop) {
+    .menu {
+        left: -100vw;
+        width: 100vw;
+        transition: all .25s ease-in-out;
+        &.is-active { left: 0; }
+        & ~ main { margin-left: 0; }
+    }
+    .burger { display: block; }
+}

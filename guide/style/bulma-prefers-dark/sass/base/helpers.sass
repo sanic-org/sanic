@@ -1,0 +1,16 @@
+@each $name, $pair in $colors
+  $color: nth($pair, 1)
+  .has-text-#{$name}-dark
+    color: $color !important
+  a.has-text-#{$name}-dark
+    &:hover,
+    &:focus
+      color: lighten($color, 10%) !important
+  .has-background-#{$name}-dark
+    background-color: $color !important
+
+@each $name, $shade in $shades
+  .has-text-#{$name}-dark
+    color: $shade !important
+  .has-background-#{$name}-dark
+    background-color: $shade !important

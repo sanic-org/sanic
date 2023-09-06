@@ -1,0 +1,78 @@
+$table-color-dark: $grey-lighter !default
+$table-background-color-dark: $black !default
+
+$table-cell-border-dark: 1px solid $grey-darker !default
+$table-cell-heading-color-dark: $text-strong-dark !default
+
+$table-head-cell-color-dark: $text-strong-dark !default
+$table-foot-cell-color-dark: $text-strong-dark !default
+
+$table-row-hover-background-color-dark: $black-bis !default
+
+$table-row-active-background-color-dark: $primary-dark !default
+$table-row-active-color-dark: $primary-invert-dark !default
+
+$table-striped-row-even-background-color-dark: $black-bis !default
+$table-striped-row-even-hover-background-color-dark: $black-ter !default
+
+.table
+  background-color: $table-background-color-dark
+  color: $table-color-dark
+  td,
+  th
+    border: $table-cell-border-dark
+    // Colors
+    @each $name, $pair in $colors
+      $color: darken(nth($pair, 1), 10%)
+      $color-invert: nth($pair, 2)
+      &.is-#{$name}
+        background-color: $color
+        border-color: $color
+        color: $color-invert
+    // Colors Dark
+    @each $name, $pair in $colors
+      $color: nth($pair, 1)
+      $color-invert: nth($pair, 2)
+      &.is-#{$name}-dark
+        background-color: $color
+        border-color: $color
+        color: $color-invert
+    // Modifiers
+    &.is-selected
+      background-color: $table-row-active-background-color-dark
+      color: $table-row-active-color-dark
+  th
+    color: $table-cell-heading-color-dark
+  tr
+    &.is-selected
+      background-color: $table-row-active-background-color-dark
+      color: $table-row-active-color-dark
+      td,
+      th
+        border-color: $table-row-active-color-dark
+  thead
+    td,
+    th
+      color: $table-head-cell-color-dark
+  tfoot
+    td,
+    th
+      color: $table-foot-cell-color-dark
+  // Modifiers
+  &.is-hoverable
+    tbody
+      tr:not(.is-selected)
+        &:hover
+          background-color: $table-row-hover-background-color-dark
+    &.is-striped
+      tbody
+        tr:not(.is-selected)
+          &:hover
+            background-color: $table-row-hover-background-color-dark
+            &:nth-child(even)
+              background-color: $table-striped-row-even-hover-background-color-dark
+  &.is-striped
+    tbody
+      tr:not(.is-selected)
+        &:nth-child(even)
+          background-color: $table-striped-row-even-background-color-dark

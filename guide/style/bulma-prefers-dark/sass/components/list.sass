@@ -1,0 +1,27 @@
+$list-background-color-dark: $black !default
+$list-shadow-dark: 0 2px 3px rgba($white, 0.1), 0 0 0 1px rgba($white, 0.1) !default
+
+$list-item-border-dark: 1px solid $border-dark !default
+$list-item-color-dark: $text-dark !default
+$list-item-active-background-color-dark: $link-dark !default
+$list-item-active-color-dark: $link-invert-dark !default
+$list-item-hover-background-color-dark: $background-dark !default
+
+.list
+  background-color: $list-background-color-dark
+  box-shadow: $list-shadow-dark
+  // &.is-hoverable > .list-item:hover:not(.is-active)
+  //   background-color: $list-item-hover-background-color-dark
+  //   cursor: pointer
+
+.list-item
+  &:not(a)
+    color: $list-item-color-dark
+  &:not(:last-child)
+    border-bottom: $list-item-border-dark
+  &.is-active
+    background-color: $list-item-active-background-color-dark
+    color: $list-item-active-color-dark
+
+a.list-item
+  background-color: $list-item-hover-background-color-dark

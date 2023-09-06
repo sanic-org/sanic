@@ -103,7 +103,7 @@ ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.15.0" + env_dependency
 types_ujson = "types-ujson" + env_dependency
 requirements = [
-    "sanic-routing>=22.8.0",
+    "sanic-routing>=23.6.0",
     "httptools>=0.0.10",
     uvloop,
     ujson,
@@ -116,7 +116,7 @@ requirements = [
 ]
 
 tests_require = [
-    "sanic-testing>=23.3.0",
+    "sanic-testing>=23.6.0",
     "pytest==7.1.*",
     "coverage",
     "beautifulsoup4",
@@ -143,6 +143,7 @@ docs_require = [
     "m2r2",
     "enum-tools[sphinx]",
     "mistune<2.0.0",
+    "autodocsumm>=0.2.11",
 ]
 
 dev_require = tests_require + [

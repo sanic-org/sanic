@@ -56,7 +56,7 @@ class MockTransport(TransportProtocol):  # no cov
         self._receive = receive
         self._send = send
         self._protocol = None
-        self.loop = None
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
 
     def get_protocol(self) -> MockProtocol:  # type: ignore
         if not self._protocol:

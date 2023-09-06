@@ -1,0 +1,65 @@
+$background-image-size: 270px;
+.hero .title {
+    position: relative;
+        span { display: none; }
+        &::after {
+            content: "";
+            position: absolute;
+            top: -108px;
+            left: 0;
+            right: 0;
+            margin: auto;
+            width: 500px;
+            height: 122px;
+            background: url(/assets/images/logo.svg) no-repeat center center;
+        }
+
+}
+
+.sanic-simple-logo {
+    background: url(/assets/images/logo.svg) no-repeat;
+    background-size: $background-image-size;
+    height: 72px;
+
+    & img { visibility: hidden; }
+}
+:root {
+    --menu-background: #{$grey-lightest};
+    --menu-divider: #{$grey-lighter};
+    --menu-contrast: #{$black-bis};
+}
+
+.c1 { color: #{$grey}; }
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --menu-background: #{$black};
+        --menu-divider: #{$black-ter};
+        --menu-contrast: #{$grey};
+    }
+    html,
+    .navbar { background-color: #{$black-bis}; }
+    .footer { background-color: #{$black}; }
+    .sanic-simple-logo {
+        background: url(/assets/images/logo-white.svg) no-repeat;
+        background-size: $background-image-size;
+    }
+    .hero .title::after {
+        background: url(/assets/images/logo-white.svg) no-repeat center center;
+    }
+    .list {
+        background-color: transparent;
+        box-shadow: none;
+    }
+    .n,.na,.nb,.no,.nd,.ni,.ne,.nl,
+    .nn,.nx,.py,.nt,.nv,.bp,.vc,.vg,
+    .vi,.vm { color: #{$grey-light}; }
+    .s,.sa,.sb,.sc,.dl,.sd,.s2,.se,
+    .sh,.si,.sx,.sr,.s1,.ss{
+        background-color: transparent;
+        color: #{$green};
+    }
+    .nc { color: #{$yellow}; }
+    .c1 { color: #{$grey-dark}; }
+    .introduction-table .table tbody tr:last-child td { border-bottom-width: 1px; }
+}

@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class ApplicationServerInfo:
+    """Information about a server instance."""
+
     settings: Dict[str, Any]
     stage: ServerStage = field(default=ServerStage.STOPPED)
     server: Optional[AsyncioServer] = field(default=None)
@@ -26,6 +28,12 @@ class ApplicationServerInfo:
 
 @dataclass
 class ApplicationState:
+    """Application state.
+
+    This class is used to store the state of the application. It is
+    instantiated by the application and is available as `app.state`.
+    """
+
     app: Sanic
     asgi: bool = field(default=False)
     coffee: bool = field(default=False)
@@ -69,15 +77,31 @@ class ApplicationState:
         if getattr(self.app, "configure_logging", False) and self.app.debug:
             logger.setLevel(logging.DEBUG)
 
-    def set_verbosity(self, value: int):
+    def set_verbosity(self, value: int) -> None:
+        """Set the verbosity level.
+
+        Args:
+            value (int): Verbosity level.
+        """
         VerbosityFilter.verbosity = value
 
     @property
-    def is_debug(self):
+    def is_debug(self) -> bool:
+        """Check if the application is in debug mode.
+
+        Returns:
+            bool: `True` if the application is in debug mode, `False`
+                otherwise.
+        """
         return self.mode is Mode.DEBUG
 
     @property
     def stage(self) -> ServerStage:
+        """Get the server stage.
+
+        Returns:
+            ServerStage: Server stage.
+        """
         if not self.server_info:
             return ServerStage.STOPPED
 

@@ -1,3 +1,4 @@
 sanic>=23.6.*
 sanic-ext>=23.6.*
 msgspec
+python-frontmatter

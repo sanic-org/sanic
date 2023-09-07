@@ -20,6 +20,7 @@ from pytest import LogCaptureFixture
 
 from sanic import Request, Sanic
 from sanic.compat import Header
+from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
 from sanic.response import (
     HTTPResponse,
@@ -545,7 +546,7 @@ def test_raw_response(app):
         return raw(b"raw_response")
 
     request, response = app.test_client.get("/test")
-    assert response.content_type == "application/octet-stream"
+    assert response.content_type == DEFAULT_HTTP_CONTENT_TYPE
     assert response.body == b"raw_response"
 
 

@@ -119,8 +119,59 @@ class Sanic(
     StartupMixin,
     metaclass=TouchUpMeta,
 ):
-    """
-    The main application instance
+    """The main application instance
+
+    You will create an instance of this class and use it to register
+    routes, listeners, middleware, blueprints, error handlers, etc.
+
+    By convention, it is often called `app`. It must be named using
+    the `name` parameter and is roughly constrained to the same
+    restrictions as a Python module name, however, it can contain
+    hyphens (`-`).
+
+    ```python
+    # will cause an error because it contains spaces
+    Sanic("This is not legal")
+    ```
+
+    ```python
+    # this is legal
+    Sanic("Hyphens-are-legal_or_also_underscores")
+    ```
+
+    Args:
+        name (str): The name of the application. Must be a valid
+            Python module name (including hyphens).
+        config (Optional[config_type]): The configuration to use for
+            the application. Defaults to `None`.
+        ctx (Optional[ctx_type]): The context to use for the
+            application. Defaults to `None`.
+        router (Optional[Router]): The router to use for the
+            application. Defaults to `None`.
+        signal_router (Optional[SignalRouter]): The signal router to
+            use for the application. Defaults to `None`.
+        error_handler (Optional[ErrorHandler]): The error handler to
+            use for the application. Defaults to `None`.
+        env_prefix (Optional[str]): The prefix to use for environment
+            variables. Defaults to `SANIC_`.
+        request_class (Optional[Type[Request]]): The request class to
+            use for the application. Defaults to `Request`.
+        strict_slashes (bool): Whether to enforce strict slashes.
+            Defaults to `False`.
+        log_config (Optional[Dict[str, Any]]): The logging configuration
+            to use for the application. Defaults to `None`.
+        configure_logging (bool): Whether to configure logging.
+            Defaults to `True`.
+        dumps (Optional[Callable[..., AnyStr]]): The function to use
+            for serializing JSON. Defaults to `None`.
+        loads (Optional[Callable[..., Any]]): The function to use
+            for deserializing JSON. Defaults to `None`.
+        inspector (bool): Whether to enable the inspector. Defaults
+            to `False`.
+        inspector_class (Optional[Type[Inspector]]): The inspector
+            class to use for the application. Defaults to `None`.
+        certloader_class (Optional[Type[CertLoader]]): The certloader
+            class to use for the application. Defaults to `None`.
     """
 
     __touchup__ = (

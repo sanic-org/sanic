@@ -272,7 +272,7 @@ th {
 
 html {
   background-color: white;
-  font-size: 18px;
+  font-size: 24px;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   min-width: 300px;
@@ -12652,37 +12652,39 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
   .menu hr {
     background-color: var(--menu-divider); }
   .menu .is-anchor {
-    font-size: 0.85em; }
+    font-size: 0.75em; }
     .menu .is-anchor a::before {
       content: '# ';
       color: var(--menu-contrast); }
   .menu .menu-label {
     margin-bottom: 1rem; }
-  .menu li.is-group > a::after {
-    content: '';
-    position: relative;
-    top: -2px;
-    left: 8px;
-    display: inline-block;
-    width: 0;
-    height: 0;
-    border-left: 8px solid var(--menu-contrast);
-    border-top: 5.33333px solid transparent;
-    border-bottom: 5.33333px solid transparent;
-    transform: rotate(90deg); }
-  .menu li.is-group > a ~ .menu-list {
-    transition: all .15s ease-in-out;
-    transform: scaleY(1);
-    transform-origin: top;
-    overflow: hidden;
-    opacity: 1;
-    margin: 0; }
-  .menu li.is-group > a:not(.is-open)::after {
-    transform: rotate(0deg); }
-  .menu li.is-group > a:not(.is-open) ~ .menu-list {
-    transform: scaleY(0);
-    opacity: 0;
-    font-size: 0; }
+  .menu li.is-group > a {
+    font-size: 0.85rem; }
+    .menu li.is-group > a::after {
+      content: '';
+      position: relative;
+      top: -2px;
+      left: 8px;
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 8px solid var(--menu-contrast);
+      border-top: 5.33333px solid transparent;
+      border-bottom: 5.33333px solid transparent;
+      transform: rotate(90deg); }
+    .menu li.is-group > a ~ .menu-list {
+      transition: all .15s ease-in-out;
+      transform: scaleY(1);
+      transform-origin: top;
+      overflow: hidden;
+      opacity: 1;
+      margin: 0; }
+    .menu li.is-group > a:not(.is-open)::after {
+      transform: rotate(0deg); }
+    .menu li.is-group > a:not(.is-open) ~ .menu-list {
+      transform: scaleY(0);
+      opacity: 0;
+      font-size: 0; }
   .menu ~ main {
     margin-left: 360px; }
   .menu .anchor-list {
@@ -12702,6 +12704,16 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
   .burger {
     display: block; } }
 
+.menu-list li ul {
+  margin: 0;
+  padding-left: 0; }
+
+.menu-list ul li:not(.is-anchor) {
+  margin-left: 0.75em; }
+
+.menu-list .menu-list li a {
+  font-size: 0.85em; }
+
 code {
   color: #4a4a4a; }
 
@@ -12717,6 +12729,12 @@ code {
 a[target=_blank]::after {
   content: "⇗";
   margin-left: 0.25em; }
+
+a > code {
+  border-bottom: 1px solid #ff0d68; }
+  a > code:hover {
+    background-color: #ff0d68;
+    color: white; }
 
 h1 a.anchor,
 h2 a.anchor,
@@ -12767,6 +12785,10 @@ p + p {
     margin-left: 0; }
   article {
     margin-left: 0; } }
+
+@media screen and (min-width: 1216px) {
+  .section {
+    padding: 3rem 0rem; } }
 
 .footer {
   margin-bottom: 4rem; }
@@ -12998,6 +13020,51 @@ h3 + .code-block {
 .tabs .tab-content {
   display: none; }
 
+.table-of-contents {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  max-width: 500px;
+  padding: 1rem 2rem;
+  background-color: #fafafa;
+  box-shadow: 0 0 2px rgba(63, 63, 68, 0.5); }
+  @media (prefers-color-scheme: dark) {
+    .table-of-contents {
+      background-color: #0a0a0a;
+      box-shadow: 0 0 2px rgba(191, 191, 191, 0.5); } }
+  .table-of-contents .table-of-contents-item {
+    display: block;
+    margin-bottom: 0.5rem;
+    text-decoration: none; }
+    .table-of-contents .table-of-contents-item:hover {
+      text-decoration: underline;
+      color: #ff0d68; }
+      .table-of-contents .table-of-contents-item:hover strong, .table-of-contents .table-of-contents-item:hover small {
+        color: #ff0d68; }
+    .table-of-contents .table-of-contents-item strong {
+      color: #121212;
+      font-size: 1.15em;
+      display: block;
+      line-height: 1rem;
+      margin-top: 0.75rem; }
+    .table-of-contents .table-of-contents-item small {
+      color: #7a7a7a;
+      font-size: 0.85em; }
+    @media (prefers-color-scheme: dark) {
+      .table-of-contents .table-of-contents-item strong {
+        color: #dbdbdb; } }
+  @media (max-width: 768px) {
+    .table-of-contents {
+      position: static;
+      max-width: calc(100vw - 2rem); }
+      .table-of-contents .table-of-contents-item {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: start; }
+        .table-of-contents .table-of-contents-item strong {
+          display: inline;
+          margin: 0 0 0 0.75rem; } }
 footer .level,
 footer .level .level-right,
 footer .level .level-left {

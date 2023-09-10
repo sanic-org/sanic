@@ -290,3 +290,68 @@ h3 + .code-block { margin-top: 1rem; }
 .tabs {
     .tab-content { display: none; }
 }
+
+.table-of-contents {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  max-width: 500px;
+  padding: 1rem 2rem;
+  background-color: $white-bis;
+  box-shadow: 0 0 2px rgba(63, 63, 68, 0.5);
+
+  @media (prefers-color-scheme: dark) {
+      background-color: $black;
+      box-shadow: 0 0 2px rgba(191, 191, 191, 0.5);
+      
+  }
+
+  .table-of-contents-item {
+    display: block;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+
+    &:hover {
+	text-decoration: underline;
+	color: $primary;
+
+	strong, small {
+	    color: $primary;
+	}
+    }
+
+    strong {
+	color: $black-bis;
+	font-size: 1.15em;
+	display: block;
+	line-height: 1rem;
+	margin-top: 0.75rem;
+    }
+
+    small {
+	color: $grey;
+	font-size: 0.85em;
+    }
+
+    @media (prefers-color-scheme: dark) {
+	strong { color: $grey-lighter; }
+    }
+  }
+
+  @media (max-width: 768px) {
+    position: static;
+    max-width: calc(100vw - 2rem);
+
+    .table-of-contents-item {
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: start;
+	
+	strong {
+	    display: inline;
+	    margin: 0 0 0 0.75rem;
+	}
+    }
+  }
+}

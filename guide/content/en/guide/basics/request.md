@@ -419,8 +419,8 @@ def record_factory(*args, **kwargs):
 
 logging.setLogRecordFactory(record_factory)
 
-LOGGING_CONFIG_DEFAULTS["formatters"]["access"]["format"] = LOGGING_FORMAT
 
+LOGGING_CONFIG_DEFAULTS["formatters"]["access"]["format"] = LOGGING_FORMAT
 app = Sanic("Example", log_config=LOGGING_CONFIG_DEFAULTS)
 ```
 

@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from functools import partial
 from typing import Callable, List, Optional, Union, overload
-
+from operator import attrgetter
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import BadRequest
 from sanic.models.futures import FutureListener
@@ -25,7 +25,7 @@ class ListenerEvent(str, Enum):
     AFTER_RELOAD_TRIGGER = auto()
 
 
-class ListenerMixin(metaclass=SanicMeta):
+class ListenerMixin(metaclass=SanicMeta):    
     def __init__(self, *args, **kwargs) -> None:
         self._future_listeners: List[FutureListener] = []
 
@@ -38,6 +38,8 @@ class ListenerMixin(metaclass=SanicMeta):
         listener_or_event: ListenerType[Sanic],
         event_or_none: str,
         apply: bool = ...,
+        *,
+        priority: int = 0,
     ) -> ListenerType[Sanic]:
         ...
 
@@ -47,6 +49,8 @@ class ListenerMixin(metaclass=SanicMeta):
         listener_or_event: str,
         event_or_none: None = ...,
         apply: bool = ...,
+        *,
+        priority: int = 0,
     ) -> Callable[[ListenerType[Sanic]], ListenerType[Sanic]]:
         ...
 
@@ -55,6 +59,8 @@ class ListenerMixin(metaclass=SanicMeta):
         listener_or_event: Union[ListenerType[Sanic], str],
         event_or_none: Optional[str] = None,
         apply: bool = True,
+        *,
+        priority: int = 0,
     ) -> Union[
         ListenerType[Sanic],
         Callable[[ListenerType[Sanic]], ListenerType[Sanic]],
@@ -81,6 +87,7 @@ class ListenerMixin(metaclass=SanicMeta):
             listener_or_event (Union[ListenerType[Sanic], str]): A listener function or an event name.
             event_or_none (Optional[str]): The event name to listen for if `listener_or_event` is a function. Defaults to `None`.
             apply (bool): Whether to apply the listener immediately. Defaults to `True`.
+            priority (int): The priority of the listener. Defaults to `0`.
 
         Returns:
             Union[ListenerType[Sanic], Callable[[ListenerType[Sanic]], ListenerType[Sanic]]]: The listener or a callable that takes a listener.
@@ -96,7 +103,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
 
         def register_listener(
-            listener: ListenerType[Sanic], event: str
+            listener: ListenerType[Sanic], event: str, priority: int = 0
         ) -> ListenerType[Sanic]:
             """A helper function to register a listener for an event.
 
@@ -112,7 +119,7 @@ class ListenerMixin(metaclass=SanicMeta):
             """
             nonlocal apply
 
-            future_listener = FutureListener(listener, event)
+            future_listener = FutureListener(listener, event, priority)
             self._future_listeners.append(future_listener)
             if apply:
                 self._apply_listener(future_listener)
@@ -123,9 +130,9 @@ class ListenerMixin(metaclass=SanicMeta):
                 raise BadRequest(
                     "Invalid event registration: Missing event name."
                 )
-            return register_listener(listener_or_event, event_or_none)
+            return register_listener(listener_or_event, event_or_none, priority)
         else:
-            return partial(register_listener, event=listener_or_event)
+            return partial(register_listener, event=listener_or_event, priority=priority)
 
     def main_process_start(
         self, listener: ListenerType[Sanic]

@@ -432,7 +432,7 @@ class Sanic(
     # -------------------------------------------------------------------- #
 
     def register_listener(
-        self, listener: ListenerType[SanicVar], event: str
+        self, listener: ListenerType[SanicVar], event: str, *, priority: int = 0
     ) -> ListenerType[SanicVar]:
         """Register the listener for a given event.
 
@@ -453,10 +453,14 @@ class Sanic(
             raise BadRequest(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
-            self.signal(_event.value)(
+            self.signal(_event.value, priority=priority)(
                 partial(self._listener, listener=listener)
             )
         else:
+            if priority:
+                error_logger.warning(
+                    f"Priority is not supported for {_event.value}"
+                )
             self.listeners[_event.value].append(listener)
 
         return listener
@@ -580,7 +584,7 @@ class Sanic(
         return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
-        return self.register_listener(listener.listener, listener.event)
+        return self.register_listener(listener.listener, listener.event, priority=listener.priority)
 
     def _apply_route(
         self, route: FutureRoute, overwrite: bool = False
@@ -632,7 +636,13 @@ class Sanic(
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
         with self.amend():
-            return self.signal_router.add(*signal)
+            return self.signal_router.add(
+                handler=signal.handler,
+                event=signal.event,
+                condition=signal.condition,
+                exclusive=signal.exclusive,
+                priority=signal.priority,
+            )
 
     @overload
     def dispatch(
@@ -1399,7 +1409,7 @@ class Sanic(
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
                         f"Invalid response type {response!r} "
-                        "(need HTTPResponse)"
+                       "(need HTTPResponse)"
                     )
 
         except CancelledError:  # type: ignore

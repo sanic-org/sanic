@@ -250,6 +250,8 @@ class SignalRouter(BaseRouter):
         event: str,
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
+        *,
+        priority: int = 0,
     ) -> Signal:
         event_definition = event
         parts = self._build_event_parts(event)
@@ -268,6 +270,7 @@ class SignalRouter(BaseRouter):
             handler,
             name=name,
             append=True,
+            priority=priority,
         )  # type: ignore
 
         signal.ctx.exclusive = exclusive

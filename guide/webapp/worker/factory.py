@@ -62,7 +62,10 @@ def create_app(root: Path) -> Sanic:
         language: str,
         path: str = "",
     ):
-        return html(page_renderer.render(request, language, path))
+        return html(
+            page_renderer.render(request, language, path),
+            headers={"vary": "hx-request"},
+        )
 
     @app.on_request
     async def set_language(request: Request):

@@ -110,7 +110,6 @@ def organize_docobjects(package_name: str) -> dict[str, str]:
     docobjects = _extract_docobjects(package_name)
     page_registry: defaultdict[str, list[str]] = defaultdict(list)
     for module, docobject in docobjects.items():
-        print(f"{module=}")
         builder = Builder(name="Partial")
         _docobject_to_html(docobject, builder)
         ref = module.rsplit(".", module.count(".") - 1)[0]

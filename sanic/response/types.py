@@ -24,7 +24,6 @@ from sanic.helpers import (
     Default,
     _default,
     has_message_body,
-    remove_entity_headers,
 )
 from sanic.http import Http
 

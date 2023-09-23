@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
+from collections import deque
+from dataclasses import dataclass
 from enum import Enum
 from inspect import isawaitable
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -74,6 +76,38 @@ def _blank():
 
 class Signal(Route):
     """A `Route` that is used to dispatch signals to handlers"""
+
+
+@dataclass
+class SignalWaiter:
+    """A record representing a future waiting for a signal"""
+
+    signal: Signal
+    event_definition: str
+    trigger: str = ""
+    requirements: Optional[Dict[str, str]] = None
+    exclusive: bool = True
+
+    future: Optional[asyncio.Future] = None
+
+    async def wait(self):
+        """Block until the signal is next dispatched.
+
+        Return the context of the signal dispatch, if any.
+        """
+        loop = asyncio.get_running_loop()
+        self.future = loop.create_future()
+        self.signal.ctx.waiters.append(self)
+        try:
+            return await self.future
+        finally:
+            self.signal.ctx.waiters.remove(self)
+
+    def matches(self, event, condition):
+        return ((condition is None and not self.exclusive)
+                or (condition is None and not self.requirements)
+                or condition == self.requirements
+        ) and (self.trigger or event == self.event_definition)
 
 
 class SignalGroup(RouteGroup):
@@ -160,18 +194,20 @@ class SignalRouter(BaseRouter):
                     error_logger.warning(str(e))
                 return None
 
-        events = [signal.ctx.event for signal in group]
-        for signal_event in events:
-            signal_event.set()
         if context:
             params.update(context)
+        params.pop("__trigger__", None)
 
         signals = group.routes
         if not reverse:
             signals = signals[::-1]
         try:
             for signal in signals:
-                params.pop("__trigger__", None)
+                for waiter in signal.ctx.waiters:
+                    if waiter.matches(event, condition):
+                        waiter.future.set_result(dict(params))
+
+            for signal in signals:
                 requirements = signal.extra.requirements
                 if (
                     (condition is None and signal.ctx.exclusive is False)
@@ -197,9 +233,6 @@ class SignalRouter(BaseRouter):
                 )
                 setattr(e, "__dispatched__", True)
             raise e
-        finally:
-            for signal_event in events:
-                signal_event.clear()
 
     async def dispatch(
         self,
@@ -244,14 +277,29 @@ class SignalRouter(BaseRouter):
         await asyncio.sleep(0)
         return task
 
-    def add(  # type: ignore
-        self,
-        handler: SignalHandler,
-        event: str,
-        condition: Optional[Dict[str, Any]] = None,
-        exclusive: bool = True,
-    ) -> Signal:
-        event_definition = event
+    def get_waiter(
+            self,
+            event: Union[str, Enum],
+            condition: Optional[Dict[str, Any]],
+            exclusive: bool,
+    ):
+        event_definition = str(event.value) if isinstance(event, Enum) else event
+        name, trigger, _ = self._get_event_parts(event_definition)
+        signal = cast(Signal, self.name_index.get(name))
+        if not signal:
+            return None
+
+        if event_definition.endswith(".*") and not trigger:
+            trigger = "*"
+        return SignalWaiter(
+            signal=signal,
+            event_definition=event_definition,
+            trigger=trigger,
+            requirements=condition,
+            exclusive=bool(exclusive),
+        )
+
+    def _get_event_parts(self, event):
         parts = self._build_event_parts(event)
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])
@@ -262,6 +310,18 @@ class SignalRouter(BaseRouter):
 
         if not trigger:
             event = ".".join([*parts[:2], "<__trigger__>"])
+
+        return name, trigger, event
+
+    def add(  # type: ignore
+        self,
+        handler: SignalHandler,
+        event: str,
+        condition: Optional[Dict[str, Any]] = None,
+        exclusive: bool = True,
+    ) -> Signal:
+        event_definition = event
+        name, trigger, event = self._get_event_parts(event)
 
         signal = super().add(
             event,
@@ -298,7 +358,7 @@ class SignalRouter(BaseRouter):
             raise RuntimeError("Cannot finalize signals outside of event loop")
 
         for signal in self.routes:
-            signal.ctx.event = asyncio.Event()
+            signal.ctx.waiters = deque()
 
         return super().finalize(do_compile=do_compile, do_optimize=do_optimize)
 

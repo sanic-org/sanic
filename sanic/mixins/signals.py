@@ -88,7 +88,7 @@ class SignalMixin(metaclass=SanicMeta):
         """
         if not handler:
 
-            async def noop():
+            async def noop(**context):
                 ...
 
             handler = noop

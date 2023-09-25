@@ -80,7 +80,6 @@ def test_invalid_signal(app, signal):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_triggers_event(app):
-
     @app.signal("foo.bar.baz")
     def sync_signal(*args):
         pass
@@ -92,7 +91,7 @@ async def test_dispatch_signal_triggers_event(app):
     await asyncio.sleep(0)
 
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -142,7 +141,6 @@ async def test_dispatch_signal_with_enum_event(app):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_with_enum_event_to_event(app):
-
     class FooEnum(Enum):
         FOO_BAR_BAZ = "foo.bar.baz"
 
@@ -157,7 +155,7 @@ async def test_dispatch_signal_with_enum_event_to_event(app):
     await asyncio.sleep(0)
 
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -185,7 +183,6 @@ async def test_dispatch_signal_triggers_multiple_handlers(app):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_triggers_multiple_events(app):
-
     @app.signal("foo.bar.baz")
     def sync_signal(*_):
         pass
@@ -200,13 +197,12 @@ async def test_dispatch_signal_triggers_multiple_events(app):
 
     assert event_task1.done()
     assert event_task2.done()
-    event_task1.result()    # Will raise if there was an exception
-    event_task2.result()    # Will raise if there was an exception
+    event_task1.result()  # Will raise if there was an exception
+    event_task2.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_with_multiple_handlers_triggers_event_once(app):
-
     @app.signal("foo.bar.baz")
     def sync_signal(*_):
         pass
@@ -222,7 +218,7 @@ async def test_dispatch_signal_with_multiple_handlers_triggers_event_once(app):
     await asyncio.sleep(0)
 
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -243,7 +239,6 @@ async def test_dispatch_signal_triggers_dynamic_route(app):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_triggers_parameterized_dynamic_route_event(app):
-
     @app.signal("foo.bar.<baz:int>")
     def sync_signal(baz):
         pass
@@ -255,12 +250,11 @@ async def test_dispatch_signal_triggers_parameterized_dynamic_route_event(app):
     await asyncio.sleep(0)
 
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_triggers_starred_dynamic_route_event(app):
-
     @app.signal("foo.bar.<baz:int>")
     def sync_signal(baz):
         pass
@@ -272,7 +266,7 @@ async def test_dispatch_signal_triggers_starred_dynamic_route_event(app):
     await asyncio.sleep(0)
 
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -294,14 +288,15 @@ async def test_dispatch_signal_triggers_with_requirements(app):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_to_event_with_requirements(app):
-
     @app.signal("foo.bar.baz")
     def sync_signal(*_):
         pass
 
     app.signal_router.finalize()
 
-    event_task = asyncio.create_task(app.event("foo.bar.baz", condition={"one": "two"}))
+    event_task = asyncio.create_task(
+        app.event("foo.bar.baz", condition={"one": "two"})
+    )
     await app.dispatch("foo.bar.baz")
     await asyncio.sleep(0)
     assert not event_task.done()
@@ -309,7 +304,7 @@ async def test_dispatch_signal_to_event_with_requirements(app):
     await app.dispatch("foo.bar.baz", condition={"one": "two"})
     await asyncio.sleep(0)
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -331,24 +326,27 @@ async def test_dispatch_signal_triggers_with_requirements_exclusive(app):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_to_event_with_requirements_exclusive(app):
-
     @app.signal("foo.bar.baz")
     def sync_signal(*_):
         pass
 
     app.signal_router.finalize()
 
-    event_task = asyncio.create_task(app.event("foo.bar.baz", condition={"one": "two"}, exclusive=False))
+    event_task = asyncio.create_task(
+        app.event("foo.bar.baz", condition={"one": "two"}, exclusive=False)
+    )
     await app.dispatch("foo.bar.baz")
     await asyncio.sleep(0)
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
-    event_task = asyncio.create_task(app.event("foo.bar.baz", condition={"one": "two"}, exclusive=False))
+    event_task = asyncio.create_task(
+        app.event("foo.bar.baz", condition={"one": "two"}, exclusive=False)
+    )
     await app.dispatch("foo.bar.baz", condition={"one": "two"})
     await asyncio.sleep(0)
     assert event_task.done()
-    event_task.result()     # Will raise if there was an exception
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -368,7 +366,6 @@ async def test_dispatch_signal_triggers_with_context(app):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_to_event_with_context(app):
-
     @app.signal("foo.bar.baz")
     def sync_signal(**context):
         pass
@@ -379,7 +376,7 @@ async def test_dispatch_signal_to_event_with_context(app):
     await app.dispatch("foo.bar.baz", context={"amount": 9})
     await asyncio.sleep(0)
     assert event_task.done()
-    assert event_task.result()['amount'] == 9
+    assert event_task.result()["amount"] == 9
 
 
 @pytest.mark.asyncio
@@ -399,7 +396,6 @@ async def test_dispatch_signal_triggers_with_context_fail(app):
 
 @pytest.mark.asyncio
 async def test_dispatch_signal_to_dynamic_route_event(app):
-
     @app.signal("foo.bar.<something>")
     def sync_signal(**context):
         pass
@@ -410,7 +406,7 @@ async def test_dispatch_signal_to_dynamic_route_event(app):
     await app.dispatch("foo.bar.baz")
     await asyncio.sleep(0)
     assert event_task.done()
-    assert event_task.result()['something'] == "baz"
+    assert event_task.result()["something"] == "baz"
 
 
 @pytest.mark.asyncio
@@ -521,7 +517,7 @@ async def test_dispatch_signal_triggers_event_on_bp_with_context(app):
     for _ in range(5):
         await asyncio.sleep(0)
     assert event_task.done()
-    assert event_task.result()['amount'] == 9
+    assert event_task.result()["amount"] == 9
 
 
 def test_bad_finalize(app):

@@ -104,9 +104,10 @@ class SignalWaiter:
             self.signal.ctx.waiters.remove(self)
 
     def matches(self, event, condition):
-        return ((condition is None and not self.exclusive)
-                or (condition is None and not self.requirements)
-                or condition == self.requirements
+        return (
+            (condition is None and not self.exclusive)
+            or (condition is None and not self.requirements)
+            or condition == self.requirements
         ) and (self.trigger or event == self.event_definition)
 
 
@@ -278,12 +279,14 @@ class SignalRouter(BaseRouter):
         return task
 
     def get_waiter(
-            self,
-            event: Union[str, Enum],
-            condition: Optional[Dict[str, Any]],
-            exclusive: bool,
+        self,
+        event: Union[str, Enum],
+        condition: Optional[Dict[str, Any]],
+        exclusive: bool,
     ):
-        event_definition = str(event.value) if isinstance(event, Enum) else event
+        event_definition = (
+            str(event.value) if isinstance(event, Enum) else event
+        )
         name, trigger, _ = self._get_event_parts(event_definition)
         signal = cast(Signal, self.name_index.get(name))
         if not signal:

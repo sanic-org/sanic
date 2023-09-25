@@ -724,7 +724,9 @@ class Sanic(
             if self.config.EVENT_AUTOREGISTER:
                 self.signal_router.reset()
                 self.add_signal(None, event)
-                waiter = self.signal_router.get_waiter(event, condition, exclusive)
+                waiter = self.signal_router.get_waiter(
+                    event, condition, exclusive
+                )
                 self.signal_router.finalize()
             else:
                 raise NotFound("Could not find signal %s" % event)

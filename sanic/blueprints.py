@@ -517,11 +517,11 @@ class Blueprint(BaseSanic):
         )
 
     def event(
-            self,
-            event: str,
-            timeout: Optional[Union[int, float]] = None,
-            *,
-            condition: Optional[Dict[str, Any]] = None,
+        self,
+        event: str,
+        timeout: Optional[Union[int, float]] = None,
+        *,
+        condition: Optional[Dict[str, Any]] = None,
     ):
         """Wait for a signal event to be dispatched.
 
@@ -541,7 +541,9 @@ class Blueprint(BaseSanic):
 
         waiters = []
         for app in self.apps:
-            waiter = app.signal_router.get_waiter(event, condition, exclusive=False)
+            waiter = app.signal_router.get_waiter(
+                event, condition, exclusive=False
+            )
             if not waiter:
                 raise NotFound("Could not find signal %s" % event)
             waiters.append(waiter)
@@ -558,7 +560,7 @@ class Blueprint(BaseSanic):
             task.cancel()
         if not done:
             raise TimeoutError()
-        finished_task, = done
+        (finished_task,) = done
         return finished_task.result()
 
     @staticmethod

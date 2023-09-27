@@ -277,7 +277,7 @@ class SignalRouter(BaseRouter):
 
         return cast(Signal, signal)
 
-    def finalize(self, do_compile: bool = True, do_optimize: bool = False):
+    def finalize(self, do_compile: bool = True, do_optimize: bool = False, loop: asyncio.AbstractEventLoop = None):
         """Finalize the router and compile the routes
 
         Args:
@@ -293,7 +293,7 @@ class SignalRouter(BaseRouter):
         self.add(_blank, "sanic.__signal__.__init__")
 
         try:
-            self.ctx.loop = asyncio.get_running_loop()
+            self.ctx.loop = loop or asyncio.get_running_loop()
         except RuntimeError:
             raise RuntimeError("Cannot finalize signals outside of event loop")
 

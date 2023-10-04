@@ -217,8 +217,9 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
                     / 2
                 )
                 _interval = max(0.1, interval)
-                self._callback_check_timeouts = \
-                    self.loop.call_later(_interval, self.check_timeouts)
+                self._callback_check_timeouts = self.loop.call_later(
+                    _interval, self.check_timeouts
+                )
                 return
             cancel_msg_args = ()
             if sys.version_info >= (3, 9):

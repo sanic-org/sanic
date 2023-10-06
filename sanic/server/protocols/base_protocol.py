@@ -90,9 +90,8 @@ class SanicProtocol(asyncio.Protocol):
         if self.transport:
             self.transport.close()
             if timeout is None:
-                self.abort()
-            else:
-                self.loop.call_later(timeout, self.abort)
+                timeout = self.app.config.GRACEFUL_SHUTDOWN_TIMEOUT
+            self.loop.call_later(timeout, self.abort)
 
     def abort(self):
         """

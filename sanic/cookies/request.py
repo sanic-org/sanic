@@ -149,13 +149,11 @@ class CookieRequestParameters(RequestParameters):
         except KeyError:
             return super().get(name, default)
 
-    def getlist(
-        self, name: str, default: Optional[Any] = None
-    ) -> Optional[Any]:
+    def getlist(self, name: str) -> list[Any]:
         try:
             return self._get_prefixed_cookie(name)
         except KeyError:
-            return super().getlist(name, default)
+            return super().getlist(name)
 
     def _get_prefixed_cookie(self, name: str) -> Any:
         getitem = super().__getitem__

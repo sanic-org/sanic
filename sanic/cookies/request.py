@@ -80,8 +80,10 @@ def parse_cookie(raw: str) -> Dict[str, List[str]]:
         # Support cookies =value or plain value with no name
         # https://github.com/httpwg/http-extensions/issues/159
         if not sep:
+            if not name:
+                continue  # Empty value like ;; or a cookie header with no value
             name, value = "", name
-            
+
         if COOKIE_NAME_RESERVED_CHARS.search(name):  # no cov
             continue
 

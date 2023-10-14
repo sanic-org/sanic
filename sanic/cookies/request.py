@@ -73,13 +73,15 @@ def parse_cookie(raw: str) -> Dict[str, List[str]]:
     cookies: Dict[str, List[str]] = {}
 
     for token in raw.split(";"):
-        name, __, value = token.partition("=")
+        name, sep, value = token.partition("=")
         name = name.strip()
         value = value.strip()
 
-        if not name:
-            continue
-
+        # Support cookies =value or plain value with no name
+        # https://github.com/httpwg/http-extensions/issues/159
+        if not sep:
+            name, value = "", name
+            
         if COOKIE_NAME_RESERVED_CHARS.search(name):  # no cov
             continue
 

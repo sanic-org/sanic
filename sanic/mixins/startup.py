@@ -881,7 +881,8 @@ class StartupMixin(metaclass=SanicMeta):
         except ServerKilled:
             exit_code = 1
         except SanicException as e:
-            kwargs = {}
+            exit_code = 1
+            kwargs = primary_server_info.settings
             if e.quiet:
                 error_logger.error(str(e))
             else:

@@ -47,10 +47,10 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     path = os.path.abspath(path)
     folder = os.path.dirname(path)
     if not os.path.isdir(folder):
-        raise FileNotFoundError(f"Socket folder does not exist: {folder}")
+        raise FileNotFoundError("Socket folder does not exist")
     try:
         if not stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
-            raise FileExistsError(f"Existing file is not a socket: {path}")
+            raise FileExistsError("Existing file is not a socket")
     except FileNotFoundError:
         pass
     # Create new socket with a random temporary name
@@ -103,7 +103,10 @@ def configure_socket(
     unix = server_settings["unix"]
     backlog = server_settings["backlog"]
     if unix:
-        sock = bind_unix_socket(unix, backlog=backlog)
+        try:
+            sock = bind_unix_socket(unix, backlog=backlog)
+        except OSError as e:
+            raise ServerError(f"Error binding {unix}: {e}", quiet=True)
         server_settings["unix"] = unix
     if sock is None:
         try:

@@ -610,7 +610,7 @@ def test_multiple_responses(
 
     @app.get("/4")
     async def handler4(request: Request):
-        response = await request.respond(headers={"one": "one"})
+        await request.respond(headers={"one": "one"})
         return json({"foo": "bar"}, headers={"one": "two"})
 
     @app.get("/5")
@@ -641,10 +641,6 @@ def test_multiple_responses(
         "been responded to."
     )
 
-    error_msg3 = (
-        "Response stream was ended, no more "
-        "response data is allowed to be sent."
-    )
 
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/1")

@@ -2180,7 +2180,7 @@ def test_safe_method_with_body_ignored(app):
     )
 
     assert request.body == b""
-    assert request.json == None
+    assert request.json is None
     assert response.body == b"OK"
 
 

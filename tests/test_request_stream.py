@@ -618,6 +618,6 @@ def test_streaming_echo():
         assert res == b"-"
 
         res = await read_chunk()
-        assert res == None
+        assert res is None
 
     app.run(access_log=False, single_process=True)

@@ -57,9 +57,7 @@ class WebsocketFrameAssembler:
         self.read_mutex = asyncio.Lock()
         self.write_mutex = asyncio.Lock()
 
-        self.completed_queue = asyncio.Queue(
-            maxsize=1
-        )  # type: asyncio.Queue[Data]
+        self.completed_queue = asyncio.Queue(maxsize=1)  # type: asyncio.Queue[Data]
 
         # put() sets this event to tell get() that a message can be fetched.
         self.message_complete = asyncio.Event()

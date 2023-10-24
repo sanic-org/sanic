@@ -4,7 +4,6 @@
 import ujson
 
 from wheezy.http import HTTPResponse, WSGIApplication
-from wheezy.http.response import json_response
 from wheezy.routing import url
 from wheezy.web.handlers import BaseHandler
 from wheezy.web.middleware import (

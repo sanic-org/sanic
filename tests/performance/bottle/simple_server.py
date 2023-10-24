@@ -2,7 +2,7 @@
 import bottle
 import ujson
 
-from bottle import route, run
+from bottle import route
 
 
 @route("/")

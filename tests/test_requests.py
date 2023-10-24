@@ -2011,11 +2011,11 @@ def test_server_name_and_url_for(app):
     app.config.SERVER_NAME = "my-server"  # This means default port
     assert app.url_for("handler", _external=True) == "http://my-server/foo"
     request, response = app.test_client.get("/foo")
-    assert request.url_for("handler") == f"http://my-server/foo"
+    assert request.url_for("handler") == "http://my-server/foo"
 
     app.config.SERVER_NAME = "https://my-server/path"
     request, response = app.test_client.get("/foo")
-    url = f"https://my-server/path/foo"
+    url = "https://my-server/path/foo"
     assert app.url_for("handler", _external=True) == url
     assert request.url_for("handler") == url
 

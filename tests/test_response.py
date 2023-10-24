@@ -769,7 +769,7 @@ def test_file_response_headers(
     assert (
         "cache-control" in headers
         and f"max-age={test_max_age}" in headers.get("cache-control")
-        and f"public" in headers.get("cache-control")
+        and "public" in headers.get("cache-control")
     )
     assert (
         "expires" in headers
@@ -800,14 +800,14 @@ def test_file_response_headers(
 
     _, response = app.test_client.get(f"/files/no_cache/{file_name}")
     headers = response.headers
-    assert "cache-control" in headers and f"no-cache" == headers.get(
+    assert "cache-control" in headers and "no-cache" == headers.get(
         "cache-control"
     )
     assert response.status == 200
 
     _, response = app.test_client.get(f"/files/no_store/{file_name}")
     headers = response.headers
-    assert "cache-control" in headers and f"no-store" == headers.get(
+    assert "cache-control" in headers and "no-store" == headers.get(
         "cache-control"
     )
     assert response.status == 200

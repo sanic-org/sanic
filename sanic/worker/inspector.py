@@ -44,8 +44,8 @@ class Inspector:
         host: str,
         port: int,
         api_key: str,
-        tls_key: Path | (str | Default),
-        tls_cert: Path | (str | Default),
+        tls_key: Path | str | Default,
+        tls_cert: Path | str | Default,
     ):
         self._publisher = publisher
         self.app_info = app_info

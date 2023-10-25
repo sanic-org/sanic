@@ -644,7 +644,7 @@ class BlueprintGroup(bpg_base):
     def __init__(
         self,
         url_prefix: str | None = None,
-        version: int | (str | float) | None = None,
+        version: int | str | float | None = None,
         strict_slashes: bool | None = None,
         version_prefix: str = "/v",
         name_prefix: str | None = "",

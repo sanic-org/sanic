@@ -762,7 +762,7 @@ class Sanic(
         blueprint: Blueprint | (Iterable[Blueprint] | BlueprintGroup),
         *,
         url_prefix: str | None = None,
-        version: int | (float | str) | None = None,
+        version: int | float | str | None = None,
         strict_slashes: bool | None = None,
         version_prefix: str | None = None,
         name_prefix: str | None = None,
@@ -1788,7 +1788,7 @@ class Sanic(
     # Configuration
     # -------------------------------------------------------------------- #
 
-    def update_config(self, config: bytes | (str | (dict | Any))) -> None:
+    def update_config(self, config: Any) -> None:
         """Update the application configuration.
 
         This method is used to update the application configuration. It can
@@ -1798,7 +1798,7 @@ class Sanic(
         See [Configuration](/en/guide/deployment/configuration) for details.
 
         Args:
-            config (Union[bytes, str, dict, Any]): The configuration object,
+            config (bytes | str | dict | Any): The configuration object,
                 dictionary, or path to a configuration file.
         """
 

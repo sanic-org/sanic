@@ -17,6 +17,8 @@ CIPHERS_TLS12 = [
     "ECDHE-RSA-AES128-GCM-SHA256",
 ]
 
+TlsDef = None | ssl.SSLContext | dict[str, Any] | str
+TlsDefs = TlsDef | list[TlsDef] | tuple[TlsDef, ...]
 
 def create_context(
     certfile: str | None = None,
@@ -37,7 +39,7 @@ def create_context(
 
 
 def shorthand_to_ctx(
-    ctxdef: None | (ssl.SSLContext | (dict | str))
+    ctxdef: TlsDef
 ) -> ssl.SSLContext | None:
     """Convert an ssl argument shorthand to an SSLContext object."""
     if ctxdef is None or isinstance(ctxdef, ssl.SSLContext):
@@ -53,7 +55,7 @@ def shorthand_to_ctx(
 
 
 def process_to_context(
-    ssldef: None | ssl.SSLContext | dict | str | list | tuple
+    ssldef: TlsDefs
 ) -> ssl.SSLContext | None:
     """Process app.run ssl argument from easy formats to full SSLContext."""
     return (

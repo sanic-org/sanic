@@ -28,12 +28,12 @@ jobs:
           # - { python-version: "3.10", tox-env: docs }
           - { python-version: "3.8",  tox-env: type-checking }
           - { python-version: "3.11", tox-env: type-checking }
-          - { python-version: "3.8",  tox-env: py38,          max-attempts: 3 }
-          - { python-version: "3.8",  tox-env: py38-no-ext,   max-attempts: 3 }
-          - { python-version: "3.9",  tox-env: py39,          max-attempts: 3 }
-          - { python-version: "3.10", tox-env: py310-no-ext,  max-attempts: 3 }
-          - { python-version: "3.11", tox-env: py311,         max-attempts: 3 }
-          - { python-version: "3.11", tox-env: py311-no-ext,  max-attempts: 3 }
+          - { python-version: "3.8",  tox-env: py38,          max-attempts: 2 }
+          - { python-version: "3.8",  tox-env: py38-no-ext,   max-attempts: 2 }
+          - { python-version: "3.9",  tox-env: py39,          max-attempts: 2 }
+          - { python-version: "3.10", tox-env: py310-no-ext,  max-attempts: 2 }
+          - { python-version: "3.11", tox-env: py311,         max-attempts: 2 }
+          - { python-version: "3.11", tox-env: py311-no-ext,  max-attempts: 2 }
           - { python-version: "3.8",  tox-env: py38-no-ext,   platform: windows-latest, ignore-errors: true }
           - { python-version: "3.9",  tox-env: py39-no-ext,   platform: windows-latest, ignore-errors: true }
           - { python-version: "3.10", tox-env: py310-no-ext,  platform: windows-latest, ignore-errors: true }

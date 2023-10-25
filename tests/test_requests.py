@@ -2211,7 +2211,7 @@ async def test_conflicting_body_methods_overload_error(app: Sanic):
 
     with pytest.raises(
         ServerError,
-        match="Duplicate route names detected: test_conflicting_body_methods_overload_error\.put.*",
+        match=r"Duplicate route names detected: test_conflicting_body_methods_overload_error\.put.*",
     ):
         await app._startup()
 
@@ -2273,7 +2273,7 @@ async def test_handler_overload_error(app: Sanic):
 
     with pytest.raises(
         ServerError,
-        match="Duplicate route names detected: test_handler_overload_error\.handler.*",
+        match=r"Duplicate route names detected: test_handler_overload_error\.handler.*",
     ):
         await app._startup()
 

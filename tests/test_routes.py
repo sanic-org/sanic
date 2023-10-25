@@ -1129,7 +1129,7 @@ def test_route_invalid_host(app):
 
 
 def test_route_with_regex_group(app):
-    @app.route("/path/to/<ext:file\.(txt)>")
+    @app.route(r"/path/to/<ext:file\.(txt)>")
     async def handler(request, ext):
         return text(ext)
 
@@ -1160,7 +1160,7 @@ def test_route_with_regex_named_group_invalid(app):
 
 
 def test_route_with_regex_group_ambiguous(app):
-    @app.route("/path/to/<ext:file(?:\.)(txt)>")
+    @app.route(r"/path/to/<ext:file(?:\.)(txt)>")
     async def handler(request, ext):
         return text(ext)
 
@@ -1169,7 +1169,7 @@ def test_route_with_regex_group_ambiguous(app):
 
     assert e.match(
         re.escape(
-            "Could not compile pattern file(?:\.)(txt). Try using a named "
+            r"Could not compile pattern file(?:\.)(txt). Try using a named "
             "group instead: '(?P<ext>your_matching_group)'"
         )
     )

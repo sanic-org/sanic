@@ -1,5 +1,4 @@
 import pytest
-
 from pytest import raises
 
 from sanic.app import Sanic
@@ -8,7 +7,6 @@ from sanic.blueprints import Blueprint
 from sanic.exceptions import BadRequest, Forbidden, SanicException, ServerError
 from sanic.request import Request
 from sanic.response import HTTPResponse, text
-
 
 MIDDLEWARE_INVOKE_COUNTER = {"request": 0, "response": 0}
 

@@ -2,19 +2,16 @@ from __future__ import annotations
 
 import re
 import string
-
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Union
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
 
-
 if TYPE_CHECKING:
     from sanic.compat import Header
 
 from typing import Literal
-
 
 SameSite = Union[
     Literal["Strict"],

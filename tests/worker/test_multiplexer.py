@@ -1,5 +1,4 @@
 import sys
-
 from multiprocessing import Event
 from os import environ, getpid
 from typing import Any, Dict, Type, Union

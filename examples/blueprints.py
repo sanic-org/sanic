@@ -1,7 +1,6 @@
 from sanic import Blueprint, Sanic
 from sanic.response import file, json
 
-
 app = Sanic("Example")
 blueprint = Blueprint("bp_example", url_prefix="/my_blueprint")
 blueprint2 = Blueprint("bp_example2", url_prefix="/my_blueprint2")

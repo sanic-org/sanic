@@ -9,7 +9,6 @@ from sanic.exceptions import ServerKilled
 from sanic.worker.constants import RestartOrder
 from sanic.worker.manager import WorkerManager
 
-
 if not OS_IS_WINDOWS:
     from signal import SIGKILL
 else:

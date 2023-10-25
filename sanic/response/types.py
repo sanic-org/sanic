@@ -24,7 +24,6 @@ from sanic.helpers import (
 )
 from sanic.http import Http
 
-
 if TYPE_CHECKING:
     from sanic.asgi import ASGIApp
     from sanic.http.http3 import HTTPReceiver

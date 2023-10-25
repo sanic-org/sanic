@@ -1,6 +1,5 @@
 import logging
 import sys
-
 from asyncio import Event
 from pathlib import Path
 
@@ -9,7 +8,6 @@ import pytest
 from sanic import Sanic
 from sanic.compat import UVLOOP_INSTALLED
 from sanic.http.constants import HTTP
-
 
 parent_dir = Path(__file__).parent.parent
 localhost_dir = parent_dir / "certs/localhost"

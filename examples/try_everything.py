@@ -4,7 +4,6 @@ from sanic import Sanic, response
 from sanic.exceptions import ServerError
 from sanic.log import logger as log
 
-
 app = Sanic("Example")
 
 

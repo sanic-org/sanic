@@ -2,7 +2,6 @@ from sanic import Sanic, response, text
 from sanic.handlers import ErrorHandler
 from sanic.server.async_server import AsyncioServer
 
-
 HTTP_PORT = 9999
 HTTPS_PORT = 8888
 

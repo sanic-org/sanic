@@ -1,7 +1,6 @@
 import asyncio
 
 import pytest
-
 from sanic_testing.testing import SanicTestClient
 
 from sanic.blueprints import Blueprint

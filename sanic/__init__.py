@@ -36,7 +36,6 @@ from sanic.response import (
 )
 from sanic.server.websockets.impl import WebsocketImplProtocol as Websocket
 
-
 DefaultSanic: TypeAlias = "Sanic[Config, SimpleNamespace]"
 """
 A type alias for a Sanic app with a default config and namespace.

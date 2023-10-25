@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-
 from argparse import ArgumentParser, Namespace
 from collections import OrderedDict
 from configparser import RawConfigParser
@@ -11,10 +10,8 @@ from os import chdir, path
 from subprocess import PIPE, Popen
 
 import towncrier
-
 from jinja2 import BaseLoader, Environment
 from requests import patch
-
 
 GIT_COMMANDS = {
     "get_tag": ["git describe --tags --abbrev=0"],
@@ -256,9 +253,7 @@ def release(args: Namespace):
     if current_tag and current_version not in current_tag:
         print(
             "Tag mismatch between what's in git and what was provided by "
-            "--current-version. Existing: {}, Give: {}".format(
-                current_tag, current_version
-            )
+            f"--current-version. Existing: {current_tag}, Give: {current_version}"
         )
         sys.exit(1)
     new_version = args.release_version or _get_new_version(

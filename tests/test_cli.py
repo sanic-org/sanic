@@ -1,13 +1,11 @@
 import json
 import os
 import sys
-
 from pathlib import Path
 from typing import List, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
-
 from sanic_routing import __version__ as __routing_version__
 
 from sanic import __version__

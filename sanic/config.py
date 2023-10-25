@@ -14,7 +14,6 @@ from sanic.http import Http
 from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
-
 FilterWarningType = Union[
     Literal["default"],
     Literal["error"],

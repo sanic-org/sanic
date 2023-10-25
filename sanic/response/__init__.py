@@ -17,7 +17,6 @@ from .types import (
     json_dumps,
 )
 
-
 __all__ = (
     "BaseHTTPResponse",
     "HTTPResponse",

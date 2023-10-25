@@ -1,6 +1,5 @@
 import logging
 import uuid
-
 from importlib import reload
 from io import StringIO
 from unittest.mock import Mock
@@ -8,11 +7,9 @@ from unittest.mock import Mock
 import pytest
 
 import sanic
-
 from sanic import Sanic
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, logger
 from sanic.response import text
-
 
 logging_format = """module: %(module)s; \
 function: %(funcName)s(); \

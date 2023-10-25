@@ -6,7 +6,6 @@ from sentry_sdk.integrations.sanic import SanicIntegration
 from sanic import Sanic
 from sanic.response import json
 
-
 sentry_init(
     dsn=getenv("SENTRY_DSN"),
     integrations=[SanicIntegration()],

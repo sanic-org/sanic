@@ -1,14 +1,12 @@
 from typing import Any, Mapping
 
 import tracerite.html
-
 from html5tagger import E
 from tracerite import html_traceback, inspector
 
 from sanic.request import Request
 
 from .base import BasePage
-
 
 # Avoid showing the request in the traceback variable inspectors
 inspector.blacklist_types += (Request,)

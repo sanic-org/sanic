@@ -3,7 +3,6 @@ import os
 import platform
 import signal
 import sys
-
 from contextlib import contextmanager
 from enum import Enum
 from typing import Awaitable, Literal, Union
@@ -12,7 +11,6 @@ from multidict import CIMultiDict  # type: ignore
 
 from sanic.helpers import Default
 from sanic.log import error_logger
-
 
 StartMethod = Union[
     Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]

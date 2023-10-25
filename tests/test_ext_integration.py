@@ -4,7 +4,6 @@ import pytest
 
 from sanic import Sanic
 
-
 try:
     import sanic_ext  # noqa: F401
 

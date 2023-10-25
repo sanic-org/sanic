@@ -1,5 +1,4 @@
 import logging
-
 from os import environ
 from unittest.mock import Mock, patch
 

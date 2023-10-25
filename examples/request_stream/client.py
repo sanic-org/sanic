@@ -1,6 +1,5 @@
 import requests
 
-
 # Warning: This is a heavy process.
 
 data = ""

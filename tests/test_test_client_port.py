@@ -2,7 +2,6 @@ from sanic_testing.testing import PORT, SanicTestClient
 
 from sanic.response import json, text
 
-
 # ------------------------------------------------------------ #
 #  UTF-8
 # ------------------------------------------------------------ #

@@ -6,7 +6,6 @@ from sanic import Sanic
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.response import json
 
-
 PRIORITY_TEST_CASES = (
     ([0, 1, 2], [1, 1, 1]),
     ([0, 1, 2], [1, 1, None]),

@@ -2,7 +2,6 @@
 """ Minimal helloworld application.
 """
 import ujson
-
 from wheezy.http import HTTPResponse, WSGIApplication
 from wheezy.routing import url
 from wheezy.web.handlers import BaseHandler
@@ -37,7 +36,6 @@ main = WSGIApplication(
 
 if __name__ == "__main__":
     import sys
-
     from wsgiref.simple_server import make_server
 
     try:

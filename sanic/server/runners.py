@@ -8,14 +8,12 @@ from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context
 
-
 if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import asyncio
 import os
 import socket
-
 from functools import partial
 from signal import SIG_IGN, SIGINT, SIGTERM
 from signal import signal as signal_func
@@ -28,7 +26,6 @@ from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
 from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
 from sanic.server.socket import bind_unix_socket, remove_unix_socket
-
 
 try:
     from aioquic.asyncio import serve as quic_serve

@@ -1,5 +1,4 @@
 import os
-
 from datetime import datetime, timezone
 from multiprocessing.context import BaseContext
 from signal import SIGINT

@@ -9,7 +9,6 @@
 import os
 import sys
 
-
 # Add support for auto-doc
 
 
@@ -19,7 +18,6 @@ root_directory = os.path.dirname(os.getcwd())
 sys.path.insert(0, root_directory)
 
 import sanic  # noqa: E402
-
 
 # -- General configuration ------------------------------------------------
 

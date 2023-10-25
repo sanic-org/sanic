@@ -8,7 +8,6 @@ from sanic.response import json, text
 from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
 
-
 data = "abc" * 1_000_000
 
 

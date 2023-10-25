@@ -7,7 +7,6 @@
 # 38->
 
 import logging
-
 from ctypes import c_int32
 from multiprocessing import Pipe, Queue, Value
 from os import environ

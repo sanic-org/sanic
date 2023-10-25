@@ -5,9 +5,7 @@ import sys
 
 import ujson as json
 import uvloop
-
 from aiohttp import web
-
 
 loop = uvloop.new_event_loop()
 asyncio.set_event_loop(loop)

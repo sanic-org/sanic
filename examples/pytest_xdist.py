@@ -11,7 +11,6 @@ Run with xdist params:
 import re
 
 import pytest
-
 from sanic_testing import SanicTestClient
 from sanic_testing.testing import PORT as PORT_BASE
 

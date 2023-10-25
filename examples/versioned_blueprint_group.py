@@ -2,7 +2,6 @@ from sanic import Sanic
 from sanic.blueprints import Blueprint
 from sanic.response import json
 
-
 app = Sanic(name="blue-print-group-version-example")
 
 bp1 = Blueprint(name="ultron", url_prefix="/ultron")

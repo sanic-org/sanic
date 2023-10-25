@@ -4,12 +4,10 @@ from typing import TYPE_CHECKING
 
 from sanic.exceptions import RequestCancelled
 
-
 if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import asyncio
-
 from asyncio.transports import Transport
 from time import monotonic as current_time
 

@@ -2,21 +2,18 @@
 import logging
 import os
 import sys
-
 from asyncio import AbstractEventLoop, sleep
 from string import ascii_lowercase
 
 import httpcore
 import httpx
 import pytest
-
 from pytest import LogCaptureFixture
 
 from sanic import Sanic
 from sanic.compat import use_context
 from sanic.request import Request
 from sanic.response import text
-
 
 # import platform
 # import subprocess

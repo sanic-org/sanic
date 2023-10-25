@@ -1,5 +1,4 @@
 import json
-
 from functools import partial
 from unittest.mock import Mock
 
@@ -9,7 +8,6 @@ from sanic import Request, Sanic
 from sanic.exceptions import SanicException
 from sanic.response import json as json_response
 from sanic.response.types import JSONResponse
-
 
 JSON_BODY = {"ok": True}
 json_dumps = partial(json.dumps, separators=(",", ":"))

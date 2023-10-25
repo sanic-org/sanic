@@ -1,7 +1,6 @@
 from sanic import Blueprint, Sanic
 from sanic.response import text
 
-
 """
 Demonstrates that blueprint request middleware are executed in the order they
 are added. And blueprint response middleware are executed in _reverse_ order.

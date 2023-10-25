@@ -1,9 +1,7 @@
 import logging
-
 from contextvars import ContextVar
 
 from sanic import Sanic, response
-
 
 log = logging.getLogger(__name__)
 

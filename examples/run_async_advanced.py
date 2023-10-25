@@ -1,12 +1,10 @@
 import asyncio
-
 from signal import SIGINT, signal
 
 import uvloop
 
 from sanic import Sanic, response
 from sanic.server import AsyncioServer
-
 
 app = Sanic("Example")
 

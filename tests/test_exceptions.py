@@ -1,7 +1,6 @@
 import logging
 
 import pytest
-
 from bs4 import BeautifulSoup
 
 from sanic import Sanic

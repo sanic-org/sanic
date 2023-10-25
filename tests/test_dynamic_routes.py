@@ -1,5 +1,4 @@
 import pytest
-
 from sanic_routing.exceptions import RouteExists
 
 from sanic.response import text

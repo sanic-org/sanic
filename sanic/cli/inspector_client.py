@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-
 from http.client import RemoteDisconnected
 from textwrap import indent
 from typing import Any
@@ -12,7 +11,6 @@ from urllib.request import urlopen
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTDTTY
 from sanic.log import Colors
-
 
 try:  # no cov
     from ujson import dumps, loads

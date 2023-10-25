@@ -1,7 +1,6 @@
 from sanic import Sanic, response
 from sanic.blueprints import Blueprint
 
-
 # Usage
 # curl -H "Host: example.com" localhost:8000
 # curl -H "Host: sub.example.com" localhost:8000

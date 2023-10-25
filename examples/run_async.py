@@ -4,7 +4,6 @@ import uvloop
 
 from sanic import Sanic, response
 
-
 app = Sanic("Example")
 
 

@@ -10,7 +10,6 @@ from sanic.constants import HTTP_METHODS
 from sanic.exceptions import URLBuildError
 from sanic.response import text
 
-
 # ------------------------------------------------------------ #
 #  UTF-8
 # ------------------------------------------------------------ #

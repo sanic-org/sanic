@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Optional, Sequence, cast
 
-
 try:  # websockets < 11.0
     from websockets.connection import State
     from websockets.server import ServerConnection as ServerProtocol
@@ -15,7 +14,6 @@ from sanic.log import logger
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol
-
 
 if TYPE_CHECKING:
     from websockets import http11

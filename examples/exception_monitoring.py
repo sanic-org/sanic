@@ -10,7 +10,6 @@ an external service.
 from sanic.exceptions import SanicException
 from sanic.handlers import ErrorHandler
 
-
 """
 Imports and code relevant for our CustomHandler class
 (Ordinarily this would be in a separate file)
@@ -38,7 +37,6 @@ server's error_handler to an instance of our CustomHandler
 """
 
 from sanic import Sanic
-
 
 handler = CustomHandler()
 app = Sanic("Example", error_handler=handler)

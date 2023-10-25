@@ -2,7 +2,6 @@ import asyncio
 
 from sanic import Sanic
 
-
 app = Sanic("Example")
 
 

@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 
 import pytest
-
 from aioquic.h3.connection import H3Connection
 from aioquic.h3.events import DataReceived, HeadersReceived
 from aioquic.quic.configuration import QuicConfiguration
@@ -17,7 +16,6 @@ from sanic.http.http3 import Http3, HTTPReceiver
 from sanic.models.server_types import ConnInfo
 from sanic.response import empty, json
 from sanic.server.protocols.http_protocol import Http3Protocol
-
 
 try:
     from unittest.mock import AsyncMock

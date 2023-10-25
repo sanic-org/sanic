@@ -1,7 +1,6 @@
 from sanic import Sanic
 from sanic import response as res
 
-
 app = Sanic("Example")
 
 

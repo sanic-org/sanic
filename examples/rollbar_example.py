@@ -6,7 +6,6 @@ from sanic import Sanic
 from sanic.exceptions import SanicException
 from sanic.handlers import ErrorHandler
 
-
 rollbar.init(getenv("ROLLBAR_API_KEY"))
 
 

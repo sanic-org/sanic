@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from sanic.http.constants import Stage
 
-
 if TYPE_CHECKING:
     from sanic.response import BaseHTTPResponse
     from sanic.server.protocols.http_protocol import HttpProtocol

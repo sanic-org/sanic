@@ -10,7 +10,6 @@ from pathlib import Path
 
 from sanic import Sanic, response
 
-
 app = Sanic("Example")
 
 

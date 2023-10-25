@@ -1,6 +1,5 @@
 import logging
 import os
-
 from contextlib import contextmanager
 from os import environ
 from pathlib import Path
@@ -9,7 +8,6 @@ from textwrap import dedent
 from unittest.mock import Mock, call
 
 import pytest
-
 from pytest import MonkeyPatch
 
 from sanic import Sanic

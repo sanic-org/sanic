@@ -3,9 +3,7 @@ from random import choice, seed
 from pytest import mark
 
 import sanic.router
-
 from sanic.request import Request
-
 
 seed("Pack my box with five dozen liquor jugs.")
 

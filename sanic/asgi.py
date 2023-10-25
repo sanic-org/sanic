@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import warnings
-
 from typing import TYPE_CHECKING
 
 from sanic.compat import Header
@@ -14,7 +13,6 @@ from sanic.request import Request
 from sanic.response import BaseHTTPResponse
 from sanic.server import ConnInfo
 from sanic.server.websockets.connection import WebSocketConnection
-
 
 if TYPE_CHECKING:
     from sanic import Sanic

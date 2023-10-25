@@ -1,11 +1,9 @@
 import asyncio
-
 from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
 
 from sanic.exceptions import BadRequest
 from sanic.models.protocol_types import TransportProtocol
 from sanic.server.websockets.connection import WebSocketConnection
-
 
 ASGIScope = MutableMapping[str, Any]
 ASGIMessage = MutableMapping[str, Any]

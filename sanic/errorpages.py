@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import sys
 import typing as t
-
 from functools import partial
 from traceback import extract_tb
 
@@ -25,7 +24,6 @@ from sanic.helpers import STATUS_CODES
 from sanic.log import deprecation, logger
 from sanic.pages.error import ErrorPage
 from sanic.response import html, json, text
-
 
 dumps: t.Callable[..., str]
 try:

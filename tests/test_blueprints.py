@@ -11,7 +11,6 @@ from sanic.exceptions import BadRequest, NotFound, SanicException, ServerError
 from sanic.request import Request
 from sanic.response import json, text
 
-
 # ------------------------------------------------------------ #
 #  GET
 # ------------------------------------------------------------ #

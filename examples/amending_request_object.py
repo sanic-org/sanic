@@ -3,7 +3,6 @@ from random import randint
 from sanic import Sanic
 from sanic.response import text
 
-
 app = Sanic("Example")
 
 

@@ -7,14 +7,12 @@ import re
 import string
 import sys
 import uuid
-
 from contextlib import suppress
 from logging import LogRecord
 from typing import Any, Dict, List, Tuple
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
 from sanic_routing.exceptions import RouteExists
 from sanic_testing.testing import PORT
 
@@ -22,7 +20,6 @@ from sanic import Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.router import Router
 from sanic.touchup.service import TouchUp
-
 
 slugify = re.compile(r"[^a-zA-Z0-9_\-]")
 random.seed("Pack my box with five dozen liquor jugs.")

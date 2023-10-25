@@ -1,6 +1,5 @@
 # Run with: python simple_server.py
 import ujson
-
 from tornado import ioloop, web
 
 

@@ -5,7 +5,6 @@ from pytest import LogCaptureFixture
 
 from sanic.response import empty
 
-
 PORT = 42101
 
 

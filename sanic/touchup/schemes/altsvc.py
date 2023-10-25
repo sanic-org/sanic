@@ -7,7 +7,6 @@ from sanic.http.constants import HTTP
 
 from .base import BaseScheme
 
-
 if TYPE_CHECKING:
     from sanic import Sanic
 

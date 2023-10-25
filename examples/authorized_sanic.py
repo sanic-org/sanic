@@ -3,7 +3,6 @@ from functools import wraps
 from sanic import Sanic
 from sanic.response import json
 
-
 app = Sanic("Example")
 
 

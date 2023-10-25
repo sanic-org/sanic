@@ -1,5 +1,4 @@
 import re
-
 from textwrap import dedent
 
 from html5tagger import HTML, Builder, E  # type: ignore

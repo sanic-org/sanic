@@ -5,7 +5,6 @@ from sanic.application.constants import Mode
 from sanic.config import Config
 from sanic.log import LOGGING_CONFIG_DEFAULTS, logger
 
-
 LOGGING_CONFIG = {**LOGGING_CONFIG_DEFAULTS}
 LOGGING_CONFIG["formatters"]["generic"]["format"] = "%(message)s"
 LOGGING_CONFIG["loggers"]["sanic.root"]["level"] = "DEBUG"

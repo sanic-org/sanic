@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib
 import inspect
 import pkgutil
-
 from collections import defaultdict
 from dataclasses import dataclass, field
 from html import escape

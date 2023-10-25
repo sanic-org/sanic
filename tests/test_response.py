@@ -2,7 +2,6 @@ import asyncio
 import inspect
 import os
 import time
-
 from collections import namedtuple
 from datetime import datetime, timedelta
 from email.utils import formatdate, parsedate_to_datetime
@@ -14,7 +13,6 @@ from typing import Callable, List, Union
 from urllib.parse import unquote
 
 import pytest
-
 from aiofiles import os as async_os
 from pytest import LogCaptureFixture
 
@@ -32,7 +30,6 @@ from sanic.response import (
     raw,
     text,
 )
-
 
 JSON_DATA = {"ok": True}
 

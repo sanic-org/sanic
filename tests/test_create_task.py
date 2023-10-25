@@ -1,6 +1,5 @@
 import asyncio
 import sys
-
 from threading import Event
 
 import pytest

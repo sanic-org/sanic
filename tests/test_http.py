@@ -1,17 +1,14 @@
 import json as stdjson
-
 from collections import namedtuple
 from pathlib import Path
 from sys import version_info
 
 import pytest
-
 from sanic_testing.reusable import ReusableClient
 
 from sanic import json, text
 from sanic.app import Sanic
 from tests.client import RawClient
-
 
 parent_dir = Path(__file__).parent
 localhost_dir = parent_dir / "certs/localhost"

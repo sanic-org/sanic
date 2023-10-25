@@ -8,14 +8,12 @@ from unittest.mock import Mock, patch
 from urllib.error import URLError
 
 import pytest
-
 from sanic_testing import TestManager
 
 from sanic.cli.inspector_client import InspectorClient
 from sanic.helpers import Default
 from sanic.log import Colors
 from sanic.worker.inspector import Inspector
-
 
 DATA = {
     "info": {

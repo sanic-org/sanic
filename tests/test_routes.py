@@ -2,7 +2,6 @@ import asyncio
 import re
 
 import pytest
-
 from sanic_routing.exceptions import (
     InvalidUsage,
     ParameterNameConflicts,

@@ -4,7 +4,6 @@ from contextlib import suppress
 from importlib import import_module
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from sanic import Sanic
 

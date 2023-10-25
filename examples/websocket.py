@@ -1,7 +1,6 @@
 from sanic import Sanic
 from sanic.response import redirect
 
-
 app = Sanic("Example")
 
 

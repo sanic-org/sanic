@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-
 from asyncio import new_event_loop
 from itertools import chain
 from multiprocessing.connection import Connection

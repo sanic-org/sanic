@@ -4,7 +4,6 @@ Modify header or status in response
 
 from sanic import Sanic, response
 
-
 app = Sanic("Example")
 
 

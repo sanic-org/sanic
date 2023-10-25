@@ -4,11 +4,9 @@ import pickle
 import random
 import signal
 import sys
-
 from asyncio import sleep
 
 import pytest
-
 from sanic_testing.testing import HOST, PORT
 
 from sanic import Blueprint, text

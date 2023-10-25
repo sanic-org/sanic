@@ -6,12 +6,10 @@ from sanic.http.constants import HTTP
 from sanic.http.http3 import Http3
 from sanic.touchup.meta import TouchUpMeta
 
-
 if TYPE_CHECKING:
     from sanic.app import Sanic
 
 import sys
-
 from asyncio import CancelledError
 from time import monotonic as current_time
 
@@ -25,7 +23,6 @@ from sanic.log import Colors, error_logger, logger
 from sanic.models.server_types import ConnInfo
 from sanic.request import Request
 from sanic.server.protocols.base_protocol import SanicProtocol
-
 
 ConnectionProtocol = type("ConnectionProtocol", (), {})
 try:

@@ -2,7 +2,6 @@ from json import loads as sloads
 
 import pytest
 
-
 try:
     from ujson import loads as uloads
 

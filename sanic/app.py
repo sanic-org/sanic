@@ -5,7 +5,6 @@ import logging
 import logging.config
 import re
 import sys
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -88,7 +87,6 @@ from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
-
 
 if TYPE_CHECKING:
     try:
@@ -850,8 +848,8 @@ class Sanic(
             return
         if blueprint.name in self.blueprints:
             assert self.blueprints[blueprint.name] is blueprint, (
-                'A blueprint with the name "{}" is already registered.  '
-                "Blueprint names must be unique.".format(blueprint.name)
+                f'A blueprint with the name "{blueprint.name}" is already registered.  '
+                "Blueprint names must be unique."
             )
         else:
             self.blueprints[blueprint.name] = blueprint

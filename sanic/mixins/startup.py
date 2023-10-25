@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import platform
-
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -64,7 +63,6 @@ from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
 from sanic.worker.serve import worker_serve
 
-
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.application.state import ApplicationState
@@ -73,7 +71,6 @@ if TYPE_CHECKING:
 SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
 from typing import Literal
-
 
 HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
 

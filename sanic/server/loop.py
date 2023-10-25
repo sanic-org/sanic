@@ -1,6 +1,5 @@
 import asyncio
 import sys
-
 from os import getenv
 
 from sanic.compat import OS_IS_WINDOWS

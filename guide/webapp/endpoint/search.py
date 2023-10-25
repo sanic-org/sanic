@@ -6,7 +6,6 @@ from webapp.display.page import Page
 from webapp.display.search.renderer import SearchRenderer
 from webapp.display.search.search import Document, Searcher, Stemmer
 
-
 bp = Blueprint("search", url_prefix="/<language>/search")
 
 

@@ -2,7 +2,6 @@ from asyncio import sleep
 
 from sanic import Sanic, response
 
-
 app = Sanic("DelayedResponseApp", strict_slashes=True)
 app.config.AUTO_EXTEND = False
 

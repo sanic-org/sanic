@@ -2,7 +2,6 @@ import logging
 import os
 import platform
 import sys
-
 from unittest.mock import Mock, patch
 
 import pytest

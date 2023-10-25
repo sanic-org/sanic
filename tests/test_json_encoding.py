@@ -1,5 +1,4 @@
 import sys
-
 from dataclasses import asdict, dataclass
 from functools import partial
 from json import dumps as sdumps
@@ -8,10 +7,8 @@ from typing import Dict
 
 import pytest
 
-
 try:
     import ujson
-
     from ujson import dumps as udumps
 
     ujson_version = tuple(

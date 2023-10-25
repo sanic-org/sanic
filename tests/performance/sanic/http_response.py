@@ -5,7 +5,6 @@ import timeit
 
 from sanic.response import json
 
-
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe()))
 )

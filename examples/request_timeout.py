@@ -4,7 +4,6 @@ from sanic import Sanic, response
 from sanic.config import Config
 from sanic.exceptions import RequestTimeout
 
-
 Config.REQUEST_TIMEOUT = 1
 app = Sanic("Example")
 

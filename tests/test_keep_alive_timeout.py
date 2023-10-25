@@ -1,18 +1,15 @@
 import asyncio
 import platform
-
 from asyncio import sleep as aio_sleep
 from itertools import count
 from os import environ
 
 import pytest
-
 from sanic_testing.reusable import ReusableClient
 
 from sanic import Sanic
 from sanic.compat import OS_IS_WINDOWS
 from sanic.response import text
-
 
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 

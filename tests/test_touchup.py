@@ -1,7 +1,6 @@
 import logging
 
 import pytest
-
 from sanic_routing.exceptions import NotFound
 
 from sanic.signals import RESERVED_NAMESPACES

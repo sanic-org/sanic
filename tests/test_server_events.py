@@ -1,15 +1,12 @@
 import asyncio
 import signal
-
 from contextlib import closing
 from socket import socket
 
 import pytest
-
 from sanic_testing.testing import HOST, PORT
 
 from sanic.exceptions import BadRequest, SanicException
-
 
 AVAILABLE_LISTENERS = [
     "before_server_start",

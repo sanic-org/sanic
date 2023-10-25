@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse
@@ -24,7 +23,6 @@ from sanic.http.constants import Stage
 from sanic.http.stream import Stream
 from sanic.log import access_logger, error_logger, logger
 from sanic.touchup import TouchUpMeta
-
 
 HTTP_CONTINUE = b"HTTP/1.1 100 Continue\r\n\r\n"
 

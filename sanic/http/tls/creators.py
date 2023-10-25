@@ -3,7 +3,6 @@ from __future__ import annotations
 import ssl
 import subprocess
 import sys
-
 from abc import ABC, abstractmethod
 from contextlib import suppress
 from pathlib import Path
@@ -21,7 +20,6 @@ from sanic.constants import (
 from sanic.exceptions import SanicException
 from sanic.helpers import Default
 from sanic.http.tls.context import CertSimple, SanicSSLContext
-
 
 try:
     import trustme

@@ -2,7 +2,6 @@ from abc import ABCMeta
 from pathlib import Path
 from typing import Optional
 
-
 CURRENT_DIR = Path(__file__).parent
 
 

@@ -1,5 +1,4 @@
 import sys
-
 from pathlib import Path
 
 import pytest
@@ -7,7 +6,6 @@ import pytest
 from sanic.app import Sanic
 from sanic.response import empty
 from tests.client import RawClient
-
 
 parent_dir = Path(__file__).parent
 localhost_dir = parent_dir / "certs/localhost"

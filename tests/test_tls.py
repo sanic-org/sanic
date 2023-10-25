@@ -3,7 +3,6 @@ import os
 import ssl
 import subprocess
 import sys
-
 from contextlib import contextmanager
 from multiprocessing import Event
 from pathlib import Path
@@ -11,11 +10,9 @@ from unittest.mock import Mock, patch
 from urllib.parse import urlparse
 
 import pytest
-
 from sanic_testing.testing import HOST, PORT, SanicTestClient
 
 import sanic.http.tls.creators
-
 from sanic import Sanic
 from sanic.application.constants import Mode
 from sanic.compat import use_context
@@ -30,7 +27,6 @@ from sanic.http.tls.creators import (
 )
 from sanic.response import text
 from sanic.worker.loader import CertLoader
-
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 localhost_dir = os.path.join(current_dir, "certs/localhost")

@@ -1,6 +1,5 @@
 import logging
 import socket
-
 from os import getenv
 from platform import node
 from uuid import getnode as get_mac
@@ -10,7 +9,6 @@ from logdna import LogDNAHandler
 from sanic import Sanic
 from sanic.request import Request
 from sanic.response import json
-
 
 log = logging.getLogger("logdna")
 log.setLevel(logging.INFO)

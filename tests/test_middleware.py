@@ -1,12 +1,10 @@
 import logging
-
 from asyncio import CancelledError, sleep
 from itertools import count
 
 from sanic.exceptions import NotFound
 from sanic.request import Request
 from sanic.response import HTTPResponse, json, text
-
 
 # ------------------------------------------------------------ #
 #  GET

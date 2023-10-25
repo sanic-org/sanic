@@ -1,11 +1,9 @@
 from typing import Any, Callable, Coroutine
 
 import pytest
-
 from websockets.client import WebSocketClientProtocol
 
 from sanic import Request, Sanic, Websocket
-
 
 MimicClientType = Callable[
     [WebSocketClientProtocol], Coroutine[None, None, Any]

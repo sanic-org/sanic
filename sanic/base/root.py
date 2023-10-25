@@ -1,5 +1,4 @@
 import re
-
 from typing import Any, Optional
 
 from sanic.base.meta import SanicMeta
@@ -10,7 +9,6 @@ from sanic.mixins.middleware import MiddlewareMixin
 from sanic.mixins.routes import RouteMixin
 from sanic.mixins.signals import SignalMixin
 from sanic.mixins.static import StaticMixin
-
 
 VALID_NAME = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_\-]*$")
 

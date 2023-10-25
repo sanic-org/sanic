@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import re
-
 from collections import Counter
 from inspect import isawaitable
 from os import environ
@@ -10,7 +9,6 @@ from unittest.mock import Mock, patch
 import pytest
 
 import sanic
-
 from sanic import Sanic
 from sanic.compat import OS_IS_WINDOWS
 from sanic.config import Config

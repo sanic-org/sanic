@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from socket import socket
@@ -11,7 +10,6 @@ from typing import TYPE_CHECKING, Any
 from sanic.application.constants import Mode, Server, ServerStage
 from sanic.log import VerbosityFilter, logger
 from sanic.server.async_server import AsyncioServer
-
 
 if TYPE_CHECKING:
     from sanic import Sanic

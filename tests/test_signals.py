@@ -1,11 +1,9 @@
 import asyncio
-
 from enum import Enum
 from inspect import isawaitable
 from itertools import count
 
 import pytest
-
 from sanic_routing.exceptions import NotFound
 
 from sanic import Blueprint, Sanic, empty

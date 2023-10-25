@@ -1,7 +1,6 @@
 import re
 import signal
 import threading
-
 from asyncio import Event
 from logging import DEBUG
 from pathlib import Path

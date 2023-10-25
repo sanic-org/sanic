@@ -4,7 +4,6 @@ from sanic.response import stream, text
 from sanic.views import HTTPMethodView
 from sanic.views import stream as stream_decorator
 
-
 bp = Blueprint("bp_example")
 app = Sanic("Example")
 

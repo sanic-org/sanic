@@ -3,7 +3,6 @@ from __future__ import annotations
 from asyncio import BaseTransport
 from typing import TYPE_CHECKING, AnyStr
 
-
 if TYPE_CHECKING:
     from sanic.http.constants import HTTP
     from sanic.models.asgi import ASGIScope

@@ -11,7 +11,6 @@ from typing import (
 
 from sanic.exceptions import InvalidUsage
 
-
 ASGIMessage = MutableMapping[str, Any]
 
 

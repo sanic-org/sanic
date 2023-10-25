@@ -1,11 +1,9 @@
 """Defines basics of HTTP standard."""
 
 import sys
-
 from importlib import import_module
 from inspect import ismodule
 from typing import Dict
-
 
 STATUS_CODES: Dict[int, bytes] = {
     100: b"Continue",

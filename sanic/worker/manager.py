@@ -1,5 +1,4 @@
 import os
-
 from contextlib import suppress
 from itertools import count
 from random import choice
@@ -12,7 +11,6 @@ from sanic.exceptions import ServerKilled
 from sanic.log import error_logger, logger
 from sanic.worker.constants import RestartOrder
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
-
 
 if not OS_IS_WINDOWS:
     from signal import SIGKILL

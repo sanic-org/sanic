@@ -1,5 +1,4 @@
 import asyncio
-
 from asyncio.tasks import Task
 from unittest.mock import Mock, call
 
@@ -8,7 +7,6 @@ import pytest
 from sanic.app import Sanic
 from sanic.application.state import ApplicationServerInfo, ServerStage
 from sanic.response import empty
-
 
 try:
     from unittest.mock import AsyncMock

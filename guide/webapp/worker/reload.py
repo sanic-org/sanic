@@ -5,7 +5,6 @@ from queue import Empty, Queue
 from typing import Any
 
 import ujson
-
 from sanic import Request, Sanic, Websocket
 
 

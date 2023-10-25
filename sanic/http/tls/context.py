@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import os
 import ssl
-
 from typing import Any, Iterable
 
 from sanic.log import logger
-
 
 # Only allow secure ciphers, notably leaving out AES-CBC mode
 # OpenSSL chooses ECDSA or RSA depending on the cert in use

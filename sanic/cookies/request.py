@@ -1,11 +1,9 @@
 import re
-
 from typing import Any, Dict, List, Optional
 
 from sanic.cookies.response import Cookie
 from sanic.log import deprecation
 from sanic.request.parameters import RequestParameters
-
 
 COOKIE_NAME_RESERVED_CHARS = re.compile(
     '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'

@@ -1,12 +1,10 @@
 # flake8: noqa: E501
 
 import subprocess
-
 from pathlib import Path
 from typing import List, Tuple
 
 import pytest
-
 
 CURRENT_DIR = Path(__file__).parent
 

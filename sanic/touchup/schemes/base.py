@@ -26,6 +26,7 @@ class BaseScheme(ABC):
     def build(cls, method, module_globals, app):
         raw_source = getsource(method)
         src = dedent(raw_source)
+        src = f"from __future__ import annotations\n{src}"
         node = parse(src)
 
         for scheme in cls._registry:

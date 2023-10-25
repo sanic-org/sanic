@@ -60,9 +60,7 @@ def _make_path(maybe_path: Path | str, tmpdir: Path | None) -> Path:
     return path
 
 
-def get_ssl_context(
-    app: Sanic, ssl: ssl.SSLContext | None
-) -> ssl.SSLContext:
+def get_ssl_context(app: Sanic, ssl: ssl.SSLContext | None) -> ssl.SSLContext:
     if ssl:
         return ssl
 

@@ -1,4 +1,3 @@
-
 from typing import Iterable, TypedDict
 
 from html5tagger import E

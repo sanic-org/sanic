@@ -401,9 +401,7 @@ class SessionTicketStore:
         return self.tickets.pop(label, None)
 
 
-def get_config(
-    app: Sanic, ssl: SanicSSLContext | (CertSelector | SSLContext)
-):
+def get_config(app: Sanic, ssl: SanicSSLContext | CertSelector | SSLContext):
     # TODO:
     # - proper selection needed if service with multiple certs insted of
     #   just taking the first

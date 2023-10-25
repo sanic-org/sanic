@@ -1214,7 +1214,11 @@ class Sanic(
 
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
-        response: BaseHTTPResponse | (Coroutine[Any, Any, BaseHTTPResponse | None] | ResponseStream) | None = None
+        response: (
+            BaseHTTPResponse
+            | (Coroutine[Any, Any, BaseHTTPResponse | None] | ResponseStream)
+            | None
+        ) = None
         run_middleware = True
         try:
             await self.dispatch(
@@ -1272,10 +1276,8 @@ class Sanic(
 
                 if handler is None:
                     raise ServerError(
-
-                            "'None' was returned while requesting a "
-                            "handler from the router"
-
+                        "'None' was returned while requesting a "
+                        "handler from the router"
                     )
 
                 # Run response handler

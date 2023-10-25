@@ -153,7 +153,7 @@ class MediaType:
 
         params = {
             key.strip(): value.strip()
-                for key, value in (param.split("=", 1) for param in raw_params)
+            for key, value in (param.split("=", 1) for param in raw_params)
         }
 
         return cls(type_.lstrip(), subtype.rstrip(), **params)

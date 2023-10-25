@@ -68,7 +68,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = {  # no cov
         },
         "access": {
             "format": "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: "
-            + "%(request)s %(message)s %(status)s %(byte)s",
+            "%(request)s %(message)s %(status)s %(byte)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },

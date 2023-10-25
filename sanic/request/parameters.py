@@ -18,9 +18,7 @@ class RequestParameters(dict):
         """  # noqa: E501
         return super().get(name, [default])[0]
 
-    def getlist(
-        self, name: str, default: Any | None = None
-    ) -> Any | None:
+    def getlist(self, name: str, default: Any | None = None) -> Any | None:
         """Return the entire list
 
         Args:

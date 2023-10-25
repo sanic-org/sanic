@@ -133,10 +133,8 @@ class ErrorHandler:
                 url = repr(request.url)
             except AttributeError:  # no cov
                 url = "unknown"
-            response_message = (
-                "Exception raised in exception handler " '"%s" for uri: %s'
-            )
-            error_logger.exception(response_message, handler.__name__, url)
+            response_message = f'Exception raised in exception handler "{handler.__name__}" for uri: {url}'
+            error_logger.exception(response_message)
 
             if self.debug:
                 return text(response_message % (handler.__name__, url), 500)

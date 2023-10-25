@@ -3,9 +3,21 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
-extend-select = ["I", "W", "UP", "C4"]
-# Worth selecting but still too broken: ASYNC, S, B
-ignore = ["D100", "D101", "D102", "D103", "E402", "E741", "F811", "F821"]
+extend-select = ["I", "W", "UP", "C4", "ISC"]
+# Worth selecting but still too broken: ASYNC, S, B, DTZ, FA
+ignore = [
+	"D100",
+	"D101",
+	"D102",
+	"D103",
+	"E402",
+	"E741",
+	"F811",
+	"F821",
+	# ruff format complains about these:
+	"ISC001",
+	"W191",
+]
 line-length = 79
 show-source = true
 show-fixes = true

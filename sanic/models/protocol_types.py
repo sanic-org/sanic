@@ -19,6 +19,7 @@ class HTMLProtocol(Protocol):
     def _repr_html_(self) -> AnyStr:
         ...
 
+
 class Range(Protocol):
     start: int | None
     end: int | None

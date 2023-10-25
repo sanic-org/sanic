@@ -100,9 +100,7 @@ def find_cert(self: CertSelector, server_name: str):
     raise ValueError(f"No certificate found matching hostname {server_name!r}")
 
 
-def match_hostname(
-    ctx: ssl.SSLContext | CertSelector, hostname: str
-) -> bool:
+def match_hostname(ctx: ssl.SSLContext | CertSelector, hostname: str) -> bool:
     """Match names from CertSelector against a received hostname."""
     # Local certs are considered trusted, so this can be less pedantic
     # and thus faster than the deprecated ssl.match_hostname function is.

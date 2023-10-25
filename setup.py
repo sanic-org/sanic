@@ -97,7 +97,7 @@ setup_kwargs = {
 }
 
 env_dependency = (
-    '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
+    '; sys_platform != "win32" and implementation_name == "cpython"'
 )
 ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.15.0" + env_dependency

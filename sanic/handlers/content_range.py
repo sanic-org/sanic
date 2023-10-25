@@ -33,9 +33,7 @@ class ContentRangeHandler(Range):
             raise HeaderNotFound("Range Header Not Found")
         unit, _, value = tuple(map(str.strip, _range.partition("=")))
         if unit != "bytes":
-            raise InvalidRangeType(
-                f"{unit} is not a valid Range Type", self
-            )
+            raise InvalidRangeType(f"{unit} is not a valid Range Type", self)
         start_b, _, end_b = tuple(map(str.strip, value.partition("-")))
         try:
             self.start = int(start_b) if start_b else None

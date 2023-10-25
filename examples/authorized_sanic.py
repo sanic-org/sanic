@@ -1,4 +1,3 @@
-
 from functools import wraps
 
 from sanic import Sanic

@@ -128,7 +128,7 @@ class Config(dict, metaclass=DescriptorMeta):
 
     def __init__(
         self,
-        defaults: dict[str, str | (bool | (int | (float | None)))] | None = None,
+        defaults: dict[str, str | bool | int | float | None] | None = None,
         env_prefix: str | None = SANIC_PREFIX,
         keep_alive: bool | None = None,
         *,

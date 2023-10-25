@@ -1124,7 +1124,7 @@ def test_route_invalid_host(app):
             return text("pass")
 
     assert str(excinfo.value) == (
-        "Expected either string or Iterable of " f"host strings, not {host!r}"
+        f"Expected either string or Iterable of host strings, not {host!r}"
     )
 
 

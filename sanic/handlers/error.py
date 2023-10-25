@@ -137,7 +137,7 @@ class ErrorHandler:
             error_logger.exception(response_message)
 
             if self.debug:
-                return text(response_message % (handler.__name__, url), 500)
+                return text(response_message, 500)
             else:
                 return text("An error occurred while handling an error", 500)
         return response

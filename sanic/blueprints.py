@@ -14,15 +14,9 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Iterable,
     Iterator,
-    List,
-    Optional,
     Sequence,
-    Set,
-    Tuple,
-    Union,
     overload,
 )
 
@@ -122,10 +116,10 @@ class Blueprint(BaseSanic):
     def __init__(
         self,
         name: str,
-        url_prefix: Optional[str] = None,
-        host: Optional[Union[List[str], str]] = None,
-        version: Optional[Union[int, str, float]] = None,
-        strict_slashes: Optional[bool] = None,
+        url_prefix: str | None = None,
+        host: list[str] | str | None = None,
+        version: int | (str | float) | None = None,
+        strict_slashes: bool | None = None,
         version_prefix: str = "/v",
     ):
         super().__init__(name=name)
@@ -161,7 +155,7 @@ class Blueprint(BaseSanic):
         return f"Blueprint({args})"
 
     @property
-    def apps(self) -> Set[Sanic]:
+    def apps(self) -> set[Sanic]:
         """Get the set of apps that this blueprint is registered to.
 
         Returns:
@@ -196,23 +190,23 @@ class Blueprint(BaseSanic):
 
     def reset(self) -> None:
         """Reset the blueprint to its initial state."""
-        self._apps: Set[Sanic] = set()
+        self._apps: set[Sanic] = set()
         self._allow_route_overwrite = False
-        self.exceptions: List[RouteHandler] = []
-        self.listeners: Dict[str, List[ListenerType[Any]]] = {}
-        self.middlewares: List[MiddlewareType] = []
-        self.routes: List[Route] = []
-        self.statics: List[RouteHandler] = []
-        self.websocket_routes: List[Route] = []
+        self.exceptions: list[RouteHandler] = []
+        self.listeners: dict[str, list[ListenerType[Any]]] = {}
+        self.middlewares: list[MiddlewareType] = []
+        self.routes: list[Route] = []
+        self.statics: list[RouteHandler] = []
+        self.websocket_routes: list[Route] = []
 
     def copy(
         self,
         name: str,
-        url_prefix: Optional[Union[str, Default]] = _default,
-        version: Optional[Union[int, str, float, Default]] = _default,
-        version_prefix: Union[str, Default] = _default,
-        allow_route_overwrite: Union[bool, Default] = _default,
-        strict_slashes: Optional[Union[bool, Default]] = _default,
+        url_prefix: str | Default | None = _default,
+        version: int | (str | (float | Default)) | None = _default,
+        version_prefix: str | Default = _default,
+        allow_route_overwrite: bool | Default = _default,
+        strict_slashes: bool | Default | None = _default,
         with_registration: bool = True,
         with_ctx: bool = False,
     ):
@@ -277,12 +271,12 @@ class Blueprint(BaseSanic):
 
     @staticmethod
     def group(
-        *blueprints: Union[Blueprint, BlueprintGroup],
-        url_prefix: Optional[str] = None,
-        version: Optional[Union[int, str, float]] = None,
-        strict_slashes: Optional[bool] = None,
+        *blueprints: Blueprint | BlueprintGroup,
+        url_prefix: str | None = None,
+        version: int | (str | float) | None = None,
+        strict_slashes: bool | None = None,
         version_prefix: str = "/v",
-        name_prefix: Optional[str] = "",
+        name_prefix: str | None = "",
     ) -> BlueprintGroup:
         """Group multiple blueprints (or other blueprint groups) together.
 
@@ -479,7 +473,7 @@ class Blueprint(BaseSanic):
                 continue
             future.condition.update({"__blueprint__": self.name})
             # Force exclusive to be False
-            app._apply_signal(tuple((*future[:-1], False)))
+            app._apply_signal((*future[:-1], False))
 
         self.routes += [route for route in routes if isinstance(route, Route)]
         self.websocket_routes += [
@@ -516,7 +510,7 @@ class Blueprint(BaseSanic):
             *[app.dispatch(*args, **kwargs) for app in self.apps]
         )
 
-    def event(self, event: str, timeout: Optional[Union[int, float]] = None):
+    def event(self, event: str, timeout: int | float | None = None):
         """Wait for a signal event to be dispatched.
 
         Args:
@@ -550,7 +544,7 @@ class Blueprint(BaseSanic):
         return value
 
     @staticmethod
-    def _setup_uri(base: str, prefix: Optional[str]):
+    def _setup_uri(base: str, prefix: str | None):
         uri = base
         if prefix:
             uri = prefix
@@ -563,7 +557,7 @@ class Blueprint(BaseSanic):
 
     @staticmethod
     def register_futures(
-        apps: Set[Sanic], bp: Blueprint, futures: Sequence[Tuple[Any, ...]]
+        apps: set[Sanic], bp: Blueprint, futures: Sequence[tuple[Any, ...]]
     ):
         """Register futures to the apps.
 
@@ -575,7 +569,7 @@ class Blueprint(BaseSanic):
         """
 
         for app in apps:
-            app._future_registry.update(set((bp, item) for item in futures))
+            app._future_registry.update({(bp, item) for item in futures})
 
 
 if sys.version_info < (3, 9):
@@ -667,13 +661,13 @@ class BlueprintGroup(bpg_base):
 
     def __init__(
         self,
-        url_prefix: Optional[str] = None,
-        version: Optional[Union[int, str, float]] = None,
-        strict_slashes: Optional[bool] = None,
+        url_prefix: str | None = None,
+        version: int | (str | float) | None = None,
+        strict_slashes: bool | None = None,
         version_prefix: str = "/v",
-        name_prefix: Optional[str] = "",
+        name_prefix: str | None = "",
     ):
-        self._blueprints: List[Blueprint] = []
+        self._blueprints: list[Blueprint] = []
         self._url_prefix = url_prefix
         self._version = version
         self._version_prefix = version_prefix
@@ -681,7 +675,7 @@ class BlueprintGroup(bpg_base):
         self._name_prefix = name_prefix
 
     @property
-    def url_prefix(self) -> Optional[Union[int, str, float]]:
+    def url_prefix(self) -> int | (str | float) | None:
         """The URL prefix for the Blueprint Group.
 
         Returns:
@@ -691,7 +685,7 @@ class BlueprintGroup(bpg_base):
         return self._url_prefix
 
     @property
-    def blueprints(self) -> List[Blueprint]:
+    def blueprints(self) -> list[Blueprint]:
         """A list of all the available blueprints under this group.
 
         Returns:
@@ -701,7 +695,7 @@ class BlueprintGroup(bpg_base):
         return self._blueprints
 
     @property
-    def version(self) -> Optional[Union[str, int, float]]:
+    def version(self) -> str | (int | float) | None:
         """API Version for the Blueprint Group, if any.
 
         Returns:
@@ -710,7 +704,7 @@ class BlueprintGroup(bpg_base):
         return self._version
 
     @property
-    def strict_slashes(self) -> Optional[bool]:
+    def strict_slashes(self) -> bool | None:
         """Whether to enforce strict slashes for the Blueprint Group.
 
         Returns:
@@ -728,7 +722,7 @@ class BlueprintGroup(bpg_base):
         return self._version_prefix
 
     @property
-    def name_prefix(self) -> Optional[str]:
+    def name_prefix(self) -> str | None:
         """Name prefix for the Blueprint Group.
 
         This is mainly needed when blueprints are copied in order to
@@ -756,8 +750,8 @@ class BlueprintGroup(bpg_base):
         ...
 
     def __getitem__(
-        self, item: Union[int, slice]
-    ) -> Union[Blueprint, MutableSequence[Blueprint]]:
+        self, item: int | slice
+    ) -> Blueprint | MutableSequence[Blueprint]:
         """Get the Blueprint object at the specified index.
 
         This method returns a blueprint inside the group specified by
@@ -785,8 +779,8 @@ class BlueprintGroup(bpg_base):
 
     def __setitem__(
         self,
-        index: Union[int, slice],
-        item: Union[Blueprint, Iterable[Blueprint]],
+        index: int | slice,
+        item: Blueprint | Iterable[Blueprint],
     ) -> None:
         """Set the Blueprint object at the specified index.
 
@@ -824,7 +818,7 @@ class BlueprintGroup(bpg_base):
     def __delitem__(self, index: slice) -> None:
         ...
 
-    def __delitem__(self, index: Union[int, slice]) -> None:
+    def __delitem__(self, index: int | slice) -> None:
         """Delete the Blueprint object at the specified index.
 
         Abstract method implemented to turn the `BlueprintGroup` class

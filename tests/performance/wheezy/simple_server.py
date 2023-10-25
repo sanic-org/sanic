@@ -41,7 +41,7 @@ if __name__ == "__main__":
     from wsgiref.simple_server import make_server
 
     try:
-        print("Visit http://localhost:{}/".format(sys.argv[-1]))
+        print(f"Visit http://localhost:{sys.argv[-1]}/")
         make_server("", int(sys.argv[-1]), main).serve_forever()
     except KeyboardInterrupt:
         pass

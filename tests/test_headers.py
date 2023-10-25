@@ -402,7 +402,7 @@ def test_accept_misc():
     assert m.header.type == "*"
     assert m.header.subtype == "plain"
     assert m.header.q == 1.0
-    assert m.header.params == dict(param="123")
+    assert m.header.params == {"param": "123"}
     # Matches object against another Matched object (by mime and header)
     assert m == a.match("text/*")
     # Against unsupported type falls back to object id matching

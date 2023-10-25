@@ -622,7 +622,7 @@ class Unauthorized(HTTPException):
         # if auth-scheme is specified, set "WWW-Authenticate" header
         if scheme is not None:
             values = [
-                '{!s}="{!s}"'.format(k, v) for k, v in challenges.items()
+                f'{k!s}="{v!s}"' for k, v in challenges.items()
             ]
             challenge = ", ".join(values)
 

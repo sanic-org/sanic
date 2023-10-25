@@ -196,7 +196,7 @@ Or, a path to a directory to run as a simple HTTP server:
         if self.args.tlshost:
             ssl.append(None)
         if self.args.cert is not None or self.args.key is not None:
-            ssl.append(dict(cert=self.args.cert, key=self.args.key))
+            ssl.append({"cert": self.args.cert, "key": self.args.key})
         if self.args.tls:
             ssl += self.args.tls
         if not ssl:

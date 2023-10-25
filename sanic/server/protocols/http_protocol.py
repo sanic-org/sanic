@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sanic.http.constants import HTTP
 from sanic.http.http3 import Http3
@@ -55,7 +55,7 @@ class HttpProtocolMixin:
             ...
 
     def _setup(self):
-        self.request: Optional[Request] = None
+        self.request: Request | None = None
         self.access_log = self.app.config.ACCESS_LOG
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
@@ -295,7 +295,7 @@ class Http3Protocol(HttpProtocolMixin, ConnectionProtocol):  # type: ignore
         self.app = app
         super().__init__(*args, **kwargs)
         self._setup()
-        self._connection: Optional[H3Connection] = None
+        self._connection: H3Connection | None = None
 
     def quic_event_received(self, event: QuicEvent) -> None:
         logger.debug(
@@ -319,5 +319,5 @@ class Http3Protocol(HttpProtocolMixin, ConnectionProtocol):  # type: ignore
                 self._http.http_event_received(http_event)
 
     @property
-    def connection(self) -> Optional[H3Connection]:
+    def connection(self) -> H3Connection | None:
         return self._connection

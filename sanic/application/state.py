@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any
 
 from sanic.application.constants import Mode, Server, ServerStage
 from sanic.log import VerbosityFilter, logger
@@ -21,9 +21,9 @@ if TYPE_CHECKING:
 class ApplicationServerInfo:
     """Information about a server instance."""
 
-    settings: Dict[str, Any]
+    settings: dict[str, Any]
     stage: ServerStage = field(default=ServerStage.STOPPED)
-    server: Optional[AsyncioServer] = field(default=None)
+    server: AsyncioServer | None = field(default=None)
 
 
 @dataclass
@@ -40,11 +40,11 @@ class ApplicationState:
     fast: bool = field(default=False)
     host: str = field(default="")
     port: int = field(default=0)
-    ssl: Optional[SSLContext] = field(default=None)
-    sock: Optional[socket] = field(default=None)
-    unix: Optional[str] = field(default=None)
+    ssl: SSLContext | None = field(default=None)
+    sock: socket | None = field(default=None)
+    unix: str | None = field(default=None)
     mode: Mode = field(default=Mode.PRODUCTION)
-    reload_dirs: Set[Path] = field(default_factory=set)
+    reload_dirs: set[Path] = field(default_factory=set)
     auto_reload: bool = field(default=False)
     server: Server = field(default=Server.SANIC)
     is_running: bool = field(default=False)
@@ -53,7 +53,7 @@ class ApplicationState:
     verbosity: int = field(default=0)
     workers: int = field(default=0)
     primary: bool = field(default=True)
-    server_info: List[ApplicationServerInfo] = field(default_factory=list)
+    server_info: list[ApplicationServerInfo] = field(default_factory=list)
 
     # This property relates to the ApplicationState instance and should
     # not be changed except in the __post_init__ method
@@ -71,7 +71,7 @@ class ApplicationState:
         if self._init and hasattr(self, f"set_{name}"):
             getattr(self, f"set_{name}")(value)
 
-    def set_mode(self, value: Union[str, Mode]):
+    def set_mode(self, value: str | Mode):
         if hasattr(self.app, "error_handler"):
             self.app.error_handler.debug = self.app.debug
         if getattr(self.app, "configure_logging", False) and self.app.debug:

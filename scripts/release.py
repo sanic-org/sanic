@@ -104,7 +104,7 @@ def _fetch_current_version(config_file: str) -> str:
 
 def _change_micro_version(current_version: str):
     version_string = current_version.split(".")
-    version_string[-1] = str((int(version_string[-1]) + 1))
+    version_string[-1] = str(int(version_string[-1]) + 1)
     return ".".join(version_string)
 
 
@@ -231,7 +231,7 @@ def _tag_release(new_version, current_version, milestone, release_name, token):
         )
         out, error, ret = _run_shell_command(command=command)
         if int(ret) != 0:
-            print("Failed to execute the command: {}".format(command[0]))
+            print(f"Failed to execute the command: {command[0]}")
             sys.exit(1)
 
     change_log = _generate_markdown_document(

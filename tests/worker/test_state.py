@@ -23,12 +23,12 @@ def test_del_state():
 
 
 def test_iter_state():
-    result = [item for item in gen_state(one=1, two=2)]
+    result = list(gen_state(one=1, two=2))
     assert result == ["one", "two"]
 
 
 def test_state_len():
-    result = [item for item in gen_state(one=1, two=2)]
+    result = list(gen_state(one=1, two=2))
     assert len(result) == 2
 
 

@@ -14,7 +14,7 @@ async def index(request):
 
 @app.route("/posts/<post_id>")
 async def post_handler(request, post_id):
-    return response.text("Post - {}".format(post_id))
+    return response.text(f"Post - {post_id}")
 
 
 if __name__ == "__main__":

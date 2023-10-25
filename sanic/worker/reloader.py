@@ -10,7 +10,6 @@ from pathlib import Path
 from signal import SIGINT, SIGTERM
 from signal import signal as signal_func
 from time import sleep
-from typing import Dict, Set
 
 from sanic.server.events import trigger_events
 from sanic.worker.loader import AppLoader
@@ -23,7 +22,7 @@ class Reloader:
         self,
         publisher: Connection,
         interval: float,
-        reload_dirs: Set[Path],
+        reload_dirs: set[Path],
         app_loader: AppLoader,
     ):
         self._publisher = publisher
@@ -36,7 +35,7 @@ class Reloader:
         app = self.app_loader.load()
         signal_func(SIGINT, self.stop)
         signal_func(SIGTERM, self.stop)
-        mtimes: Dict[str, float] = {}
+        mtimes: dict[str, float] = {}
 
         reloader_start = app.listeners.get("reload_process_start")
         reloader_stop = app.listeners.get("reload_process_stop")

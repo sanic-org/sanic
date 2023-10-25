@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 from sanic.http.constants import Stage
 
@@ -12,13 +12,13 @@ if TYPE_CHECKING:
 
 class Stream:
     stage: Stage
-    response: Optional[BaseHTTPResponse]
+    response: BaseHTTPResponse | None
     protocol: HttpProtocol
-    url: Optional[str]
-    request_body: Optional[bytes]
-    request_max_size: Union[int, float]
+    url: str | None
+    request_body: bytes | None
+    request_max_size: int | float
 
-    __touchup__: Tuple[str, ...] = tuple()
+    __touchup__: tuple[str, ...] = ()
     __slots__ = ("request_max_size",)
 
     def respond(

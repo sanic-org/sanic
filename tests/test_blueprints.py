@@ -483,7 +483,7 @@ def test_bp_exception_handler_applied(app: Sanic):
 
     @handled.exception(Error)
     def handle_error(req, e):
-        return text("handled {}".format(e))
+        return text(f"handled {e}")
 
     @handled.route("/ok")
     def ok(request):
@@ -513,7 +513,7 @@ def test_bp_exception_handler_not_applied(app: Sanic):
 
     @handled.exception(Error)
     def handle_error(req, e):
-        return text("handled {}".format(e))
+        return text(f"handled {e}")
 
     @nothandled.route("/notok")
     def notok(request):

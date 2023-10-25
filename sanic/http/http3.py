@@ -8,10 +8,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
     Union,
     cast,
 )
@@ -109,11 +105,11 @@ class HTTPReceiver(Receiver, Stream):
         self.request_body = None
         self.stage = Stage.IDLE
         self.headers_sent = False
-        self.response: Optional[BaseHTTPResponse] = None
+        self.response: BaseHTTPResponse | None = None
         self.request_max_size = self.protocol.request_max_size
         self.request_bytes = 0
 
-    async def run(self, exception: Optional[Exception] = None):
+    async def run(self, exception: Exception | None = None):
         """Handle the request and response cycle."""
         self.stage = Stage.HANDLER
         self.head_only = self.request.method.upper() == "HEAD"
@@ -148,7 +144,7 @@ class HTTPReceiver(Receiver, Stream):
 
     def _prepare_headers(
         self, response: BaseHTTPResponse
-    ) -> List[Tuple[bytes, bytes]]:
+    ) -> list[tuple[bytes, bytes]]:
         size = len(response.body) if response.body else 0
         headers = response.headers
         status = response.status
@@ -304,7 +300,7 @@ class Http3:
     ) -> None:
         self.protocol = protocol
         self.transmit = transmit
-        self.receivers: Dict[int, Receiver] = {}
+        self.receivers: dict[int, Receiver] = {}
 
     def http_event_received(self, event: H3Event) -> None:
         logger.debug(  # no cov
@@ -330,7 +326,7 @@ class Http3:
                 extra={"verbosity": 2},
             )
 
-    def get_or_make_receiver(self, event: H3Event) -> Tuple[Receiver, bool]:
+    def get_or_make_receiver(self, event: H3Event) -> tuple[Receiver, bool]:
         if (
             isinstance(event, HeadersReceived)
             and event.stream_id not in self.receivers
@@ -396,17 +392,17 @@ class SessionTicketStore:
     """
 
     def __init__(self) -> None:
-        self.tickets: Dict[bytes, SessionTicket] = {}
+        self.tickets: dict[bytes, SessionTicket] = {}
 
     def add(self, ticket: SessionTicket) -> None:
         self.tickets[ticket.ticket] = ticket
 
-    def pop(self, label: bytes) -> Optional[SessionTicket]:
+    def pop(self, label: bytes) -> SessionTicket | None:
         return self.tickets.pop(label, None)
 
 
 def get_config(
-    app: Sanic, ssl: Union[SanicSSLContext, CertSelector, SSLContext]
+    app: Sanic, ssl: SanicSSLContext | (CertSelector | SSLContext)
 ):
     # TODO:
     # - proper selection needed if service with multiple certs insted of

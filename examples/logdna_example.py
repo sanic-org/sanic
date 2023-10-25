@@ -48,7 +48,7 @@ app = Sanic("Example")
 
 @app.middleware
 def log_request(request: Request):
-    logdna.info("I was Here with a new Request to URL: {}".format(request.url))
+    logdna.info(f"I was Here with a new Request to URL: {request.url}")
 
 
 @app.route("/")

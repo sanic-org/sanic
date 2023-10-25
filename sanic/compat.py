@@ -6,7 +6,7 @@ import sys
 
 from contextlib import contextmanager
 from enum import Enum
-from typing import Awaitable, Union
+from typing import Awaitable, Literal, Union
 
 from multidict import CIMultiDict  # type: ignore
 
@@ -14,14 +14,9 @@ from sanic.helpers import Default
 from sanic.log import error_logger
 
 
-if sys.version_info < (3, 8):  # no cov
-    StartMethod = Union[Default, str]
-else:  # no cov
-    from typing import Literal
-
-    StartMethod = Union[
-        Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]
-    ]
+StartMethod = Union[
+    Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]
+]
 
 OS_IS_WINDOWS = os.name == "nt"
 PYPY_IMPLEMENTATION = platform.python_implementation() == "PyPy"
@@ -142,7 +137,7 @@ if use_trio:  # pragma: no cover
         return trio.Path(path).stat()
 
     open_async = trio.open_file
-    CancelledErrors = tuple([asyncio.CancelledError, trio.Cancelled])
+    CancelledErrors = (asyncio.CancelledError, trio.Cancelled)
 else:
     if PYPY_IMPLEMENTATION:
         pypy_os_module_patch()
@@ -156,7 +151,7 @@ else:
     async def open_async(file, mode="r", **kwargs):
         return aio_open(file, mode, **kwargs)
 
-    CancelledErrors = tuple([asyncio.CancelledError])
+    CancelledErrors = (asyncio.CancelledError,)
 
 
 def ctrlc_workaround_for_windows(app):

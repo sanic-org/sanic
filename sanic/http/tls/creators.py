@@ -9,7 +9,7 @@ from contextlib import suppress
 from pathlib import Path
 from tempfile import mkdtemp
 from types import ModuleType
-from typing import TYPE_CHECKING, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, cast
 
 from sanic.application.constants import Mode
 from sanic.application.spinner import loading
@@ -47,7 +47,7 @@ CIPHERS_TLS12 = [
 ]
 
 
-def _make_path(maybe_path: Union[Path, str], tmpdir: Optional[Path]) -> Path:
+def _make_path(maybe_path: Path | str, tmpdir: Path | None) -> Path:
     if isinstance(maybe_path, Path):
         return maybe_path
     else:
@@ -61,7 +61,7 @@ def _make_path(maybe_path: Union[Path, str], tmpdir: Optional[Path]) -> Path:
 
 
 def get_ssl_context(
-    app: Sanic, ssl: Optional[ssl.SSLContext]
+    app: Sanic, ssl: ssl.SSLContext | None
 ) -> ssl.SSLContext:
     if ssl:
         return ssl
@@ -126,10 +126,10 @@ class CertCreator(ABC):
         local_tls_key,
         local_tls_cert,
     ) -> CertCreator:
-        creator: Optional[CertCreator] = None
+        creator: CertCreator | None = None
 
-        cert_creator_options: Tuple[
-            Tuple[Type[CertCreator], LocalCertCreator], ...
+        cert_creator_options: tuple[
+            tuple[type[CertCreator], LocalCertCreator], ...
         ] = (
             (MkcertCreator, LocalCertCreator.MKCERT),
             (TrustmeCreator, LocalCertCreator.TRUSTME),
@@ -160,8 +160,8 @@ class CertCreator(ABC):
     @staticmethod
     def _try_select(
         app: Sanic,
-        creator: Optional[CertCreator],
-        creator_class: Type[CertCreator],
+        creator: CertCreator | None,
+        creator_class: type[CertCreator],
         creator_requirement: LocalCertCreator,
         creator_requested: LocalCertCreator,
         local_tls_key,

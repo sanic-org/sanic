@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import ssl
 
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Any, Iterable
 
 from sanic.log import logger
 
@@ -21,9 +21,9 @@ CIPHERS_TLS12 = [
 
 
 def create_context(
-    certfile: Optional[str] = None,
-    keyfile: Optional[str] = None,
-    password: Optional[str] = None,
+    certfile: str | None = None,
+    keyfile: str | None = None,
+    password: str | None = None,
     purpose: ssl.Purpose = ssl.Purpose.CLIENT_AUTH,
 ) -> ssl.SSLContext:
     """Create a context with secure crypto and HTTP/1.1 in protocols."""
@@ -39,8 +39,8 @@ def create_context(
 
 
 def shorthand_to_ctx(
-    ctxdef: Union[None, ssl.SSLContext, dict, str]
-) -> Optional[ssl.SSLContext]:
+    ctxdef: None | (ssl.SSLContext | (dict | str))
+) -> ssl.SSLContext | None:
     """Convert an ssl argument shorthand to an SSLContext object."""
     if ctxdef is None or isinstance(ctxdef, ssl.SSLContext):
         return ctxdef
@@ -55,8 +55,8 @@ def shorthand_to_ctx(
 
 
 def process_to_context(
-    ssldef: Union[None, ssl.SSLContext, dict, str, list, tuple]
-) -> Optional[ssl.SSLContext]:
+    ssldef: None | (ssl.SSLContext | (dict | (str | (list | tuple))))
+) -> ssl.SSLContext | None:
     """Process app.run ssl argument from easy formats to full SSLContext."""
     return (
         CertSelector(map(shorthand_to_ctx, ssldef))
@@ -101,7 +101,7 @@ def find_cert(self: CertSelector, server_name: str):
 
 
 def match_hostname(
-    ctx: Union[ssl.SSLContext, CertSelector], hostname: str
+    ctx: ssl.SSLContext | CertSelector, hostname: str
 ) -> bool:
     """Match names from CertSelector against a received hostname."""
     # Local certs are considered trusted, so this can be less pedantic
@@ -119,7 +119,7 @@ def match_hostname(
 
 def selector_sni_callback(
     sslobj: ssl.SSLObject, server_name: str, ctx: CertSelector
-) -> Optional[int]:
+) -> int | None:
     """Select a certificate matching the SNI."""
     # Call server_name_callback to store the SNI on sslobj
     server_name_callback(sslobj, server_name, ctx)
@@ -142,7 +142,7 @@ def server_name_callback(
 
 
 class SanicSSLContext(ssl.SSLContext):
-    sanic: Dict[str, os.PathLike]
+    sanic: dict[str, os.PathLike]
 
     @classmethod
     def create_from_ssl_context(cls, context: ssl.SSLContext):
@@ -153,7 +153,7 @@ class SanicSSLContext(ssl.SSLContext):
 class CertSimple(SanicSSLContext):
     """A wrapper for creating SSLContext with a sanic attribute."""
 
-    sanic: Dict[str, Any]
+    sanic: dict[str, Any]
 
     def __new__(cls, cert, key, **kw):
         # try common aliases, rename to cert/key
@@ -190,7 +190,7 @@ class CertSelector(ssl.SSLContext):
     def __new__(cls, ctxs):
         return super().__new__(cls)
 
-    def __init__(self, ctxs: Iterable[Optional[ssl.SSLContext]]):
+    def __init__(self, ctxs: Iterable[ssl.SSLContext | None]):
         super().__init__()
         self.sni_callback = selector_sni_callback  # type: ignore
         self.sanic_select = []

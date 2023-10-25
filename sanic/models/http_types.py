@@ -2,15 +2,14 @@ from __future__ import annotations
 
 from base64 import b64decode
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass()
 class Credentials:
-    auth_type: Optional[str]
-    token: Optional[str]
-    _username: Optional[str] = field(default=None)
-    _password: Optional[str] = field(default=None)
+    auth_type: str | None
+    token: str | None
+    _username: str | None = field(default=None)
+    _password: str | None = field(default=None)
 
     def __post_init__(self):
         if self._auth_is_basic:

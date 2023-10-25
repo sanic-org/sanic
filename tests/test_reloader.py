@@ -129,10 +129,10 @@ def scanner(proc, trigger="complete"):
             yield line
 
 
-argv = dict(
-    script=[sys.executable, "reloader.py"],
-    module=[sys.executable, "-m", "reloader"],
-    sanic=[
+argv = {
+    "script": [sys.executable, "reloader.py"],
+    "module": [sys.executable, "-m", "reloader"],
+    "sanic": [
         sys.executable,
         "-m",
         "sanic",
@@ -141,14 +141,14 @@ argv = dict(
         "--auto-reload",
         "reloader.app",
     ],
-)
+}
 
 
 @pytest.mark.parametrize(
     "runargs, mode",
     [
-        (dict(port=42202, auto_reload=True), "script"),
-        (dict(port=42203, auto_reload=True), "module"),
+        ({"port": 42202, "auto_reload": True}, "script"),
+        ({"port": 42203, "auto_reload": True}, "module"),
         ({}, "sanic"),
     ],
 )
@@ -180,8 +180,8 @@ async def test_reloader_live(runargs, mode):
 @pytest.mark.parametrize(
     "runargs, mode",
     [
-        (dict(port=42302, auto_reload=True), "script"),
-        (dict(port=42303, auto_reload=True), "module"),
+        ({"port": 42302, "auto_reload": True}, "script"),
+        ({"port": 42303, "auto_reload": True}, "module"),
         ({}, "sanic"),
     ],
 )

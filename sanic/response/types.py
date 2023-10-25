@@ -8,12 +8,8 @@ from typing import (
     AnyStr,
     Callable,
     Coroutine,
-    Dict,
     Iterator,
-    Optional,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 from sanic.compat import Header
@@ -66,18 +62,18 @@ class BaseHTTPResponse:
 
     def __init__(self):
         self.asgi: bool = False
-        self.body: Optional[bytes] = None
-        self.content_type: Optional[str] = None
-        self.stream: Optional[Union[Http, ASGIApp, HTTPReceiver]] = None
+        self.body: bytes | None = None
+        self.content_type: str | None = None
+        self.stream: Http | (ASGIApp | HTTPReceiver) | None = None
         self.status: int = None
         self.headers = Header({})
-        self._cookies: Optional[CookieJar] = None
+        self._cookies: CookieJar | None = None
 
     def __repr__(self):
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.status} {self.content_type}>"
 
-    def _encode_body(self, data: Optional[AnyStr]):
+    def _encode_body(self, data: AnyStr | None):
         if data is None:
             return b""
         return (
@@ -98,7 +94,7 @@ class BaseHTTPResponse:
         return self._cookies
 
     @property
-    def processed_headers(self) -> Iterator[Tuple[bytes, bytes]]:
+    def processed_headers(self) -> Iterator[tuple[bytes, bytes]]:
         """Obtain a list of header tuples encoded in bytes for sending.
 
         Add and remove headers based on status and content_type.
@@ -119,8 +115,8 @@ class BaseHTTPResponse:
 
     async def send(
         self,
-        data: Optional[AnyStr] = None,
-        end_stream: Optional[bool] = None,
+        data: AnyStr | None = None,
+        end_stream: bool | None = None,
     ) -> None:
         """Send any pending response headers and the given data as body.
 
@@ -157,14 +153,14 @@ class BaseHTTPResponse:
         value: str,
         *,
         path: str = "/",
-        domain: Optional[str] = None,
+        domain: str | None = None,
         secure: bool = True,
-        max_age: Optional[int] = None,
-        expires: Optional[datetime] = None,
+        max_age: int | None = None,
+        expires: datetime | None = None,
         httponly: bool = False,
-        samesite: Optional[SameSite] = "Lax",
+        samesite: SameSite | None = "Lax",
         partitioned: bool = False,
-        comment: Optional[str] = None,
+        comment: str | None = None,
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> Cookie:
@@ -211,7 +207,7 @@ class BaseHTTPResponse:
         key: str,
         *,
         path: str = "/",
-        domain: Optional[str] = None,
+        domain: str | None = None,
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> None:
@@ -255,14 +251,14 @@ class HTTPResponse(BaseHTTPResponse):
 
     def __init__(
         self,
-        body: Optional[Any] = None,
+        body: Any | None = None,
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
-        content_type: Optional[str] = None,
+        headers: Header | dict[str, str] | None = None,
+        content_type: str | None = None,
     ):
         super().__init__()
 
-        self.content_type: Optional[str] = content_type
+        self.content_type: str | None = content_type
         self.body = self._encode_body(body)
         self.status = status
         self.headers = Header(headers or {})
@@ -306,11 +302,11 @@ class JSONResponse(HTTPResponse):
 
     def __init__(
         self,
-        body: Optional[Any] = None,
+        body: Any | None = None,
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        headers: Header | dict[str, str] | None = None,
         content_type: str = "application/json",
-        dumps: Optional[Callable[..., str]] = None,
+        dumps: Callable[..., str] | None = None,
         **kwargs: Any,
     ):
         self._initialized = False
@@ -337,7 +333,7 @@ class JSONResponse(HTTPResponse):
             )
 
     @property
-    def raw_body(self) -> Optional[Any]:
+    def raw_body(self) -> Any | None:
         """Returns the raw body, as long as body has not been manually set previously.
 
         NOTE: This object should not be mutated, as it will not be
@@ -361,7 +357,7 @@ class JSONResponse(HTTPResponse):
         self._raw_body = value
 
     @property  # type: ignore
-    def body(self) -> Optional[bytes]:  # type: ignore
+    def body(self) -> bytes | None:  # type: ignore
         """Returns the response body.
 
         Returns:
@@ -370,7 +366,7 @@ class JSONResponse(HTTPResponse):
         return self._body
 
     @body.setter
-    def body(self, value: Optional[bytes]):
+    def body(self, value: bytes | None):
         self._body = value
         if not self._initialized:
             return
@@ -379,7 +375,7 @@ class JSONResponse(HTTPResponse):
     def set_body(
         self,
         body: Any,
-        dumps: Optional[Callable[..., str]] = None,
+        dumps: Callable[..., str] | None = None,
         **dumps_kwargs: Any,
     ) -> None:
         """Set the response body to the given value, using the given dumps function
@@ -526,12 +522,12 @@ class ResponseStream:
     def __init__(
         self,
         streaming_fn: Callable[
-            [Union[BaseHTTPResponse, ResponseStream]],
+            [BaseHTTPResponse | ResponseStream],
             Coroutine[Any, Any, None],
         ],
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
-        content_type: Optional[str] = None,
+        headers: Header | dict[str, str] | None = None,
+        content_type: str | None = None,
     ):
         if headers is None:
             headers = Header()
@@ -541,8 +537,8 @@ class ResponseStream:
         self.status = status
         self.headers = headers or Header()
         self.content_type = content_type
-        self.request: Optional[Request] = None
-        self._cookies: Optional[CookieJar] = None
+        self.request: Request | None = None
+        self._cookies: CookieJar | None = None
 
     async def write(self, message: str):
         await self.response.send(message)

@@ -14,24 +14,24 @@ from sanic.response import text
 from sanic.views import HTTPMethodView
 
 
-URL_FOR_ARGS1 = dict(arg1=["v1", "v2"])
+URL_FOR_ARGS1 = {"arg1": ["v1", "v2"]}
 URL_FOR_VALUE1 = "/myurl?arg1=v1&arg1=v2"
-URL_FOR_ARGS2 = dict(arg1=["v1", "v2"], _anchor="anchor")
+URL_FOR_ARGS2 = {"arg1": ["v1", "v2"], "_anchor": "anchor"}
 URL_FOR_VALUE2 = "/myurl?arg1=v1&arg1=v2#anchor"
-URL_FOR_ARGS3 = dict(
-    arg1="v1",
-    _anchor="anchor",
-    _scheme="http",
-    _server=f"{test_host}:{test_port}",
-    _external=True,
-)
+URL_FOR_ARGS3 = {
+    "arg1": "v1",
+    "_anchor": "anchor",
+    "_scheme": "http",
+    "_server": f"{test_host}:{test_port}",
+    "_external": True,
+}
 URL_FOR_VALUE3 = f"http://{test_host}:{test_port}/myurl?arg1=v1#anchor"
-URL_FOR_ARGS4 = dict(
-    arg1="v1",
-    _anchor="anchor",
-    _external=True,
-    _server=f"http://{test_host}:{test_port}",
-)
+URL_FOR_ARGS4 = {
+    "arg1": "v1",
+    "_anchor": "anchor",
+    "_external": True,
+    "_server": f"http://{test_host}:{test_port}",
+}
 URL_FOR_VALUE4 = f"http://{test_host}:{test_port}/myurl?arg1=v1#anchor"
 
 

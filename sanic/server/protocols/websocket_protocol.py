@@ -104,12 +104,10 @@ class WebSocketProtocol(HttpProtocol):
                 # but ServerProtocol needs a list
                 subprotocols = cast(
                     Optional[Sequence[Subprotocol]],
-                    list(
-                        [
+                    [
                             Subprotocol(subprotocol)
                             for subprotocol in subprotocols
-                        ]
-                    ),
+                        ],
                 )
             ws_proto = ServerProtocol(
                 max_size=self.websocket_max_size,

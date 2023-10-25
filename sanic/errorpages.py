@@ -73,7 +73,7 @@ class BaseRenderer:
         self.debug = debug
 
     @property
-    def headers(self) -> t.Dict[str, str]:
+    def headers(self) -> dict[str, str]:
         """The headers to be used for the response."""
         if isinstance(self.exception, SanicException):
             return getattr(self.exception, "headers", {})
@@ -326,8 +326,8 @@ def exception_response(
     exception: Exception,
     debug: bool,
     fallback: str,
-    base: t.Type[BaseRenderer],
-    renderer: t.Optional[t.Type[BaseRenderer]] = None,
+    base: type[BaseRenderer],
+    renderer: type[BaseRenderer] | None = None,
 ) -> HTTPResponse:
     """Render a response for the default FALLBACK exception handler."""
     if not renderer:

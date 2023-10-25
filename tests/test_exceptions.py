@@ -308,7 +308,7 @@ def test_contextual_exception_context(debug):
     assert dl == {"foo": "bar"}
 
     _, response = app.test_client.post("/coffee/text", debug=debug)
-    lines = list(map(lambda x: x.decode(), response.body.split(b"\n")))
+    lines = [x.decode() for x in response.body.split(b"\n")]
     idx = lines.index("Context") + 1
     assert response.status == 418
     assert lines[2] == "Sorry, I cannot brew coffee"
@@ -358,7 +358,7 @@ def test_contextual_exception_extra(debug):
         assert not dl
 
     _, response = app.test_client.post("/coffee/text", debug=debug)
-    lines = list(map(lambda x: x.decode(), response.body.split(b"\n")))
+    lines = [x.decode() for x in response.body.split(b"\n")]
     assert response.status == 418
     assert lines[2] == "Found bar"
     if debug:

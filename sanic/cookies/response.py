@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import re
 import string
-import sys
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
@@ -14,19 +13,17 @@ from sanic.log import deprecation
 if TYPE_CHECKING:
     from sanic.compat import Header
 
-if sys.version_info < (3, 8):  # no cov
-    SameSite = str
-else:  # no cov
-    from typing import Literal
+from typing import Literal
 
-    SameSite = Union[
-        Literal["Strict"],
-        Literal["Lax"],
-        Literal["None"],
-        Literal["strict"],
-        Literal["lax"],
-        Literal["none"],
-    ]
+
+SameSite = Union[
+    Literal["Strict"],
+    Literal["Lax"],
+    Literal["None"],
+    Literal["strict"],
+    Literal["lax"],
+    Literal["none"],
+]
 
 DEFAULT_MAX_AGE = 0
 SAMESITE_VALUES = ("strict", "lax", "none")
@@ -180,7 +177,7 @@ class CookieJar(dict):
         return CookieJar.HEADER_KEY
 
     @property
-    def cookie_headers(self) -> Dict[str, str]:  # no cov
+    def cookie_headers(self) -> dict[str, str]:  # no cov
         """Deprecated in v24.3"""
         deprecation(
             "The CookieJar.coookie_headers property has been deprecated "
@@ -191,7 +188,7 @@ class CookieJar(dict):
         return {key: self.header_key for key in self}
 
     @property
-    def cookies(self) -> List[Cookie]:
+    def cookies(self) -> list[Cookie]:
         """A list of cookies in the CookieJar.
 
         Returns:
@@ -203,10 +200,10 @@ class CookieJar(dict):
         self,
         key: str,
         path: str = "/",
-        domain: Optional[str] = None,
+        domain: str | None = None,
         host_prefix: bool = False,
         secure_prefix: bool = False,
-    ) -> Optional[Cookie]:
+    ) -> Cookie | None:
         """Fetch a cookie from the CookieJar.
 
         Args:
@@ -236,7 +233,7 @@ class CookieJar(dict):
         self,
         key: str,
         path: str = "/",
-        domain: Optional[str] = None,
+        domain: str | None = None,
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> bool:
@@ -271,14 +268,14 @@ class CookieJar(dict):
         value: str,
         *,
         path: str = "/",
-        domain: Optional[str] = None,
+        domain: str | None = None,
         secure: bool = True,
-        max_age: Optional[int] = None,
-        expires: Optional[datetime] = None,
+        max_age: int | None = None,
+        expires: datetime | None = None,
         httponly: bool = False,
-        samesite: Optional[SameSite] = "Lax",
+        samesite: SameSite | None = "Lax",
         partitioned: bool = False,
-        comment: Optional[str] = None,
+        comment: str | None = None,
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> Cookie:
@@ -362,7 +359,7 @@ class CookieJar(dict):
         key: str,
         *,
         path: str = "/",
-        domain: Optional[str] = None,
+        domain: str | None = None,
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> None:
@@ -390,7 +387,7 @@ class CookieJar(dict):
         :type secure_prefix: bool
         """
         # remove it from header
-        cookies: List[Cookie] = self.headers.popall(self.HEADER_KEY, [])
+        cookies: list[Cookie] = self.headers.popall(self.HEADER_KEY, [])
         for cookie in cookies:
             if (
                 cookie.key != Cookie.make_key(key, host_prefix, secure_prefix)
@@ -481,14 +478,14 @@ class Cookie(dict):
         value: str,
         *,
         path: str = "/",
-        domain: Optional[str] = None,
+        domain: str | None = None,
         secure: bool = True,
-        max_age: Optional[int] = None,
-        expires: Optional[datetime] = None,
+        max_age: int | None = None,
+        expires: datetime | None = None,
         httponly: bool = False,
-        samesite: Optional[SameSite] = "Lax",
+        samesite: SameSite | None = "Lax",
         partitioned: bool = False,
-        comment: Optional[str] = None,
+        comment: str | None = None,
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ):
@@ -561,7 +558,7 @@ class Cookie(dict):
     # in v24.3 when this is no longer a dict
     def _set_value(self, key: str, value: Any) -> None:
         if key not in self._keys:
-            raise KeyError("Unknown cookie property: %s=%s" % (key, value))
+            raise KeyError(f"Unknown cookie property: {key}={value}")
 
         if value is not None:
             if key.lower() == "max-age" and not str(value).isdigit():
@@ -604,7 +601,7 @@ class Cookie(dict):
 
     def __str__(self):
         """Format as a Set-Cookie header value."""
-        output = ["%s=%s" % (self.key, _quote(self.value))]
+        output = [f"{self.key}={_quote(self.value)}"]
         key_index = list(self._keys)
         for key, value in sorted(
             self.items(), key=lambda x: key_index.index(x[0])
@@ -614,11 +611,10 @@ class Cookie(dict):
                     try:
                         output.append("%s=%d" % (self._keys[key], value))
                     except TypeError:
-                        output.append("%s=%s" % (self._keys[key], value))
+                        output.append(f"{self._keys[key]}={value}")
                 elif key == "expires":
                     output.append(
-                        "%s=%s"
-                        % (
+                        "{}={}".format(
                             self._keys[key],
                             value.strftime("%a, %d-%b-%Y %T GMT"),
                         )
@@ -626,7 +622,7 @@ class Cookie(dict):
                 elif key in self._flags:
                     output.append(self._keys[key])
                 else:
-                    output.append("%s=%s" % (self._keys[key], value))
+                    output.append(f"{self._keys[key]}={value}")
 
         return "; ".join(output)
 
@@ -640,7 +636,7 @@ class Cookie(dict):
         self._set_value("path", value)
 
     @property
-    def expires(self) -> Optional[datetime]:  # no cov
+    def expires(self) -> datetime | None:  # no cov
         """The expiration date of the cookie. Defaults to `None`."""
         return self.get("expires")
 
@@ -649,7 +645,7 @@ class Cookie(dict):
         self._set_value("expires", value)
 
     @property
-    def comment(self) -> Optional[str]:  # no cov
+    def comment(self) -> str | None:  # no cov
         """A comment for the cookie. Defaults to `None`."""
         return self.get("comment")
 
@@ -658,7 +654,7 @@ class Cookie(dict):
         self._set_value("comment", value)
 
     @property
-    def domain(self) -> Optional[str]:  # no cov
+    def domain(self) -> str | None:  # no cov
         """The domain of the cookie. Defaults to `None`."""
         return self.get("domain")
 
@@ -667,7 +663,7 @@ class Cookie(dict):
         self._set_value("domain", value)
 
     @property
-    def max_age(self) -> Optional[int]:  # no cov
+    def max_age(self) -> int | None:  # no cov
         """The maximum age of the cookie in seconds. Defaults to `None`."""
         return self.get("max-age")
 
@@ -694,7 +690,7 @@ class Cookie(dict):
         self._set_value("httponly", value)
 
     @property
-    def samesite(self) -> Optional[SameSite]:  # no cov
+    def samesite(self) -> SameSite | None:  # no cov
         """The SameSite attribute for the cookie. Defaults to `"Lax"`."""
         return self.get("samesite")
 

@@ -4,7 +4,7 @@ import sys
 
 from http.client import RemoteDisconnected
 from textwrap import indent
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.error import URLError
 from urllib.request import Request as URequest
 from urllib.request import urlopen
@@ -27,7 +27,7 @@ class InspectorClient:
         port: int,
         secure: bool,
         raw: bool,
-        api_key: Optional[str],
+        api_key: str | None,
     ) -> None:
         self.scheme = "https" if secure else "http"
         self.host = host
@@ -89,7 +89,7 @@ class InspectorClient:
 
     def request(self, action: str, method: str = "POST", **kwargs: Any) -> Any:
         url = f"{self.base_url}/{action}"
-        params: Dict[str, Any] = {"method": method, "headers": {}}
+        params: dict[str, Any] = {"method": method, "headers": {}}
         if kwargs:
             params["data"] = dumps(kwargs).encode()
             params["headers"]["content-type"] = "application/json"

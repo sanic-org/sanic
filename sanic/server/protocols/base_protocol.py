@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sanic.exceptions import RequestCancelled
 
@@ -47,9 +47,9 @@ class SanicProtocol(asyncio.Protocol):
         self.loop = loop
         self.app: Sanic = app
         self.signal = signal or Signal()
-        self.transport: Optional[Transport] = None
+        self.transport: Transport | None = None
         self.connections = connections if connections is not None else set()
-        self.conn_info: Optional[ConnInfo] = None
+        self.conn_info: ConnInfo | None = None
         self._can_write = asyncio.Event()
         self._can_write.set()
         self._unix = unix
@@ -82,7 +82,7 @@ class SanicProtocol(asyncio.Protocol):
         self._data_received.clear()
         await self._data_received.wait()
 
-    def close(self, timeout: Optional[float] = None):
+    def close(self, timeout: float | None = None):
         """
         Attempt close the connection.
         """

@@ -6,7 +6,7 @@ import socket
 import stat
 
 from ipaddress import ip_address
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
@@ -77,7 +77,7 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     return sock
 
 
-def remove_unix_socket(path: Optional[str]) -> None:
+def remove_unix_socket(path: str | None) -> None:
     """Remove dead unix socket during server exit."""
     if not path:
         return
@@ -94,8 +94,8 @@ def remove_unix_socket(path: Optional[str]) -> None:
 
 
 def configure_socket(
-    server_settings: Dict[str, Any]
-) -> Optional[socket.SocketType]:
+    server_settings: dict[str, Any]
+) -> socket.SocketType | None:
     # Create a listening socket or use the one in settings
     if server_settings.get("version") is HTTP.VERSION_3:
         return None

@@ -7,13 +7,7 @@ from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
     Any,
-    DefaultDict,
-    Dict,
     Generic,
-    List,
-    Optional,
-    Tuple,
-    Union,
     cast,
 )
 
@@ -161,8 +155,8 @@ class Request(Generic[sanic_type, ctx_type]):
         except HttpParserInvalidURLError:
             url = url_bytes.decode(errors="backslashreplace")
             raise BadURL(f"Bad URL: {url}")
-        self._id: Optional[Union[uuid.UUID, str, int]] = None
-        self._name: Optional[str] = None
+        self._id: uuid.UUID | (str | int) | None = None
+        self._name: str | None = None
         self._stream_id = stream_id
         self.app = app
 
@@ -174,29 +168,29 @@ class Request(Generic[sanic_type, ctx_type]):
 
         # Init but do not inhale
         self.body = b""
-        self.conn_info: Optional[ConnInfo] = None
-        self._ctx: Optional[ctx_type] = None
-        self.parsed_accept: Optional[AcceptList] = None
-        self.parsed_args: DefaultDict[
-            Tuple[bool, bool, str, str], RequestParameters
+        self.conn_info: ConnInfo | None = None
+        self._ctx: ctx_type | None = None
+        self.parsed_accept: AcceptList | None = None
+        self.parsed_args: defaultdict[
+            tuple[bool, bool, str, str], RequestParameters
         ] = defaultdict(RequestParameters)
-        self.parsed_cookies: Optional[RequestParameters] = None
-        self.parsed_credentials: Optional[Credentials] = None
-        self.parsed_files: Optional[RequestParameters] = None
-        self.parsed_form: Optional[RequestParameters] = None
-        self.parsed_forwarded: Optional[Options] = None
+        self.parsed_cookies: RequestParameters | None = None
+        self.parsed_credentials: Credentials | None = None
+        self.parsed_files: RequestParameters | None = None
+        self.parsed_form: RequestParameters | None = None
+        self.parsed_forwarded: Options | None = None
         self.parsed_json = None
-        self.parsed_not_grouped_args: DefaultDict[
-            Tuple[bool, bool, str, str], List[Tuple[str, str]]
+        self.parsed_not_grouped_args: defaultdict[
+            tuple[bool, bool, str, str], list[tuple[str, str]]
         ] = defaultdict(list)
-        self.parsed_token: Optional[str] = None
+        self.parsed_token: str | None = None
         self._request_middleware_started = False
         self._response_middleware_started = False
         self.responded: bool = False
-        self.route: Optional[Route] = None
-        self.stream: Optional[Stream] = None
-        self._match_info: Dict[str, Any] = {}
-        self._protocol: Optional[BaseProtocol] = None
+        self.route: Route | None = None
+        self.stream: Stream | None = None
+        self._match_info: dict[str, Any] = {}
+        self._protocol: BaseProtocol | None = None
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -251,7 +245,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return request
 
     @classmethod
-    def generate_id(*_) -> Union[uuid.UUID, str, int]:
+    def generate_id(*_) -> uuid.UUID | (str | int):
         """Generate a unique ID for the request.
 
         This method is called to generate a unique ID for each request.
@@ -320,11 +314,11 @@ class Request(Generic[sanic_type, ctx_type]):
 
     async def respond(
         self,
-        response: Optional[BaseHTTPResponse] = None,
+        response: BaseHTTPResponse | None = None,
         *,
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
-        content_type: Optional[str] = None,
+        headers: Header | dict[str, str] | None = None,
+        content_type: str | None = None,
     ):
         """Respond to the request without returning.
 
@@ -424,7 +418,7 @@ class Request(Generic[sanic_type, ctx_type]):
             self.body = b"".join([data async for data in self.stream])
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """The route name
 
         In the following pattern:
@@ -443,7 +437,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return None
 
     @property
-    def endpoint(self) -> Optional[str]:
+    def endpoint(self) -> str | None:
         """Alias of `sanic.request.Request.name`
 
         Returns:
@@ -452,7 +446,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.name
 
     @property
-    def uri_template(self) -> Optional[str]:
+    def uri_template(self) -> str | None:
         """The defined URI template
 
         Returns:
@@ -494,7 +488,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return bytes(reqline)
 
     @property
-    def id(self) -> Optional[Union[uuid.UUID, str, int]]:
+    def id(self) -> uuid.UUID | (str | int) | None:
         """A request ID passed from the client, or generated from the backend.
 
         By default, this will look in a request header defined at:
@@ -593,7 +587,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.parsed_accept
 
     @property
-    def token(self) -> Optional[str]:
+    def token(self) -> str | None:
         """Attempt to return the auth header token.
 
         Returns:
@@ -608,7 +602,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.parsed_token
 
     @property
-    def credentials(self) -> Optional[Credentials]:
+    def credentials(self) -> Credentials | None:
         """Attempt to return the auth header value.
 
         Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication
@@ -633,7 +627,7 @@ class Request(Generic[sanic_type, ctx_type]):
 
     def get_form(
         self, keep_blank_values: bool = False
-    ) -> Optional[RequestParameters]:
+    ) -> RequestParameters | None:
         """Method to extract and parse the form data from a request.
 
         Args:
@@ -670,7 +664,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.parsed_form
 
     @property
-    def form(self) -> Optional[RequestParameters]:
+    def form(self) -> RequestParameters | None:
         """The request body parsed as form data
 
         Returns:
@@ -682,7 +676,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.parsed_form
 
     @property
-    def files(self) -> Optional[RequestParameters]:
+    def files(self) -> RequestParameters | None:
         """The request body parsed as uploaded files
 
         Returns:
@@ -836,7 +830,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.headers.getone("content-type", DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
-    def match_info(self) -> Dict[str, Any]:
+    def match_info(self) -> dict[str, Any]:
         """Matched path parameters after resolving route
 
         Returns:
@@ -867,7 +861,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.conn_info.client_port if self.conn_info else 0
 
     @property
-    def socket(self) -> Union[Tuple[str, int], Tuple[None, None]]:
+    def socket(self) -> tuple[str, int] | tuple[None, None]:
         """Information about the connected socket if available
 
         Returns:
@@ -891,7 +885,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self._parsed_url.path.decode("utf-8")
 
     @property
-    def network_paths(self) -> Optional[List[Any]]:
+    def network_paths(self) -> list[Any] | None:
         """Access the network paths if available
 
         Returns:

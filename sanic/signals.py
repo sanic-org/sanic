@@ -4,7 +4,7 @@ import asyncio
 
 from enum import Enum
 from inspect import isawaitable
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, cast
 
 from sanic_routing import BaseRouter, Route, RouteGroup
 from sanic_routing.exceptions import NotFound
@@ -96,7 +96,7 @@ class SignalRouter(BaseRouter):
     def get(  # type: ignore
         self,
         event: str,
-        condition: Optional[Dict[str, str]] = None,
+        condition: dict[str, str] | None = None,
     ):
         """Get the handlers for a signal
 
@@ -121,7 +121,7 @@ class SignalRouter(BaseRouter):
             )
         except NotFound:
             message = "Could not find signal %s"
-            terms: List[Union[str, Optional[Dict[str, str]]]] = [event]
+            terms: list[str | dict[str, str] | None] = [event]
             if extra:
                 message += " with %s"
                 terms.append(extra)
@@ -144,8 +144,8 @@ class SignalRouter(BaseRouter):
     async def _dispatch(
         self,
         event: str,
-        context: Optional[Dict[str, Any]] = None,
-        condition: Optional[Dict[str, str]] = None,
+        context: dict[str, Any] | None = None,
+        condition: dict[str, str] | None = None,
         fail_not_found: bool = True,
         reverse: bool = False,
     ) -> Any:
@@ -205,12 +205,12 @@ class SignalRouter(BaseRouter):
         self,
         event: str,
         *,
-        context: Optional[Dict[str, Any]] = None,
-        condition: Optional[Dict[str, str]] = None,
+        context: dict[str, Any] | None = None,
+        condition: dict[str, str] | None = None,
         fail_not_found: bool = True,
         inline: bool = False,
         reverse: bool = False,
-    ) -> Union[asyncio.Task, Any]:
+    ) -> asyncio.Task | Any:
         """Dispatch a signal to all handlers that match the event
 
         Args:
@@ -248,7 +248,7 @@ class SignalRouter(BaseRouter):
         self,
         handler: SignalHandler,
         event: str,
-        condition: Optional[Dict[str, Any]] = None,
+        condition: dict[str, Any] | None = None,
         exclusive: bool = True,
     ) -> Signal:
         event_definition = event
@@ -302,7 +302,7 @@ class SignalRouter(BaseRouter):
 
         return super().finalize(do_compile=do_compile, do_optimize=do_optimize)
 
-    def _build_event_parts(self, event: str) -> Tuple[str, str, str]:
+    def _build_event_parts(self, event: str) -> tuple[str, str, str]:
         parts = path_to_parts(event, self.delimiter)
         if (
             len(parts) != 3

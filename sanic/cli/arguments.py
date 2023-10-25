@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser, _ArgumentGroup
-from typing import List, Optional, Type, Union
 
 from sanic_routing import __version__ as __routing_version__
 
@@ -10,14 +9,14 @@ from sanic.http.constants import HTTP
 
 
 class Group:
-    name: Optional[str]
-    container: Union[ArgumentParser, _ArgumentGroup]
-    _registry: List[Type[Group]] = []
+    name: str | None
+    container: ArgumentParser | _ArgumentGroup
+    _registry: list[type[Group]] = []
 
     def __init_subclass__(cls) -> None:
         Group._registry.append(cls)
 
-    def __init__(self, parser: ArgumentParser, title: Optional[str]):
+    def __init__(self, parser: ArgumentParser, title: str | None):
         self.parser = parser
 
         if title:

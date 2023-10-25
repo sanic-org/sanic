@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from inspect import signature
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable
 from uuid import UUID
 
 from sanic_routing import BaseRouter
@@ -27,8 +27,8 @@ class Router(BaseRouter):
     ALLOWED_METHODS = HTTP_METHODS
 
     def _get(
-        self, path: str, method: str, host: Optional[str]
-    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
+        self, path: str, method: str, host: str | None
+    ) -> tuple[Route, RouteHandler, dict[str, Any]]:
         try:
             return self.resolve(
                 path=path,
@@ -48,8 +48,8 @@ class Router(BaseRouter):
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def get(  # type: ignore
-        self, path: str, method: str, host: Optional[str]
-    ) -> Tuple[Route, RouteHandler, Dict[str, Any]]:
+        self, path: str, method: str, host: str | None
+    ) -> tuple[Route, RouteHandler, dict[str, Any]]:
         """Retrieve a `Route` object containing the details about how to handle a response for a given request
 
         :param request: the incoming request object
@@ -78,18 +78,18 @@ class Router(BaseRouter):
         uri: str,
         methods: Iterable[str],
         handler: RouteHandler,
-        host: Optional[Union[str, Iterable[str]]] = None,
+        host: str | Iterable[str] | None = None,
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
-        version: Optional[Union[str, float, int]] = None,
-        name: Optional[str] = None,
+        version: str | (float | int) | None = None,
+        name: str | None = None,
         unquote: bool = False,
         static: bool = False,
         version_prefix: str = "/v",
         overwrite: bool = False,
-        error_format: Optional[str] = None,
-    ) -> Union[Route, List[Route]]:
+        error_format: str | None = None,
+    ) -> Route | list[Route]:
         """Add a handler to the router
 
         Args:
@@ -115,15 +115,15 @@ class Router(BaseRouter):
 
         uri = self._normalize(uri, handler)
 
-        params = dict(
-            path=uri,
-            handler=handler,
-            methods=frozenset(map(str, methods)) if methods else None,
-            name=name,
-            strict=strict_slashes,
-            unquote=unquote,
-            overwrite=overwrite,
-        )
+        params = {
+            "path": uri,
+            "handler": handler,
+            "methods": frozenset(map(str, methods)) if methods else None,
+            "name": name,
+            "strict": strict_slashes,
+            "unquote": unquote,
+            "overwrite": overwrite,
+        }
 
         if isinstance(host, str):
             hosts = [host]
@@ -163,8 +163,8 @@ class Router(BaseRouter):
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(
-        self, view_name: str, name: Optional[str] = None
-    ) -> Optional[Route]:
+        self, view_name: str, name: str | None = None
+    ) -> Route | None:
         """Find a route in the router based on the specified view name.
 
         Args:
@@ -188,7 +188,7 @@ class Router(BaseRouter):
         return route
 
     @property
-    def routes_all(self) -> Dict[Tuple[str, ...], Route]:
+    def routes_all(self) -> dict[tuple[str, ...], Route]:
         """Return all routes in the router.
 
         Returns:
@@ -197,7 +197,7 @@ class Router(BaseRouter):
         return {route.parts: route for route in self.routes}
 
     @property
-    def routes_static(self) -> Dict[Tuple[str, ...], Route]:
+    def routes_static(self) -> dict[tuple[str, ...], Route]:
         """Return all static routes in the router.
 
         _In this context "static" routes do not refer to the `app.static()`
@@ -210,7 +210,7 @@ class Router(BaseRouter):
         return self.static_routes
 
     @property
-    def routes_dynamic(self) -> Dict[Tuple[str, ...], Route]:
+    def routes_dynamic(self) -> dict[tuple[str, ...], Route]:
         """Return all dynamic routes in the router.
 
         _Dynamic routes are routes that contain path parameters._
@@ -221,7 +221,7 @@ class Router(BaseRouter):
         return self.dynamic_routes
 
     @property
-    def routes_regex(self) -> Dict[Tuple[str, ...], Route]:
+    def routes_regex(self) -> dict[tuple[str, ...], Route]:
         """Return all regex routes in the router.
 
         _Regex routes are routes that contain path parameters with regex

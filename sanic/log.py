@@ -19,10 +19,10 @@ else:
         from enum import StrEnum
 
 
-LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
-    version=1,
-    disable_existing_loggers=False,
-    loggers={
+LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = {  # no cov
+    "version": 1,
+    "disable_existing_loggers": False,
+    "loggers": {
         "sanic.root": {"level": "INFO", "handlers": ["console"]},
         "sanic.error": {
             "level": "INFO",
@@ -43,7 +43,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
             "qualname": "sanic.server",
         },
     },
-    handlers={
+    "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "generic",
@@ -60,7 +60,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
             "stream": sys.stdout,
         },
     },
-    formatters={
+    "formatters": {
         "generic": {
             "format": "%(asctime)s [%(process)s] [%(levelname)s] %(message)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
@@ -73,7 +73,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
             "class": "logging.Formatter",
         },
     },
-)
+}
 """
 Defult logging configuration
 """

@@ -51,7 +51,7 @@ def test_asyncio_server_no_start_serving(app: Sanic):
     asyncio_srv_coro = app.create_server(
         port=43123,
         return_asyncio_server=True,
-        asyncio_server_kwargs=dict(start_serving=False),
+        asyncio_server_kwargs={"start_serving": False},
     )
     srv = loop.run_until_complete(asyncio_srv_coro)
     assert srv.is_serving() is False
@@ -63,7 +63,7 @@ def test_asyncio_server_start_serving(app: Sanic):
     asyncio_srv_coro = app.create_server(
         port=43124,
         return_asyncio_server=True,
-        asyncio_server_kwargs=dict(start_serving=False),
+        asyncio_server_kwargs={"start_serving": False},
     )
     srv = loop.run_until_complete(asyncio_srv_coro)
     assert srv.is_serving() is False
@@ -96,7 +96,7 @@ def test_create_server_no_startup(app: Sanic):
     asyncio_srv_coro = app.create_server(
         port=43124,
         return_asyncio_server=True,
-        asyncio_server_kwargs=dict(start_serving=False),
+        asyncio_server_kwargs={"start_serving": False},
     )
     srv = loop.run_until_complete(asyncio_srv_coro)
     message = (
@@ -488,7 +488,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
         for app in apps:
             srv_coro = app.create_server(
                 return_asyncio_server=True,
-                asyncio_server_kwargs=dict(start_serving=False),
+                asyncio_server_kwargs={"start_serving": False},
             )
             loop.run_until_complete(srv_coro)
 
@@ -526,7 +526,7 @@ def test_multiple_uvloop_configs_display_warning(caplog):
         for app in (default_uvloop, no_uvloop, yes_uvloop):
             srv_coro = app.create_server(
                 return_asyncio_server=True,
-                asyncio_server_kwargs=dict(start_serving=False),
+                asyncio_server_kwargs={"start_serving": False},
             )
             srv = loop.run_until_complete(srv_coro)
             loop.run_until_complete(srv.startup())

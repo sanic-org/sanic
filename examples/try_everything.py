@@ -20,7 +20,7 @@ def test_sync(request):
 
 @app.route("/dynamic/<name>/<i:int>")
 def test_params(request, name, i):
-    return response.text("yeehaww {} {}".format(name, i))
+    return response.text(f"yeehaww {name} {i}")
 
 
 @app.route("/exception")

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import sys
-
 from abc import ABCMeta
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Literal, Sequence, Union
 from warnings import filterwarnings
 
 from sanic.constants import LocalCertCreator
@@ -17,19 +15,14 @@ from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-
-    FilterWarningType = Union[
-        Literal["default"],
-        Literal["error"],
-        Literal["ignore"],
-        Literal["always"],
-        Literal["module"],
-        Literal["once"],
-    ]
-else:
-    FilterWarningType = str
+FilterWarningType = Union[
+    Literal["default"],
+    Literal["error"],
+    Literal["ignore"],
+    Literal["always"],
+    Literal["module"],
+    Literal["once"],
+]
 
 SANIC_PREFIX = "SANIC_"
 
@@ -100,25 +93,25 @@ class Config(dict, metaclass=DescriptorMeta):
     EVENT_AUTOREGISTER: bool
     DEPRECATION_FILTER: FilterWarningType
     FORWARDED_FOR_HEADER: str
-    FORWARDED_SECRET: Optional[str]
+    FORWARDED_SECRET: str | None
     GRACEFUL_SHUTDOWN_TIMEOUT: float
     INSPECTOR: bool
     INSPECTOR_HOST: str
     INSPECTOR_PORT: int
-    INSPECTOR_TLS_KEY: Union[Path, str, Default]
-    INSPECTOR_TLS_CERT: Union[Path, str, Default]
+    INSPECTOR_TLS_KEY: Path | (str | Default)
+    INSPECTOR_TLS_CERT: Path | (str | Default)
     INSPECTOR_API_KEY: str
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
-    LOCAL_CERT_CREATOR: Union[str, LocalCertCreator]
-    LOCAL_TLS_KEY: Union[Path, str, Default]
-    LOCAL_TLS_CERT: Union[Path, str, Default]
+    LOCAL_CERT_CREATOR: str | LocalCertCreator
+    LOCAL_TLS_KEY: Path | (str | Default)
+    LOCAL_TLS_CERT: Path | (str | Default)
     LOCALHOST: str
     MOTD: bool
-    MOTD_DISPLAY: Dict[str, str]
+    MOTD_DISPLAY: dict[str, str]
     NOISY_EXCEPTIONS: bool
-    PROXIES_COUNT: Optional[int]
-    REAL_IP_HEADER: Optional[str]
+    PROXIES_COUNT: int | None
+    REAL_IP_HEADER: str | None
     REQUEST_BUFFER_SIZE: int
     REQUEST_MAX_HEADER_SIZE: int
     REQUEST_ID_HEADER: str
@@ -127,21 +120,19 @@ class Config(dict, metaclass=DescriptorMeta):
     RESPONSE_TIMEOUT: int
     SERVER_NAME: str
     TLS_CERT_PASSWORD: str
-    TOUCHUP: Union[Default, bool]
-    USE_UVLOOP: Union[Default, bool]
+    TOUCHUP: Default | bool
+    USE_UVLOOP: Default | bool
     WEBSOCKET_MAX_SIZE: int
     WEBSOCKET_PING_INTERVAL: int
     WEBSOCKET_PING_TIMEOUT: int
 
     def __init__(
         self,
-        defaults: Optional[
-            Dict[str, Union[str, bool, int, float, None]]
-        ] = None,
-        env_prefix: Optional[str] = SANIC_PREFIX,
-        keep_alive: Optional[bool] = None,
+        defaults: dict[str, str | (bool | (int | (float | None)))] | None = None,
+        env_prefix: str | None = SANIC_PREFIX,
+        keep_alive: bool | None = None,
         *,
-        converters: Optional[Sequence[Callable[[str], Any]]] = None,
+        converters: Sequence[Callable[[str], Any]] | None = None,
     ):
         defaults = defaults or {}
         super().__init__({**DEFAULT_CONFIG, **defaults})
@@ -209,7 +200,7 @@ class Config(dict, metaclass=DescriptorMeta):
             ```
         """
         kwargs.update({k: v for item in other for k, v in dict(item).items()})
-        setters: Dict[str, Any] = {
+        setters: dict[str, Any] = {
             k: kwargs.pop(k)
             for k in {**kwargs}.keys()
             if k in self.__class__.__setters__
@@ -276,7 +267,7 @@ class Config(dict, metaclass=DescriptorMeta):
             module=r"sanic.*",
         )
 
-    def _check_error_format(self, format: Optional[str] = None):
+    def _check_error_format(self, format: str | None = None):
         check_error_format(format or self.FALLBACK_ERROR_FORMAT)
 
     def load_environment_vars(self, prefix=SANIC_PREFIX):
@@ -332,7 +323,7 @@ class Config(dict, metaclass=DescriptorMeta):
                 except ValueError:
                     pass
 
-    def update_config(self, config: Union[bytes, str, dict, Any]):
+    def update_config(self, config: bytes | (str | (dict | Any))):
         """Update app.config.
 
         .. note::

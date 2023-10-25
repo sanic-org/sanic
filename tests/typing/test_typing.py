@@ -20,9 +20,8 @@ def run_check(path_location: str) -> str:
 
     process = subprocess.run(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
+        capture_output=True,
+        text=True,
     )
     output = process.stdout + process.stderr
     return output

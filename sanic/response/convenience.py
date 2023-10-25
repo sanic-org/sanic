@@ -6,7 +6,7 @@ from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from time import time
-from typing import Any, AnyStr, Callable, Dict, Optional, Union
+from typing import Any, AnyStr, Callable
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
@@ -19,7 +19,7 @@ from .types import HTTPResponse, JSONResponse, ResponseStream
 
 
 def empty(
-    status: int = 204, headers: Optional[Dict[str, str]] = None
+    status: int = 204, headers: dict[str, str] | None = None
 ) -> HTTPResponse:
     """Returns an empty response to the client.
 
@@ -36,9 +36,9 @@ def empty(
 def json(
     body: Any,
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     content_type: str = "application/json",
-    dumps: Optional[Callable[..., str]] = None,
+    dumps: Callable[..., str] | None = None,
     **kwargs: Any,
 ) -> JSONResponse:
     """Returns response object with body in json format.
@@ -67,7 +67,7 @@ def json(
 def text(
     body: str,
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     content_type: str = "text/plain; charset=utf-8",
 ) -> HTTPResponse:
     """Returns response object with body in text format.
@@ -95,9 +95,9 @@ def text(
 
 
 def raw(
-    body: Optional[AnyStr],
+    body: AnyStr | None,
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     content_type: str = DEFAULT_HTTP_CONTENT_TYPE,
 ) -> HTTPResponse:
     """Returns response object without encoding the body.
@@ -120,9 +120,9 @@ def raw(
 
 
 def html(
-    body: Union[str, bytes, HTMLProtocol],
+    body: str | (bytes | HTMLProtocol),
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
 ) -> HTTPResponse:
     """Returns response object with body in html format.
 
@@ -151,8 +151,8 @@ def html(
 
 
 async def validate_file(
-    request_headers: Header, last_modified: Union[datetime, float, int]
-) -> Optional[HTTPResponse]:
+    request_headers: Header, last_modified: datetime | (float | int)
+) -> HTTPResponse | None:
     """Validate file based on request headers.
 
     Args:
@@ -204,17 +204,17 @@ async def validate_file(
 
 
 async def file(
-    location: Union[str, PurePath],
+    location: str | PurePath,
     status: int = 200,
-    request_headers: Optional[Header] = None,
+    request_headers: Header | None = None,
     validate_when_requested: bool = True,
-    mime_type: Optional[str] = None,
-    headers: Optional[Dict[str, str]] = None,
-    filename: Optional[str] = None,
-    last_modified: Optional[Union[datetime, float, int, Default]] = _default,
-    max_age: Optional[Union[float, int]] = None,
-    no_store: Optional[bool] = None,
-    _range: Optional[Range] = None,
+    mime_type: str | None = None,
+    headers: dict[str, str] | None = None,
+    filename: str | None = None,
+    last_modified: datetime | (float | (int | Default)) | None = _default,
+    max_age: float | int | None = None,
+    no_store: bool | None = None,
+    _range: Range | None = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
 
@@ -301,7 +301,7 @@ async def file(
 
 def redirect(
     to: str,
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
     status: int = 302,
     content_type: str = "text/html; charset=utf-8",
 ) -> HTTPResponse:
@@ -330,13 +330,13 @@ def redirect(
 
 
 async def file_stream(
-    location: Union[str, PurePath],
+    location: str | PurePath,
     status: int = 200,
     chunk_size: int = 4096,
-    mime_type: Optional[str] = None,
-    headers: Optional[Dict[str, str]] = None,
-    filename: Optional[str] = None,
-    _range: Optional[Range] = None,
+    mime_type: str | None = None,
+    headers: dict[str, str] | None = None,
+    filename: str | None = None,
+    _range: Range | None = None,
 ) -> ResponseStream:
     """Return a streaming response object with file data.
 

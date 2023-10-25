@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class RequestParameters(dict):
     """Hosts a dict with lists as values where get returns the first value of the list and getlist returns the whole shebang"""  # noqa: E501
 
-    def get(self, name: str, default: Optional[Any] = None) -> Optional[Any]:
+    def get(self, name: str, default: Any | None = None) -> Any | None:
         """Return the first value, either the default or actual
 
         Args:
@@ -19,8 +19,8 @@ class RequestParameters(dict):
         return super().get(name, [default])[0]
 
     def getlist(
-        self, name: str, default: Optional[Any] = None
-    ) -> Optional[Any]:
+        self, name: str, default: Any | None = None
+    ) -> Any | None:
         """Return the entire list
 
         Args:

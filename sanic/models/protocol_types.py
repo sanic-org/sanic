@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import sys
-
 from asyncio import BaseTransport
-from typing import TYPE_CHECKING, Any, AnyStr, Optional
+from typing import TYPE_CHECKING, AnyStr
 
 
 if TYPE_CHECKING:
@@ -11,26 +9,22 @@ if TYPE_CHECKING:
     from sanic.models.asgi import ASGIScope
 
 
-if sys.version_info < (3, 8):
-    Range = Any
-    HTMLProtocol = Any
-else:
-    # Protocol is a 3.8+ feature
-    from typing import Protocol
+from typing import Protocol
 
-    class HTMLProtocol(Protocol):
-        def __html__(self) -> AnyStr:
-            ...
 
-        def _repr_html_(self) -> AnyStr:
-            ...
+class HTMLProtocol(Protocol):
+    def __html__(self) -> AnyStr:
+        ...
 
-    class Range(Protocol):
-        start: Optional[int]
-        end: Optional[int]
-        size: Optional[int]
-        total: Optional[int]
-        __slots__ = ()
+    def _repr_html_(self) -> AnyStr:
+        ...
+
+class Range(Protocol):
+    start: int | None
+    end: int | None
+    size: int | None
+    total: int | None
+    __slots__ = ()
 
 
 class TransportProtocol(BaseTransport):

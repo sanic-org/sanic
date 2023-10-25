@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Sanic documentation build configuration file, created by
 # sphinx-quickstart on Sun Dec 25 18:07:21 2016.

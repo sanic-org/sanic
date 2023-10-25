@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Type
 
 from html5tagger import HTML, Builder  # type: ignore
 from sanic import Request
@@ -38,7 +37,7 @@ class PageRenderer(BaseRenderer):
 
     @contextmanager
     def _base(self, request: Request, builder: Builder, page: Page | None):
-        layout_type: Type[BaseLayout] = (
+        layout_type: type[BaseLayout] = (
             page.get_layout() if page else BaseLayout
         )
         layout = layout_type(builder)

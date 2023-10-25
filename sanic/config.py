@@ -98,14 +98,14 @@ class Config(dict, metaclass=DescriptorMeta):
     INSPECTOR: bool
     INSPECTOR_HOST: str
     INSPECTOR_PORT: int
-    INSPECTOR_TLS_KEY: Path | (str | Default)
-    INSPECTOR_TLS_CERT: Path | (str | Default)
+    INSPECTOR_TLS_KEY: Path | str | Default
+    INSPECTOR_TLS_CERT: Path | str | Default
     INSPECTOR_API_KEY: str
     KEEP_ALIVE_TIMEOUT: int
     KEEP_ALIVE: bool
     LOCAL_CERT_CREATOR: str | LocalCertCreator
-    LOCAL_TLS_KEY: Path | (str | Default)
-    LOCAL_TLS_CERT: Path | (str | Default)
+    LOCAL_TLS_KEY: Path | str | Default
+    LOCAL_TLS_CERT: Path | str | Default
     LOCALHOST: str
     MOTD: bool
     MOTD_DISPLAY: dict[str, str]
@@ -323,7 +323,7 @@ class Config(dict, metaclass=DescriptorMeta):
                 except ValueError:
                     pass
 
-    def update_config(self, config: bytes | (str | (dict | Any))):
+    def update_config(self, config: bytes | str | dict | Any):
         """Update app.config.
 
         .. note::

@@ -155,7 +155,7 @@ class Request(Generic[sanic_type, ctx_type]):
         except HttpParserInvalidURLError:
             url = url_bytes.decode(errors="backslashreplace")
             raise BadURL(f"Bad URL: {url}")
-        self._id: uuid.UUID | (str | int) | None = None
+        self._id: uuid.UUID | str | int | None = None
         self._name: str | None = None
         self._stream_id = stream_id
         self.app = app
@@ -245,7 +245,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return request
 
     @classmethod
-    def generate_id(*_) -> uuid.UUID | (str | int):
+    def generate_id(*_) -> uuid.UUID | str | int:
         """Generate a unique ID for the request.
 
         This method is called to generate a unique ID for each request.
@@ -488,7 +488,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return bytes(reqline)
 
     @property
-    def id(self) -> uuid.UUID | (str | int) | None:
+    def id(self) -> uuid.UUID | str | int | None:
         """A request ID passed from the client, or generated from the backend.
 
         By default, this will look in a request header defined at:

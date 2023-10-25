@@ -82,7 +82,7 @@ class Router(BaseRouter):
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
-        version: str | (float | int) | None = None,
+        version: str | float | int | None = None,
         name: str | None = None,
         unquote: bool = False,
         static: bool = False,

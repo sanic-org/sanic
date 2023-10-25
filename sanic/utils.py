@@ -128,4 +128,4 @@ def load_module_from_file_location(
         try:
             return import_string(location)
         except ValueError:
-            raise OSError("Unable to load configuration %s" % str(location))
+            raise OSError(f"Unable to load configuration {location!s}")

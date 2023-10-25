@@ -64,7 +64,7 @@ class BaseHTTPResponse:
         self.asgi: bool = False
         self.body: bytes | None = None
         self.content_type: str | None = None
-        self.stream: Http | (ASGIApp | HTTPReceiver) | None = None
+        self.stream: Http | ASGIApp | HTTPReceiver | None = None
         self.status: int = None
         self.headers = Header({})
         self._cookies: CookieJar | None = None

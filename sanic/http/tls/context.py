@@ -55,7 +55,7 @@ def shorthand_to_ctx(
 
 
 def process_to_context(
-    ssldef: None | (ssl.SSLContext | (dict | (str | (list | tuple))))
+    ssldef: None | ssl.SSLContext | dict | str | list | tuple
 ) -> ssl.SSLContext | None:
     """Process app.run ssl argument from easy formats to full SSLContext."""
     return (

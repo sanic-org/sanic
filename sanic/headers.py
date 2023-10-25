@@ -529,7 +529,7 @@ def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
 
 def parse_credentials(
     header: str | None,
-    prefixes: list | (tuple | set) | None = None,
+    prefixes: list | tuple | set | None = None,
 ) -> tuple[str | None, str | None]:
     """Parses any header with the aim to retrieve any credentials from it.
 

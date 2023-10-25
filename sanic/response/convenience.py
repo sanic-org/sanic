@@ -120,7 +120,7 @@ def raw(
 
 
 def html(
-    body: str | (bytes | HTMLProtocol),
+    body: str | bytes | HTMLProtocol,
     status: int = 200,
     headers: dict[str, str] | None = None,
 ) -> HTTPResponse:
@@ -151,7 +151,7 @@ def html(
 
 
 async def validate_file(
-    request_headers: Header, last_modified: datetime | (float | int)
+    request_headers: Header, last_modified: datetime | float | int
 ) -> HTTPResponse | None:
     """Validate file based on request headers.
 
@@ -170,8 +170,7 @@ async def validate_file(
         if_modified_since = parsedate_to_datetime(if_modified_since)
     except (TypeError, ValueError):
         logger.warning(
-            "Ignoring invalid If-Modified-Since header received: '%s'",
-            if_modified_since,
+            f"Ignoring invalid If-Modified-Since header received: '{if_modified_since}'"
         )
         return None
     if not isinstance(last_modified, datetime):
@@ -211,7 +210,7 @@ async def file(
     mime_type: str | None = None,
     headers: dict[str, str] | None = None,
     filename: str | None = None,
-    last_modified: datetime | (float | (int | Default)) | None = _default,
+    last_modified: datetime | float | int | Default | None = _default,
     max_age: float | int | None = None,
     no_store: bool | None = None,
     _range: Range | None = None,

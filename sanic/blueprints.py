@@ -118,7 +118,7 @@ class Blueprint(BaseSanic):
         name: str,
         url_prefix: str | None = None,
         host: list[str] | str | None = None,
-        version: int | (str | float) | None = None,
+        version: int | str | float | None = None,
         strict_slashes: bool | None = None,
         version_prefix: str = "/v",
     ):
@@ -203,7 +203,7 @@ class Blueprint(BaseSanic):
         self,
         name: str,
         url_prefix: str | Default | None = _default,
-        version: int | (str | (float | Default)) | None = _default,
+        version: int | str | float | Default | None = _default,
         version_prefix: str | Default = _default,
         allow_route_overwrite: bool | Default = _default,
         strict_slashes: bool | Default | None = _default,
@@ -273,7 +273,7 @@ class Blueprint(BaseSanic):
     def group(
         *blueprints: Blueprint | BlueprintGroup,
         url_prefix: str | None = None,
-        version: int | (str | float) | None = None,
+        version: int | str | float | None = None,
         strict_slashes: bool | None = None,
         version_prefix: str = "/v",
         name_prefix: str | None = "",
@@ -675,7 +675,7 @@ class BlueprintGroup(bpg_base):
         self._name_prefix = name_prefix
 
     @property
-    def url_prefix(self) -> int | (str | float) | None:
+    def url_prefix(self) -> int | str | float | None:
         """The URL prefix for the Blueprint Group.
 
         Returns:
@@ -695,7 +695,7 @@ class BlueprintGroup(bpg_base):
         return self._blueprints
 
     @property
-    def version(self) -> str | (int | float) | None:
+    def version(self) -> str | int | float | None:
         """API Version for the Blueprint Group, if any.
 
         Returns:

@@ -6,7 +6,7 @@ from typing import Any
 class RequestParameters(dict):
     """Hosts a dict with lists as values where get returns the first value of the list and getlist returns the whole shebang"""  # noqa: E501
 
-    def get(self, name: str, default: Any | None = None) -> Any | None:
+    def get(self, name: str, default: Any = None) -> Any:
         """Return the first value, either the default or actual
 
         Args:
@@ -18,7 +18,7 @@ class RequestParameters(dict):
         """  # noqa: E501
         return super().get(name, [default])[0]
 
-    def getlist(self, name: str, default: Any | None = None) -> Any | None:
+    def getlist(self, name: str, default: Any = None) -> Any:
         """Return the entire list
 
         Args:

@@ -51,8 +51,8 @@ class SanicProtocol(asyncio.Protocol):
         self._can_write = asyncio.Event()
         self._can_write.set()
         self._unix = unix
-        self._time = 0.0  # type: float
-        self._task = None  # type: Optional[asyncio.Task]
+        self._time = 0.0
+        self._task: asyncio.Task | None = None
         self._data_received = asyncio.Event()
 
     @property

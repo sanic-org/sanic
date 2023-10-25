@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from asyncio import BaseTransport
-from typing import TYPE_CHECKING, AnyStr
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sanic.http.constants import HTTP
@@ -12,10 +12,10 @@ from typing import Protocol
 
 
 class HTMLProtocol(Protocol):
-    def __html__(self) -> AnyStr:
+    def __html__(self) -> str:
         ...
 
-    def _repr_html_(self) -> AnyStr:
+    def _repr_html_(self) -> str:
         ...
 
 

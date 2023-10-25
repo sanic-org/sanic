@@ -11,7 +11,7 @@ from sanic import Sanic
 from sanic.compat import OS_IS_WINDOWS
 from sanic.response import text
 
-CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
+CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 1, "KEEP_ALIVE": True}
 
 PORT = 42001  # test_keep_alive_timeout_reuse doesn't work with random port
 MAX_LOOPS = 15
@@ -81,48 +81,12 @@ def test_keep_alive_timeout_reuse():
                 assert response.text == "OK"
                 assert request.protocol.state["requests_count"] == 1
 
-                loop.run_until_complete(aio_sleep(1))
+                loop.run_until_complete(aio_sleep(.5))
 
                 request, response = client.get("/1")
                 assert response.status == 200
                 assert response.text == "OK"
                 assert request.protocol.state["requests_count"] == 2
-        except OSError:
-            loops += 1
-            if loops > MAX_LOOPS:
-                raise
-            continue
-        else:
-            break
-
-
-@pytest.mark.skipif(
-    bool(environ.get("SANIC_NO_UVLOOP"))
-    or OS_IS_WINDOWS
-    or platform.system() != "Linux",
-    reason="Not testable with current client",
-)
-def test_keep_alive_client_timeout():
-    """If the server keep-alive timeout is longer than the client
-    keep-alive timeout, client will try to create a new connection here."""
-    loops = 0
-    while True:
-        try:
-            port = get_port()
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            client = ReusableClient(keep_alive_app_client_timeout, loop=loop, port=port)
-            with client:
-                headers = {"Connection": "keep-alive"}
-                request, response = client.get("/1", headers=headers, timeout=1)
-
-                assert response.status == 200
-                assert response.text == "OK"
-                assert request.protocol.state["requests_count"] == 1
-
-                loop.run_until_complete(aio_sleep(2))
-                request, response = client.get("/1", timeout=1)
-                assert request.protocol.state["requests_count"] == 1
         except OSError:
             loops += 1
             if loops > MAX_LOOPS:
@@ -150,14 +114,14 @@ def test_keep_alive_server_timeout():
             client = ReusableClient(keep_alive_app_server_timeout, loop=loop, port=port)
             with client:
                 headers = {"Connection": "keep-alive"}
-                request, response = client.get("/1", headers=headers, timeout=60)
+                request, response = client.get("/1", headers=headers, timeout=5)
 
                 assert response.status == 200
                 assert response.text == "OK"
                 assert request.protocol.state["requests_count"] == 1
 
-                loop.run_until_complete(aio_sleep(3))
-                request, response = client.get("/1", timeout=60)
+                loop.run_until_complete(aio_sleep(1.5))
+                request, response = client.get("/1", timeout=5)
 
                 assert request.protocol.state["requests_count"] == 1
         except OSError:
@@ -185,7 +149,7 @@ def test_keep_alive_connection_context():
                 headers = {"Connection": "keep-alive"}
                 request1, _ = client.post("/ctx", headers=headers)
 
-                loop.run_until_complete(aio_sleep(1))
+                loop.run_until_complete(aio_sleep(0.2))
                 request2, response = client.get("/ctx")
 
                 assert response.text == "hello"

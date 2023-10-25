@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import ssl
-from typing import Any, Iterable
+from typing import Any, Iterable, Union
 
 from sanic.log import logger
 

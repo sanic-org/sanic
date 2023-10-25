@@ -8,7 +8,6 @@ from mistune.core import BlockState
 from mistune.directives import DirectivePlugin, RSTDirective
 from mistune.markdown import Markdown
 
-
 class Column(DirectivePlugin):
     def parse(
         self, block: BlockParser, m: Match, state: BlockState

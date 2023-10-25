@@ -1,6 +1,5 @@
 import sys
 
-
 import pytest
 
 from sanic import Sanic

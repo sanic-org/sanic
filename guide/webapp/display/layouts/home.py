@@ -8,7 +8,6 @@ from sanic import Request
 
 from .base import BaseLayout
 
-
 class HomeLayout(BaseLayout):
     @contextmanager
     def layout(

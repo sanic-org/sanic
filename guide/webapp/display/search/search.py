@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import ClassVar
 
 from msgspec import Struct
-from webapp.display.page import Page
 
+from webapp.display.page import Page
 
 class Stemmer:
     STOP_WORDS: ClassVar[set[str]] = set(

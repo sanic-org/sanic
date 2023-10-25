@@ -1,11 +1,10 @@
 # from scss.compiler import compile_string
 
 from pygments.formatters import html
-from sass import compile as compile_scss
-from webapp.display.code_style import SanicCodeStyle
-
 from sanic import Sanic
+from sass import compile as compile_scss
 
+from webapp.display.code_style import SanicCodeStyle
 
 def setup_style(app: Sanic) -> None:
     index = app.config.STYLE_DIR / "index.scss"

@@ -1,6 +1,5 @@
 from asyncio import CancelledError
 
-
 from sanic import Request, Sanic, json
 
 

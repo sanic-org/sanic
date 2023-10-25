@@ -2,7 +2,6 @@ import re
 
 from mistune.markdown import Markdown
 
-
 def parse_inline_span(inline, m: re.Match, state):
     state.append_token(
         {

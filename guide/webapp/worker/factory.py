@@ -1,14 +1,13 @@
 from pathlib import Path
 
+from sanic import Request, Sanic, html, redirect
+
 from webapp.display.layouts.models import MenuItem
 from webapp.display.page import Page, PageRenderer
 from webapp.endpoint.view import bp
 from webapp.worker.config import load_config, load_menu
 from webapp.worker.reload import setup_livereload
 from webapp.worker.style import setup_style
-
-from sanic import Request, Sanic, html, redirect
-
 
 def _compile_sidebar_order(items: list[MenuItem]) -> list[str]:
     order = []

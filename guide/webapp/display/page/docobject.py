@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import inspect
 import pkgutil
+
 from collections import defaultdict
 from dataclasses import dataclass, field
 from html import escape
@@ -10,11 +11,9 @@ from html import escape
 from docstring_parser import Docstring, DocstringParam, DocstringRaises
 from docstring_parser import parse as parse_docstring
 from docstring_parser.common import DocstringExample
-
 from html5tagger import HTML, Builder, E  # type: ignore
 
 from ..markdown import render_markdown, slugify
-
 
 @dataclass
 class DocObject:

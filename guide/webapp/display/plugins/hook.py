@@ -2,7 +2,6 @@ from mistune.core import BlockState
 from mistune.directives import DirectivePlugin, RSTDirective
 from mistune.markdown import Markdown
 
-
 class Hook(DirectivePlugin):
     def __call__(  # type: ignore
         self, directive: RSTDirective, md: Markdown

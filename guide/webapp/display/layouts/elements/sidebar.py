@@ -1,9 +1,8 @@
-from webapp.display.layouts.models import MenuItem
-from webapp.display.text import slugify
-
 from html5tagger import Builder, E  # type: ignore
 from sanic import Request
 
+from webapp.display.layouts.models import MenuItem
+from webapp.display.text import slugify
 
 def do_sidebar(builder: Builder, request: Request) -> None:
     builder.a(class_="burger")(E.span().span().span().span())

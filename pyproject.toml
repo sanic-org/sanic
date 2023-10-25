@@ -4,6 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 line-length = 79
+extend-select = ["I"]
+
+[tool.ruff.isort]
+known-first-party = ["sanic"]
+known-third-party = ["pytest"]
+lines-after-imports = 2
+lines-between-types = 1
 
 [tool.black]
 line-length = 79

@@ -13,11 +13,10 @@ localhost_dir = parent_dir / "certs/localhost"
 PORT = 12344
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported in 3.7")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported in 3.8")
 def test_http1_response_has_alt_svc():
-    Sanic._app_registry.clear()
+    """Verify that H1 server returns alt-svc header when H3 is also running."""
     app = Sanic("TestAltSvc")
-    app.config.TOUCHUP = True
     response = b""
 
     @app.get("/")
@@ -28,23 +27,17 @@ def test_http1_response_has_alt_svc():
     async def do_request(*_):
         nonlocal response
 
-        app.router.reset()
-        app.router.finalize()
-
         client = RawClient(app.state.host, app.state.port)
         await client.connect()
         await client.send(
             """
-            GET / HTTP/1.1
+            GET / HTTP/1.0
             host: localhost:7777
 
             """
         )
         response = await client.recv()
         await client.close()
-
-    @app.after_server_start
-    def shutdown(*_):
         app.stop()
 
     app.prepare(
@@ -59,6 +52,6 @@ def test_http1_response_has_alt_svc():
         version=1,
         port=PORT,
     )
-    Sanic.serve_single(app)
+    Sanic.serve_single()
 
     assert f'alt-svc: h3=":{PORT}"\r\n'.encode() in response

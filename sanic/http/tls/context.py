@@ -20,6 +20,7 @@ CIPHERS_TLS12 = [
 TlsDef = None | ssl.SSLContext | dict[str, Any] | str
 TlsDefs = TlsDef | list[TlsDef] | tuple[TlsDef, ...]
 
+
 def create_context(
     certfile: str | None = None,
     keyfile: str | None = None,
@@ -38,9 +39,7 @@ def create_context(
     return context
 
 
-def shorthand_to_ctx(
-    ctxdef: TlsDef
-) -> ssl.SSLContext | None:
+def shorthand_to_ctx(ctxdef: TlsDef) -> ssl.SSLContext | None:
     """Convert an ssl argument shorthand to an SSLContext object."""
     if ctxdef is None or isinstance(ctxdef, ssl.SSLContext):
         return ctxdef
@@ -54,9 +53,7 @@ def shorthand_to_ctx(
     )
 
 
-def process_to_context(
-    ssldef: TlsDefs
-) -> ssl.SSLContext | None:
+def process_to_context(ssldef: TlsDefs) -> ssl.SSLContext | None:
     """Process app.run ssl argument from easy formats to full SSLContext."""
     return (
         CertSelector(map(shorthand_to_ctx, ssldef))

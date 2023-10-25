@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import ssl
-from typing import Any, Iterable, Union
+from typing import Any, Dict, Iterable, List, Union
 
 from sanic.log import logger
 
@@ -17,8 +17,8 @@ CIPHERS_TLS12 = [
     "ECDHE-RSA-AES128-GCM-SHA256",
 ]
 
-TlsDef = Union[ssl.SSLContext, dict[str, Any], str, None]
-TlsDefs = Union[TlsDef, list[TlsDef], tuple]
+TlsDef = Union[ssl.SSLContext, Dict[str, Any], str, None]
+TlsDefs = Union[TlsDef, List[TlsDef], tuple]
 
 
 def create_context(

@@ -3,8 +3,8 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
-extend-select = ["I", "W", "UP", "C4", "ISC"]
-# Worth selecting but still too broken: ASYNC, S, B, DTZ, FA
+extend-select = ["I", "W", "UP", "C4", "ISC", "S"]
+# Worth selecting but still too broken: ASYNC, B, DTZ, FA
 ignore = [
 	"D100",
 	"D101",
@@ -16,10 +16,22 @@ ignore = [
 	"F821",
 	# ruff format complains about these:
 	"ISC001",
+	"S101",
+	"S102",
+	"S104",
+	"S311",
+	"S603",
+	"S607",
 	"W191",
 ]
 show-source = true
 show-fixes = true
+
+[tool.ruff.per-file-ignores]
+"examples/request_stream/client.py" = ["S113"]
+"tests/*" = ["S"]
+"scripts/*" = ["S"]
+"sanic/cli/inspector_client.py" = ["S310"]
 
 [tool.ruff.isort]
 known-first-party = ["sanic"]

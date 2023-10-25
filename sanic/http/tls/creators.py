@@ -174,7 +174,7 @@ class CertCreator(ABC):
 class MkcertCreator(CertCreator):
     def check_supported(self) -> None:
         try:
-            subprocess.run(  # nosec B603 B607
+            subprocess.run(  # noqa: S603 S607
                 ["mkcert", "-help"],
                 check=True,
                 stderr=subprocess.DEVNULL,

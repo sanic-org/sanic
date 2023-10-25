@@ -135,7 +135,7 @@ class WorkerManager:
                     "Server shutdown failed because a server was not found."
                 )
                 return
-            worker = choice(servers)  # nosec B311
+            worker = choice(servers)  # noqa: S311
         else:
             worker = self.transient[ident]
 

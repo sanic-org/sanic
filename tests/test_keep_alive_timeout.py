@@ -1,5 +1,4 @@
 import asyncio
-import platform
 from asyncio import sleep as aio_sleep
 from itertools import count
 from os import environ

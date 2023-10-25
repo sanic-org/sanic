@@ -120,7 +120,6 @@ tests_require = [
     "pytest-benchmark",
     "chardet==3.*",
     "ruff",
-    "bandit",
     "mypy",
     "docutils",
     "pygments",

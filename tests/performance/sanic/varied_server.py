@@ -6,9 +6,7 @@ from sanic import Sanic
 from sanic.exceptions import ServerError
 from sanic.response import json, text
 
-currentdir = os.path.dirname(
-    os.path.abspath(inspect.getfile(inspect.currentframe()))
-)
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.insert(0, currentdir + "/../../../")
 
 

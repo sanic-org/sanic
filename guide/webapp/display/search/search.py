@@ -92,9 +92,7 @@ def _inverse_document_frequency(docs: list[Document]) -> dict[str, float]:
     return {word: num_docs / count for word, count in word_count.items()}
 
 
-def _tf_idf_vector(
-    document: Document, idf: dict[str, float]
-) -> dict[str, float]:
+def _tf_idf_vector(document: Document, idf: dict[str, float]) -> dict[str, float]:
     """Calculate the TF-IDF vector for a document."""
     return {
         word: tf * idf[word]
@@ -103,9 +101,7 @@ def _tf_idf_vector(
     }
 
 
-def _cosine_similarity(
-    vec1: dict[str, float], vec2: dict[str, float]
-) -> float:
+def _cosine_similarity(vec1: dict[str, float], vec2: dict[str, float]) -> float:
     """Calculate the cosine similarity between two vectors."""
     if not vec1 or not vec2:
         return 0.0
@@ -127,9 +123,7 @@ def _search(
     tf_idf_query = _tf_idf_vector(
         Document(page=dummy_page, language=language).process(stemmer), idf
     )
-    similarities = [
-        _cosine_similarity(tf_idf_query, vector) for vector in vectors
-    ]
+    similarities = [_cosine_similarity(tf_idf_query, vector) for vector in vectors]
     return [
         (similarity, document)
         for similarity, document in sorted(
@@ -156,16 +150,13 @@ class Searcher:
         }
         self._vectors = {
             language: [
-                _tf_idf_vector(document, self._idf[language])
-                for document in documents
+                _tf_idf_vector(document, self._idf[language]) for document in documents
             ]
             for language, documents in self._documents.items()
         }
         self._stemmer = stemmer
 
-    def search(
-        self, query: str, language: str
-    ) -> list[tuple[float, Document]]:
+    def search(self, query: str, language: str) -> list[tuple[float, Document]]:
         return _search(
             query,
             language,

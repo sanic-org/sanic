@@ -12,9 +12,7 @@ from mistune.markdown import Markdown
 
 
 class Mermaid(DirectivePlugin):
-    def parse(
-        self, block: BlockParser, m: Match, state: BlockState
-    ) -> dict[str, Any]:
+    def parse(self, block: BlockParser, m: Match, state: BlockState) -> dict[str, Any]:
         info = m.groupdict()
 
         new_state = block.state_cls()

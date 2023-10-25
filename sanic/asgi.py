@@ -140,9 +140,7 @@ class ASGIApp:
                 ]
             )
         except UnicodeDecodeError:
-            raise BadRequest(
-                "Header names can only contain US-ASCII characters"
-            )
+            raise BadRequest("Header names can only contain US-ASCII characters")
 
         if scope["type"] == "http":
             version = scope["http_version"]
@@ -151,9 +149,7 @@ class ASGIApp:
             version = "1.1"
             method = "GET"
 
-            instance.ws = instance.transport.create_websocket_connection(
-                send, receive
-            )
+            instance.ws = instance.transport.create_websocket_connection(send, receive)
         else:
             raise ServerError("Received unknown ASGI scope")
 

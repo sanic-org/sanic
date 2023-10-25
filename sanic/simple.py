@@ -11,8 +11,6 @@ def create_simple_server(directory: Path):
         )
 
     app = Sanic("SimpleServer")
-    app.static(
-        "/", directory, name="main", directory_view=True, index="index.html"
-    )
+    app.static("/", directory, name="main", directory_view=True, index="index.html")
 
     return app

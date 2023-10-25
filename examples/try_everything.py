@@ -42,9 +42,7 @@ async def test_file(request):
 
 @app.route("/file_stream")
 async def test_file_stream(request):
-    return await response.file_stream(
-        os.path.abspath("setup.py"), chunk_size=1024
-    )
+    return await response.file_stream(os.path.abspath("setup.py"), chunk_size=1024)
 
 
 # ----------------------------------------------- #

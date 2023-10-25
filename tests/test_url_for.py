@@ -15,10 +15,7 @@ def test_routes_with_host(app):
     assert app.url_for("hostindex") == "/"
     assert app.url_for("hostpath") == "/path"
     assert app.url_for("hostindex", _external=True) == "http://example.com/"
-    assert (
-        app.url_for("hostpath", _external=True)
-        == "http://path.example.com/path"
-    )
+    assert app.url_for("hostpath", _external=True) == "http://path.example.com/path"
 
 
 def test_routes_with_multiple_hosts(app):
@@ -27,9 +24,7 @@ def test_routes_with_multiple_hosts(app):
         pass
 
     assert app.url_for("hostindex") == "/"
-    assert (
-        app.url_for("hostindex", _host="example.com") == "http://example.com/"
-    )
+    assert app.url_for("hostindex", _host="example.com") == "http://example.com/"
 
     with pytest.raises(ValueError) as e:
         assert app.url_for("hostindex", _external=True)

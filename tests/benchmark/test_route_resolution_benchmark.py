@@ -16,9 +16,7 @@ class TestSanicRouteResolution:
     async def test_resolve_route_no_arg_string_path(
         self, sanic_router, route_generator, benchmark
     ):
-        simple_routes = route_generator.generate_random_direct_route(
-            max_route_depth=4
-        )
+        simple_routes = route_generator.generate_random_direct_route(max_route_depth=4)
         router, simple_routes = sanic_router(route_details=simple_routes)
         route_to_call = choice(simple_routes)
         request = Request(
@@ -52,9 +50,7 @@ class TestSanicRouteResolution:
         )
         router, typed_routes = sanic_router(route_details=typed_routes)
         route_to_call = choice(typed_routes)
-        url = route_generator.generate_url_for_template(
-            template=route_to_call[-1]
-        )
+        url = route_generator.generate_url_for_template(template=route_to_call[-1])
 
         print(f"{route_to_call[-1]} -> {url}")
         request = Request(

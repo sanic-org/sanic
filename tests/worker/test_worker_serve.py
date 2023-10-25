@@ -66,9 +66,7 @@ def test_has_multiplexer(app: Sanic):
 
     Sanic.register_app(app)
     with patch("sanic.worker.serve._serve_http_1"):
-        worker_serve(
-            **args(app, monitor_publisher=Mock(), worker_state=Mock())
-        )
+        worker_serve(**args(app, monitor_publisher=Mock(), worker_state=Mock()))
     assert isinstance(app.multiplexer, WorkerMultiplexer)
 
     del environ["SANIC_WORKER_NAME"]
@@ -102,9 +100,7 @@ def test_serve_app_factory(wm: Mock, mock_app):
 
 @patch("sanic.mixins.startup.WorkerManager")
 @pytest.mark.parametrize("config", (True, False))
-def test_serve_with_inspector(
-    WorkerManager: Mock, mock_app: Mock, config: bool
-):
+def test_serve_with_inspector(WorkerManager: Mock, mock_app: Mock, config: bool):
     Inspector = Mock()
     mock_app.config.INSPECTOR = config
     mock_app.inspector_class = Inspector

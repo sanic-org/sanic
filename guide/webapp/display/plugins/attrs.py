@@ -15,9 +15,7 @@ class Attributes(DirectivePlugin):
         if md.renderer.NAME == "html":
             md.renderer.register("attrs", self._render)
 
-    def parse(
-        self, block: BlockParser, m: Match, state: BlockState
-    ) -> dict[str, Any]:
+    def parse(self, block: BlockParser, m: Match, state: BlockState) -> dict[str, Any]:
         info = m.groupdict()
         options = dict(self.parse_options(m))
         new_state = block.state_cls()

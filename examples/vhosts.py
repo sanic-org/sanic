@@ -11,9 +11,7 @@ app = Sanic("Example")
 bp = Blueprint("bp", host="bp.example.com")
 
 
-@app.route(
-    "/", host=["example.com", "somethingelse.com", "therestofyourdomains.com"]
-)
+@app.route("/", host=["example.com", "somethingelse.com", "therestofyourdomains.com"])
 async def hello_0(request):
     return response.text("Some defaults")
 

@@ -43,21 +43,15 @@ def test_state_eq():
 
 
 def test_state_keys():
-    assert list(gen_state(one=1, two=2).keys()) == list(
-        {"one": 1, "two": 2}.keys()
-    )
+    assert list(gen_state(one=1, two=2).keys()) == list({"one": 1, "two": 2}.keys())
 
 
 def test_state_values():
-    assert list(gen_state(one=1, two=2).values()) == list(
-        {"one": 1, "two": 2}.values()
-    )
+    assert list(gen_state(one=1, two=2).values()) == list({"one": 1, "two": 2}.values())
 
 
 def test_state_items():
-    assert list(gen_state(one=1, two=2).items()) == list(
-        {"one": 1, "two": 2}.items()
-    )
+    assert list(gen_state(one=1, two=2).items()) == list({"one": 1, "two": 2}.items())
 
 
 def test_state_update():

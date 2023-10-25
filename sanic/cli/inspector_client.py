@@ -45,11 +45,7 @@ class InspectorClient:
             return
         result = self.request(action, **kwargs).get("result")
         if result:
-            out = (
-                dumps(result)
-                if isinstance(result, (list, dict))
-                else str(result)
-            )
+            out = dumps(result) if isinstance(result, (list, dict)) else str(result)
             sys.stdout.write(out + "\n")
 
     def info(self) -> None:

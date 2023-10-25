@@ -244,10 +244,7 @@ class DevelopmentGroup(Group):
             "--auto-reload",
             dest="auto_reload",
             action="store_true",
-            help=(
-                "Watch source directory for file changes and reload on "
-                "changes"
-            ),
+            help=("Watch source directory for file changes and reload on " "changes"),
         )
         self.container.add_argument(
             "-R",

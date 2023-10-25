@@ -220,9 +220,7 @@ def test_reload_listeners():
             filename, port=42305, auto_reload=True
         )
 
-        proc = Popen(
-            argv["script"], cwd=tmpdir, stdout=PIPE, creationflags=flags
-        )
+        proc = Popen(argv["script"], cwd=tmpdir, stdout=PIPE, creationflags=flags)
         try:
             timeout = Timer(TIMER_DELAY, terminate, [proc])
             timeout.start()

@@ -14,9 +14,7 @@ class OptionalDispatchEvent(BaseScheme):
         super().__init__(app)
 
         self._sync_events()
-        self._registered_events = [
-            signal.name for signal in app.signal_router.routes
-        ]
+        self._registered_events = [signal.name for signal in app.signal_router.routes]
 
     def visitors(self) -> List[NodeTransformer]:
         return [RemoveDispatch(self._registered_events)]
@@ -26,9 +24,7 @@ class OptionalDispatchEvent(BaseScheme):
         app_events = {}
         for app in self.app.__class__._app_registry.values():
             if app.state.server_info:
-                app_events[app] = {
-                    signal.name for signal in app.signal_router.routes
-                }
+                app_events[app] = {signal.name for signal in app.signal_router.routes}
                 all_events.update(app_events[app])
 
         for app, events in app_events.items():

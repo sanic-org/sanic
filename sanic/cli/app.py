@@ -56,9 +56,7 @@ Or, a path to a directory to run as a simple HTTP server:
         )
         self.parser._positionals.title = "Required\n========\n  Positional"
         self.parser._optionals.title = "Optional\n========\n  General"
-        self.main_process = (
-            os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
-        )
+        self.main_process = os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
         self.args: Namespace = Namespace()
         self.groups: List[Group] = []
         self.inspecting = False
@@ -126,11 +124,7 @@ Or, a path to a directory to run as a simple HTTP server:
                         key = key.lstrip("-")
                     except ValueError:
                         value = False if arg.startswith("--no-") else True
-                        key = (
-                            arg.replace("--no-", "")
-                            .lstrip("-")
-                            .replace("-", "_")
-                        )
+                        key = arg.replace("--no-", "").lstrip("-").replace("-", "_")
                     setattr(self.args, key, value)
 
         kwargs = {**self.args.__dict__}
@@ -180,8 +174,7 @@ Or, a path to a directory to run as a simple HTTP server:
                     "  Example Module: project.sanic_server.app"
                 )
                 error_logger.error(
-                    "\nThe error below might have caused the above one:\n"
-                    f"{e.msg}"
+                    "\nThe error below might have caused the above one:\n" f"{e.msg}"
                 )
                 sys.exit(1)
             else:

@@ -92,9 +92,7 @@ class SignalMixin(metaclass=SanicMeta):
                 ...
 
             handler = noop
-        self.signal(event=event, condition=condition, exclusive=exclusive)(
-            handler
-        )
+        self.signal(event=event, condition=condition, exclusive=exclusive)(handler)
         return handler
 
     def event(self, event: str):

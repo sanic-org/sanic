@@ -35,9 +35,7 @@ def proxy(request, path):
 
 @https.main_process_start
 async def start(app, _):
-    http_server = await http.create_server(
-        port=HTTP_PORT, return_asyncio_server=True
-    )
+    http_server = await http.create_server(port=HTTP_PORT, return_asyncio_server=True)
     app.add_task(runner(http, http_server))
     app.ctx.http_server = http_server
     app.ctx.http = http

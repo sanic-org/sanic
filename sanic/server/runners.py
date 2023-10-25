@@ -167,9 +167,7 @@ def _setup_system_signals(
             ctrlc_workaround_for_windows(app)
         else:
             for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
-                loop.add_signal_handler(
-                    _signal, partial(app.stop, terminate=False)
-                )
+                loop.add_signal_handler(_signal, partial(app.stop, terminate=False))
 
 
 def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
@@ -223,9 +221,7 @@ def _serve_http_1(
         unix=unix,
         **protocol_kwargs,
     )
-    asyncio_server_kwargs = (
-        asyncio_server_kwargs if asyncio_server_kwargs else {}
-    )
+    asyncio_server_kwargs = asyncio_server_kwargs if asyncio_server_kwargs else {}
     if OS_IS_WINDOWS and sock:
         pid = os.getpid()
         sock = sock.share(pid)
@@ -314,9 +310,7 @@ def _serve_http_3(
     run_multiple: bool = False,
 ):
     if not HTTP3_AVAILABLE:
-        raise ServerError(
-            "Cannot run HTTP/3 server without aioquic installed. "
-        )
+        raise ServerError("Cannot run HTTP/3 server without aioquic installed. ")
     protocol = partial(Http3Protocol, app=app)
     ticket_store = SessionTicketStore()
     ssl_context = get_ssl_context(app, ssl)
@@ -339,9 +333,7 @@ def _serve_http_3(
 
     # TODO: Create connection cleanup and graceful shutdown
     cleanup = None
-    _run_server_forever(
-        loop, server.before_stop, server.after_stop, cleanup, None
-    )
+    _run_server_forever(loop, server.before_stop, server.after_stop, cleanup, None)
 
 
 def _build_protocol_kwargs(

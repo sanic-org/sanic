@@ -69,13 +69,9 @@ def load_cert_dir(p: str) -> ssl.SSLContext:
     keyfile = os.path.join(p, "privkey.pem")
     certfile = os.path.join(p, "fullchain.pem")
     if not os.access(keyfile, os.R_OK):
-        raise ValueError(
-            f"Certificate not found or permission denied {keyfile}"
-        )
+        raise ValueError(f"Certificate not found or permission denied {keyfile}")
     if not os.access(certfile, os.R_OK):
-        raise ValueError(
-            f"Certificate not found or permission denied {certfile}"
-        )
+        raise ValueError(f"Certificate not found or permission denied {certfile}")
     return CertSimple(certfile, keyfile)
 
 
@@ -87,9 +83,7 @@ def find_cert(self: CertSelector, server_name: str):
     if not server_name:
         if self.sanic_fallback:
             return self.sanic_fallback
-        raise ValueError(
-            "The client provided no SNI to match for certificate."
-        )
+        raise ValueError("The client provided no SNI to match for certificate.")
     for ctx in self.sanic_select:
         if match_hostname(ctx, server_name):
             return ctx
@@ -162,9 +156,7 @@ class CertSimple(SanicSSLContext):
         if "names" not in kw:
             cert = ssl._ssl._test_decode_cert(certfile)  # type: ignore
             kw["names"] = [
-                name
-                for t, name in cert["subjectAltName"]
-                if t in ["DNS", "IP Address"]
+                name for t, name in cert["subjectAltName"] if t in ["DNS", "IP Address"]
             ]
             subject = {k: v for item in cert["subject"] for k, v in item}
         self = create_context(certfile, keyfile, password)
@@ -201,7 +193,5 @@ class CertSelector(ssl.SSLContext):
             if i == 0:
                 self.sanic_fallback = ctx
         if not all_names:
-            raise ValueError(
-                "No certificates with SubjectAlternativeNames found."
-            )
+            raise ValueError("No certificates with SubjectAlternativeNames found.")
         logger.info(f"Certificate vhosts: {', '.join(all_names)}")

@@ -79,9 +79,7 @@ class ExceptionMixin(metaclass=SanicMeta):
 
         return decorator
 
-    def all_exceptions(
-        self, handler: Callable[..., Any]
-    ) -> Callable[..., Any]:
+    def all_exceptions(self, handler: Callable[..., Any]) -> Callable[..., Any]:
         """Enables the process of creating a global exception handler as a convenience.
 
         This following two examples are equivalent:

@@ -31,9 +31,7 @@ def test_static_index_single(app: Sanic, static_file_directory: str):
 
     _, response = app.test_client.get("/static/")
     assert response.status == 200
-    assert response.body == get_file_content(
-        static_file_directory, "test.html"
-    )
+    assert response.body == get_file_content(static_file_directory, "test.html")
     assert response.headers["Content-Type"] == "text/html"
 
 
@@ -53,15 +51,11 @@ def test_static_index_multiple(app: Sanic, static_file_directory: str):
 
     _, response = app.test_client.get("/static/")
     assert response.status == 200
-    assert response.body == get_file_content(
-        static_file_directory, "test.html"
-    )
+    assert response.body == get_file_content(static_file_directory, "test.html")
     assert response.headers["Content-Type"] == "text/html"
 
 
-def test_static_directory_view_and_index(
-    app: Sanic, static_file_directory: str
-):
+def test_static_directory_view_and_index(app: Sanic, static_file_directory: str):
     app.static(
         "/static",
         static_file_directory,

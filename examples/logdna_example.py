@@ -33,9 +33,7 @@ logdna_options = {
     "mac": get_mac_address(),
 }
 
-logdna_handler = LogDNAHandler(
-    getenv("LOGDNA_API_KEY"), options=logdna_options
-)
+logdna_handler = LogDNAHandler(getenv("LOGDNA_API_KEY"), options=logdna_options)
 
 logdna = logging.getLogger(__name__)
 logdna.setLevel(logging.INFO)

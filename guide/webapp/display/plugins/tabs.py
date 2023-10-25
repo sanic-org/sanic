@@ -10,9 +10,7 @@ from mistune.markdown import Markdown
 
 
 class Tabs(DirectivePlugin):
-    def parse(
-        self, block: BlockParser, m: Match, state: BlockState
-    ) -> dict[str, Any]:
+    def parse(self, block: BlockParser, m: Match, state: BlockState) -> dict[str, Any]:
         info = m.groupdict()
 
         new_state = block.state_cls()
@@ -41,9 +39,7 @@ class Tabs(DirectivePlugin):
     def _render_tab(self, renderer: HTMLRenderer, text: str, **attrs):
         start = '<div class="tabs mt-6"><ul>\n' if attrs.get("first") else ""
         end = (
-            '</ul></div><div class="tab-display"></div>\n'
-            if attrs.get("last")
-            else ""
+            '</ul></div><div class="tab-display"></div>\n' if attrs.get("last") else ""
         )
         content = f'<div class="tab-content">{text}</div>\n'
         tab = f'<li><a>{attrs["title"]}</a>{content}</li>\n'

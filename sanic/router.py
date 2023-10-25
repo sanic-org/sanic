@@ -40,9 +40,7 @@ class Router(BaseRouter):
             raise MethodNotAllowed(
                 f"Method {method} not allowed for URL {path}",
                 method=method,
-                allowed_methods=tuple(e.allowed_methods)
-                if e.allowed_methods
-                else None,
+                allowed_methods=tuple(e.allowed_methods) if e.allowed_methods else None,
             ) from None
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
@@ -137,11 +135,7 @@ class Router(BaseRouter):
 
             ident = name
             if len(hosts) > 1:
-                ident = (
-                    f"{name}_{host.replace('.', '_')}"
-                    if name
-                    else "__unnamed__"
-                )
+                ident = f"{name}_{host.replace('.', '_')}" if name else "__unnamed__"
 
             route = super().add(**params)  # type: ignore
             route.extra.ident = ident

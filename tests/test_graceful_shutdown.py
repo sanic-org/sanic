@@ -8,9 +8,7 @@ from sanic.response import empty
 PORT = 42101
 
 
-def test_no_exceptions_when_cancel_pending_request(
-    app, caplog: LogCaptureFixture
-):
+def test_no_exceptions_when_cancel_pending_request(app, caplog: LogCaptureFixture):
     app.config.GRACEFUL_SHUTDOWN_TIMEOUT = 1
 
     @app.get("/")

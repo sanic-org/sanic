@@ -62,9 +62,7 @@ class WorkerState(Mapping):
 
     def update(self, mapping: MappingType[str, Any]) -> None:
         if any(k in self.RESTRICTED for k in mapping.keys()):
-            self._write_error(
-                [k for k in mapping.keys() if k in self.RESTRICTED]
-            )
+            self._write_error([k for k in mapping.keys() if k in self.RESTRICTED])
         self._state[self._name] = {
             **self._state[self._name],
             **mapping,

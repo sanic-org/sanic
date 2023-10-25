@@ -127,9 +127,9 @@ def test_state_to_json():
 
 
 def test_run_inspector_authentication():
-    inspector = Inspector(
-        Mock(), {}, {}, "", 0, "super-secret", Default(), Default()
-    )(False)
+    inspector = Inspector(Mock(), {}, {}, "", 0, "super-secret", Default(), Default())(
+        False
+    )
     manager = TestManager(inspector.app)
     _, response = manager.test_client.get("/")
     assert response.status == 401

@@ -10,9 +10,7 @@ from mistune.markdown import Markdown
 
 
 class Column(DirectivePlugin):
-    def parse(
-        self, block: BlockParser, m: Match, state: BlockState
-    ) -> dict[str, Any]:
+    def parse(self, block: BlockParser, m: Match, state: BlockState) -> dict[str, Any]:
         info = m.groupdict()
 
         new_state = block.state_cls()
@@ -36,9 +34,7 @@ class Column(DirectivePlugin):
 
     def _render_column(self, renderer: HTMLRenderer, text: str, **attrs):
         start = (
-            '<div class="columns mt-3 is-multiline">\n'
-            if attrs.get("first")
-            else ""
+            '<div class="columns mt-3 is-multiline">\n' if attrs.get("first") else ""
         )
         end = "</div>\n" if attrs.get("last") else ""
         col = f'<div class="column is-half">{text}</div>\n'

@@ -92,9 +92,7 @@ def run_check(path_location: str) -> str:
         ),
     ),
 )
-def test_check_app_default(
-    path_location: str, expected: List[Tuple[str, int]]
-) -> None:
+def test_check_app_default(path_location: str, expected: List[Tuple[str, int]]) -> None:
     output = run_check(f"samples/{path_location}")
 
     for text, number in expected:

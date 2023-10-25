@@ -28,9 +28,7 @@ def test_bp_group_with_additional_route_params(app: Sanic):
     blueprint_1 = Blueprint("blueprint_1", url_prefix="/bp1")
     blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
 
-    @blueprint_1.route(
-        "/request_path", methods=frozenset({"PUT", "POST"}), version=2
-    )
+    @blueprint_1.route("/request_path", methods=frozenset({"PUT", "POST"}), version=2)
     def blueprint_1_v2_method_with_put_and_post(request: Request):
         if request.method == "PUT":
             return text("PUT_OK")
@@ -46,9 +44,7 @@ def test_bp_group_with_additional_route_params(app: Sanic):
         elif request.method == "PATCH":
             return text(f"PATCH_{param}")
 
-    blueprint_group = Blueprint.group(
-        blueprint_1, blueprint_2, url_prefix="/api"
-    )
+    blueprint_group = Blueprint.group(blueprint_1, blueprint_2, url_prefix="/api")
 
     @blueprint_group.middleware("request")
     def authenticate_request(request: Request):
@@ -68,15 +64,11 @@ def test_bp_group_with_additional_route_params(app: Sanic):
     app.blueprint(blueprint_group)
 
     header = {"authorization": " ".join(["Basic", AUTH])}
-    _, response = app.test_client.put(
-        "/v2/api/bp1/request_path", headers=header
-    )
+    _, response = app.test_client.put("/v2/api/bp1/request_path", headers=header)
     assert response.text == "PUT_OK"
     assert response.headers.get("x-test-middleware") == "value"
 
-    _, response = app.test_client.post(
-        "/v2/api/bp1/request_path", headers=header
-    )
+    _, response = app.test_client.post("/v2/api/bp1/request_path", headers=header)
     assert response.text == "POST_OK"
 
     _, response = app.test_client.delete("/api/bp2/route/bp2", headers=header)
@@ -109,9 +101,7 @@ def test_bp_group(app: Sanic):
     def blueprint_2_error(request: Request):
         raise ServerError("Error")
 
-    blueprint_group_1 = Blueprint.group(
-        blueprint_1, blueprint_2, url_prefix="/bp"
-    )
+    blueprint_group_1 = Blueprint.group(blueprint_1, blueprint_2, url_prefix="/bp")
 
     blueprint_3 = Blueprint("blueprint_3", url_prefix="/bp3")
 
@@ -213,9 +203,7 @@ def test_bp_group_list_operations(app: Sanic):
     def blueprint_2_default_route(request):
         return text("BP2_OK")
 
-    blueprint_group_1 = Blueprint.group(
-        blueprint_1, blueprint_2, url_prefix="/bp"
-    )
+    blueprint_group_1 = Blueprint.group(blueprint_1, blueprint_2, url_prefix="/bp")
 
     blueprint_3 = Blueprint("blueprint_2", url_prefix="/bp3")
 
@@ -247,9 +235,7 @@ def test_bp_group_as_list():
 def test_bp_group_as_nested_group():
     blueprint_1 = Blueprint("blueprint_1", url_prefix="/bp1")
     blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
-    blueprint_group_1 = Blueprint.group(
-        Blueprint.group(blueprint_1, blueprint_2)
-    )
+    blueprint_group_1 = Blueprint.group(Blueprint.group(blueprint_1, blueprint_2))
     assert len(blueprint_group_1) == 1
 
 
@@ -259,9 +245,7 @@ def test_blueprint_group_insert():
     )
     blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
     blueprint_3 = Blueprint("blueprint_3", url_prefix=None)
-    group = BlueprintGroup(
-        url_prefix="/test", version=1.3, strict_slashes=False
-    )
+    group = BlueprintGroup(url_prefix="/test", version=1.3, strict_slashes=False)
     group.insert(0, blueprint_1)
     group.insert(0, blueprint_2)
     group.insert(0, blueprint_3)
@@ -350,12 +334,8 @@ async def test_multiple_nested_bp_group():
     bp1.add_route(lambda _: ..., "/", name="route1")
     bp2.add_route(lambda _: ..., "/", name="route2")
 
-    group_a = Blueprint.group(
-        bp1, bp2, url_prefix="/group-a", name_prefix="group-a"
-    )
-    group_b = Blueprint.group(
-        bp1, bp2, url_prefix="/group-b", name_prefix="group-b"
-    )
+    group_a = Blueprint.group(bp1, bp2, url_prefix="/group-a", name_prefix="group-a")
+    group_b = Blueprint.group(bp1, bp2, url_prefix="/group-b", name_prefix="group-b")
 
     app = Sanic("PropTest")
     app.blueprint(group_a)

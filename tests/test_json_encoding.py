@@ -11,9 +11,7 @@ try:
     import ujson
     from ujson import dumps as udumps
 
-    ujson_version = tuple(
-        map(int, ujson.__version__.strip(ascii_lowercase).split("."))
-    )
+    ujson_version = tuple(map(int, ujson.__version__.strip(ascii_lowercase).split(".")))
 
     NO_UJSON = False
     DEFAULT_DUMPS = udumps
@@ -69,15 +67,11 @@ def test_json_response_ujson(payload: Dict[str, Foo]):
     response = json(payload)
     assert response.body == b'{"foo":{"bar":"bar"}}'
 
-    with pytest.raises(
-        TypeError, match="Object of type Foo is not JSON serializable"
-    ):
+    with pytest.raises(TypeError, match="Object of type Foo is not JSON serializable"):
         json(payload, dumps=sdumps)
 
     Sanic("Test", dumps=sdumps)
-    with pytest.raises(
-        TypeError, match="Object of type Foo is not JSON serializable"
-    ):
+    with pytest.raises(TypeError, match="Object of type Foo is not JSON serializable"):
         json(payload)
 
 

@@ -99,9 +99,7 @@ class WorkerManager:
             Worker: The Worker instance
         """  # noqa: E501
         container = self.transient if transient else self.durable
-        worker = Worker(
-            ident, func, kwargs, self.context, self.worker_state, workers
-        )
+        worker = Worker(ident, func, kwargs, self.context, self.worker_state, workers)
         container[worker.ident] = worker
         return worker
 
@@ -204,9 +202,7 @@ class WorkerManager:
 
         change = num_worker - self.num_server
         if change == 0:
-            logger.info(
-                f"No change needed. There are already {num_worker} workers."
-            )
+            logger.info(f"No change needed. There are already {num_worker} workers.")
             return
 
         logger.info(f"Scaling from {self.num_server} to {num_worker} workers")
@@ -237,9 +233,7 @@ class WorkerManager:
             try:
                 if self.monitor_subscriber.poll(0.1):
                     message = self.monitor_subscriber.recv()
-                    logger.debug(
-                        f"Monitor message: {message}", extra={"verbosity": 2}
-                    )
+                    logger.debug(f"Monitor message: {message}", extra={"verbosity": 2})
                     if not message:
                         break
                     elif message == "__TERMINATE__":
@@ -258,9 +252,7 @@ class WorkerManager:
                     reloaded_files = (
                         split_message[1] if len(split_message) > 1 else None
                     )
-                    process_names = [
-                        name.strip() for name in processes.split(",")
-                    ]
+                    process_names = [name.strip() for name in processes.split(",")]
                     if "__ALL_PROCESSES__" in process_names:
                         process_names = None
                     order = (

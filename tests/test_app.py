@@ -97,9 +97,7 @@ def test_create_server_no_startup(app: Sanic):
         asyncio_server_kwargs={"start_serving": False},
     )
     srv = loop.run_until_complete(asyncio_srv_coro)
-    message = (
-        "Cannot run Sanic server without first running await server.startup()"
-    )
+    message = "Cannot run Sanic server without first running await server.startup()"
     with pytest.raises(SanicException, match=message):
         loop.run_until_complete(srv.start_serving())
 
@@ -212,14 +210,8 @@ def test_app_websocket_parameters(websocket_protocol_mock, app: Sanic):
     websocket_protocol_call_args = websocket_protocol_mock.call_args
     ws_kwargs = websocket_protocol_call_args[1]
     assert ws_kwargs["websocket_max_size"] == app.config.WEBSOCKET_MAX_SIZE
-    assert (
-        ws_kwargs["websocket_ping_timeout"]
-        == app.config.WEBSOCKET_PING_TIMEOUT
-    )
-    assert (
-        ws_kwargs["websocket_ping_interval"]
-        == app.config.WEBSOCKET_PING_INTERVAL
-    )
+    assert ws_kwargs["websocket_ping_timeout"] == app.config.WEBSOCKET_PING_TIMEOUT
+    assert ws_kwargs["websocket_ping_interval"] == app.config.WEBSOCKET_PING_INTERVAL
 
 
 def test_handle_request_with_nested_exception(app: Sanic, monkeypatch):
@@ -228,9 +220,7 @@ def test_handle_request_with_nested_exception(app: Sanic, monkeypatch):
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -247,9 +237,7 @@ def test_handle_request_with_nested_exception_debug(app: Sanic, monkeypatch):
     def mock_error_handler_response(*args, **kwargs):
         raise Exception(err_msg)
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -263,15 +251,11 @@ def test_handle_request_with_nested_exception_debug(app: Sanic, monkeypatch):
     )
 
 
-def test_handle_request_with_nested_sanic_exception(
-    app: Sanic, monkeypatch, caplog
-):
+def test_handle_request_with_nested_sanic_exception(app: Sanic, monkeypatch, caplog):
     def mock_error_handler_response(*args, **kwargs):
         raise SanicException("Mock SanicException")
 
-    monkeypatch.setattr(
-        app.error_handler, "response", mock_error_handler_response
-    )
+    monkeypatch.setattr(app.error_handler, "response", mock_error_handler_response)
 
     @app.get("/")
     def handler(request):
@@ -326,9 +310,7 @@ def test_app_registry_wrong_type():
 def test_app_registry_name_reuse():
     Sanic("test")
     Sanic.test_mode = False
-    with pytest.raises(
-        SanicException, match='Sanic app name "test" already in use.'
-    ):
+    with pytest.raises(SanicException, match='Sanic app name "test" already in use.'):
         Sanic("test")
     Sanic.test_mode = True
     Sanic("test")
@@ -361,9 +343,7 @@ def test_get_app_does_not_exist():
 
 
 def test_get_app_does_not_exist_force_create():
-    assert isinstance(
-        Sanic.get_app("does-not-exist", force_create=True), Sanic
-    )
+    assert isinstance(Sanic.get_app("does-not-exist", force_create=True), Sanic)
 
 
 def test_get_app_default():
@@ -372,9 +352,7 @@ def test_get_app_default():
 
 
 def test_get_app_no_default():
-    with pytest.raises(
-        SanicException, match="No Sanic apps have been registered."
-    ):
+    with pytest.raises(SanicException, match="No Sanic apps have been registered."):
         Sanic.get_app()
 
 
@@ -383,9 +361,7 @@ def test_get_app_default_ambiguous():
     Sanic("test2")
     with pytest.raises(
         SanicException,
-        match=re.escape(
-            'Multiple Sanic apps found, use Sanic.get_app("app_name")'
-        ),
+        match=re.escape('Multiple Sanic apps found, use Sanic.get_app("app_name")'),
     ):
         Sanic.get_app()
 
@@ -417,8 +393,7 @@ def test_bad_custom_config():
     with pytest.raises(
         SanicException,
         match=(
-            "When instantiating Sanic with config, you cannot also pass "
-            "env_prefix"
+            "When instantiating Sanic with config, you cannot also pass " "env_prefix"
         ),
     ):
         Sanic("test", config=1, env_prefix=1)
@@ -500,9 +475,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
     )
 
     counter = Counter([(r[1], r[2]) for r in caplog.record_tuples])
-    modified = sum(
-        1 for app in apps if not isinstance(app.config.USE_UVLOOP, Default)
-    )
+    modified = sum(1 for app in apps if not isinstance(app.config.USE_UVLOOP, Default))
 
     assert counter[(logging.WARNING, message)] == modified
 
@@ -559,12 +532,8 @@ def test_no_workers(app: Sanic):
         {"auto_reload": True},
     ),
 )
-def test_cannot_run_single_process_and_workers_or_auto_reload(
-    app: Sanic, extra
-):
-    message = (
-        "Single process cannot be run with multiple workers or auto-reload"
-    )
+def test_cannot_run_single_process_and_workers_or_auto_reload(app: Sanic, extra):
+    message = "Single process cannot be run with multiple workers or auto-reload"
     with pytest.raises(RuntimeError, match=message):
         app.run(single_process=True, **extra)
 

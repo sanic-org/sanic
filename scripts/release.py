@@ -25,8 +25,7 @@ GIT_COMMANDS = {
     ],
     "push_tag": ["git push origin {new_version}"],
     "get_change_log": [
-        'git log --no-merges --pretty=format:"%h::: %cn::: %s" '
-        "{current_version}.."
+        'git log --no-merges --pretty=format:"%h::: %cn::: %s" ' "{current_version}.."
     ],
 }
 
@@ -72,9 +71,7 @@ class Directory:
 
 def _run_shell_command(command: list):
     try:
-        process = Popen(
-            command, stderr=PIPE, stdout=PIPE, stdin=PIPE, shell=True
-        )
+        process = Popen(command, stderr=PIPE, stdout=PIPE, stdin=PIPE, shell=True)
         output, error = process.communicate()
         return_code = process.returncode
         return output.decode("utf-8"), error, return_code
@@ -143,9 +140,9 @@ def _update_release_version_for_sanic(
     current_version_line = config_parser.get(
         "version", "current_version_pattern"
     ).format(current_version=current_version)
-    new_version_line = config_parser.get(
-        "version", "new_version_pattern"
-    ).format(new_version=new_version)
+    new_version_line = config_parser.get("version", "new_version_pattern").format(
+        new_version=new_version
+    )
 
     for version_file in version_files.split(","):
         with open(version_file) as init_file:

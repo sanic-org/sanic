@@ -22,9 +22,7 @@ class RemoveAltSvc(NodeTransformer):
     def __init__(self, app: Sanic, verbosity: int = 0) -> None:
         self._app = app
         self._verbosity = verbosity
-        self._versions = {
-            info.settings["version"] for info in app.state.server_info
-        }
+        self._versions = {info.settings["version"] for info in app.state.server_info}
 
     def visit_Assign(self, node: Assign) -> Any:
         if any(self._matches(target) for target in node.targets):

@@ -751,9 +751,7 @@ def test_bp_group_with_default_url_prefix(app: Sanic):
     def api_v1_info(request):
         return text("api_version: v1")
 
-    bp_api_v1_group = Blueprint.group(
-        bp_api_v1, bp_resources_group, url_prefix="/v1"
-    )
+    bp_api_v1_group = Blueprint.group(bp_api_v1, bp_resources_group, url_prefix="/v1")
     bp_api_group = Blueprint.group(bp_api_v1_group, url_prefix="/api")
     app.blueprint(bp_api_group)
 
@@ -794,9 +792,7 @@ def test_blueprint_middleware_with_args(app: Sanic):
     )
     assert response.text == "value"
 
-    _, response = app.test_client.get(
-        "/wa", headers={"content-type": "plain/text"}
-    )
+    _, response = app.test_client.get("/wa", headers={"content-type": "plain/text"})
     assert response.json.get("test") == "value"
 
 
@@ -985,13 +981,9 @@ def test_blueprint_group_strict_slashes():
     app = Sanic(name="blueprint-group-test")
     bp1 = Blueprint(name="bp1", url_prefix=None, strict_slashes=False)
 
-    bp2 = Blueprint(
-        name="bp2", version=3, url_prefix="/bp2", strict_slashes=None
-    )
+    bp2 = Blueprint(name="bp2", version=3, url_prefix="/bp2", strict_slashes=None)
 
-    bp3 = Blueprint(
-        name="bp3", version=None, url_prefix="/bp3/", strict_slashes=None
-    )
+    bp3 = Blueprint(name="bp3", version=None, url_prefix="/bp3/", strict_slashes=None)
 
     @bp1.get("/r1")
     async def bp1_r1(request):

@@ -65,10 +65,7 @@ class HTTP3Transport(TransportProtocol):
         return self._protocol
 
     def get_extra_info(self, info: str, default: Any = None) -> Any:
-        if (
-            info in ("socket", "sockname", "peername")
-            and self._protocol._transport
-        ):
+        if info in ("socket", "sockname", "peername") and self._protocol._transport:
             return self._protocol._transport.get_extra_info(info, default)
         elif info == "network_paths":
             return self._protocol._quic._network_paths
@@ -114,8 +111,7 @@ class HTTPReceiver(Receiver, Stream):
 
         if exception:
             logger.info(  # no cov
-                f"{Colors.BLUE}[exception]: "
-                f"{Colors.RED}{exception}{Colors.END}",
+                f"{Colors.BLUE}[exception]: " f"{Colors.RED}{exception}{Colors.END}",
                 exc_info=True,
                 extra={"verbosity": 1},
             )
@@ -140,17 +136,13 @@ class HTTPReceiver(Receiver, Stream):
 
         await app.handle_exception(self.request, exception)
 
-    def _prepare_headers(
-        self, response: BaseHTTPResponse
-    ) -> list[tuple[bytes, bytes]]:
+    def _prepare_headers(self, response: BaseHTTPResponse) -> list[tuple[bytes, bytes]]:
         size = len(response.body) if response.body else 0
         headers = response.headers
         status = response.status
 
         if not has_message_body(status) and (
-            size
-            or "content-length" in headers
-            or "transfer-encoding" in headers
+            size or "content-length" in headers or "transfer-encoding" in headers
         ):
             headers.pop("content-length", None)
             headers.pop("transfer-encoding", None)
@@ -243,11 +235,7 @@ class HTTPReceiver(Receiver, Stream):
         ):
             size = len(data)
             if end_stream:
-                data = (
-                    b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
-                    if size
-                    else b"0\r\n\r\n"
-                )
+                data = b"%x\r\n%b\r\n0\r\n\r\n" % (size, data) if size else b"0\r\n\r\n"
             elif size:
                 data = b"%x\r\n%b\r\n" % (size, data)
 
@@ -325,10 +313,7 @@ class Http3:
             )
 
     def get_or_make_receiver(self, event: H3Event) -> tuple[Receiver, bool]:
-        if (
-            isinstance(event, HeadersReceived)
-            and event.stream_id not in self.receivers
-        ):
+        if isinstance(event, HeadersReceived) and event.stream_id not in self.receivers:
             request = self._make_request(event)
             receiver = HTTPReceiver(self.transmit, self.protocol, request)
             request.stream = receiver
@@ -351,9 +336,7 @@ class Http3:
                 )
             )
         except UnicodeDecodeError:
-            raise BadRequest(
-                "Header names may only contain US-ASCII characters."
-            )
+            raise BadRequest("Header names may only contain US-ASCII characters.")
         method = headers[":method"]
         path = headers[":path"]
         scheme = headers.pop(":scheme", "")
@@ -422,8 +405,6 @@ def get_config(app: Sanic, ssl: SanicSSLContext | CertSelector | SSLContext):
     )
     password = app.config.TLS_CERT_PASSWORD or None
 
-    config.load_cert_chain(
-        ssl.sanic["cert"], ssl.sanic["key"], password=password
-    )
+    config.load_cert_chain(ssl.sanic["cert"], ssl.sanic["key"], password=password)
 
     return config

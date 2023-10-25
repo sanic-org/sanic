@@ -60,9 +60,7 @@ def parse_multipart_form(body, boundary):
             colon_index = form_line.index(":")
             idx = colon_index + 2
             form_header_field = form_line[0:colon_index].lower()
-            form_header_value, form_parameters = parse_content_header(
-                form_line[idx:]
-            )
+            form_header_value, form_parameters = parse_content_header(form_line[idx:])
 
             if form_header_field == "content-disposition":
                 field_name = form_parameters.get("name")
@@ -97,9 +95,7 @@ def parse_multipart_form(body, boundary):
                 else:
                     fields[field_name] = [value]
             else:
-                form_file = File(
-                    type=content_type, name=file_name, body=post_data
-                )
+                form_file = File(type=content_type, name=file_name, body=post_data)
                 if field_name in files:
                     files[field_name].append(form_file)
                 else:

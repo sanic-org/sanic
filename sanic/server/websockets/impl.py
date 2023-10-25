@@ -152,12 +152,8 @@ class WebsocketImplProtocol:
         self.data_finished_fut = asyncio.shield(self.loop.create_future())
 
         if self.ping_interval:
-            self.keepalive_ping_task = asyncio.create_task(
-                self.keepalive_ping()
-            )
-        self.auto_closer_task = asyncio.create_task(
-            self.auto_close_connection()
-        )
+            self.keepalive_ping_task = asyncio.create_task(self.keepalive_ping())
+        self.auto_closer_task = asyncio.create_task(self.auto_close_connection())
 
     async def wait_for_connection_lost(self, timeout=None) -> bool:
         """
@@ -246,9 +242,7 @@ class WebsocketImplProtocol:
                     try:
                         await asyncio.wait_for(ping_waiter, self.ping_timeout)
                     except asyncio.TimeoutError:
-                        error_logger.warning(
-                            "Websocket timed out waiting for pong"
-                        )
+                        error_logger.warning("Websocket timed out waiting for pong")
                         self.fail_connection(1011)
                         break
         except asyncio.CancelledError:
@@ -278,9 +272,7 @@ class WebsocketImplProtocol:
             self.keepalive_ping_task = None
         if self.loop and self.io_proto and self.io_proto.transport:
             self.io_proto.transport.close()
-            self.loop.call_later(
-                self.close_timeout, self.io_proto.transport.abort
-            )
+            self.loop.call_later(self.close_timeout, self.io_proto.transport.abort)
         # We were never open, or already closed
         return True
 
@@ -318,9 +310,7 @@ class WebsocketImplProtocol:
                 try:
                     data_to_send = self.ws_proto.data_to_send()
                     while (
-                        len(data_to_send)
-                        and self.io_proto
-                        and self.io_proto.transport
+                        len(data_to_send) and self.io_proto and self.io_proto.transport
                     ):
                         frame_data = data_to_send.pop(0)
                         self.io_proto.transport.write(frame_data)
@@ -356,11 +346,7 @@ class WebsocketImplProtocol:
             self.ws_proto.send_close(code, reason)
             data_to_send.extend(self.ws_proto.data_to_send())
             try:
-                while (
-                    len(data_to_send)
-                    and self.io_proto
-                    and self.io_proto.transport
-                ):
+                while len(data_to_send) and self.io_proto and self.io_proto.transport:
                     frame_data = data_to_send.pop(0)
                     self.io_proto.transport.write(frame_data)
             except Exception:
@@ -392,15 +378,11 @@ class WebsocketImplProtocol:
             if self.data_finished_fut:
                 try:
                     await self.data_finished_fut
-                    logger.debug(
-                        "Websocket task finished. Closing the connection."
-                    )
+                    logger.debug("Websocket task finished. Closing the connection.")
                 except asyncio.CancelledError:
                     # Cancelled error is called when data phase is cancelled
                     # if an error occurred or the client closed the connection
-                    logger.debug(
-                        "Websocket handler cancelled. Closing the connection."
-                    )
+                    logger.debug("Websocket handler cancelled. Closing the connection.")
 
             # Cancel the keepalive ping task.
             if self.keepalive_ping_task:
@@ -426,10 +408,7 @@ class WebsocketImplProtocol:
             if (not self.io_proto) or (not self.io_proto.transport):
                 # we were never open, or done. Can't do any finalization.
                 return
-            elif (
-                self.connection_lost_waiter
-                and self.connection_lost_waiter.done()
-            ):
+            elif self.connection_lost_waiter and self.connection_lost_waiter.done():
                 # connection confirmed closed already, proceed to abort waiter
                 ...
             elif self.io_proto.transport.is_closing():
@@ -447,9 +426,7 @@ class WebsocketImplProtocol:
                 if self.io_proto and self.io_proto.transport:
                     self.io_proto.transport.abort()
             else:
-                if await self.wait_for_connection_lost(
-                    timeout=self.close_timeout
-                ):
+                if await self.wait_for_connection_lost(timeout=self.close_timeout):
                     # Connection aborted before the timeout expired.
                     return
                 error_logger.warning(
@@ -731,8 +708,7 @@ class WebsocketImplProtocol:
         async with self.conn_mutex:
             if self.ws_proto.state in (CLOSED, CLOSING):
                 raise WebsocketClosed(
-                    "Cannot send a ping when the websocket interface "
-                    "is closed."
+                    "Cannot send a ping when the websocket interface " "is closed."
                 )
             if (not self.io_proto) or (not self.io_proto.loop):
                 raise ServerError(
@@ -747,9 +723,7 @@ class WebsocketImplProtocol:
 
             # Protect against duplicates if a payload is explicitly set.
             if data in self.pings:
-                raise ValueError(
-                    "already waiting for a pong with the same data"
-                )
+                raise ValueError("already waiting for a pong with the same data")
 
             # Generate a unique random payload otherwise.
             while data is None or data in self.pings:
@@ -842,9 +816,7 @@ class WebsocketImplProtocol:
         self.ws_proto.receive_eof()
         data_to_send = self.ws_proto.data_to_send()
         events_to_process = self.ws_proto.events_received()
-        asyncio.create_task(
-            self.async_eof_received(data_to_send, events_to_process)
-        )
+        asyncio.create_task(self.async_eof_received(data_to_send, events_to_process))
         return False
 
     def connection_lost(self, exc):

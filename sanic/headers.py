@@ -19,9 +19,7 @@ _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
 _param = re.compile(rf";\s*{_token}=(?:{_token}|{_quoted})", re.ASCII)
 _ipv6 = "(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
 _ipv6_re = re.compile(_ipv6)
-_host_re = re.compile(
-    r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?"
-)
+_host_re = re.compile(r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?")
 
 # RFC's quoted-pair escapes are mostly ignored by browsers. Chrome, Firefox and
 # curl all have different escaping, that we try to handle as well as possible,
@@ -122,9 +120,7 @@ class MediaType:
                     or mt.subtype == "*"
                 )
                 # Type match
-                and (
-                    self.type == mt.type or self.type == "*" or mt.type == "*"
-                )
+                and (self.type == mt.type or self.type == "*" or mt.type == "*")
             )
             else None
         )
@@ -312,9 +308,7 @@ def parse_accept(accept: str | None) -> AcceptList:
         accept = "*/*"  # No header means that all types are accepted
     try:
         a = [
-            mt
-            for mt in [MediaType._parse(mtype) for mtype in accept.split(",")]
-            if mt
+            mt for mt in [MediaType._parse(mtype) for mtype in accept.split(",")] if mt
         ]
         if not a:
             raise ValueError
@@ -411,11 +405,7 @@ def parse_xforwarded(headers, config) -> Options | None:
             # Combine, split and filter multiple headers' entries
             forwarded_for = headers.getall(config.FORWARDED_FOR_HEADER)
             proxies = [
-                p
-                for p in (
-                    p.strip() for h in forwarded_for for p in h.split(",")
-                )
-                if p
+                p for p in (p.strip() for h in forwarded_for for p in h.split(",")) if p
             ]
             addr = proxies[-proxies_count]
         except (KeyError, IndexError):

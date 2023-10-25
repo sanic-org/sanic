@@ -22,9 +22,7 @@ class CustomRequest(Request[Sanic[CustomConfig, Foo], RequestContext]):
         return ctx
 
 
-app = Sanic(
-    "test", config=CustomConfig(), ctx=Foo(), request_class=CustomRequest
-)
+app = Sanic("test", config=CustomConfig(), ctx=Foo(), request_class=CustomRequest)
 
 
 @app.get("/")

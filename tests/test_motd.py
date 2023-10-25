@@ -74,9 +74,7 @@ def test_reload_dirs(app):
     app.config.AUTO_RELOAD = True
 
     with patch.object(MOTD, "output") as mock:
-        app.prepare(
-            reload_dir="./", auto_reload=True, motd_display={"foo": "bar"}
-        )
+        app.prepare(reload_dir="./", auto_reload=True, motd_display={"foo": "bar"})
     mock.assert_called()
     assert mock.call_args.args[2]["auto-reload"] == f"enabled, {os.getcwd()}"
     assert mock.call_args.args[3] == {"foo": "bar"}

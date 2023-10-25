@@ -35,9 +35,7 @@ URL_FOR_VALUE4 = f"http://{test_host}:{test_port}/myurl?arg1=v1#anchor"
 def _generate_handlers_from_names(app, l):
     for name in l:
         # this is the easiest way to generate functions with dynamic names
-        exec(
-            f'@app.route(name)\ndef {name}(request):\n\treturn text("{name}")'
-        )
+        exec(f'@app.route(name)\ndef {name}(request):\n\treturn text("{name}")')
 
 
 @pytest.fixture

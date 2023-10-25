@@ -140,8 +140,7 @@ class WebSocketProtocol(HttpProtocol):
         )
         loop = (
             request.transport.loop
-            if hasattr(request, "transport")
-            and hasattr(request.transport, "loop")
+            if hasattr(request, "transport") and hasattr(request.transport, "loop")
             else None
         )
         await self.websocket.connection_made(self, loop=loop)

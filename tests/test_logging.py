@@ -25,9 +25,7 @@ def test_log(app):
     log_stream = StringIO()
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-    logging.basicConfig(
-        format=logging_format, level=logging.DEBUG, stream=log_stream
-    )
+    logging.basicConfig(format=logging_format, level=logging.DEBUG, stream=log_stream)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     log = logging.getLogger()
     rand_string = str(uuid.uuid4())
@@ -47,26 +45,13 @@ def test_logging_defaults():
     Sanic("test_logging")
 
     for fmt in [h.formatter for h in logging.getLogger("sanic.root").handlers]:
-        assert (
-            fmt._fmt
-            == LOGGING_CONFIG_DEFAULTS["formatters"]["generic"]["format"]
-        )
+        assert fmt._fmt == LOGGING_CONFIG_DEFAULTS["formatters"]["generic"]["format"]
 
-    for fmt in [
-        h.formatter for h in logging.getLogger("sanic.error").handlers
-    ]:
-        assert (
-            fmt._fmt
-            == LOGGING_CONFIG_DEFAULTS["formatters"]["generic"]["format"]
-        )
+    for fmt in [h.formatter for h in logging.getLogger("sanic.error").handlers]:
+        assert fmt._fmt == LOGGING_CONFIG_DEFAULTS["formatters"]["generic"]["format"]
 
-    for fmt in [
-        h.formatter for h in logging.getLogger("sanic.access").handlers
-    ]:
-        assert (
-            fmt._fmt
-            == LOGGING_CONFIG_DEFAULTS["formatters"]["access"]["format"]
-        )
+    for fmt in [h.formatter for h in logging.getLogger("sanic.access").handlers]:
+        assert fmt._fmt == LOGGING_CONFIG_DEFAULTS["formatters"]["access"]["format"]
 
 
 def test_logging_pass_customer_logconfig():
@@ -85,14 +70,10 @@ def test_logging_pass_customer_logconfig():
     for fmt in [h.formatter for h in logging.getLogger("sanic.root").handlers]:
         assert fmt._fmt == modified_config["formatters"]["generic"]["format"]
 
-    for fmt in [
-        h.formatter for h in logging.getLogger("sanic.error").handlers
-    ]:
+    for fmt in [h.formatter for h in logging.getLogger("sanic.error").handlers]:
         assert fmt._fmt == modified_config["formatters"]["generic"]["format"]
 
-    for fmt in [
-        h.formatter for h in logging.getLogger("sanic.access").handlers
-    ]:
+    for fmt in [h.formatter for h in logging.getLogger("sanic.access").handlers]:
         assert fmt._fmt == modified_config["formatters"]["access"]["format"]
 
 
@@ -108,9 +89,7 @@ def test_log_connection_lost(app, debug, monkeypatch):
     stream = StringIO()
     error = logging.getLogger("sanic.error")
     error.addHandler(logging.StreamHandler(stream))
-    monkeypatch.setattr(
-        sanic.server.protocols.http_protocol, "error_logger", error
-    )
+    monkeypatch.setattr(sanic.server.protocols.http_protocol, "error_logger", error)
 
     @app.route("/conn_lost")
     async def conn_lost(request):
@@ -234,9 +213,7 @@ def test_verbosity(app, caplog, app_verbosity, log_verbosity, exists):
         return text("hello")
 
     with caplog.at_level(logging.INFO):
-        _ = app.test_client.get(
-            "/", server_kwargs={"verbosity": app_verbosity}
-        )
+        _ = app.test_client.get("/", server_kwargs={"verbosity": app_verbosity})
 
     record = ("sanic.root", logging.INFO, rand_string)
 

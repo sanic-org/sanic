@@ -20,7 +20,5 @@ class Stream:
     __touchup__: tuple[str, ...] = ()
     __slots__ = ("request_max_size",)
 
-    def respond(
-        self, response: BaseHTTPResponse
-    ) -> BaseHTTPResponse:  # no cov
+    def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:  # no cov
         raise NotImplementedError("Not implemented")

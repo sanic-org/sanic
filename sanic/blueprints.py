@@ -128,9 +128,7 @@ class Blueprint(BaseSanic):
         self.host = host
         self.strict_slashes = strict_slashes
         self.url_prefix = (
-            url_prefix[:-1]
-            if url_prefix and url_prefix.endswith("/")
-            else url_prefix
+            url_prefix[:-1] if url_prefix and url_prefix.endswith("/") else url_prefix
         )
         self.version = version
         self.version_prefix = version_prefix
@@ -164,9 +162,7 @@ class Blueprint(BaseSanic):
                 an app.
         """
         if not self._apps:
-            raise SanicException(
-                f"{self} has not yet been registered to an app"
-            )
+            raise SanicException(f"{self} has not yet been registered to an app")
         return self._apps
 
     @property
@@ -345,9 +341,7 @@ class Blueprint(BaseSanic):
         opt_strict_slashes = options.get("strict_slashes", None)
         opt_version_prefix = options.get("version_prefix", self.version_prefix)
         opt_name_prefix = options.get("name_prefix", None)
-        error_format = options.get(
-            "error_format", app.config.FALLBACK_ERROR_FORMAT
-        )
+        error_format = options.get("error_format", app.config.FALLBACK_ERROR_FORMAT)
 
         routes = []
         middleware = []
@@ -373,9 +367,7 @@ class Blueprint(BaseSanic):
                     version_prefix = prefix
                     break
 
-            version = self._extract_value(
-                future.version, opt_version, self.version
-            )
+            version = self._extract_value(future.version, opt_version, self.version)
             strict_slashes = self._extract_value(
                 future.strict_slashes, opt_strict_slashes, self.strict_slashes
             )
@@ -411,22 +403,16 @@ class Blueprint(BaseSanic):
                 continue
 
             registered.add(apply_route)
-            route = app._apply_route(
-                apply_route, overwrite=self._allow_route_overwrite
-            )
+            route = app._apply_route(apply_route, overwrite=self._allow_route_overwrite)
 
             # If it is a copied BP, then make sure all of the names of routes
             # matchup with the new BP name
             if self.copied_from:
                 for r in route:
                     r.name = r.name.replace(self.copied_from, self.name)
-                    r.extra.ident = r.extra.ident.replace(
-                        self.copied_from, self.name
-                    )
+                    r.extra.ident = r.extra.ident.replace(self.copied_from, self.name)
 
-            operation = (
-                routes.extend if isinstance(route, list) else routes.append
-            )
+            operation = routes.extend if isinstance(route, list) else routes.append
             operation(route)
 
         # Static Files
@@ -504,9 +490,7 @@ class Blueprint(BaseSanic):
         condition = kwargs.pop("condition", {})
         condition.update({"__blueprint__": self.name})
         kwargs["condition"] = condition
-        await asyncio.gather(
-            *[app.dispatch(*args, **kwargs) for app in self.apps]
-        )
+        await asyncio.gather(*[app.dispatch(*args, **kwargs) for app in self.apps])
 
     def event(self, event: str, timeout: int | float | None = None):
         """Wait for a signal event to be dispatched.
@@ -747,9 +731,7 @@ class BlueprintGroup(bpg_base):
     def __getitem__(self, item: slice) -> MutableSequence[Blueprint]:
         ...
 
-    def __getitem__(
-        self, item: int | slice
-    ) -> Blueprint | MutableSequence[Blueprint]:
+    def __getitem__(self, item: int | slice) -> Blueprint | MutableSequence[Blueprint]:
         """Get the Blueprint object at the specified index.
 
         This method returns a blueprint inside the group specified by

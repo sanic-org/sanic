@@ -84,9 +84,7 @@ async def test_http_receiver_run_request(app: Sanic, http_request: Request):
 
     app.__class__ = mock_handle
     receiver = generate_http_receiver(app, http_request)
-    receiver.protocol.quic_event_received(
-        ProtocolNegotiated(alpn_protocol="h3")
-    )
+    receiver.protocol.quic_event_received(ProtocolNegotiated(alpn_protocol="h3"))
     await receiver.run()
     handler.assert_awaited_once_with(receiver.request)
 
@@ -99,9 +97,7 @@ async def test_http_receiver_run_exception(app: Sanic, http_request: Request):
 
     app.__class__ = mock_handle
     receiver = generate_http_receiver(app, http_request)
-    receiver.protocol.quic_event_received(
-        ProtocolNegotiated(alpn_protocol="h3")
-    )
+    receiver.protocol.quic_event_received(ProtocolNegotiated(alpn_protocol="h3"))
     exception = Exception("Oof")
     await receiver.run(exception)
     handler.assert_awaited_once_with(receiver.request, exception)
@@ -139,9 +135,7 @@ def test_http_receiver_receive_body(app: Sanic, http_request: Request):
     receiver.receive_body(b"..")
     assert receiver.request.body == b"...."
 
-    with pytest.raises(
-        PayloadTooLarge, match="Request body exceeds the size limit"
-    ):
+    with pytest.raises(PayloadTooLarge, match="Request body exceeds the size limit"):
         receiver.receive_body(b"..")
 
 
@@ -176,17 +170,13 @@ async def test_send_headers(app: Sanic, http_request: Request):
     send_headers_mock = Mock()
     existing_send_headers = H3Connection.send_headers
     receiver = generate_http_receiver(app, http_request)
-    receiver.protocol.quic_event_received(
-        ProtocolNegotiated(alpn_protocol="h3")
-    )
+    receiver.protocol.quic_event_received(ProtocolNegotiated(alpn_protocol="h3"))
 
     http_request._protocol = receiver.protocol
 
     def send_headers(*args, **kwargs):
         send_headers_mock(*args, **kwargs)
-        return existing_send_headers(
-            receiver.protocol.connection, *args, **kwargs
-        )
+        return existing_send_headers(receiver.protocol.connection, *args, **kwargs)
 
     receiver.protocol.connection.send_headers = send_headers
     receiver.head_only = False
@@ -310,10 +300,7 @@ def test_request_header_encoding(app):
             )
         )
     assert exc_info.value.status_code == 400
-    assert (
-        str(exc_info.value)
-        == "Header names may only contain US-ASCII characters."
-    )
+    assert str(exc_info.value) == "Header names may only contain US-ASCII characters."
 
 
 def test_request_url_encoding(app):

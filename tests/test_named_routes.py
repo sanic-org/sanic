@@ -283,9 +283,7 @@ def test_dynamic_named_route_path():
 def test_dynamic_named_route_unhashable():
     app = Sanic("app")
 
-    @app.route(
-        "/folder/<unhashable:[A-Za-z0-9/]+>/end/", name="route_unhashable"
-    )
+    @app.route("/folder/<unhashable:[A-Za-z0-9/]+>/end/", name="route_unhashable")
     async def handler(request, unhashable):
         return text("OK")
 
@@ -366,10 +364,7 @@ def test_dynamic_add_named_route():
         return text("OK")
 
     app.add_route(handler, "/folder/<name>", name="route_dynamic")
-    assert (
-        app.router.routes_all[("folder", "<name:str>")].name
-        == "app.route_dynamic"
-    )
+    assert app.router.routes_all[("folder", "<name:str>")].name == "app.route_dynamic"
     assert app.url_for("route_dynamic", name="test") == "/folder/test"
     with pytest.raises(URLBuildError):
         app.url_for("handler")

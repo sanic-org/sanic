@@ -27,8 +27,6 @@ class CSS(ABCMeta):
         Page.STYLE += attrs.get("STYLE_APPEND", "")
         # Combine with all ancestor styles
         Page.CSS = "".join(
-            Class.STYLE
-            for Class in reversed(Page.__mro__)
-            if type(Class) is CSS
+            Class.STYLE for Class in reversed(Page.__mro__) if type(Class) is CSS
         )
         return Page

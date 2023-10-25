@@ -12,9 +12,7 @@ from multidict import CIMultiDict  # type: ignore
 from sanic.helpers import Default
 from sanic.log import error_logger
 
-StartMethod = Union[
-    Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]
-]
+StartMethod = Union[Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]]
 
 OS_IS_WINDOWS = os.name == "nt"
 PYPY_IMPLEMENTATION = platform.python_implementation() == "PyPy"

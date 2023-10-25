@@ -205,17 +205,12 @@ class StaticHandleMixin(metaclass=SanicMeta):
                 )
             uri = uri.rstrip("/")
             uri += "/<__file_uri__:path>"
-        elif static.resource_type == "file" and not path.isfile(
-            file_or_directory
-        ):
+        elif static.resource_type == "file" and not path.isfile(file_or_directory):
             raise TypeError(
-                "Resource type improperly identified as file. "
-                f"'{file_or_directory}'"
+                "Resource type improperly identified as file. " f"'{file_or_directory}'"
             )
         elif static.resource_type != "file":
-            raise ValueError(
-                "The resource_type should be set to 'file' or 'dir'"
-            )
+            raise ValueError("The resource_type should be set to 'file' or 'dir'")
 
         # special prefix for static files
         # if not static.name.startswith("_static_"):
@@ -278,9 +273,7 @@ class StaticHandleMixin(metaclass=SanicMeta):
                 response = await validate_file(request.headers, modified_since)
                 if response:
                     return response
-                headers["Last-Modified"] = formatdate(
-                    modified_since, usegmt=True
-                )
+                headers["Last-Modified"] = formatdate(modified_since, usegmt=True)
             _range = None
             if use_content_range:
                 _range = None

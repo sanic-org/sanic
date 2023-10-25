@@ -80,9 +80,7 @@ def load_module_from_file_location(
             env_vars_in_location = set(re_findall(r"\${(.+?)}", location))
 
             # B) Check these variables exists in environment.
-            not_defined_env_vars = env_vars_in_location.difference(
-                os_environ.keys()
-            )
+            not_defined_env_vars = env_vars_in_location.difference(os_environ.keys())
             if not_defined_env_vars:
                 raise LoadFileException(
                     "The following environment variables are not set: "
@@ -91,18 +89,14 @@ def load_module_from_file_location(
 
             # C) Substitute them in location.
             for env_var in env_vars_in_location:
-                location = location.replace(
-                    "${" + env_var + "}", os_environ[env_var]
-                )
+                location = location.replace("${" + env_var + "}", os_environ[env_var])
 
         location = str(location)
         if ".py" in location:
             name = location.split("/")[-1].split(".")[
                 0
             ]  # get just the file name without path and .py extension
-            _mod_spec = spec_from_file_location(
-                name, location, *args, **kwargs
-            )
+            _mod_spec = spec_from_file_location(name, location, *args, **kwargs)
             assert _mod_spec is not None  # type assertion for mypy
             module = module_from_spec(_mod_spec)
             _mod_spec.loader.exec_module(module)  # type: ignore

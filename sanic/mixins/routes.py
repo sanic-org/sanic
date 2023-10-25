@@ -25,9 +25,7 @@ from sanic.models.futures import FutureRoute, FutureStatic
 from sanic.models.handler_types import RouteHandler
 from sanic.types import HashableDict
 
-RouteWrapper = Callable[
-    [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
-]
+RouteWrapper = Callable[[RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]]
 
 
 class RouteMixin(BaseMixin, metaclass=SanicMeta):
@@ -814,7 +812,5 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         }
         if raw:
             unexpected_arguments = ", ".join(raw.keys())
-            raise TypeError(
-                f"Unexpected keyword arguments: {unexpected_arguments}"
-            )
+            raise TypeError(f"Unexpected keyword arguments: {unexpected_arguments}")
         return HashableDict(ctx_kwargs)

@@ -72,9 +72,7 @@ def test_keep_alive_timeout_reuse():
         port = get_port()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        client = ReusableClient(
-            keep_alive_timeout_app_reuse, loop=loop, port=port
-        )
+        client = ReusableClient(keep_alive_timeout_app_reuse, loop=loop, port=port)
         try:
             with client:
                 headers = {"Connection": "keep-alive"}
@@ -113,14 +111,10 @@ def test_keep_alive_client_timeout():
             port = get_port()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            client = ReusableClient(
-                keep_alive_app_client_timeout, loop=loop, port=port
-            )
+            client = ReusableClient(keep_alive_app_client_timeout, loop=loop, port=port)
             with client:
                 headers = {"Connection": "keep-alive"}
-                request, response = client.get(
-                    "/1", headers=headers, timeout=1
-                )
+                request, response = client.get("/1", headers=headers, timeout=1)
 
                 assert response.status == 200
                 assert response.text == "OK"
@@ -153,14 +147,10 @@ def test_keep_alive_server_timeout():
             port = get_port()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            client = ReusableClient(
-                keep_alive_app_server_timeout, loop=loop, port=port
-            )
+            client = ReusableClient(keep_alive_app_server_timeout, loop=loop, port=port)
             with client:
                 headers = {"Connection": "keep-alive"}
-                request, response = client.get(
-                    "/1", headers=headers, timeout=60
-                )
+                request, response = client.get("/1", headers=headers, timeout=60)
 
                 assert response.status == 200
                 assert response.text == "OK"
@@ -190,9 +180,7 @@ def test_keep_alive_connection_context():
             port = get_port()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            client = ReusableClient(
-                keep_alive_app_context, loop=loop, port=port
-            )
+            client = ReusableClient(keep_alive_app_context, loop=loop, port=port)
             with client:
                 headers = {"Connection": "keep-alive"}
                 request1, _ = client.post("/ctx", headers=headers)
@@ -203,9 +191,7 @@ def test_keep_alive_connection_context():
                 assert response.text == "hello"
                 assert id(request1.conn_info.ctx) == id(request2.conn_info.ctx)
                 assert (
-                    request1.conn_info.ctx.foo
-                    == request2.conn_info.ctx.foo
-                    == "hello"
+                    request1.conn_info.ctx.foo == request2.conn_info.ctx.foo == "hello"
                 )
                 assert request2.protocol.state["requests_count"] == 2
         except OSError:

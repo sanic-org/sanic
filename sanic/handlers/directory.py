@@ -60,9 +60,7 @@ class DirectoryHandler:
                 return await file(index_file)
 
         if self.directory_view:
-            return self._index(
-                self.directory / current, path, request.app.debug
-            )
+            return self._index(self.directory / current, path, request.app.debug)
 
         if self.index:
             raise NotFound("File not found")
@@ -72,9 +70,7 @@ class DirectoryHandler:
     def _index(self, location: Path, path: str, debug: bool):
         # Remove empty path elements, append slash
         if "//" in path or not path.endswith("/"):
-            return redirect(
-                "/" + "".join([f"{p}/" for p in path.split("/") if p])
-            )
+            return redirect("/" + "".join([f"{p}/" for p in path.split("/") if p]))
 
         # Render file browser
         page = DirectoryPage(self._iter_files(location), path, debug)
@@ -83,9 +79,7 @@ class DirectoryHandler:
     def _prepare_file(self, path: Path) -> dict[str, int | str]:
         stat = path.stat()
         modified = (
-            datetime.fromtimestamp(stat.st_mtime)
-            .isoformat()[:19]
-            .replace("T", " ")
+            datetime.fromtimestamp(stat.st_mtime).isoformat()[:19].replace("T", " ")
         )
         is_dir = S_ISDIR(stat.st_mode)
         icon = "📁" if is_dir else "📄"

@@ -47,9 +47,7 @@ class MockProtocol:  # no cov
 class MockTransport(TransportProtocol):  # no cov
     _protocol: Optional[MockProtocol]
 
-    def __init__(
-        self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
-    ) -> None:
+    def __init__(self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend) -> None:
         self.scope = scope
         self._receive = receive
         self._send = send
@@ -61,9 +59,7 @@ class MockTransport(TransportProtocol):  # no cov
             self._protocol = MockProtocol(self, self.loop)
         return self._protocol
 
-    def get_extra_info(
-        self, info: str, default=None
-    ) -> Optional[Union[str, bool]]:
+    def get_extra_info(self, info: str, default=None) -> Optional[Union[str, bool]]:
         if info == "peername":
             return self.scope.get("client")
         elif info == "sslcontext":

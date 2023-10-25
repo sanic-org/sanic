@@ -62,9 +62,7 @@ def test_extend_cannot_be_called_multiple_times(app: Sanic, sanic_ext):
 )
 def test_fail_if_not_loaded(app: Sanic):
     del sys.modules["sanic_ext"]
-    with pytest.raises(
-        RuntimeError, match="Sanic Extensions is not installed.*"
-    ):
+    with pytest.raises(RuntimeError, match="Sanic Extensions is not installed.*"):
         app.extend(built_in_extensions=False)
 
 

@@ -93,9 +93,7 @@ def test_sets_loop_policy_only_when_not_already_set(monkeypatch):
 
     # Existing policy is not uvloop.EventLoopPolicy
     get_event_loop_policy = Mock(return_value=None)
-    monkeypatch.setattr(
-        loop.asyncio, "get_event_loop_policy", get_event_loop_policy
-    )
+    monkeypatch.setattr(loop.asyncio, "get_event_loop_policy", get_event_loop_policy)
 
     with patch("asyncio.set_event_loop_policy") as set_event_loop_policy:
         loop.try_use_uvloop()
@@ -106,9 +104,7 @@ def test_sets_loop_policy_only_when_not_already_set(monkeypatch):
 
     # Existing policy is uvloop.EventLoopPolicy
     get_event_loop_policy = Mock(return_value=policy)
-    monkeypatch.setattr(
-        loop.asyncio, "get_event_loop_policy", get_event_loop_policy
-    )
+    monkeypatch.setattr(loop.asyncio, "get_event_loop_policy", get_event_loop_policy)
 
     with patch("asyncio.set_event_loop_policy") as set_event_loop_policy:
         loop.try_use_uvloop()

@@ -53,16 +53,12 @@ class Livereload:
         "serverName": SERVER_NAME,
     }
 
-    def __init__(
-        self, reload_queue: Queue, debug: bool, state: dict[str, Any]
-    ):
+    def __init__(self, reload_queue: Queue, debug: bool, state: dict[str, Any]):
         self.reload_queue = reload_queue
         self.app = Sanic(self.SERVER_NAME)
         self.debug = debug
         self.state = state
-        self.app.static(
-            "/livereload.js", Path(__file__).parent / "livereload.js"
-        )
+        self.app.static("/livereload.js", Path(__file__).parent / "livereload.js")
         self.app.add_websocket_route(
             self.livereload_handler, "/livereload", name="livereload"
         )
@@ -108,7 +104,5 @@ class Livereload:
                 break
 
 
-def _run_reload_server(
-    reload_queue: Queue, debug: bool, state: dict[str, Any]
-):
+def _run_reload_server(reload_queue: Queue, debug: bool, state: dict[str, Any]):
     Livereload(reload_queue, debug, state).run()

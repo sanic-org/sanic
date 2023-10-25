@@ -36,9 +36,7 @@ async def test(request):
 
 if __name__ == "__main__":
     asyncio.set_event_loop(uvloop.new_event_loop())
-    serv_coro = app.create_server(
-        host="0.0.0.0", port=8000, return_asyncio_server=True
-    )
+    serv_coro = app.create_server(host="0.0.0.0", port=8000, return_asyncio_server=True)
     loop = asyncio.get_event_loop()
     serv_task = asyncio.ensure_future(serv_coro, loop=loop)
     signal(SIGINT, lambda s, f: loop.stop())

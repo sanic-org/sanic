@@ -13,9 +13,7 @@ def do_footer(builder: Builder, request: Request) -> None:
 
 
 def _pagination(request: Request) -> Builder:
-    return E.div(
-        _pagination_left(request), _pagination_right(request), class_="level"
-    )
+    return E.div(_pagination_left(request), _pagination_right(request), class_="level")
 
 
 def _pagination_left(request: Request) -> Builder:
@@ -64,9 +62,7 @@ def _content() -> Builder:
             href="https://github.com/sanic-org/sanic/blob/master/LICENSE",
             target="_blank",
             rel="nofollow noopener noreferrer",
-        ).br()(
-            E.small(f"Copyright © 2018-{year} Sanic Community Organization")
-        ),
+        ).br()(E.small(f"Copyright © 2018-{year} Sanic Community Organization")),
     )
     return E.div(
         inner,

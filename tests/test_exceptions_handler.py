@@ -133,9 +133,7 @@ def test_inherited_exception_handler(exception_handler_app: Sanic):
 
 
 def test_chained_exception_handler(exception_handler_app: Sanic):
-    request, response = exception_handler_app.test_client.get(
-        "/6/0", debug=True
-    )
+    request, response = exception_handler_app.test_client.get("/6/0", debug=True)
     assert response.status == 500
 
     soup = BeautifulSoup(response.body, "html.parser")
@@ -182,20 +180,14 @@ def test_exception_handler_lookup(exception_handler_app: Sanic):
     assert handler.lookup(ModuleNotFoundError(), None) == import_error_handler
     assert handler.lookup(CustomError(), None) == custom_error_handler
     assert handler.lookup(ServerError("Error"), None) == server_error_handler
-    assert (
-        handler.lookup(CustomServerError("Error"), None)
-        == server_error_handler
-    )
+    assert handler.lookup(CustomServerError("Error"), None) == server_error_handler
 
     # once again to ensure there is no caching bug
     assert handler.lookup(ImportError(), None) == import_error_handler
     assert handler.lookup(ModuleNotFoundError(), None) == import_error_handler
     assert handler.lookup(CustomError(), None) == custom_error_handler
     assert handler.lookup(ServerError("Error"), None) == server_error_handler
-    assert (
-        handler.lookup(CustomServerError("Error"), None)
-        == server_error_handler
-    )
+    assert handler.lookup(CustomServerError("Error"), None) == server_error_handler
 
 
 def test_exception_handler_processed_request_middleware(

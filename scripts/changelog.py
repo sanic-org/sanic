@@ -22,9 +22,7 @@ if __name__ == "__main__":
         help="Render the news fragments, don't write to files, "
         "don't check versions.",
     )
-    @click.option(
-        "--dir", "directory", default=path.dirname(path.abspath(__file__))
-    )
+    @click.option("--dir", "directory", default=path.dirname(path.abspath(__file__)))
     @click.option("--name", "project_name", default=None)
     @click.option(
         "--version",

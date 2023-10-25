@@ -120,16 +120,12 @@ class ListenerMixin(metaclass=SanicMeta):
 
         if callable(listener_or_event):
             if event_or_none is None:
-                raise BadRequest(
-                    "Invalid event registration: Missing event name."
-                )
+                raise BadRequest("Invalid event registration: Missing event name.")
             return register_listener(listener_or_event, event_or_none)
         else:
             return partial(register_listener, event=listener_or_event)
 
-    def main_process_start(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def main_process_start(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_start event.
 
         This event is fired only on the main process and **NOT** on any
@@ -151,9 +147,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
         return self.listener(listener, "main_process_start")
 
-    def main_process_ready(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def main_process_ready(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_ready event.
 
         This event is fired only on the main process and **NOT** on any
@@ -176,9 +170,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
         return self.listener(listener, "main_process_ready")
 
-    def main_process_stop(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def main_process_stop(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_stop event.
 
         This event is fired only on the main process and **NOT** on any
@@ -222,9 +214,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
         return self.listener(listener, "reload_process_start")
 
-    def reload_process_stop(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def reload_process_stop(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the reload_process_stop event.
 
         This event is fired only on the reload process and **NOT** on any
@@ -293,9 +283,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
         return self.listener(listener, "after_reload_trigger")
 
-    def before_server_start(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def before_server_start(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the before_server_start event.
 
         This event is fired on all worker processes. You should typically
@@ -319,9 +307,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
         return self.listener(listener, "before_server_start")
 
-    def after_server_start(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def after_server_start(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_server_start event.
 
         This event is fired on all worker processes. You should typically
@@ -349,9 +335,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
         return self.listener(listener, "after_server_start")
 
-    def before_server_stop(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def before_server_stop(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the before_server_stop event.
 
         This event is fired on all worker processes. This event is fired
@@ -376,9 +360,7 @@ class ListenerMixin(metaclass=SanicMeta):
         """  # noqa: E501
         return self.listener(listener, "before_server_stop")
 
-    def after_server_stop(
-        self, listener: ListenerType[Sanic]
-    ) -> ListenerType[Sanic]:
+    def after_server_stop(self, listener: ListenerType[Sanic]) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_server_stop event.
 
         This event is fired on all worker processes. This event is fired

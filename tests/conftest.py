@@ -42,14 +42,10 @@ async def _handler(request):
 
 
 TYPE_TO_GENERATOR_MAP = {
-    "str": lambda: "".join(
-        [random.choice(string.ascii_lowercase) for _ in range(4)]
-    ),
+    "str": lambda: "".join([random.choice(string.ascii_lowercase) for _ in range(4)]),
     "int": lambda: random.choice(range(1000000)),
     "float": lambda: random.random(),
-    "alpha": lambda: "".join(
-        [random.choice(string.ascii_lowercase) for _ in range(4)]
-    ),
+    "alpha": lambda: "".join([random.choice(string.ascii_lowercase) for _ in range(4)]),
     "uuid": lambda: str(uuid.uuid1()),
 }
 

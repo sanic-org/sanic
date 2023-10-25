@@ -20,13 +20,9 @@ class PageRenderer(BaseRenderer):
         self._body(request, builder, language, path)
         return builder
 
-    def _body(
-        self, request: Request, builder: Builder, language: str, path: str
-    ):
+    def _body(self, request: Request, builder: Builder, language: str, path: str):
         prev_page, current_page, next_page = Page.get(language, path)
-        request.ctx.language = (
-            Page.DEFAULT_LANGUAGE if language == "api" else language
-        )
+        request.ctx.language = Page.DEFAULT_LANGUAGE if language == "api" else language
         request.ctx.current_page = current_page
         request.ctx.previous_page = prev_page
         request.ctx.next_page = next_page
@@ -38,9 +34,7 @@ class PageRenderer(BaseRenderer):
 
     @contextmanager
     def _base(self, request: Request, builder: Builder, page: Page | None):
-        layout_type: type[BaseLayout] = (
-            page.get_layout() if page else BaseLayout
-        )
+        layout_type: type[BaseLayout] = page.get_layout() if page else BaseLayout
         layout = layout_type(builder)
         with layout(request, builder.full):
             yield

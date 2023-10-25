@@ -62,9 +62,7 @@ class ApplicationState:
 
     def __setattr__(self, name: str, value: Any) -> None:
         if self._init and name == "_init":
-            raise RuntimeError(
-                "Cannot change the value of _init after instantiation"
-            )
+            raise RuntimeError("Cannot change the value of _init after instantiation")
         super().__setattr__(name, value)
         if self._init and hasattr(self, f"set_{name}"):
             getattr(self, f"set_{name}")(value)
@@ -105,9 +103,7 @@ class ApplicationState:
 
         if all(info.stage is ServerStage.SERVING for info in self.server_info):
             return ServerStage.SERVING
-        elif any(
-            info.stage is ServerStage.SERVING for info in self.server_info
-        ):
+        elif any(info.stage is ServerStage.SERVING for info in self.server_info):
             return ServerStage.PARTIAL
 
         return ServerStage.STOPPED

@@ -496,9 +496,7 @@ class Cookie(dict):
                     "Cannot set host_prefix on a cookie without secure=True"
                 )
             if path != "/":
-                raise ServerError(
-                    "Cannot set host_prefix on a cookie unless path='/'"
-                )
+                raise ServerError("Cannot set host_prefix on a cookie unless path='/'")
             if domain:
                 raise ServerError(
                     "Cannot set host_prefix on a cookie with a defined domain"
@@ -600,9 +598,7 @@ class Cookie(dict):
         """Format as a Set-Cookie header value."""
         output = [f"{self.key}={_quote(self.value)}"]
         key_index = list(self._keys)
-        for key, value in sorted(
-            self.items(), key=lambda x: key_index.index(x[0])
-        ):
+        for key, value in sorted(self.items(), key=lambda x: key_index.index(x[0])):
             if value is not None and value is not False:
                 if key == "max-age":
                     try:

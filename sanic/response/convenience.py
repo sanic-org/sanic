@@ -18,9 +18,7 @@ from sanic.models.protocol_types import HTMLProtocol, Range
 from .types import HTTPResponse, JSONResponse, ResponseStream
 
 
-def empty(
-    status: int = 204, headers: dict[str, str] | None = None
-) -> HTTPResponse:
+def empty(status: int = 204, headers: dict[str, str] | None = None) -> HTTPResponse:
     """Returns an empty response to the client.
 
     Args:
@@ -85,13 +83,9 @@ def text(
         TypeError: If the body is not a string.
     """  # noqa: E501
     if not isinstance(body, str):
-        raise TypeError(
-            f"Bad body type. Expected str, got {type(body).__name__})"
-        )
+        raise TypeError(f"Bad body type. Expected str, got {type(body).__name__})")
 
-    return HTTPResponse(
-        body, status=status, headers=headers, content_type=content_type
-    )
+    return HTTPResponse(body, status=status, headers=headers, content_type=content_type)
 
 
 def raw(
@@ -178,18 +172,14 @@ async def validate_file(
             float(last_modified), tz=timezone.utc
         ).replace(microsecond=0)
 
-    if (
-        last_modified.utcoffset() is None
-        and if_modified_since.utcoffset() is not None
-    ):
+    if last_modified.utcoffset() is None and if_modified_since.utcoffset() is not None:
         logger.warning(
             "Cannot compare tz-aware and tz-naive datetimes. To avoid "
             "this conflict Sanic is converting last_modified to UTC."
         )
         last_modified.replace(tzinfo=timezone.utc)
     elif (
-        last_modified.utcoffset() is not None
-        and if_modified_since.utcoffset() is None
+        last_modified.utcoffset() is not None and if_modified_since.utcoffset() is None
     ):
         logger.warning(
             "Cannot compare tz-aware and tz-naive datetimes. To avoid "
@@ -240,25 +230,17 @@ async def file(
         stat = await stat_async(location)
         last_modified = stat.st_mtime
 
-    if (
-        validate_when_requested
-        and request_headers is not None
-        and last_modified
-    ):
+    if validate_when_requested and request_headers is not None and last_modified:
         response = await validate_file(request_headers, last_modified)
         if response:
             return response
 
     headers = headers or {}
     if last_modified:
-        headers.setdefault(
-            "Last-Modified", formatdate(last_modified, usegmt=True)
-        )
+        headers.setdefault("Last-Modified", formatdate(last_modified, usegmt=True))
 
     if filename:
-        headers.setdefault(
-            "Content-Disposition", f'attachment; filename="{filename}"'
-        )
+        headers.setdefault("Content-Disposition", f'attachment; filename="{filename}"')
 
     if no_store:
         cache_control = "no-store"
@@ -323,9 +305,7 @@ def redirect(
     # According to RFC 7231, a relative URI is now permitted.
     headers["Location"] = safe_to
 
-    return HTTPResponse(
-        status=status, headers=headers, content_type=content_type
-    )
+    return HTTPResponse(status=status, headers=headers, content_type=content_type)
 
 
 async def file_stream(
@@ -357,9 +337,7 @@ async def file_stream(
     """  # noqa: E501
     headers = headers or {}
     if filename:
-        headers.setdefault(
-            "Content-Disposition", f'attachment; filename="{filename}"'
-        )
+        headers.setdefault("Content-Disposition", f'attachment; filename="{filename}"')
     filename = filename or path.split(location)[-1]
     mime_type = mime_type or guess_type(filename)[0] or "text/plain"
     if _range:

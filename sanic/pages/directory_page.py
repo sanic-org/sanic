@@ -19,9 +19,7 @@ class DirectoryPage(BasePage):  # no cov
 
     TITLE = "Directory Viewer"
 
-    def __init__(
-        self, files: Iterable[FileInfo], url: str, debug: bool
-    ) -> None:
+    def __init__(self, files: Iterable[FileInfo], url: str, debug: bool) -> None:
         super().__init__(debug)
         self.files = files
         self.url = url

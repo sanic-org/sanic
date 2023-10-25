@@ -99,13 +99,9 @@ class MiddlewareMixin(metaclass=SanicMeta):
 
         # Detect which way this was called, @middleware or @middleware('AT')
         if callable(middleware_or_request):
-            return register_middleware(
-                middleware_or_request, attach_to=attach_to
-            )
+            return register_middleware(middleware_or_request, attach_to=attach_to)
         else:
-            return partial(
-                register_middleware, attach_to=middleware_or_request
-            )
+            return partial(register_middleware, attach_to=middleware_or_request)
 
     def on_request(self, middleware=None, *, priority=0) -> MiddlewareType:
         """Register a middleware to be called before a request is handled.
@@ -157,9 +153,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
         if callable(middleware):
             return self.middleware(middleware, "response", priority=priority)
         else:
-            return partial(
-                self.middleware, attach_to="response", priority=priority
-            )
+            return partial(self.middleware, attach_to="response", priority=priority)
 
     def finalize_middleware(self) -> None:
         """Finalize the middleware configuration for the Sanic application.

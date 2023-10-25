@@ -42,9 +42,7 @@ async def test_cookies_asgi(app):
         response.cookies["right_back"] = "at you"
         return response
 
-    request, response = await app.asgi_client.get(
-        "/", cookies={"test": "working!"}
-    )
+    request, response = await app.asgi_client.get("/", cookies={"test": "working!"})
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get("set-cookie", {}))
 
@@ -101,9 +99,7 @@ def test_cookie_options(app):
         response = text("OK")
         response.cookies["test"] = "at you"
         response.cookies["test"]["httponly"] = True
-        response.cookies["test"]["expires"] = datetime.now() + timedelta(
-            seconds=10
-        )
+        response.cookies["test"]["expires"] = datetime.now() + timedelta(seconds=10)
         return response
 
     request, response = app.test_client.get("/")
@@ -179,17 +175,11 @@ def test_cookie_max_age(app, max_age):
         response.cookies["test"]["max-age"] = max_age
         return response
 
-    request, response = app.test_client.get(
-        "/", cookies=cookies, raw_cookies=True
-    )
+    request, response = app.test_client.get("/", cookies=cookies, raw_cookies=True)
     assert response.status == 200
 
     cookie = response.cookies.get("test")
-    if (
-        str(max_age).isdigit()
-        and int(max_age) == float(max_age)
-        and int(max_age) != 0
-    ):
+    if str(max_age).isdigit() and int(max_age) == float(max_age) and int(max_age) != 0:
         cookie_expires = datetime.utcfromtimestamp(
             response.raw_cookies["test"].expires
         ).replace(microsecond=0)
@@ -202,9 +192,8 @@ def test_cookie_max_age(app, max_age):
         )
 
         assert cookie == "pass"
-        assert (
-            cookie_expires == expires
-            or cookie_expires == expires + timedelta(seconds=-1)
+        assert cookie_expires == expires or cookie_expires == expires + timedelta(
+            seconds=-1
         )
     else:
         assert cookie is None
@@ -221,9 +210,7 @@ def test_cookie_bad_max_age(app, max_age):
         response.cookies["test"]["max-age"] = max_age
         return response
 
-    request, response = app.test_client.get(
-        "/", cookies=cookies, raw_cookies=True
-    )
+    request, response = app.test_client.get("/", cookies=cookies, raw_cookies=True)
     assert response.status == 500
 
 
@@ -239,9 +226,7 @@ def test_cookie_expires(app: Sanic, expires: timedelta):
         response.cookies["test"]["expires"] = expires_time
         return response
 
-    request, response = app.test_client.get(
-        "/", cookies=cookies, raw_cookies=True
-    )
+    request, response = app.test_client.get("/", cookies=cookies, raw_cookies=True)
 
     cookie_expires = datetime.utcfromtimestamp(
         response.raw_cookies["test"].expires
@@ -399,17 +384,13 @@ def test_bad_cookie_prarms():
         ServerError,
         match="Cannot set host_prefix on a cookie unless path='/'",
     ):
-        jar.add_cookie(
-            "foo", "bar", host_prefix=True, secure=True, path="/foo"
-        )
+        jar.add_cookie("foo", "bar", host_prefix=True, secure=True, path="/foo")
 
     with pytest.raises(
         ServerError,
         match="Cannot set host_prefix on a cookie with a defined domain",
     ):
-        jar.add_cookie(
-            "foo", "bar", host_prefix=True, secure=True, domain="foo.bar"
-        )
+        jar.add_cookie("foo", "bar", host_prefix=True, secure=True, domain="foo.bar")
 
     with pytest.raises(
         ServerError,

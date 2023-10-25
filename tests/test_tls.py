@@ -111,9 +111,7 @@ def replace_server_name(hostname):
         server_hostname=None,
         session=None,
     ):
-        return orig_wrap_bio(
-            self, incoming, outgoing, server_side, hostname, session
-        )
+        return orig_wrap_bio(self, incoming, outgoing, server_side, hostname, session)
 
     orig_wrap_bio, ssl.SSLContext.wrap_bio = (
         ssl.SSLContext.wrap_bio,
@@ -462,9 +460,7 @@ def test_logger_vhosts(caplog):
             single_process=True,
         )
 
-    logmsg = [
-        m for s, l, m in caplog.record_tuples if m.startswith("Certificate")
-    ][0]
+    logmsg = [m for s, l, m in caplog.record_tuples if m.startswith("Certificate")][0]
 
     assert logmsg == (
         "Certificate vhosts: localhost, 127.0.0.1, 0:0:0:0:0:0:0:1, "
@@ -495,9 +491,7 @@ def test_mk_cert_creator_is_not_supported(app):
     cert_creator = MkcertCreator(app, _default, _default)
     with patch("subprocess.run") as run:
         run.side_effect = Exception("")
-        with pytest.raises(
-            SanicException, match="Sanic is attempting to use mkcert"
-        ):
+        with pytest.raises(SanicException, match="Sanic is attempting to use mkcert"):
             cert_creator.check_supported()
 
 
@@ -535,9 +529,7 @@ def test_trustme_creator_is_supported(app, monkeypatch):
 def test_trustme_creator_is_not_supported(app, monkeypatch):
     monkeypatch.setattr(sanic.http.tls.creators, "TRUSTME_INSTALLED", False)
     cert_creator = TrustmeCreator(app, _default, _default)
-    with pytest.raises(
-        SanicException, match="Sanic is attempting to use trustme"
-    ):
+    with pytest.raises(SanicException, match="Sanic is attempting to use trustme"):
         cert_creator.check_supported()
 
 
@@ -623,12 +615,8 @@ def test_get_ssl_context_only_mkcert(
 ):
     app.state.mode = Mode.DEBUG
     app.config.LOCAL_CERT_CREATOR = requirement
-    monkeypatch.setattr(
-        sanic.http.tls.creators, "MkcertCreator", MockMkcertCreator
-    )
-    monkeypatch.setattr(
-        sanic.http.tls.creators, "TrustmeCreator", MockTrustmeCreator
-    )
+    monkeypatch.setattr(sanic.http.tls.creators, "MkcertCreator", MockMkcertCreator)
+    monkeypatch.setattr(sanic.http.tls.creators, "TrustmeCreator", MockTrustmeCreator)
     MockMkcertCreator.SUPPORTED = mk_supported
     MockTrustmeCreator.SUPPORTED = trustme_supported
 

@@ -42,9 +42,7 @@ async def handler_file(request):
 
 @app.route("/file_stream")
 async def handler_file_stream(request):
-    return await response.file_stream(
-        Path("../") / "setup.py", chunk_size=1024
-    )
+    return await response.file_stream(Path("../") / "setup.py", chunk_size=1024)
 
 
 @app.post("/stream", stream=True)

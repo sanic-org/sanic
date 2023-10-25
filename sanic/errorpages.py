@@ -190,8 +190,7 @@ class TextRenderer(BaseRenderer):
             lines += [
                 f"{self.exception.__class__.__name__}: {self.exception} while "
                 f"handling path {self.request.path}",
-                f"Traceback of {self.request.app.name} "
-                "(most recent call last):\n",
+                f"Traceback of {self.request.app.name} " "(most recent call last):\n",
             ]
 
             while exc_value:
@@ -388,9 +387,7 @@ def guess_mime(req: Request, fallback: str) -> str:
     if m:
         format = CONFIG_BY_MIME[m.mime]
         source = formats[format]
-        logger.debug(
-            f"The client accepts {m.header}, using '{format}' from {source}"
-        )
+        logger.debug(f"The client accepts {m.header}, using '{format}' from {source}")
     else:
         logger.debug(f"No format found, the client accepts {req.accept!r}")
     return m.mime

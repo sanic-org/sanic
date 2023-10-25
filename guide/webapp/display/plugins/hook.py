@@ -16,16 +16,12 @@ class Hook(DirectivePlugin):
             for type_ in ("column", "tab"):
                 if token["type"] == type_:
                     maybe_next = (
-                        state.tokens[idx + 1]
-                        if idx + 1 < len(state.tokens)
-                        else None
+                        state.tokens[idx + 1] if idx + 1 < len(state.tokens) else None
                     )
                     token.setdefault("attrs", {})
                     if prev and prev["type"] != type_:
                         token["attrs"]["first"] = True
-                    if (
-                        maybe_next and maybe_next["type"] != type_
-                    ) or not maybe_next:
+                    if (maybe_next and maybe_next["type"] != type_) or not maybe_next:
                         token["attrs"]["last"] = True
 
             prev = token

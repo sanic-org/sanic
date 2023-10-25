@@ -243,9 +243,7 @@ def test_accept_parsed_against_str():
 
 
 def test_media_type_matching():
-    assert headers.MediaType("foo", "bar").match(
-        headers.MediaType("foo", "bar")
-    )
+    assert headers.MediaType("foo", "bar").match(headers.MediaType("foo", "bar"))
     assert headers.MediaType("foo", "bar").match("foo/bar")
 
 
@@ -365,31 +363,23 @@ def test_accept_ordering(raw):
 
 def test_not_accept_wildcard():
     accept = headers.parse_accept("*/*, foo/*, */bar, foo/bar;q=0.1")
-    assert not accept.match(
-        "text/html", "foo/foo", "bar/bar", accept_wildcards=False
-    )
+    assert not accept.match("text/html", "foo/foo", "bar/bar", accept_wildcards=False)
     # Should ignore wildcards in accept but still matches them from mimes
     m = accept.match("text/plain", "*/*", accept_wildcards=False)
     assert m.mime == "*/*"
     assert m.match("*/*")
     assert m.header == "foo/bar"
-    assert not accept.match(
-        "text/html", "foo/foo", "bar/bar", accept_wildcards=False
-    )
+    assert not accept.match("text/html", "foo/foo", "bar/bar", accept_wildcards=False)
 
 
 def test_accept_misc():
-    header = (
-        "foo/bar;q=0.0, */plain;param=123, text/plain, text/*, foo/bar;q=0.5"
-    )
+    header = "foo/bar;q=0.0, */plain;param=123, text/plain, text/*, foo/bar;q=0.5"
     a = headers.parse_accept(header)
     assert repr(a) == (
-        "[*/plain;param=123, text/plain, text/*, "
-        "foo/bar;q=0.5, foo/bar;q=0.0]"
+        "[*/plain;param=123, text/plain, text/*, " "foo/bar;q=0.5, foo/bar;q=0.0]"
     )  # noqa: E501
     assert str(a) == (
-        "*/plain;param=123, text/plain, text/*, "
-        "foo/bar;q=0.5, foo/bar;q=0.0"
+        "*/plain;param=123, text/plain, text/*, " "foo/bar;q=0.5, foo/bar;q=0.0"
     )  # noqa: E501
     # q=1 types don't match foo/bar but match the two others,
     # text/* comes first and matches */plain because it

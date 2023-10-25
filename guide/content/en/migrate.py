@@ -7,14 +7,10 @@ from emoji import EMOJI
 COLUMN_PATTERN = re.compile(r"---:1\s*(.*?)\s*:--:1\s*(.*?)\s*:---", re.DOTALL)
 PYTHON_HIGHLIGHT_PATTERN = re.compile(r"```python\{+.*?\}", re.DOTALL)
 BASH_HIGHLIGHT_PATTERN = re.compile(r"```bash\{+.*?\}", re.DOTALL)
-NOTIFICATION_PATTERN = re.compile(
-    r":::\s*(\w+)\s*(.*?)\n([\s\S]*?):::", re.MULTILINE
-)
+NOTIFICATION_PATTERN = re.compile(r":::\s*(\w+)\s*(.*?)\n([\s\S]*?):::", re.MULTILINE)
 EMOJI_PATTERN = re.compile(r":(\w+):")
 CURRENT_DIR = Path(__file__).parent
-SOURCE_DIR = (
-    CURRENT_DIR.parent.parent.parent.parent / "sanic-guide" / "src" / "en"
-)
+SOURCE_DIR = CURRENT_DIR.parent.parent.parent.parent / "sanic-guide" / "src" / "en"
 
 
 def convert_columns(content: str):

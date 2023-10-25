@@ -163,9 +163,7 @@ def test_matching(path, headers, expected):
     request = Request(path, headers, None, "GET", None, app)
 
     try:
-        app.router.get(
-            request.path, request.method, request.headers.get("host")
-        )
+        app.router.get(request.path, request.method, request.headers.get("host"))
     except NotFound:
         response = 404
     except Exception:
@@ -686,9 +684,7 @@ def test_websocket_route_with_subprotocols(app, subprotocols, expected):
         results = ws.subprotocol
         assert ws.subprotocol is not None
 
-    _, response = SanicTestClient(app).websocket(
-        "/ws", subprotocols=subprotocols
-    )
+    _, response = SanicTestClient(app).websocket("/ws", subprotocols=subprotocols)
     assert response.opened is True
     assert results == expected
 
@@ -1287,8 +1283,6 @@ async def test_duplicate_route_error(app):
     async def handler_bar(request):
         return text("...")
 
-    message = (
-        "Duplicate route names detected: test_duplicate_route_error.duped."
-    )
+    message = "Duplicate route names detected: test_duplicate_route_error.duped."
     with pytest.raises(ServerError, match=message):
         await app._startup()

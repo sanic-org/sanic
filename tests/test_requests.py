@@ -68,9 +68,7 @@ async def test_url_asgi(app):
 
     request, response = await app.asgi_client.get("/")
 
-    if response.body.decode().endswith("/") and not ASGI_BASE_URL.endswith(
-        "/"
-    ):
+    if response.body.decode().endswith("/") and not ASGI_BASE_URL.endswith("/"):
         response.body[:-1] == ASGI_BASE_URL.encode()
     else:
         assert response.body == ASGI_BASE_URL.encode()
@@ -387,9 +385,7 @@ def test_token(app, auth_type, token):
     if token:
         headers = {
             "content-type": "application/json",
-            "Authorization": f"{auth_type} {token}"
-            if auth_type
-            else f"{token}",
+            "Authorization": f"{auth_type} {token}" if auth_type else f"{token}",
         }
     else:
         headers = {"content-type": "application/json"}
@@ -426,9 +422,7 @@ def test_credentials(app, capfd, auth_type, token, username, password):
     if token:
         headers = {
             "content-type": "application/json",
-            "Authorization": f"{auth_type} {token}"
-            if auth_type
-            else f"{token}",
+            "Authorization": f"{auth_type} {token}" if auth_type else f"{token}",
         }
     else:
         headers = {"content-type": "application/json"}
@@ -649,9 +643,7 @@ async def test_standard_forwarded_asgi(app):
     assert response.json == {"for": "127.0.0.2", "proto": "ws"}
 
     # Header present but not matching anything
-    request, response = await app.asgi_client.get(
-        "/", headers={"Forwarded": "."}
-    )
+    request, response = await app.asgi_client.get("/", headers={"Forwarded": "."})
     assert response.json == {}
 
     # Forwarded header present but no matching secret -> use X-headers
@@ -753,9 +745,7 @@ def test_remote_addr_with_two_proxies(app):
     assert request.remote_addr == "127.0.0.1"
     assert response.body == b"127.0.0.1"
 
-    headers = {
-        "X-Forwarded-For": ", 127.0.2.2, ,  ,127.0.0.1, ,   ,,127.0.1.2"
-    }
+    headers = {"X-Forwarded-For": ", 127.0.2.2, ,  ,127.0.0.1, ,   ,,127.0.1.2"}
     request, response = app.test_client.get("/", headers=headers)
     assert request.remote_addr == "127.0.0.1"
     assert response.body == b"127.0.0.1"
@@ -794,9 +784,7 @@ async def test_remote_addr_with_two_proxies_asgi(app):
     assert request.remote_addr == "127.0.0.1"
     assert response.body == b"127.0.0.1"
 
-    headers = {
-        "X-Forwarded-For": ", 127.0.2.2, ,  ,127.0.0.1, ,   ,,127.0.1.2"
-    }
+    headers = {"X-Forwarded-For": ", 127.0.2.2, ,  ,127.0.0.1, ,   ,,127.0.1.2"}
     request, response = await app.asgi_client.get("/", headers=headers)
     assert request.remote_addr == "127.0.0.1"
     assert response.body == b"127.0.0.1"
@@ -992,9 +980,7 @@ def test_post_form_urlencoded(app):
     payload = "test=OK"
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = app.test_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = app.test_client.post("/", data=payload, headers=headers)
 
     assert request.form.get("test") == "OK"
     assert request.form.get("test") == "OK"  # For request.parsed_form
@@ -1009,9 +995,7 @@ async def test_post_form_urlencoded_asgi(app):
     payload = "test=OK"
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = await app.asgi_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = await app.asgi_client.post("/", data=payload, headers=headers)
 
     assert request.form.get("test") == "OK"
     assert request.form.get("test") == "OK"  # For request.parsed_form
@@ -1026,9 +1010,7 @@ def test_post_form_urlencoded_keep_blanks(app):
     payload = "test="
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = app.test_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = app.test_client.post("/", data=payload, headers=headers)
 
     assert request.form.get("test") == ""
     assert request.form.get("test") == ""  # For request.parsed_form
@@ -1044,9 +1026,7 @@ async def test_post_form_urlencoded_keep_blanks_asgi(app):
     payload = "test="
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = await app.asgi_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = await app.asgi_client.post("/", data=payload, headers=headers)
 
     assert request.form.get("test") == ""
     assert request.form.get("test") == ""  # For request.parsed_form
@@ -1060,9 +1040,7 @@ def test_post_form_urlencoded_drop_blanks(app):
     payload = "test="
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = app.test_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = app.test_client.post("/", data=payload, headers=headers)
 
     assert "test" not in request.form.keys()
 
@@ -1076,9 +1054,7 @@ async def test_post_form_urlencoded_drop_blanks_asgi(app):
     payload = "test="
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = await app.asgi_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = await app.asgi_client.post("/", data=payload, headers=headers)
 
     assert "test" not in request.form.keys()
 
@@ -1133,9 +1109,7 @@ async def test_post_form_multipart_form_data_asgi(app, payload):
 
     headers = {"content-type": "multipart/form-data; boundary=----sanic"}
 
-    request, response = await app.asgi_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = await app.asgi_client.post("/", data=payload, headers=headers)
 
     assert request.form.get("test") == "OK"
 
@@ -1200,9 +1174,7 @@ def test_form_with_multiple_values(app):
 
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = app.test_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = app.test_client.post("/", data=payload, headers=headers)
 
     assert request.form.getlist("selectedItems") == ["v1", "v2", "v3"]
 
@@ -1217,9 +1189,7 @@ async def test_form_with_multiple_values_asgi(app):
 
     headers = {"content-type": "application/x-www-form-urlencoded"}
 
-    request, response = await app.asgi_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = await app.asgi_client.post("/", data=payload, headers=headers)
 
     assert request.form.getlist("selectedItems") == ["v1", "v2", "v3"]
 
@@ -1445,9 +1415,7 @@ def test_request_multipart_file_without_field_name(app, caplog):
 
     headers = {"content-type": "multipart/form-data; boundary=------sanic"}
 
-    request, _ = app.test_client.post(
-        data=payload, headers=headers, debug=True
-    )
+    request, _ = app.test_client.post(data=payload, headers=headers, debug=True)
     with caplog.at_level(logging.DEBUG):
         request.form
 
@@ -1484,9 +1452,7 @@ def test_request_multipart_file_duplicate_filed_name(app):
         "Content-Type": "multipart/form-data; boundary=e73ffaa8b1b2472b8ec848de833cb05b"
     }
 
-    request, _ = app.test_client.post(
-        data=payload, headers=headers, debug=True
-    )
+    request, _ = app.test_client.post(data=payload, headers=headers, debug=True)
     assert request.form.getlist("file") == [
         '{"test":"json"}',
         '{"test":"json2"}',
@@ -1607,9 +1573,7 @@ def test_request_parsing_form_failed(app, caplog):
     payload = "test=OK"
     headers = {"content-type": "multipart/form-data"}
 
-    request, response = app.test_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = app.test_client.post("/", data=payload, headers=headers)
 
     with caplog.at_level(logging.ERROR):
         request.form
@@ -1630,9 +1594,7 @@ async def test_request_parsing_form_failed_asgi(app, caplog):
     payload = "test=OK"
     headers = {"content-type": "multipart/form-data"}
 
-    request, response = await app.asgi_client.post(
-        "/", data=payload, headers=headers
-    )
+    request, response = await app.asgi_client.post("/", data=payload, headers=headers)
 
     with caplog.at_level(logging.ERROR):
         request.form
@@ -1743,9 +1705,7 @@ def test_request_query_args_custom_parsing(app):
     def handler(request):
         return text("pass")
 
-    request, response = app.test_client.get(
-        "/?test1=value1&test2=&test3=value3"
-    )
+    request, response = app.test_client.get("/?test1=value1&test2=&test3=value3")
 
     assert request.get_query_args(keep_blank_values=True) == [
         ("test1", "value1"),
@@ -1762,9 +1722,7 @@ def test_request_query_args_custom_parsing(app):
         {"test1": ["value1"], "test2": [""], "test3": ["value3"]}
     )
 
-    assert request.args == RequestParameters(
-        {"test1": ["value1"], "test3": ["value3"]}
-    )
+    assert request.args == RequestParameters({"test1": ["value1"], "test3": ["value3"]})
 
     assert request.get_args(keep_blank_values=False) == RequestParameters(
         {"test1": ["value1"], "test3": ["value3"]}
@@ -1777,9 +1735,7 @@ async def test_request_query_args_custom_parsing_asgi(app):
     def handler(request):
         return text("pass")
 
-    request, response = await app.asgi_client.get(
-        "/?test1=value1&test2=&test3=value3"
-    )
+    request, response = await app.asgi_client.get("/?test1=value1&test2=&test3=value3")
 
     assert request.get_query_args(keep_blank_values=True) == [
         ("test1", "value1"),
@@ -1796,9 +1752,7 @@ async def test_request_query_args_custom_parsing_asgi(app):
         {"test1": ["value1"], "test2": [""], "test3": ["value3"]}
     )
 
-    assert request.args == RequestParameters(
-        {"test1": ["value1"], "test3": ["value3"]}
-    )
+    assert request.args == RequestParameters({"test1": ["value1"], "test3": ["value3"]})
 
     assert request.get_args(keep_blank_values=False) == RequestParameters(
         {"test1": ["value1"], "test3": ["value3"]}
@@ -1907,9 +1861,7 @@ def test_request_server_name_in_host_header(app):
     def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get(
-        "/", headers={"Host": "my-server:5555"}
-    )
+    request, response = app.test_client.get("/", headers={"Host": "my-server:5555"})
     assert request.server_name == "my-server"
 
     request, response = app.test_client.get(
@@ -1917,9 +1869,7 @@ def test_request_server_name_in_host_header(app):
     )
     assert request.server_name == "[2a00:1450:400f:80c::200e]"
 
-    request, response = app.test_client.get(
-        "/", headers={"Host": "mal_formed"}
-    )
+    request, response = app.test_client.get("/", headers={"Host": "mal_formed"})
     assert request.server_name == ""
 
 
@@ -1955,9 +1905,7 @@ def test_request_server_port_in_host_header(app):
     def handler(request):
         return text("OK")
 
-    request, response = app.test_client.get(
-        "/", headers={"Host": "my-server:5555"}
-    )
+    request, response = app.test_client.get("/", headers={"Host": "my-server:5555"})
     assert request.server_port == 5555
 
     request, response = app.test_client.get(
@@ -1965,9 +1913,7 @@ def test_request_server_port_in_host_header(app):
     )
     assert request.server_port == 5555
 
-    request, response = app.test_client.get(
-        "/", headers={"Host": "mal_formed:5555"}
-    )
+    request, response = app.test_client.get("/", headers={"Host": "mal_formed:5555"})
     if PORT is None:
         assert request.server_port != 5555
     else:
@@ -2038,13 +1984,8 @@ def test_url_for_with_forwarded_request(app):
         },
     )
     assert app.url_for("view_name") == "/another_view"
-    assert (
-        app.url_for("view_name", _external=True)
-        == "http://my-server/another_view"
-    )
-    assert (
-        request.url_for("view_name") == "https://my-server:6789/another_view"
-    )
+    assert app.url_for("view_name", _external=True) == "http://my-server/another_view"
+    assert request.url_for("view_name") == "https://my-server:6789/another_view"
 
     request, response = app.test_client.get(
         "/",
@@ -2159,10 +2100,7 @@ def test_url_for_without_server_name(app):
         return text("url-for")
 
     request, response = app.test_client.get("/sample")
-    assert (
-        response.json["url"]
-        == f"http://127.0.0.1:{request.server_port}/url-for"
-    )
+    assert response.json["url"] == f"http://127.0.0.1:{request.server_port}/url-for"
 
 
 def test_safe_method_with_body_ignored(app):
@@ -2219,15 +2157,11 @@ def test_conflicting_body_methods_overload(app: Sanic):
     @app.put("/p/", name="two")
     @app.put("/p/<foo>", name="three")
     async def put(request, foo=None):
-        return json(
-            {"name": request.route.name, "body": str(request.body), "foo": foo}
-        )
+        return json({"name": request.route.name, "body": str(request.body), "foo": foo})
 
     @app.delete("/p/<foo>")
     async def delete(request, foo):
-        return json(
-            {"name": request.route.name, "body": str(request.body), "foo": foo}
-        )
+        return json({"name": request.route.name, "body": str(request.body), "foo": foo})
 
     payload = {"test": "OK"}
     data = str(json_dumps(payload).encode())
@@ -2285,9 +2219,7 @@ def test_handler_overload(app: Sanic):
     def handler(request, **kwargs):
         return json(kwargs)
 
-    _, response = app.test_client.get(
-        "/long/sub/route/param_a/foo/param_b/bar"
-    )
+    _, response = app.test_client.get("/long/sub/route/param_a/foo/param_b/bar")
     assert response.status == 200
     assert response.json == {
         "param_a": "foo",

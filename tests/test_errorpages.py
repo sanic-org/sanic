@@ -544,9 +544,7 @@ def test_guess_mime_logging(
     with caplog.at_level(logging.DEBUG, logger="sanic.root"):
         guess_mime(fake_request, fallback)
 
-    (logmsg,) = (
-        r.message for r in caplog.records if r.funcName == "guess_mime"
-    )
+    (logmsg,) = (r.message for r in caplog.records if r.funcName == "guess_mime")
 
     assert logmsg == expected
 
@@ -564,9 +562,7 @@ def test_exception_header_on_renderers(app: Sanic, format, expected):
 
     @app.get("/test")
     def test(request):
-        raise SanicException(
-            "test", status_code=400, headers={"exception": "test"}
-        )
+        raise SanicException("test", status_code=400, headers={"exception": "test"})
 
     _, response = app.test_client.get("/test")
     assert response.status == 400

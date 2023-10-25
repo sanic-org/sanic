@@ -6,12 +6,9 @@ from webapp.display.layouts.models import MenuItem
 
 def do_navbar(builder: Builder, request: Request) -> None:
     navbar_items = [
-        _render_navbar_item(item, request)
-        for item in request.app.config.NAVBAR
+        _render_navbar_item(item, request) for item in request.app.config.NAVBAR
     ]
-    container = E.div(
-        _search_form(request), *navbar_items, class_="navbar-end"
-    )
+    container = E.div(_search_form(request), *navbar_items, class_="navbar-end")
 
     builder.nav(
         E.div(container, class_="navbar-menu"),
@@ -46,10 +43,7 @@ def _render_navbar_item(item: MenuItem, request: Request) -> Builder:
         return E.div(
             E.a(item.label, class_="navbar-link"),
             E.div(
-                *(
-                    _render_navbar_item(subitem, request)
-                    for subitem in item.items
-                ),
+                *(_render_navbar_item(subitem, request) for subitem in item.items),
                 class_="navbar-dropdown",
             ),
             class_="navbar-item has-dropdown is-hoverable",

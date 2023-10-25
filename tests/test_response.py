@@ -127,14 +127,10 @@ def test_response_content_length(app):
         )
 
     _, response = app.test_client.get("/response_with_space")
-    content_length_for_response_with_space = response.headers.get(
-        "Content-Length"
-    )
+    content_length_for_response_with_space = response.headers.get("Content-Length")
 
     _, response = app.test_client.get("/response_without_space")
-    content_length_for_response_without_space = response.headers.get(
-        "Content-Length"
-    )
+    content_length_for_response_without_space = response.headers.get("Content-Length")
 
     assert (
         content_length_for_response_with_space
@@ -289,9 +285,7 @@ def test_stream_response_with_cookies(app):
         cookies = CookieJar(headers)
         cookies["test"] = "modified"
         cookies["test"] = "pass"
-        response = await request.respond(
-            content_type="text/csv", headers=headers
-        )
+        response = await request.respond(content_type="text/csv", headers=headers)
 
         await response.send("foo,")
         await asyncio.sleep(0.001)
@@ -340,9 +334,7 @@ def get_file_last_modified_timestamp(
     return (static_file_directory / file_name).stat().st_mtime
 
 
-@pytest.mark.parametrize(
-    "file_name", ["test.file", "decode me.txt", "python.png"]
-)
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt", "python.png"])
 @pytest.mark.parametrize("status", [200, 401])
 def test_file_response(app: Sanic, file_name, static_file_directory, status):
     @app.route("/files/<filename>", methods=["GET"])
@@ -369,9 +361,7 @@ def test_file_response(app: Sanic, file_name, static_file_directory, status):
         ("python.png", "logo.png"),
     ],
 )
-def test_file_response_custom_filename(
-    app: Sanic, source, dest, static_file_directory
-):
+def test_file_response_custom_filename(app: Sanic, source, dest, static_file_directory):
     @app.route("/files/<filename>", methods=["GET"])
     def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
@@ -381,10 +371,7 @@ def test_file_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert (
-        response.headers["Content-Disposition"]
-        == f'attachment; filename="{dest}"'
-    )
+    assert response.headers["Content-Disposition"] == f'attachment; filename="{dest}"'
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -418,9 +405,7 @@ def test_file_head_response(app: Sanic, file_name, static_file_directory):
     )
 
 
-@pytest.mark.parametrize(
-    "file_name", ["test.file", "decode me.txt", "python.png"]
-)
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt", "python.png"])
 def test_file_stream_response(app: Sanic, file_name, static_file_directory):
     @app.route("/files/<filename>", methods=["GET"])
     def file_route(request, filename):
@@ -458,16 +443,11 @@ def test_file_stream_response_custom_filename(
     request, response = app.test_client.get(f"/files/{source}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, source)
-    assert (
-        response.headers["Content-Disposition"]
-        == f'attachment; filename="{dest}"'
-    )
+    assert response.headers["Content-Disposition"] == f'attachment; filename="{dest}"'
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
-def test_file_stream_head_response(
-    app: Sanic, file_name, static_file_directory
-):
+def test_file_stream_head_response(app: Sanic, file_name, static_file_directory):
     @app.route("/files/<filename>", methods=["GET", "HEAD"])
     async def file_route(request, filename):
         file_path = os.path.join(static_file_directory, filename)
@@ -504,12 +484,8 @@ def test_file_stream_head_response(
     )
 
 
-@pytest.mark.parametrize(
-    "file_name", ["test.file", "decode me.txt", "python.png"]
-)
-@pytest.mark.parametrize(
-    "size,start,end", [(1024, 0, 1024), (4096, 1024, 8192)]
-)
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt", "python.png"])
+@pytest.mark.parametrize("size,start,end", [(1024, 0, 1024), (4096, 1024, 8192)])
 def test_file_stream_response_range(
     app: Sanic, file_name, static_file_directory, size, start, end
 ):
@@ -700,8 +676,7 @@ def send_response_after_eof_should_fail(
     )
 
     error_msg2 = (
-        "Response stream was ended, no more "
-        "response data is allowed to be sent."
+        "Response stream was ended, no more " "response data is allowed to be sent."
     )
 
     with caplog.at_level(ERROR):
@@ -711,48 +686,30 @@ def send_response_after_eof_should_fail(
         assert message_in_records(caplog.records, error_msg2)
 
 
-@pytest.mark.parametrize(
-    "file_name", ["test.file", "decode me.txt", "python.png"]
-)
-def test_file_response_headers(
-    app: Sanic, file_name: str, static_file_directory: str
-):
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt", "python.png"])
+def test_file_response_headers(app: Sanic, file_name: str, static_file_directory: str):
     test_last_modified = datetime.now()
     test_max_age = 10
     test_expires = test_last_modified.timestamp() + test_max_age
 
     @app.route("/files/cached/<filename>", methods=["GET"])
     def file_route_cache(request: Request, filename: str):
-        file_path = (
-            Path(static_file_directory) / unquote(filename)
-        ).absolute()
-        return file(
-            file_path, max_age=test_max_age, last_modified=test_last_modified
-        )
+        file_path = (Path(static_file_directory) / unquote(filename)).absolute()
+        return file(file_path, max_age=test_max_age, last_modified=test_last_modified)
 
-    @app.route(
-        "/files/cached_default_last_modified/<filename>", methods=["GET"]
-    )
-    def file_route_cache_default_last_modified(
-        request: Request, filename: str
-    ):
-        file_path = (
-            Path(static_file_directory) / unquote(filename)
-        ).absolute()
+    @app.route("/files/cached_default_last_modified/<filename>", methods=["GET"])
+    def file_route_cache_default_last_modified(request: Request, filename: str):
+        file_path = (Path(static_file_directory) / unquote(filename)).absolute()
         return file(file_path, max_age=test_max_age)
 
     @app.route("/files/no_cache/<filename>", methods=["GET"])
     def file_route_no_cache(request: Request, filename: str):
-        file_path = (
-            Path(static_file_directory) / unquote(filename)
-        ).absolute()
+        file_path = (Path(static_file_directory) / unquote(filename)).absolute()
         return file(file_path)
 
     @app.route("/files/no_store/<filename>", methods=["GET"])
     def file_route_no_store(request: Request, filename: str):
-        file_path = (
-            Path(static_file_directory) / unquote(filename)
-        ).absolute()
+        file_path = (Path(static_file_directory) / unquote(filename)).absolute()
         return file(file_path, no_store=True)
 
     _, response = app.test_client.get(f"/files/cached/{file_name}")
@@ -765,8 +722,7 @@ def test_file_response_headers(
     )
     assert (
         "expires" in headers
-        and headers.get("expires")[:-6]
-        == formatdate(test_expires, usegmt=True)[:-6]
+        and headers.get("expires")[:-6] == formatdate(test_expires, usegmt=True)[:-6]
         # [:-6] to allow at most 1 min difference
         # It's minimal for cases like:
         # Thu, 26 May 2022 05:36:59 GMT
@@ -774,9 +730,9 @@ def test_file_response_headers(
         # Thu, 26 May 2022 05:37:00 GMT
     )
     assert response.status == 200
-    assert "last-modified" in headers and headers.get(
-        "last-modified"
-    ) == formatdate(test_last_modified.timestamp(), usegmt=True)
+    assert "last-modified" in headers and headers.get("last-modified") == formatdate(
+        test_last_modified.timestamp(), usegmt=True
+    )
 
     _, response = app.test_client.get(
         f"/files/cached_default_last_modified/{file_name}"
@@ -785,23 +741,19 @@ def test_file_response_headers(
         static_file_directory, file_name
     )
     headers = response.headers
-    assert "last-modified" in headers and headers.get(
-        "last-modified"
-    ) == formatdate(file_last_modified, usegmt=True)
+    assert "last-modified" in headers and headers.get("last-modified") == formatdate(
+        file_last_modified, usegmt=True
+    )
     assert response.status == 200
 
     _, response = app.test_client.get(f"/files/no_cache/{file_name}")
     headers = response.headers
-    assert "cache-control" in headers and "no-cache" == headers.get(
-        "cache-control"
-    )
+    assert "cache-control" in headers and "no-cache" == headers.get("cache-control")
     assert response.status == 200
 
     _, response = app.test_client.get(f"/files/no_store/{file_name}")
     headers = response.headers
-    assert "cache-control" in headers and "no-store" == headers.get(
-        "cache-control"
-    )
+    assert "cache-control" in headers and "no-store" == headers.get("cache-control")
     assert response.status == 200
 
 
@@ -849,17 +801,13 @@ def test_file_validate(app: Sanic, static_file_directory: str):
     file_path.unlink()
 
 
-@pytest.mark.parametrize(
-    "file_name", ["test.file", "decode me.txt", "python.png"]
-)
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt", "python.png"])
 def test_file_validating_invalid_header(
     app: Sanic, file_name: str, static_file_directory: str
 ):
     @app.route("/files/<filename>", methods=["GET"])
     def file_route(request: Request, filename: str):
-        handler_file_path = (
-            Path(static_file_directory) / unquote(filename)
-        ).absolute()
+        handler_file_path = (Path(static_file_directory) / unquote(filename)).absolute()
 
         return file(
             handler_file_path,
@@ -884,17 +832,13 @@ def test_file_validating_invalid_header(
     assert response.body == get_file_content(static_file_directory, file_name)
 
 
-@pytest.mark.parametrize(
-    "file_name", ["test.file", "decode me.txt", "python.png"]
-)
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt", "python.png"])
 def test_file_validating_304_response(
     app: Sanic, file_name: str, static_file_directory: str
 ):
     @app.route("/files/<filename>", methods=["GET"])
     def file_route(request: Request, filename: str):
-        handler_file_path = (
-            Path(static_file_directory) / unquote(filename)
-        ).absolute()
+        handler_file_path = (Path(static_file_directory) / unquote(filename)).absolute()
 
         return file(
             handler_file_path,
@@ -914,9 +858,7 @@ def test_file_validating_304_response(
     assert response.body == b""
 
 
-@pytest.mark.parametrize(
-    "file_name", ["test.file", "decode me.txt", "python.png"]
-)
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt", "python.png"])
 def test_file_validating_304_response(
     app: Sanic, file_name: str, static_file_directory: str
 ):
@@ -930,9 +872,7 @@ def test_file_validating_304_response(
     _, response = app.test_client.get(
         "/static",
         headers={
-            "if-modified-since": formatdate(
-                last_modified.timestamp(), usegmt=True
-            )
+            "if-modified-since": formatdate(last_modified.timestamp(), usegmt=True)
         },
     )
     assert response.status == 304

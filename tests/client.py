@@ -13,9 +13,7 @@ class RawClient:
         self.port = port
 
     async def connect(self):
-        self.reader, self.writer = await asyncio.open_connection(
-            self.host, self.port
-        )
+        self.reader, self.writer = await asyncio.open_connection(self.host, self.port)
 
     async def close(self):
         self.writer.close()
@@ -39,8 +37,4 @@ class RawClient:
         return await self.reader.read(nbytes)
 
     def _clean(self, message: str) -> str:
-        return (
-            dedent(message)
-            .lstrip("\n")
-            .replace("\n", self.CRLF.decode("utf-8"))
-        )
+        return dedent(message).lstrip("\n").replace("\n", self.CRLF.decode("utf-8"))

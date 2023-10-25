@@ -15,9 +15,7 @@ def _menu_items(request: Request) -> list[Builder]:
         _sanic_logo(request),
         *_sidebar_items(request),
         E.hr(),
-        E.p("Current with version ").strong(
-            request.app.config.GENERAL.current_version
-        ),
+        E.p("Current with version ").strong(request.app.config.GENERAL.current_version),
         E.hr(),
         E.p("Want more? ").a(
             "sanicbook.com", href="https://sanicbook.com", target="_blank"
@@ -73,9 +71,7 @@ def _single_sidebar_item(item: MenuItem, request: Request) -> Builder:
     kwargs = {}
     classes: list[str] = []
     li_classes = "menu-item"
-    _, page, _ = request.app.ctx.get_page(
-        request.ctx.language, item.path or ""
-    )
+    _, page, _ = request.app.ctx.get_page(request.ctx.language, item.path or "")
     if request.path == path:
         classes.append("is-active")
     if item.href:

@@ -92,16 +92,8 @@ class CertCreator(ABC):
         if isinstance(self.key, Default) or isinstance(self.cert, Default):
             self.tmpdir = Path(mkdtemp())
 
-        key = (
-            DEFAULT_LOCAL_TLS_KEY
-            if isinstance(self.key, Default)
-            else self.key
-        )
-        cert = (
-            DEFAULT_LOCAL_TLS_CERT
-            if isinstance(self.cert, Default)
-            else self.cert
-        )
+        key = DEFAULT_LOCAL_TLS_KEY if isinstance(self.key, Default) else self.key
+        cert = DEFAULT_LOCAL_TLS_CERT if isinstance(self.cert, Default) else self.cert
 
         self.key_path = _make_path(key, self.tmpdir)
         self.cert_path = _make_path(cert, self.tmpdir)
@@ -124,9 +116,7 @@ class CertCreator(ABC):
     ) -> CertCreator:
         creator: CertCreator | None = None
 
-        cert_creator_options: tuple[
-            tuple[type[CertCreator], LocalCertCreator], ...
-        ] = (
+        cert_creator_options: tuple[tuple[type[CertCreator], LocalCertCreator], ...] = (
             (MkcertCreator, LocalCertCreator.MKCERT),
             (TrustmeCreator, LocalCertCreator.TRUSTME),
         )

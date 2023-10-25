@@ -36,9 +36,7 @@ def get_file_content(static_file_directory, file_name):
 )
 def test_static_file(static_file_directory, file_name):
     app = Sanic("qq")
-    app.static(
-        "/testing.file", get_file_path(static_file_directory, file_name)
-    )
+    app.static("/testing.file", get_file_path(static_file_directory, file_name))
     app.static(
         "/testing2.file",
         get_file_path(static_file_directory, file_name),
@@ -155,16 +153,10 @@ def test_static_directory(file_name, base_uri, static_file_directory):
     app.router.reset()
     app.blueprint(bp)
 
-    uri = app.url_for(
-        "static", name="test_bp_static.static", filename=file_name
-    )
-    uri2 = app.url_for(
-        "static", name="test_bp_static.static", filename="/" + file_name
-    )
+    uri = app.url_for("static", name="test_bp_static.static", filename=file_name)
+    uri2 = app.url_for("static", name="test_bp_static.static", filename="/" + file_name)
 
-    uri4 = app.url_for(
-        "static", name="test_bp_static.uploads", filename=file_name
-    )
+    uri4 = app.url_for("static", name="test_bp_static.uploads", filename=file_name)
     uri5 = app.url_for(
         "static", name="test_bp_static.uploads", filename="/" + file_name
     )
@@ -213,9 +205,7 @@ def test_static_head_request(file_name, static_file_directory):
     # blueprint
     uri = app.url_for("static", name="test_bp_static.static")
     assert uri == "/bp/testing.file"
-    assert uri == app.url_for(
-        "static", name="test_bp_static.static", filename="any"
-    )
+    assert uri == app.url_for("static", name="test_bp_static.static", filename="any")
 
     request, response = app.test_client.head(uri)
     assert response.status == 200
@@ -253,27 +243,21 @@ def test_static_content_range_correct(file_name, static_file_directory):
     assert response.status == 206
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
-    static_content = bytes(get_file_content(static_file_directory, file_name))[
-        12:20
-    ]
+    static_content = bytes(get_file_content(static_file_directory, file_name))[12:20]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
     # blueprint
     uri = app.url_for("static", name="test_bp_static.static")
     assert uri == "/bp/testing.file"
-    assert uri == app.url_for(
-        "static", name="test_bp_static.static", filename="any"
-    )
+    assert uri == app.url_for("static", name="test_bp_static.static", filename="any")
     assert uri == app.url_for("test_bp_static.static")
 
     request, response = app.test_client.get(uri, headers=headers)
     assert response.status == 206
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
-    static_content = bytes(get_file_content(static_file_directory, file_name))[
-        12:20
-    ]
+    static_content = bytes(get_file_content(static_file_directory, file_name))[12:20]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
@@ -305,18 +289,14 @@ def test_static_content_range_front(file_name, static_file_directory):
     assert response.status == 206
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
-    static_content = bytes(get_file_content(static_file_directory, file_name))[
-        12:
-    ]
+    static_content = bytes(get_file_content(static_file_directory, file_name))[12:]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
     # blueprint
     uri = app.url_for("static", name="test_bp_static.static")
     assert uri == "/bp/testing.file"
-    assert uri == app.url_for(
-        "static", name="test_bp_static.static", filename="any"
-    )
+    assert uri == app.url_for("static", name="test_bp_static.static", filename="any")
     assert uri == app.url_for("test_bp_static.static")
     assert uri == app.url_for("test_bp_static.static", filename="any")
 
@@ -324,9 +304,7 @@ def test_static_content_range_front(file_name, static_file_directory):
     assert response.status == 206
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
-    static_content = bytes(get_file_content(static_file_directory, file_name))[
-        12:
-    ]
+    static_content = bytes(get_file_content(static_file_directory, file_name))[12:]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
@@ -358,18 +336,14 @@ def test_static_content_range_back(file_name, static_file_directory):
     assert response.status == 206
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
-    static_content = bytes(get_file_content(static_file_directory, file_name))[
-        -12:
-    ]
+    static_content = bytes(get_file_content(static_file_directory, file_name))[-12:]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
     # blueprint
     uri = app.url_for("static", name="test_bp_static.static")
     assert uri == "/bp/testing.file"
-    assert uri == app.url_for(
-        "static", name="test_bp_static.static", filename="any"
-    )
+    assert uri == app.url_for("static", name="test_bp_static.static", filename="any")
     assert uri == app.url_for("test_bp_static.static")
     assert uri == app.url_for("test_bp_static.static", filename="any")
 
@@ -377,9 +351,7 @@ def test_static_content_range_back(file_name, static_file_directory):
     assert response.status == 206
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
-    static_content = bytes(get_file_content(static_file_directory, file_name))[
-        -12:
-    ]
+    static_content = bytes(get_file_content(static_file_directory, file_name))[-12:]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
@@ -413,16 +385,12 @@ def test_static_content_range_empty(file_name, static_file_directory):
     assert int(response.headers["Content-Length"]) == len(
         get_file_content(static_file_directory, file_name)
     )
-    assert response.body == bytes(
-        get_file_content(static_file_directory, file_name)
-    )
+    assert response.body == bytes(get_file_content(static_file_directory, file_name))
 
     # blueprint
     uri = app.url_for("static", name="test_bp_static.static")
     assert uri == "/bp/testing.file"
-    assert uri == app.url_for(
-        "static", name="test_bp_static.static", filename="any"
-    )
+    assert uri == app.url_for("static", name="test_bp_static.static", filename="any")
     assert uri == app.url_for("test_bp_static.static")
     assert uri == app.url_for("test_bp_static.static", filename="any")
 
@@ -433,9 +401,7 @@ def test_static_content_range_empty(file_name, static_file_directory):
     assert int(response.headers["Content-Length"]) == len(
         get_file_content(static_file_directory, file_name)
     )
-    assert response.body == bytes(
-        get_file_content(static_file_directory, file_name)
-    )
+    assert response.body == bytes(get_file_content(static_file_directory, file_name))
 
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
@@ -472,9 +438,7 @@ def test_static_content_range_error(app, file_name, static_file_directory):
     # blueprint
     uri = app.url_for("static", name="test_bp_static.static")
     assert uri == "/bp/testing.file"
-    assert uri == app.url_for(
-        "static", name="test_bp_static.static", filename="any"
-    )
+    assert uri == app.url_for("static", name="test_bp_static.static", filename="any")
     assert uri == app.url_for("test_bp_static.static")
     assert uri == app.url_for("test_bp_static.static", filename="any")
 

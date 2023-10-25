@@ -37,9 +37,7 @@ class ErrorPage(BasePage):
         if name.islower():
             name = name.title()
         self.TITLE = f"Application {name} cannot handle your request"
-        self.HEADING = E("Application ").strong(name)(
-            " cannot handle your request"
-        )
+        self.HEADING = E("Application ").strong(name)(" cannot handle your request")
         self.title = title
         self.text = text
         self.request = request
@@ -58,9 +56,7 @@ class ErrorPage(BasePage):
             # Show context details if available on the exception
             context = getattr(self.exc, "context", None)
             if context:
-                self._key_value_table(
-                    "Issue context", "exception-context", context
-                )
+                self._key_value_table("Issue context", "exception-context", context)
 
             if not debug:
                 with self.doc.div(id="enduser"):
@@ -72,19 +68,13 @@ class ErrorPage(BasePage):
                 # Show extra details if available on the exception
                 extra = getattr(self.exc, "extra", None)
                 if extra:
-                    self._key_value_table(
-                        "Issue extra data", "exception-extra", extra
-                    )
+                    self._key_value_table("Issue extra data", "exception-extra", extra)
 
-                self.doc.summary(
-                    "Details for developers (Sanic debug mode only)"
-                )
+                self.doc.summary("Details for developers (Sanic debug mode only)")
                 if self.exc:
                     with self.doc.div(class_="exception-wrapper"):
                         self.doc.h2(f"Exception in {route_name}:")
-                        self.doc(
-                            html_traceback(self.exc, include_js_css=False)
-                        )
+                        self.doc(html_traceback(self.exc, include_js_css=False))
 
                 self._key_value_table(
                     f"{self.request.method} {self.request.path}",
@@ -104,6 +94,4 @@ class ErrorPage(BasePage):
                         value = str(value)
                     except Exception:
                         value = E.em("Unable to display value")
-                    self.doc.dt.span(key, class_="nobr key").span(": ").dd(
-                        value
-                    )
+                    self.doc.dt.span(key, class_="nobr key").span(": ").dd(value)

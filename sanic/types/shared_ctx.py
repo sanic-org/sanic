@@ -14,9 +14,7 @@ class SharedContext(SimpleNamespace):
 
     def __setattr__(self, name: str, value: Any) -> None:
         if self.is_locked:
-            raise RuntimeError(
-                f"Cannot set {name} on locked SharedContext object"
-            )
+            raise RuntimeError(f"Cannot set {name} on locked SharedContext object")
         if not os.environ.get("SANIC_WORKER_NAME"):
             to_check: Iterable[Any]
             if not isinstance(value, (tuple, frozenset)):
@@ -35,8 +33,7 @@ class SharedContext(SimpleNamespace):
         except AttributeError:
             module = ""
         if not any(
-            module.startswith(prefix)
-            for prefix in ("multiprocessing", "ctypes")
+            module.startswith(prefix) for prefix in ("multiprocessing", "ctypes")
         ):
             error_logger.warning(
                 f"{Colors.YELLOW}Unsafe object {Colors.PURPLE}{name} "

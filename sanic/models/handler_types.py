@@ -12,9 +12,7 @@ MiddlewareResponse = Union[
     Optional[HTTPResponse], Coroutine[Any, Any, Optional[HTTPResponse]]
 ]
 RequestMiddlewareType = Callable[[Request], MiddlewareResponse]
-ResponseMiddlewareType = Callable[
-    [Request, BaseHTTPResponse], MiddlewareResponse
-]
+ResponseMiddlewareType = Callable[[Request, BaseHTTPResponse], MiddlewareResponse]
 ErrorMiddlewareType = Callable[
     [Request, BaseException], Optional[Coroutine[Any, Any, None]]
 ]

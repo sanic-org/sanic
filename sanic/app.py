@@ -309,9 +309,7 @@ class Sanic(
         self.asgi = False
         self.auto_reload = False
         self.blueprints: dict[str, Blueprint] = {}
-        self.certloader_class: type[CertLoader] = (
-            certloader_class or CertLoader
-        )
+        self.certloader_class: type[CertLoader] = certloader_class or CertLoader
         self.configure_logging: bool = configure_logging
         self.ctx: ctx_type = cast(ctx_type, ctx or SimpleNamespace())
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
@@ -387,15 +385,11 @@ class Sanic(
         try:
             _event = ListenerEvent[event.upper()]
         except (ValueError, AttributeError):
-            valid = ", ".join(
-                x.lower() for x in ListenerEvent.__members__.keys()
-            )
+            valid = ", ".join(x.lower() for x in ListenerEvent.__members__.keys())
             raise BadRequest(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
-            self.signal(_event.value)(
-                partial(self._listener, listener=listener)
-            )
+            self.signal(_event.value)(partial(self._listener, listener=listener))
         else:
             self.listeners[_event.value].append(listener)
 
@@ -522,9 +516,7 @@ class Sanic(
     def _apply_listener(self, listener: FutureListener):
         return self.register_listener(listener.listener, listener.event)
 
-    def _apply_route(
-        self, route: FutureRoute, overwrite: bool = False
-    ) -> list[Route]:
+    def _apply_route(self, route: FutureRoute, overwrite: bool = False) -> list[Route]:
         params = route._asdict()
         params["overwrite"] = overwrite
         websocket = params.pop("websocket", False)
@@ -653,9 +645,7 @@ class Sanic(
             fail_not_found=fail_not_found,
         )
 
-    async def event(
-        self, event: str, timeout: int | float | None = None
-    ) -> None:
+    async def event(self, event: str, timeout: int | float | None = None) -> None:
         """Wait for a specific event to be triggered.
 
         This method waits for a named event to be triggered and can be used
@@ -740,9 +730,7 @@ class Sanic(
         async def report(exception: Exception) -> None:
             await handler(self, exception)
 
-        self.add_signal(
-            handler=report, event=Event.SERVER_EXCEPTION_REPORT.value
-        )
+        self.add_signal(handler=report, event=Event.SERVER_EXCEPTION_REPORT.value)
 
         return report
 
@@ -831,14 +819,12 @@ class Sanic(
 
                     for _attr in ["version", "strict_slashes"]:
                         if getattr(item, _attr) is None:
-                            params[_attr] = getattr(
-                                blueprint, _attr
-                            ) or options.get(_attr)
+                            params[_attr] = getattr(blueprint, _attr) or options.get(
+                                _attr
+                            )
                     if item.version_prefix == "/v":
                         if blueprint.version_prefix == "/v":
-                            params["version_prefix"] = options.get(
-                                "version_prefix"
-                            )
+                            params["version_prefix"] = options.get("version_prefix")
                         else:
                             params["version_prefix"] = blueprint.version_prefix
                     name_prefix = getattr(blueprint, "name_prefix", None)
@@ -855,10 +841,7 @@ class Sanic(
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)
 
-        if (
-            self.strict_slashes is not None
-            and blueprint.strict_slashes is None
-        ):
+        if self.strict_slashes is not None and blueprint.strict_slashes is None:
             blueprint.strict_slashes = self.strict_slashes
         blueprint.register(self, options)
 
@@ -928,9 +911,7 @@ class Sanic(
 
         route = self.router.find_route_by_view_name(view_name, **kw)
         if not route:
-            raise URLBuildError(
-                f"Endpoint with name `{view_name}` was not found"
-            )
+            raise URLBuildError(f"Endpoint with name `{view_name}` was not found")
 
         uri = route.path
 
@@ -969,9 +950,7 @@ class Sanic(
         scheme = kwargs.pop("_scheme", "")
         if route.extra.hosts and external:
             if not host and len(route.extra.hosts) > 1:
-                raise ValueError(
-                    f"Host is ambiguous: {', '.join(route.extra.hosts)}"
-                )
+                raise ValueError(f"Host is ambiguous: {', '.join(route.extra.hosts)}")
             elif host and host not in route.extra.hosts:
                 raise ValueError(
                     f"Requested host ({host}) is not available for this "
@@ -1087,10 +1066,7 @@ class Sanic(
             context={"request": request, "exception": exception},
         )
 
-        if (
-            request.stream is not None
-            and request.stream.stage is not Stage.HANDLER
-        ):
+        if request.stream is not None and request.stream.stage is not Stage.HANDLER:
             error_logger.exception(exception, exc_info=True)
             logger.error(
                 "The error response will not be sent to the client for "
@@ -1137,10 +1113,7 @@ class Sanic(
                     response = self.error_handler.default(request, e)
                 elif self.debug:
                     response = HTTPResponse(
-                        (
-                            f"Error while handling error: {e}\n"
-                            f"Stack: {format_exc()}"
-                        ),
+                        (f"Error while handling error: {e}\n" f"Stack: {format_exc()}"),
                         status=500,
                     )
                 else:
@@ -1185,9 +1158,7 @@ class Sanic(
             )
             await response.eof()
         else:
-            raise ServerError(
-                f"Invalid response type {response!r} (need HTTPResponse)"
-            )
+            raise ServerError(f"Invalid response type {response!r} (need HTTPResponse)")
 
     async def handle_request(self, request: Request) -> None:  # no cov
         """Handles a request by dispatching it to the appropriate handler.
@@ -1334,17 +1305,14 @@ class Sanic(
             else:
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
-                        f"Invalid response type {response!r} "
-                        "(need HTTPResponse)"
+                        f"Invalid response type {response!r} " "(need HTTPResponse)"
                     )
 
         except CancelledError:  # type: ignore
             raise
         except Exception as e:
             # Response Generation Failed
-            await self.handle_exception(
-                request, e, run_middleware=run_middleware
-            )
+            await self.handle_exception(request, e, run_middleware=run_middleware)
 
     async def _websocket_handler(
         self, handler, request, *args, subprotocols=None, **kwargs
@@ -1423,9 +1391,7 @@ class Sanic(
     # Execution
     # -------------------------------------------------------------------- #
 
-    async def _run_request_middleware(
-        self, request, middleware_collection
-    ):  # no cov
+    async def _run_request_middleware(self, request, middleware_collection):  # no cov
         request._request_middleware_started = True
 
         for middleware in middleware_collection:
@@ -1502,9 +1468,7 @@ class Sanic(
             task.cancel()
 
     @staticmethod
-    async def _listener(
-        app: Sanic, loop: AbstractEventLoop, listener: ListenerType
-    ):
+    async def _listener(app: Sanic, loop: AbstractEventLoop, listener: ListenerType):
         try:
             maybe_coro = listener(app)  # type: ignore
         except TypeError:
@@ -1533,9 +1497,7 @@ class Sanic(
                 if isawaitable(task):
                     await task
             except CancelledError:
-                error_logger.warning(
-                    f"Task {task} was cancelled before it completed."
-                )
+                error_logger.warning(f"Task {task} was cancelled before it completed.")
                 raise
             except Exception as e:
                 await app.dispatch(
@@ -1644,18 +1606,14 @@ class Sanic(
         """  # noqa: E501
         try:
             loop = self.loop  # Will raise SanicError if loop is not started
-            return self._loop_add_task(
-                task, self, loop, name=name, register=register
-            )
+            return self._loop_add_task(task, self, loop, name=name, register=register)
         except SanicException:
             task_name = f"sanic.delayed_task.{hash(task)}"
             if not self._delayed_tasks:
                 self.after_server_start(partial(self.dispatch_delayed_tasks))
 
             if name:
-                raise RuntimeError(
-                    "Cannot name task outside of a running application"
-                )
+                raise RuntimeError("Cannot name task outside of a running application")
 
             self.signal(task_name)(partial(self.run_delayed_task, task=task))
             self._delayed_tasks.append(task_name)
@@ -1666,18 +1624,14 @@ class Sanic(
         ...
 
     @overload
-    def get_task(
-        self, name: str, *, raise_exception: Literal[False]
-    ) -> Task | None:
+    def get_task(self, name: str, *, raise_exception: Literal[False]) -> Task | None:
         ...
 
     @overload
     def get_task(self, name: str, *, raise_exception: bool) -> Task | None:
         ...
 
-    def get_task(
-        self, name: str, *, raise_exception: bool = True
-    ) -> Task | None:
+    def get_task(self, name: str, *, raise_exception: bool = True) -> Task | None:
         """Get a named task.
 
         This method is used to get a task by its name. Optionally, you can
@@ -1695,9 +1649,7 @@ class Sanic(
             return self._task_registry[name]
         except KeyError:
             if raise_exception:
-                raise SanicException(
-                    f'Registered task named "{name}" not found.'
-                )
+                raise SanicException(f'Registered task named "{name}" not found.')
             return None
 
     async def cancel_task(
@@ -1809,11 +1761,7 @@ class Sanic(
             Iterable[Task[Any]]: The tasks that are currently registered with
                 the application.
         """
-        return (
-            task
-            for task in iter(self._task_registry.values())
-            if task is not None
-        )
+        return (task for task in iter(self._task_registry.values()) if task is not None)
 
     # -------------------------------------------------------------------- #
     # ASGI
@@ -2055,9 +2003,7 @@ class Sanic(
             del cls._app_registry[name]
 
     @classmethod
-    def get_app(
-        cls, name: str | None = None, *, force_create: bool = False
-    ) -> Sanic:
+    def get_app(cls, name: str | None = None, *, force_create: bool = False) -> Sanic:
         """Retrieve an instantiated Sanic instance by name.
 
         This method is best used when needing to get access to an already
@@ -2264,9 +2210,7 @@ class Sanic(
         self.finalize()
 
         route_names = [route.extra.ident for route in self.router.routes]
-        duplicates = {
-            name for name in route_names if route_names.count(name) > 1
-        }
+        duplicates = {name for name in route_names if route_names.count(name) > 1}
         if duplicates:
             names = ", ".join(duplicates)
             message = (
@@ -2311,9 +2255,7 @@ class Sanic(
             "shutdown",
         ):
             raise SanicException(f"Invalid server event: {event}")
-        logger.debug(
-            f"Triggering server events: {event}", extra={"verbosity": 1}
-        )
+        logger.debug(f"Triggering server events: {event}", extra={"verbosity": 1})
         reverse = concern == "shutdown"
         if loop is None:
             loop = self.loop
@@ -2379,9 +2321,7 @@ class Sanic(
             Inspector: An instance of Inspector.
         """
         if environ.get("SANIC_WORKER_PROCESS") or not self._inspector:
-            raise SanicException(
-                "Can only access the inspector from the main process"
-            )
+            raise SanicException("Can only access the inspector from the main process")
         return self._inspector
 
     @property
@@ -2414,7 +2354,5 @@ class Sanic(
         """
 
         if environ.get("SANIC_WORKER_PROCESS") or not self._manager:
-            raise SanicException(
-                "Can only access the manager from the main process"
-            )
+            raise SanicException("Can only access the manager from the main process")
         return self._manager

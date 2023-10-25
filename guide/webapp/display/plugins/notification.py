@@ -19,12 +19,8 @@ class Notification(Admonition):
 
         if md.renderer.NAME == "html":
             md.renderer.register("admonition", self._render_admonition)
-            md.renderer.register(
-                "admonition_title", self._render_admonition_title
-            )
-            md.renderer.register(
-                "admonition_content", self._render_admonition_content
-            )
+            md.renderer.register("admonition_title", self._render_admonition_title)
+            md.renderer.register("admonition_content", self._render_admonition_content)
 
     def _render_admonition(self, _, text, name, **attrs) -> str:
         return str(

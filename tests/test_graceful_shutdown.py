@@ -20,6 +20,7 @@ def test_no_exceptions_when_cancel_pending_request(app, caplog: LogCaptureFixtur
         connect = asyncio.open_connection("127.0.0.1", 8000)
         _, writer = await connect
         writer.write(b"GET / HTTP/1.1\r\n\r\n")
+        await asyncio.sleep(0.5)  # Let it be received
         app.stop()
 
     with caplog.at_level(logging.INFO):

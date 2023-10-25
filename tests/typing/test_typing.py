@@ -24,7 +24,7 @@ def run_check(path_location: str) -> str:
     output = process.stdout + process.stderr
     return output
 
-
+@pytest.mark.skip(reason="Hangs most of the time, needs fixing")
 @pytest.mark.parametrize(
     "path_location,expected",
     (

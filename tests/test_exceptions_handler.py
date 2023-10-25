@@ -169,7 +169,7 @@ def test_exception_handler_lookup(exception_handler_app: Sanic):
         pass
 
     try:
-        ModuleNotFoundError
+        ModuleNotFoundError  # noqa: F823
     except Exception:
 
         class ModuleNotFoundError(ImportError):

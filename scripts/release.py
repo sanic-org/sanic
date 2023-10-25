@@ -81,7 +81,7 @@ def _run_shell_command(command: list):
         output, error = process.communicate()
         return_code = process.returncode
         return output.decode("utf-8"), error, return_code
-    except:
+    except Exception:
         return None, None, -1
 
 

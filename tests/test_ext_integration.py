@@ -6,7 +6,7 @@ from sanic import Sanic
 
 
 try:
-    import sanic_ext
+    import sanic_ext  # noqa: F401
 
     SANIC_EXT_IN_ENV = True
 except ImportError:

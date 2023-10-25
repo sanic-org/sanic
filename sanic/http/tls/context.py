@@ -17,8 +17,8 @@ CIPHERS_TLS12 = [
     "ECDHE-RSA-AES128-GCM-SHA256",
 ]
 
-TlsDef = None | ssl.SSLContext | dict[str, Any] | str
-TlsDefs = TlsDef | list[TlsDef] | tuple[TlsDef, ...]
+TlsDef = Union[ssl.SSLContext, dict[str, Any], str, None]
+TlsDefs = Union[TlsDef, list[TlsDef], tuple]
 
 
 def create_context(

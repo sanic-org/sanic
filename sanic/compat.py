@@ -133,7 +133,7 @@ if use_trio:  # pragma: no cover
         return trio.Path(path).stat()
 
     open_async = trio.open_file
-    CancelledErrors: tuple[type[BaseException], ...] = (
+    CancelledErrors: tuple = (
         asyncio.CancelledError,
         trio.Cancelled,
     )

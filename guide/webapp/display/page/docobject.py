@@ -15,6 +15,7 @@ from html5tagger import HTML, Builder, E  # type: ignore
 
 from ..markdown import render_markdown, slugify
 
+
 @dataclass
 class DocObject:
     name: str

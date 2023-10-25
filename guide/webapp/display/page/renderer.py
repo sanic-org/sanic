@@ -10,6 +10,7 @@ from webapp.display.base import BaseRenderer
 from ..layouts.base import BaseLayout
 from .page import Page
 
+
 class PageRenderer(BaseRenderer):
     def render(self, request: Request, language: str, path: str) -> Builder:
         builder = self.get_builder(

@@ -20,6 +20,7 @@ from .plugins.span import span
 from .plugins.tabs import Tabs
 from .text import slugify
 
+
 class DocsRenderer(HTMLRenderer):
     def block_code(self, code: str, info: str | None = None):
         builder = Builder("Block")

@@ -3,5 +3,3 @@ extend = "../pyproject.toml"
 
 [tool.ruff.isort]
 known-first-party = ["webapp"]
-lines-after-imports = 1
-lines-between-types = 1

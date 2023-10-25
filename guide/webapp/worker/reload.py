@@ -8,6 +8,7 @@ import ujson
 
 from sanic import Request, Sanic, Websocket
 
+
 def setup_livereload(app: Sanic) -> None:
     @app.main_process_start
     async def main_process_start(app: Sanic):

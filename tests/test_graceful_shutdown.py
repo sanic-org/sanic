@@ -10,7 +10,7 @@ from sanic.response import empty
 PORT = 42101
 
 
-@pytest.mark.skip_if(
+@pytest.mark.skipif(
     sys.platform == "linux" and sys.version_info >= (3, 11),
     reason="Fails on Python 3.11 Linux CI for an unknown reason",
 )

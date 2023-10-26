@@ -80,7 +80,7 @@ def test_keep_alive_timeout_reuse():
                 assert response.text == "OK"
                 assert request.protocol.state["requests_count"] == 1
 
-                loop.run_until_complete(aio_sleep(.5))
+                loop.run_until_complete(aio_sleep(0.5))
 
                 request, response = client.get("/1")
                 assert response.status == 200

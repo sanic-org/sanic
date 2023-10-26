@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 
 import pytest
 from pytest import LogCaptureFixture
@@ -9,7 +10,10 @@ from sanic.response import empty
 PORT = 42101
 
 
-@pytest.mark.skip(reason="Fails on Python 3.11 Linux CI for an unknown reason")
+@pytest.mark.skip_if(
+    sys.platform == "linux" and sys.version_info >= (3, 11),
+    reason="Fails on Python 3.11 Linux CI for an unknown reason",
+)
 def test_no_exceptions_when_cancel_pending_request(app, caplog: LogCaptureFixture):
     app.config.GRACEFUL_SHUTDOWN_TIMEOUT = 1
 

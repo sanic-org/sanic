@@ -3,7 +3,8 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
-extend-select = ["I", "W", "UP", "C4", "ISC", "S"]
+target-version = "py38"
+extend-select = ["I", "W", "UP", "C4", "ISC", "S", "RUF200"]
 # Worth selecting but still too broken: ASYNC, B, DTZ, FA, RUF
 ignore = [
 	"D100",

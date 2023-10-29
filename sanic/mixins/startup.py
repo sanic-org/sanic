@@ -372,7 +372,7 @@ class StartupMixin(metaclass=SanicMeta):
 
         if single_process and (fast or (workers > 1) or auto_reload):
             raise RuntimeError(
-                "Single process cannot be run with multiple workers " "or auto-reload"
+                "Single process cannot be run with multiple workers or auto-reload"
             )
 
         if register_sys_signals is False and not single_process:

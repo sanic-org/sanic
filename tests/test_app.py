@@ -392,9 +392,7 @@ def test_subclass_initialisation():
 def test_bad_custom_config():
     with pytest.raises(
         SanicException,
-        match=(
-            "When instantiating Sanic with config, you cannot also pass " "env_prefix"
-        ),
+        match=("When instantiating Sanic with config, you cannot also pass env_prefix"),
     ):
         Sanic("test", config=1, env_prefix=1)
 

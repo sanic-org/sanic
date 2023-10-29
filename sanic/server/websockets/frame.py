@@ -152,7 +152,7 @@ class WebsocketFrameAssembler:
                 # and get_in_progress check, this exception is here
                 # as a failsafe
                 raise ServerError(
-                    "Websocket get() found a message when " "state was already fetched."
+                    "Websocket get() found a message when state was already fetched."
                 )
             self.message_fetched.set()
             self.chunks = []

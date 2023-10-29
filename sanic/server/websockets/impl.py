@@ -708,7 +708,7 @@ class WebsocketImplProtocol:
         async with self.conn_mutex:
             if self.ws_proto.state in (CLOSED, CLOSING):
                 raise WebsocketClosed(
-                    "Cannot send a ping when the websocket interface " "is closed."
+                    "Cannot send a ping when the websocket interface is closed."
                 )
             if (not self.io_proto) or (not self.io_proto.loop):
                 raise ServerError(

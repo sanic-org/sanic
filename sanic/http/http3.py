@@ -111,7 +111,7 @@ class HTTPReceiver(Receiver, Stream):
 
         if exception:
             logger.info(  # no cov
-                f"{Colors.BLUE}[exception]: " f"{Colors.RED}{exception}{Colors.END}",
+                f"{Colors.BLUE}[exception]: {Colors.RED}{exception}{Colors.END}",
                 exc_info=True,
                 extra={"verbosity": 1},
             )

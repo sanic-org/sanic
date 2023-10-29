@@ -676,7 +676,7 @@ def send_response_after_eof_should_fail(
     )
 
     error_msg2 = (
-        "Response stream was ended, no more " "response data is allowed to be sent."
+        "Response stream was ended, no more response data is allowed to be sent."
     )
 
     with caplog.at_level(ERROR):

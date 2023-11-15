@@ -48,7 +48,7 @@ def bind_unix_socket(path: Path, *, mode=0o666, backlog=100) -> socket.socket:
     if not folder.is_dir():
         raise FileNotFoundError(f"Socket folder does not exist: {folder}")
     try:
-        if not stat.S_ISSOCK(path.stat(follow_symlinks=False).st_mode):
+        if not stat.S_ISSOCK(path.lstat().st_mode):
             raise FileExistsError(f"Existing file is not a socket: {path}")
     except FileNotFoundError:
         pass
@@ -81,7 +81,7 @@ def remove_unix_socket(path: Optional[Path]) -> None:
     if not path:
         return
     try:
-        if stat.S_ISSOCK(path.stat(follow_symlinks=False).st_mode):
+        if stat.S_ISSOCK(path.lstat().st_mode):
             # Is it actually dead (doesn't belong to a new server instance)?
             with socket.socket(socket.AF_UNIX) as testsock:
                 try:

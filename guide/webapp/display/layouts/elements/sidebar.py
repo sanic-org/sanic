@@ -4,6 +4,7 @@ from sanic import Request
 from webapp.display.layouts.models import MenuItem
 from webapp.display.text import slugify
 
+
 def do_sidebar(builder: Builder, request: Request) -> None:
     builder.a(class_="burger")(E.span().span().span().span())
     builder.aside(*_menu_items(request), class_="menu")

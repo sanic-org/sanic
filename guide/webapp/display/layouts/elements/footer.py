@@ -3,6 +3,7 @@ from datetime import datetime
 from html5tagger import Builder, E  # type: ignore
 from sanic import Request
 
+
 def do_footer(builder: Builder, request: Request) -> None:
     builder.footer(
         _pagination(request),

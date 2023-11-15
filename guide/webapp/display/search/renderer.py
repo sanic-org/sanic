@@ -9,6 +9,7 @@ from webapp.display.search.search import Searcher
 from ..base import BaseRenderer
 from ..layouts.main import MainLayout
 
+
 class SearchRenderer(BaseRenderer):
     def render(
         self, request: Request, language: str, searcher: Searcher, full: bool

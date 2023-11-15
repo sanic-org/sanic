@@ -6,6 +6,7 @@ from sass import compile as compile_scss
 
 from webapp.display.code_style import SanicCodeStyle
 
+
 def setup_style(app: Sanic) -> None:
     index = app.config.STYLE_DIR / "index.scss"
     style_output = app.config.PUBLIC_DIR / "assets" / "style.css"

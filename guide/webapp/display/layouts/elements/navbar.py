@@ -3,6 +3,7 @@ from sanic import Request
 
 from webapp.display.layouts.models import MenuItem
 
+
 def do_navbar(builder: Builder, request: Request) -> None:
     navbar_items = [
         _render_navbar_item(item, request)

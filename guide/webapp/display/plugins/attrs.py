@@ -7,6 +7,7 @@ from mistune.block_parser import BlockParser
 from mistune.core import BlockState
 from mistune.directives import DirectivePlugin
 
+
 class Attributes(DirectivePlugin):
     def __call__(self, directive, md):
         directive.register("attrs", self.parse)

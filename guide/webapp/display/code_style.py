@@ -7,6 +7,7 @@ from pygments.token import (  # Error,; Generic,; Number,; Operator,
     Token,
 )
 
+
 class SanicCodeStyle(Style):
     styles = {
         Token: "#777",

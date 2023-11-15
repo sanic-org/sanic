@@ -9,6 +9,7 @@ from webapp.display.layouts.elements.sidebar import do_sidebar
 
 from .base import BaseLayout
 
+
 class MainLayout(BaseLayout):
     @contextmanager
     def layout(

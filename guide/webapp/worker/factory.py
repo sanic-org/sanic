@@ -9,6 +9,7 @@ from webapp.worker.config import load_config, load_menu
 from webapp.worker.reload import setup_livereload
 from webapp.worker.style import setup_style
 
+
 def _compile_sidebar_order(items: list[MenuItem]) -> list[str]:
     order = []
     for item in items:

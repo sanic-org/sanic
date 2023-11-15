@@ -6,6 +6,7 @@ from typing import Generator
 from html5tagger import Builder
 from sanic import Request
 
+
 class BaseLayout:
     def __init__(self, builder: Builder):
         self.builder = builder

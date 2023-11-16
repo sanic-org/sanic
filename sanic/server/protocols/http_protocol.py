@@ -21,7 +21,13 @@ from sanic.exceptions import (
     ServiceUnavailable,
 )
 from sanic.http import Http, Stage
-from sanic.log import Colors, error_logger, logger
+from sanic.log import (
+    Colors,
+    access_logger,
+    error_logger,
+    logger,
+    websockets_logger,
+)
 from sanic.models.server_types import ConnInfo
 from sanic.request import Request
 from sanic.server.protocols.base_protocol import SanicProtocol
@@ -157,16 +163,12 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
             error_logger.exception("protocol.connection_task uncaught")
         finally:
             if (
-                self.app.debug
+                self.access_log
                 and self._http
                 and self.transport
                 and not self._http.upgrade_websocket
             ):
-                ip = self.transport.get_extra_info("peername")
-                error_logger.error(
-                    "Connection lost before response written"
-                    f" @ {ip} {self._http.request}"
-                )
+                self.log_disconnect()
             self._http = None
             self._task = None
             try:
@@ -181,6 +183,23 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
                 )
                 # Important to keep this Ellipsis here for the TouchUp module
                 ...
+
+    def log_disconnect(self):
+        ip = self.transport.get_extra_info("peername")
+
+        req = self._http.request
+        res = self._http.response
+        extra = {
+            "status": res.status if res else str(self._http.stage),
+            "byte": "DISCONNECTED",
+            "host": "UNKNOWN",
+            "request": "nil",
+        }
+        if req is not None:
+            if ip := req.client_ip:
+                extra["host"] = f"{ip}:{req.port}"
+            extra["request"] = f"{req.method} {req.url}"
+        access_logger.info("", extra=extra)
 
     def check_timeouts(self):
         """
@@ -197,7 +216,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
                 logger.debug("Request Timeout. Closing connection.")
                 self._http.exception = RequestTimeout("Request Timeout")
             elif stage is Stage.HANDLER and self._http.upgrade_websocket:
-                logger.debug("Handling websocket. Timeouts disabled.")
+                websockets_logger.debug("Handling websocket. Timeouts disabled.")
                 return
             elif (
                 stage in (Stage.HANDLER, Stage.RESPONSE, Stage.FAILED)
@@ -306,9 +325,7 @@ class Http3Protocol(HttpProtocolMixin, ConnectionProtocol):  # type: ignore
         if isinstance(event, ProtocolNegotiated):
             self._setup_connection(transmit=self.transmit)
             if event.alpn_protocol in H3_ALPN:
-                self._connection = H3Connection(
-                    self._quic, enable_webtransport=True
-                )
+                self._connection = H3Connection(self._quic, enable_webtransport=True)
         elif isinstance(event, DatagramFrameReceived):
             if event.data == b"quack":
                 self._quic.send_datagram_frame(b"quack-ack")

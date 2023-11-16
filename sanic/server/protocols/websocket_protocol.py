@@ -11,7 +11,7 @@ except ImportError:  # websockets >= 11.0
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import SanicException
-from sanic.log import websockets_logger
+from sanic.log import access_logger, websockets_logger
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol
@@ -33,6 +33,7 @@ class WebSocketProtocol(HttpProtocol):
         "websocket_max_size",
         "websocket_ping_interval",
         "websocket_ping_timeout",
+        "websocket_url",
     )
 
     def __init__(
@@ -50,11 +51,14 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
+        self.websocket_url = None
 
     def connection_lost(self, exc):
         if self.websocket is not None:
             self.websocket.connection_lost(exc)
         super().connection_lost(exc)
+        self.log_websocket("CLOSE")
+        self.websocket_url = None
 
     def data_received(self, data):
         if self.websocket is not None:
@@ -152,4 +156,53 @@ class WebSocketProtocol(HttpProtocol):
             else None
         )
         await self.websocket.connection_made(self, loop=loop)
+        self.websocket_url = self._http.request.url
+        self.log_websocket("OPEN")
         return self.websocket
+
+    def log_websocket(self, message):
+        if not self.access_log:
+            return
+        req = self._http.request if self._http else None
+        status = ""
+        close = ""
+        try:
+            # Can we get some useful statistics?
+            ws_proto = self.websocket.ws_proto
+            state = ws_proto.state
+            if state == CLOSED:
+                close_codes = {1000: "NORMAL", 1001: "GOING AWAY"}
+                if ws_proto.close_code == 1006:
+                    message = "CLOSE_ABNORMAL"
+                scode = (
+                    ws_proto.close_sent.code if ws_proto.close_sent else None
+                )
+                rcode = (
+                    ws_proto.close_rcvd.code if ws_proto.close_rcvd else None
+                )
+                sdesc = close_codes.get(scode, str(scode))
+                rdesc = close_codes.get(rcode, str(rcode))
+                if ws_proto.close_rcvd_then_sent:
+                    status = rcode
+                    close = f"{rdesc} sent -> {rdesc} revd"
+                elif scode and rcode:
+                    status = scode
+                    close = f"{rdesc} rcvd -> {sdesc} sent"
+                elif rcode:
+                    status = rcode
+                    close = f"{rdesc} rcvd"
+                else:
+                    status = scode
+                    close = f"{sdesc} sent"
+
+        except AttributeError:
+            ...
+        extra = {
+            "status": status,
+            "byte": close,
+            "host": "UNKNOWN",
+            "request": f"🔌 {self.websocket_url}",
+        }
+        if self._http and (ip := req.client_ip):
+            extra["host"] = f"{ip}:{req.port}"
+        access_logger.info(message, extra=extra)

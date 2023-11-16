@@ -216,7 +216,9 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
                 logger.debug("Request Timeout. Closing connection.")
                 self._http.exception = RequestTimeout("Request Timeout")
             elif stage is Stage.HANDLER and self._http.upgrade_websocket:
-                websockets_logger.debug("Handling websocket. Timeouts disabled.")
+                websockets_logger.debug(
+                    "Handling websocket. Timeouts disabled."
+                )
                 return
             elif (
                 stage in (Stage.HANDLER, Stage.RESPONSE, Stage.FAILED)
@@ -325,7 +327,9 @@ class Http3Protocol(HttpProtocolMixin, ConnectionProtocol):  # type: ignore
         if isinstance(event, ProtocolNegotiated):
             self._setup_connection(transmit=self.transmit)
             if event.alpn_protocol in H3_ALPN:
-                self._connection = H3Connection(self._quic, enable_webtransport=True)
+                self._connection = H3Connection(
+                    self._quic, enable_webtransport=True
+                )
         elif isinstance(event, DatagramFrameReceived):
             if event.data == b"quack":
                 self._quic.send_datagram_frame(b"quack-ack")

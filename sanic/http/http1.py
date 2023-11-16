@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from sanic.response import BaseHTTPResponse
 
 from asyncio import CancelledError, sleep
+from time import perf_counter
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -70,6 +71,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         "response_size",
         "response_bytes_left",
         "upgrade_websocket",
+        "perft0",
     ]
 
     def __init__(self, protocol):
@@ -94,6 +96,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         self.response: BaseHTTPResponse = None
         self.upgrade_websocket = False
         self.url = None
+        self.perft0 = None
 
     def __bool__(self):
         """Test if request handling is in progress"""
@@ -115,6 +118,7 @@ class Http(Stream, metaclass=TouchUpMeta):
                 await self.http1_request_header()
 
                 self.stage = Stage.HANDLER
+                self.perft0 = perf_counter()
                 self.request.conn_info = self.protocol.conn_info
                 await self.protocol.request_handler(self.request)
 
@@ -462,6 +466,11 @@ class Http(Stream, metaclass=TouchUpMeta):
             "byte": res.headers.get("content-length", "chunked"),
             "host": "UNKNOWN",
             "request": "nil",
+            "duration": (
+                f" {1000 * (perf_counter() - self.perft0):.1f}ms"
+                if self.perft0 is not None
+                else ""
+            ),
         }
         if ip := req.client_ip:
             extra["host"] = f"{ip}:{req.port}"

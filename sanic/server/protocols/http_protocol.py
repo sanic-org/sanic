@@ -194,6 +194,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
             "byte": "DISCONNECTED",
             "host": "UNKNOWN",
             "request": "nil",
+            "duration": "",
         }
         if req is not None:
             if ip := req.client_ip:

@@ -19,6 +19,18 @@ else:
         from enum import StrEnum
 
 
+class Colors(StrEnum):  # no cov
+    END = "\033[0m"
+    BOLD = "\033[1m"
+    BLUE = "\033[34m"
+    GREEN = "\033[32m"
+    PURPLE = "\033[35m"
+    RED = "\033[31m"
+    SANIC = "\033[38;2;255;13;104m"
+    YELLOW = "\033[01;33m"
+    GREY = "\033[1;30m"
+
+
 LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     version=1,
     disable_existing_loggers=False,
@@ -67,8 +79,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
             "class": "logging.Formatter",
         },
         "access": {
-            "format": "(%(name)s)[%(host)s]: "
-            + "%(request)s %(message)s %(status)s %(byte)s",
+            "format": f"{Colors.GREY}%(host)s {Colors.BLUE}%(request)s{Colors.END} %(message)s\033[1000C\033[39D\033[K %(status)s %(byte)s{Colors.GREY}%(duration)s{Colors.END}",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },
@@ -77,17 +88,6 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
 """
 Defult logging configuration
 """
-
-
-class Colors(StrEnum):  # no cov
-    END = "\033[0m"
-    BOLD = "\033[1m"
-    BLUE = "\033[34m"
-    GREEN = "\033[32m"
-    PURPLE = "\033[35m"
-    RED = "\033[31m"
-    SANIC = "\033[38;2;255;13;104m"
-    YELLOW = "\033[01;33m"
 
 
 class VerbosityFilter(logging.Filter):

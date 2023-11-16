@@ -207,6 +207,7 @@ class WebSocketProtocol(HttpProtocol):
             "status": status,
             "byte": close,
             "host": self.websocket_peer,
-            "request": f"🔌 {self.websocket_url}",
+            "request": f" 🔌 {self.websocket_url}",
+            "duration": "",
         }
         access_logger.info(message, extra=extra)

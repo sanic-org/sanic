@@ -122,7 +122,14 @@ server_logger = logging.getLogger("sanic.server")  # no cov
 """
 Logger used by Sanic for server related messages
 """
-logger.addFilter(_verbosity_filter)
+server_logger.addFilter(_verbosity_filter)
+
+websockets_logger = logging.getLogger("sanic.websockets")  # no cov
+"""
+Logger used by Sanic for websockets module and protocol related messages
+"""
+websockets_logger.addFilter(_verbosity_filter)
+websockets_logger.setLevel(logging.WARNING)  # Too noisy on debug/info
 
 
 def deprecation(message: str, version: float):  # no cov

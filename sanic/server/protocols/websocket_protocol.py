@@ -11,7 +11,7 @@ except ImportError:  # websockets >= 11.0
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import SanicException
-from sanic.log import logger
+from sanic.log import websockets_logger
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol
@@ -115,7 +115,7 @@ class WebSocketProtocol(HttpProtocol):
                 max_size=self.websocket_max_size,
                 subprotocols=subprotocols,
                 state=OPEN,
-                logger=logger,
+                logger=websockets_logger,
             )
             resp: "http11.Response" = ws_proto.accept(request)
         except Exception:

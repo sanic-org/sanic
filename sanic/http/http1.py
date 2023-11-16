@@ -459,16 +459,13 @@ class Http(Stream, metaclass=TouchUpMeta):
         req, res = self.request, self.response
         extra = {
             "status": getattr(res, "status", 0),
-            "byte": getattr(
-                self, "response_bytes_left", getattr(self, "response_size", -1)
-            ),
+            "byte": res.headers.get("content-length", "chunked"),
             "host": "UNKNOWN",
             "request": "nil",
         }
-        if req is not None:
-            if req.remote_addr or req.ip:
-                extra["host"] = f"{req.remote_addr or req.ip}:{req.port}"
-            extra["request"] = f"{req.method} {req.url}"
+        if ip := req.client_ip:
+            extra["host"] = f"{ip}:{req.port}"
+        extra["request"] = f"{req.method} {req.url}"
         access_logger.info("", extra=extra)
 
     # Request methods

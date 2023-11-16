@@ -184,10 +184,10 @@ class WebSocketProtocol(HttpProtocol):
                 rdesc = close_codes.get(rcode, str(rcode))
                 if ws_proto.close_rcvd_then_sent:
                     status = rcode
-                    close = f"{rdesc} sent -> {rdesc} revd"
+                    close = f"{rdesc} rcvd -> {sdesc} sent"
                 elif scode and rcode:
                     status = scode
-                    close = f"{rdesc} rcvd -> {sdesc} sent"
+                    close = f"{sdesc} sent -> {rdesc} revd"
                 elif rcode:
                     status = rcode
                     close = f"{rdesc} rcvd"

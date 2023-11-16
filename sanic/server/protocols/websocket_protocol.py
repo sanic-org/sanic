@@ -34,6 +34,7 @@ class WebSocketProtocol(HttpProtocol):
         "websocket_ping_interval",
         "websocket_ping_timeout",
         "websocket_url",
+        "websocket_peer",
     )
 
     def __init__(
@@ -52,6 +53,7 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
         self.websocket_url = None
+        self.websocket_peer = None
 
     def connection_lost(self, exc):
         if self.websocket is not None:
@@ -59,6 +61,7 @@ class WebSocketProtocol(HttpProtocol):
         super().connection_lost(exc)
         self.log_websocket("CLOSE")
         self.websocket_url = None
+        self.websocket_peer = None
 
     def data_received(self, data):
         if self.websocket is not None:
@@ -157,6 +160,9 @@ class WebSocketProtocol(HttpProtocol):
         )
         await self.websocket.connection_made(self, loop=loop)
         self.websocket_url = self._http.request.url
+        self.websocket_peer = "UNKNOWN"
+        if ip := self._http.request.client_ip:
+            self.websocket_peer = f"{ip}:{self._http.request.port}"
         self.log_websocket("OPEN")
         return self.websocket
 
@@ -200,9 +206,7 @@ class WebSocketProtocol(HttpProtocol):
         extra = {
             "status": status,
             "byte": close,
-            "host": "UNKNOWN",
+            "host": self.websocket_peer,
             "request": f"🔌 {self.websocket_url}",
         }
-        if self._http and (ip := req.client_ip):
-            extra["host"] = f"{ip}:{req.port}"
         access_logger.info(message, extra=extra)

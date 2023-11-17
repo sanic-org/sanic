@@ -464,7 +464,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         extra = {
             "status": getattr(res, "status", 0),
             "byte": res.headers.get("content-length", "chunked"),
-            "host": "UNKNOWN",
+            "host": "conn" + f"{id(self.protocol.transport):X}"[-5:-1],
             "request": "nil",
             "duration": (
                 f" {1000 * (perf_counter() - self.perft0):.1f}ms"

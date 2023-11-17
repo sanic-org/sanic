@@ -192,7 +192,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
         extra = {
             "status": res.status if res else str(self._http.stage),
             "byte": "DISCONNECTED",
-            "host": "UNKNOWN",
+            "host": "conn" + f"{id(self):X}"[-5:-1],
             "request": "nil",
             "duration": "",
         }

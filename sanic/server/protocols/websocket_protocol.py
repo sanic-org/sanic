@@ -180,30 +180,40 @@ class WebSocketProtocol(HttpProtocol):
                 close_codes = {
                     1000: "NORMAL",
                     1001: "GOING AWAY",
-                    1011: "SERVER ERROR",
+                    1005: "NO STATUS",
+                    1006: "ABNORMAL",
+                    1011: "SERVER ERR",
                 }
                 if ws_proto.close_code == 1006:
-                    message = "CLOSE_ABNORMAL"
-                scode = (
-                    ws_proto.close_sent.code if ws_proto.close_sent else None
-                )
-                rcode = (
-                    ws_proto.close_rcvd.code if ws_proto.close_rcvd else None
-                )
-                sdesc = close_codes.get(scode, str(scode))
-                rdesc = close_codes.get(rcode, str(rcode))
+                    message = "CLOSE_ABN"
+                scode = rcode = ws_proto.close_code
+                sdesc = rdesc = ""
+                if ws_proto.close_sent:
+                    scode = ws_proto.close_sent.code
+                    sdesc = ws_proto.close_sent.reason
+                if ws_proto.close_rcvd:
+                    rcode = ws_proto.close_rcvd.code
+                    rdesc = ws_proto.close_rcvd.reason
+                sdesc = sdesc or close_codes.get(scode, "")
+                rdesc = rdesc or close_codes.get(rcode, "")
                 if ws_proto.close_rcvd_then_sent:
                     status = rcode
-                    close = f"{rdesc} rcvd -> {sdesc} sent"
+                    if scode == rcode or scode == 1006:
+                        close = f"{rdesc} from client"
+                    else:
+                        close = f"{rdesc} ▼▲ {scode} {sdesc}"
                 elif scode and rcode:
                     status = scode
-                    close = f"{sdesc} sent -> {rdesc} revd"
+                    if scode == rcode or rcode == 1006:
+                        close = f"{sdesc} from server"
+                    else:
+                        close = f"{sdesc} ▲▼ {rcode} {rdesc}"
                 elif rcode:
                     status = rcode
-                    close = f"{rdesc} rcvd"
+                    close = f"{rdesc} rcvd, no reply"
                 else:
                     status = scode
-                    close = f"{sdesc} sent"
+                    close = f"{sdesc} sent, no reply"
 
         except AttributeError:
             ...

@@ -52,8 +52,8 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
-        self.websocket_url = None
-        self.websocket_peer = None
+        self.websocket_url: str | None = None
+        self.websocket_peer: str | None = None
 
     def connection_lost(self, exc):
         if self.websocket is not None:

@@ -1,4 +1,5 @@
 import logging
+import re
 import sys
 
 from enum import Enum
@@ -7,6 +8,8 @@ from warnings import warn
 
 from sanic.helpers import is_atty
 
+
+controlre = re.compile(r"\033\[[0-9;]*\w")
 
 # Python 3.11 changed the way Enum formatting works for mixed-in types.
 if sys.version_info < (3, 11, 0):
@@ -74,7 +77,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     },
     formatters={
         "generic": {
-            "format": f"{Colors.GREY}[%(process)s]{Colors.END}{Colors.BOLD}%(levelname)s:{Colors.END}\033[1000D\033[15C %(message)s",
+            "format": f"{Colors.BOLD}%(levelname)s:{Colors.END}\033[1000D\033[15C %(message)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },
@@ -88,6 +91,13 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
 """
 Defult logging configuration
 """
+
+# Strip control codes if not on terminal
+for handler in LOGGING_CONFIG_DEFAULTS["handlers"].values():
+    stream = handler["stream"]
+    formatter = LOGGING_CONFIG_DEFAULTS["formatters"][handler["formatter"]]
+    if not stream.isatty():
+        formatter["format"] = controlre.sub("", formatter["format"])
 
 
 class VerbosityFilter(logging.Filter):

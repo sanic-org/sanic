@@ -994,7 +994,7 @@ class Sanic(
 
         netloc = kwargs.pop("_server", None)
         if netloc is None and external:
-            netloc = host or self.config.SERVER_NAME or ""
+            netloc = host or self.config.get("SERVER_NAME", "")
 
         if external:
             if not scheme:

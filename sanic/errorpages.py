@@ -147,7 +147,7 @@ class HTMLRenderer(BaseRenderer):
             request=self.request,
             exc=self.exception,
         )
-        return html(page.render())
+        return html(page.render(), self.status)
 
     def minimal(self) -> HTTPResponse:
         return self.full()
@@ -166,7 +166,8 @@ class TextRenderer(BaseRenderer):
                 text=self.text,
                 bar=("=" * len(self.title)),
                 body=self._generate_body(full=True),
-            )
+            ),
+            self.status,
         )
 
     def minimal(self) -> HTTPResponse:
@@ -176,7 +177,8 @@ class TextRenderer(BaseRenderer):
                 text=self.text,
                 bar=("=" * len(self.title)),
                 body=self._generate_body(full=False),
-            )
+            ),
+            self.status,
         )
 
     @property
@@ -233,11 +235,11 @@ class JSONRenderer(BaseRenderer):
 
     def full(self) -> HTTPResponse:
         output = self._generate_output(full=True)
-        return json(output, dumps=self.dumps)
+        return json(output, self.status, dumps=self.dumps)
 
     def minimal(self) -> HTTPResponse:
         output = self._generate_output(full=False)
-        return json(output, dumps=self.dumps)
+        return json(output, self.status, dumps=self.dumps)
 
     def _generate_output(self, *, full):
         output = {

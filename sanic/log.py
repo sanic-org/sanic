@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import sys
 
@@ -77,7 +78,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     },
     formatters={
         "generic": {
-            "format": f"{Colors.BOLD}%(levelname)s:{Colors.END}\033[1000D\033[15C %(message)s",
+            "format": f"{Colors.GREY}[%(process)s]{Colors.END}{Colors.BOLD}%(levelname)s:{Colors.END}\033[1000D\033[15C %(message)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },
@@ -92,10 +93,15 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
 Defult logging configuration
 """
 
-# Strip control codes if not on terminal
 for handler in LOGGING_CONFIG_DEFAULTS["handlers"].values():
     stream = handler["stream"]
     formatter = LOGGING_CONFIG_DEFAULTS["formatters"][handler["formatter"]]
+    # Replace %(process)s PID with a prettified name
+    process = (
+        os.environ.get("SANIC_WORKER_NAME", "").replace("Sanic", "") or "Sanic"
+    )
+    formatter["format"] = formatter["format"].replace("%(process)s", process)
+    # Strip control codes if not on terminal
     if not stream.isatty():
         formatter["format"] = controlre.sub("", formatter["format"])
 

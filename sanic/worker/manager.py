@@ -115,7 +115,7 @@ class WorkerManager:
         """
         server_number = next(self._server_count)
         return self.manage(
-            f"{WorkerProcess.SERVER_LABEL}-{server_number}",
+            f"{WorkerProcess.SERVER_LABEL}{server_number+1:02}",
             self._serve,
             self._server_settings,
             transient=True,

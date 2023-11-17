@@ -20,7 +20,7 @@ class WorkerProcess:
     """A worker process."""
 
     THRESHOLD = 300  # == 30 seconds
-    SERVER_LABEL = "Server"
+    SERVER_LABEL = "Wrk"
 
     def __init__(self, factory, name, target, kwargs, worker_state):
         self.state = ProcessState.IDLE
@@ -185,7 +185,7 @@ class WorkerProcess:
 
 
 class Worker:
-    WORKER_PREFIX = "Sanic-"
+    WORKER_PREFIX = "Sanic"
 
     def __init__(
         self,
@@ -213,7 +213,7 @@ class Worker:
             # implementations do. We can safely ignore as it is a typing
             # issue in the standard lib.
             factory=self.context.Process,  # type: ignore
-            name=f"{self.WORKER_PREFIX}{self.ident}-{len(self.processes)}",
+            name=f"{self.WORKER_PREFIX}{self.ident}",
             target=self.serve,
             kwargs={**self.server_settings},
             worker_state=self.worker_state,

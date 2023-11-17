@@ -74,7 +74,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     },
     formatters={
         "generic": {
-            "format": "[%(process)s] [%(levelname)s] %(message)s",
+            "format": f"{Colors.GREY}[%(process)s]{Colors.END}{Colors.BOLD}%(levelname)s:{Colors.END}\033[1000D\033[15C %(message)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },

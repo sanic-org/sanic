@@ -391,8 +391,10 @@ def guess_mime(req: Request, fallback: str) -> str:
         format = CONFIG_BY_MIME[m.mime]
         source = formats[format]
         logger.debug(
-            f"The client accepts {m.header}, using '{format}' from {source}"
+            f"Error Page: The client accepts {m.header}, using '{format}' from {source}"
         )
     else:
-        logger.debug(f"No format found, the client accepts {req.accept!r}")
+        logger.debug(
+            f"Error Page: No format found, the client accepts {req.accept!r}"
+        )
     return m.mime

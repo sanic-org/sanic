@@ -964,20 +964,22 @@ class Request(Generic[sanic_type, ctx_type]):
             str: http|https|ws|wss or arbitrary value given by the headers.
         """
         if not hasattr(self, "_scheme"):
-            if "//" in self.app.config.get("SERVER_NAME", ""):
-                return self.app.config.SERVER_NAME.split("//")[0]
-            if "proto" in self.forwarded:
-                return str(self.forwarded["proto"])
-
             if (
                 self.app.websocket_enabled
-                and self.headers.getone("upgrade", "").lower() == "websocket"
+                and self.headers.upgrade.lower() == "websocket"
             ):
                 scheme = "ws"
             else:
                 scheme = "http"
-
-            if self.transport.get_extra_info("sslcontext"):
+            proto = None
+            if "//" in self.app.config.get("SERVER_NAME", ""):
+                proto = self.app.config.SERVER_NAME.split("//")[0]
+            if "proto" in self.forwarded:
+                proto = str(self.forwarded["proto"])
+            if proto:
+                # Give ws/wss if websocket, otherwise keep the same
+                scheme = proto.replace("http", scheme)
+            elif self.conn_info.ssl:
                 scheme += "s"
             self._scheme = scheme
 

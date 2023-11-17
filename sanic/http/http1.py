@@ -463,7 +463,9 @@ class Http(Stream, metaclass=TouchUpMeta):
         req, res = self.request, self.response
         extra = {
             "status": getattr(res, "status", 0),
-            "byte": res.headers.get("content-length", "chunked"),
+            "byte": res.headers.get("content-length", 0)
+            if res.headers.get("transfer-encoding") != "chunked"
+            else "chunked",
             "host": f"{id(self.protocol.transport):X}"[-5:-1] + "unx",
             "request": "nil",
             "duration": (

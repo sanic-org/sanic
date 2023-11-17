@@ -111,12 +111,7 @@ class WebSocketProtocol(HttpProtocol):
                 # but ServerProtocol needs a list
                 subprotocols = cast(
                     Optional[Sequence[Subprotocol]],
-                    list(
-                        [
-                            Subprotocol(subprotocol)
-                            for subprotocol in subprotocols
-                        ]
-                    ),
+                    list([Subprotocol(subprotocol) for subprotocol in subprotocols]),
                 )
             ws_proto = ServerProtocol(
                 max_size=self.websocket_max_size,
@@ -154,8 +149,7 @@ class WebSocketProtocol(HttpProtocol):
         )
         loop = (
             request.transport.loop
-            if hasattr(request, "transport")
-            and hasattr(request.transport, "loop")
+            if hasattr(request, "transport") and hasattr(request.transport, "loop")
             else None
         )
         await self.websocket.connection_made(self, loop=loop)
@@ -177,15 +171,11 @@ class WebSocketProtocol(HttpProtocol):
             ws_proto = self.websocket.ws_proto
             state = ws_proto.state
             if state == CLOSED:
-                close_codes = {1000: "NORMAL", 1001: "GOING AWAY"}
+                close_codes = {1000: "NORMAL", 1001: "GOING AWAY", 1011: "SERVER ERROR"}
                 if ws_proto.close_code == 1006:
                     message = "CLOSE_ABNORMAL"
-                scode = (
-                    ws_proto.close_sent.code if ws_proto.close_sent else None
-                )
-                rcode = (
-                    ws_proto.close_rcvd.code if ws_proto.close_rcvd else None
-                )
+                scode = ws_proto.close_sent.code if ws_proto.close_sent else None
+                rcode = ws_proto.close_rcvd.code if ws_proto.close_rcvd else None
                 sdesc = close_codes.get(scode, str(scode))
                 rdesc = close_codes.get(rcode, str(rcode))
                 if ws_proto.close_rcvd_then_sent:

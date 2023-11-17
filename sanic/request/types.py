@@ -973,7 +973,7 @@ class Request(Generic[sanic_type, ctx_type]):
                 scheme = "http"
             proto = None
             if "//" in self.app.config.get("SERVER_NAME", ""):
-                proto = self.app.config.SERVER_NAME.split("//")[0]
+                proto = self.app.config.SERVER_NAME.split("://")[0]
             elif "proto" in self.forwarded:
                 proto = str(self.forwarded["proto"])
             if proto:

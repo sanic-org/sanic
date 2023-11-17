@@ -174,40 +174,43 @@ class WebSocketProtocol(HttpProtocol):
         close = ""
         try:
             # Can we get some useful statistics?
-            ws_proto = self.websocket.ws_proto
-            state = ws_proto.state
+            p = self.websocket.ws_proto
+            state = p.state
             if state == CLOSED:
-                close_codes = {
+                codes = {
                     1000: "NORMAL",
                     1001: "GOING AWAY",
                     1005: "NO STATUS",
                     1006: "ABNORMAL",
                     1011: "SERVER ERR",
                 }
-                if ws_proto.close_code == 1006:
+                if p.close_code == 1006:
                     message = "CLOSE_ABN"
-                scode = rcode = ws_proto.close_code
+                scode = rcode = 1006  # Abnormal closure (disconnection)
                 sdesc = rdesc = ""
-                if ws_proto.close_sent:
-                    scode = ws_proto.close_sent.code
-                    sdesc = ws_proto.close_sent.reason
-                if ws_proto.close_rcvd:
-                    rcode = ws_proto.close_rcvd.code
-                    rdesc = ws_proto.close_rcvd.reason
-                sdesc = sdesc or close_codes.get(scode, "")
-                rdesc = rdesc or close_codes.get(rcode, "")
-                if ws_proto.close_rcvd_then_sent:
+                if p.close_sent:
+                    scode = p.close_sent.code
+                    sdesc = p.close_sent.reason
+                if p.close_rcvd:
+                    rcode = p.close_rcvd.code
+                    rdesc = p.close_rcvd.reason
+                # Use repr() to escape any control characters
+                sdesc = repr(sdesc[:256]) if sdesc else codes.get(scode, "")
+                rdesc = repr(rdesc[:256]) if rdesc else codes.get(rcode, "")
+                if p.close_rcvd_then_sent:
                     status = rcode
-                    if scode == rcode or scode == 1006:
-                        close = f"{rdesc} from client"
-                    else:
-                        close = f"{rdesc} ▼▲ {scode} {sdesc}"
-                elif scode and rcode:
+                    close = (
+                        f"{rdesc} from client"
+                        if scode in (rcode, 1006)
+                        else f"{rdesc} ▼▲ {scode} {sdesc}"
+                    )
+                elif scode != 1006 and rcode != 1006:
                     status = scode
-                    if scode == rcode or rcode == 1006:
-                        close = f"{sdesc} from server"
-                    else:
-                        close = f"{sdesc} ▲▼ {rcode} {rdesc}"
+                    close = (
+                        f"{sdesc} from server"
+                        if rcode in (scode, 1006)
+                        else f"{sdesc} ▲▼ {rcode} {rdesc}"
+                    )
                 elif rcode:
                     status = rcode
                     close = f"{rdesc} rcvd, no reply"

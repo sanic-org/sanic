@@ -972,8 +972,9 @@ class Request(Generic[sanic_type, ctx_type]):
             else:
                 scheme = "http"
             proto = None
-            if "//" in self.app.config.get("SERVER_NAME", ""):
-                proto = self.app.config.SERVER_NAME.split("://")[0]
+            sp = self.app.config.SERVER_NAME.split("://", 1)
+            if len(sp) == 2:
+                proto = sp[0]
             elif "proto" in self.forwarded:
                 proto = str(self.forwarded["proto"])
             if proto:
@@ -1074,7 +1075,8 @@ class Request(Generic[sanic_type, ctx_type]):
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
         try:
-            if "//" in self.app.config.SERVER_NAME:
+            sp = self.app.config.SERVER_NAME.split("://", 1)
+            if len(sp) == 2:
                 return self.app.url_for(view_name, _external=True, **kwargs)
         except AttributeError:
             pass

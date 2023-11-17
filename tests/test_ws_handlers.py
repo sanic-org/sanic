@@ -66,9 +66,9 @@ def test_request_url(
         await ws.send(request.url_for("ws_url_handler"))
         await ws.recv()
 
-    for proxy in ["", "proxy"]:
+    for proxy in ["", "proxy", "servername"]:
         app.config.FORWARDED_SECRET = proxy
-
+        app.config.SERVER_NAME = "https://example.com" if proxy == "servername" else ""
         _, ws_proxy = app.test_client.websocket(
             "/ws",
             mimic=simple_ws_mimic_client,

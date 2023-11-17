@@ -197,26 +197,20 @@ class WebSocketProtocol(HttpProtocol):
                 # Use repr() to escape any control characters
                 sdesc = repr(sdesc[:256]) if sdesc else codes.get(scode, "")
                 rdesc = repr(rdesc[:256]) if rdesc else codes.get(rcode, "")
-                if p.close_rcvd_then_sent:
+                if p.close_rcvd_then_sent or scode == 1006:
                     status = rcode
                     close = (
                         f"{rdesc} from client"
                         if scode in (rcode, 1006)
                         else f"{rdesc} ▼▲ {scode} {sdesc}"
                     )
-                elif scode != 1006 and rcode != 1006:
+                else:
                     status = scode
                     close = (
                         f"{sdesc} from server"
                         if rcode in (scode, 1006)
                         else f"{sdesc} ▲▼ {rcode} {rdesc}"
                     )
-                elif rcode:
-                    status = rcode
-                    close = f"{rdesc} rcvd, no reply"
-                else:
-                    status = scode
-                    close = f"{sdesc} sent, no reply"
 
         except AttributeError:
             ...

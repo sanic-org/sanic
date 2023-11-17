@@ -974,7 +974,7 @@ class Request(Generic[sanic_type, ctx_type]):
             proto = None
             if "//" in self.app.config.get("SERVER_NAME", ""):
                 proto = self.app.config.SERVER_NAME.split("//")[0]
-            if "proto" in self.forwarded:
+            elif "proto" in self.forwarded:
                 proto = str(self.forwarded["proto"])
             if proto:
                 # Give ws/wss if websocket, otherwise keep the same

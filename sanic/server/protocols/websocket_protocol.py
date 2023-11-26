@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Sequence, cast
+from typing import Optional, Sequence, cast
 
 
 try:  # websockets < 11.0

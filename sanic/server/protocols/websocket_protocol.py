@@ -8,17 +8,15 @@ except ImportError:  # websockets >= 11.0
     from websockets.protocol import State  # type: ignore
     from websockets.server import ServerProtocol  # type: ignore
 
+from websockets import http11
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import SanicException
 from sanic.log import logger
+from sanic.request import Request
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol
-
-
-if TYPE_CHECKING:
-    from websockets import http11
 
 
 OPEN = State.OPEN
@@ -94,6 +92,13 @@ class WebSocketProtocol(HttpProtocol):
         else:
             return super().close_if_idle()
 
+    @staticmethod
+    def sanic_request_to_ws_request(request: Request):
+        return http11.Request(
+            path=request.path,
+            headers=request.headers,
+        )
+
     async def websocket_handshake(
         self, request, subprotocols: Optional[Sequence[str]] = None
     ):
@@ -117,7 +122,9 @@ class WebSocketProtocol(HttpProtocol):
                 state=OPEN,
                 logger=logger,
             )
-            resp: "http11.Response" = ws_proto.accept(request)
+            resp: "http11.Response" = ws_proto.accept(
+                self.sanic_request_to_ws_request(request)
+            )
         except Exception:
             msg = (
                 "Failed to open a WebSocket connection.\n"

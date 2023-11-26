@@ -11,6 +11,7 @@ from sanic.app import Sanic
 from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
 from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
+from sanic.cli.console import SanicREPL
 from sanic.cli.inspector import make_inspector_parser
 from sanic.cli.inspector_client import InspectorClient
 from sanic.log import error_logger
@@ -108,6 +109,8 @@ Or, a path to a directory to run as a simple HTTP server:
         except ValueError as e:
             error_logger.exception(f"Failed to run app: {e}")
         else:
+            if self.args.repl:
+                self._repl(app)
             for http_version in self.args.http:
                 app.prepare(**kwargs, version=http_version)
             if self.args.single:
@@ -147,6 +150,11 @@ Or, a path to a directory to run as a simple HTTP server:
             if len(positional) > 1:
                 kwargs["args"] = positional[1:]
         InspectorClient(host, port, secure, raw, api_key).do(action, **kwargs)
+
+    def _repl(self, app: Sanic):
+        @app.main_process_ready
+        def start_repl(app):
+            SanicREPL(app).run()
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics
@@ -225,6 +233,9 @@ Or, a path to a directory to run as a simple HTTP server:
         for maybe_arg in ("auto_reload", "dev"):
             if getattr(self.args, maybe_arg, False):
                 kwargs[maybe_arg] = True
+
+        if self.args.dev and "--no-repl" not in sys.argv:
+            self.args.repl = True
 
         if self.args.path:
             kwargs["auto_reload"] = True

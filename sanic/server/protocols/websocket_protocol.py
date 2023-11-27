@@ -9,6 +9,7 @@ except ImportError:  # websockets >= 11.0
     from websockets.server import ServerProtocol  # type: ignore
 
 from websockets import http11
+from websockets.datastructures import Headers as WSHeaders
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import SanicException
@@ -96,7 +97,7 @@ class WebSocketProtocol(HttpProtocol):
     def sanic_request_to_ws_request(request: Request):
         return http11.Request(
             path=request.path,
-            headers=request.headers,
+            headers=WSHeaders(request.headers),
         )
 
     async def websocket_handshake(

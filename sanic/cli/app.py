@@ -153,8 +153,9 @@ Or, a path to a directory to run as a simple HTTP server:
 
     def _repl(self, app: Sanic):
         @app.main_process_ready
-        def start_repl(app):
+        async def start_repl(app):
             SanicREPL(app).run()
+            await app._startup()
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics

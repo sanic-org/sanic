@@ -115,7 +115,7 @@ class SanicREPL(InteractiveConsole):
             f"  - {Colors.BOLD + Colors.SANIC}client{Colors.END}: The Sanic client instance using httpx - {Colors.BOLD + Colors.BLUE}from httpx import Client{Colors.END}",  # noqa: E501
             f"  - {Colors.BOLD + Colors.SANIC}go{Colors.END}: An async function to fake a request to the application - {Colors.PURPLE}returns tuple[request, response]{Colors.END}",  # noqa: E501
         ]
-        if not HTTPX_AVAILABLE:
+        if HTTPX_AVAILABLE:
             locals_available["client"] = SanicClient(app)
         else:
             del variable_descriptions[3]

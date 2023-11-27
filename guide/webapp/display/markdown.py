@@ -55,10 +55,15 @@ class DocsRenderer(HTMLRenderer):
         )
 
     def link(self, text: str, url: str, title: str | None = None) -> str:
+        anchor = ""
+        if "#" in url:
+            url, anchor = url.split("#", 1)
+            anchor = "#" + anchor
         url = self.safe_url(url).removesuffix(".md")
         if not url.endswith("/"):
             url += ".html"
 
+        url += anchor
         attributes: dict[str, str] = {"href": url}
         if title:
             attributes["title"] = safe_entity(title)

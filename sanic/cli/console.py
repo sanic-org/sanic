@@ -7,8 +7,9 @@ import traceback
 from ast import PyCF_ALLOW_TOP_LEVEL_AWAIT
 from asyncio import iscoroutine, new_event_loop
 from code import InteractiveConsole
+from dataclasses import dataclass
 from types import FunctionType
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, NamedTuple, Optional, Sequence, Tuple, Union
 
 from httpx import request
 
@@ -19,6 +20,7 @@ from sanic.compat import Header
 from sanic.http.constants import Stage
 from sanic.log import Colors
 from sanic.models.protocol_types import TransportProtocol
+from sanic.response.types import HTTPResponse
 
 
 try:
@@ -45,7 +47,7 @@ except ImportError:
     )
 
 repl_app = Sanic("REPL")
-repl_response = None
+repl_response: Optional[HTTPResponse] = None
 
 
 class REPLProtocol(TransportProtocol):
@@ -63,12 +65,18 @@ class REPLProtocol(TransportProtocol):
         ...
 
 
+class Result(NamedTuple):
+    request: Request
+    response: HTTPResponse
+
+
 def make_request(
     url: str = "/",
-    headers: Union[Dict[str, Any], Sequence[Tuple[str, str]]] = {},
+    headers: Optional[Union[Dict[str, Any], Sequence[Tuple[str, str]]]] = None,
     method: str = "GET",
     body: Optional[str] = None,
 ):
+    headers = headers or {}
     protocol = REPLProtocol()
     request = Request(
         url.encode(),
@@ -85,20 +93,21 @@ def make_request(
     return request
 
 
-async def respond(request):
+async def respond(request) -> HTTPResponse:
     await repl_app.handle_request(request)
+    assert repl_response
     return repl_response
 
 
-async def go(
+async def do(
     url: str = "/",
-    headers: Union[Dict[str, Any], Sequence[Tuple[str, str]]] = {},
+    headers: Optional[Union[Dict[str, Any], Sequence[Tuple[str, str]]]] = None,
     method: str = "GET",
     body: Optional[str] = None,
-):
+) -> Result:
     request = make_request(url, headers, method, body)
     response = await respond(request)
-    return request, response
+    return Result(request, response)
 
 
 class SanicREPL(InteractiveConsole):
@@ -109,7 +118,7 @@ class SanicREPL(InteractiveConsole):
             "app": app,
             "sanic": sanic,
             "Sanic": Sanic,
-            "go": go,
+            "do": do,
         }
         client_availability = ""
         variable_descriptions = [
@@ -117,7 +126,7 @@ class SanicREPL(InteractiveConsole):
             f"  - {Colors.BOLD + Colors.SANIC}sanic{Colors.END}: The Sanic module - {Colors.BOLD + Colors.BLUE}from sanic import Sanic{Colors.END}",  # noqa: E501
             f"  - {Colors.BOLD + Colors.SANIC}Sanic{Colors.END}: The Sanic class - {Colors.BOLD + Colors.BLUE}import sanic{Colors.END}",  # noqa: E501
             f"  - {Colors.BOLD + Colors.SANIC}client{Colors.END}: The Sanic client instance using httpx - {Colors.BOLD + Colors.BLUE}from httpx import Client{Colors.END}",  # noqa: E501
-            f"  - {Colors.BOLD + Colors.SANIC}go{Colors.END}: An async function to fake a request to the application - {Colors.PURPLE}returns tuple[request, response]{Colors.END}",  # noqa: E501
+            f"  - {Colors.BOLD + Colors.SANIC}do{Colors.END}: An async function to fake a request to the application - {Colors.BOLD + Colors.BLUE}Result(request, response){Colors.END}",  # noqa: E501
         ]
         if HTTPX_AVAILABLE:
             locals_available["client"] = SanicClient(app)

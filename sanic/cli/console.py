@@ -8,7 +8,7 @@ from ast import PyCF_ALLOW_TOP_LEVEL_AWAIT
 from asyncio import iscoroutine, new_event_loop
 from code import InteractiveConsole
 from types import FunctionType
-from typing import Any, Dict, Sequence, Tuple, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 from httpx import request
 
@@ -67,6 +67,7 @@ def make_request(
     url: str = "/",
     headers: Union[Dict[str, Any], Sequence[Tuple[str, str]]] = {},
     method: str = "GET",
+    body: Optional[str] = None,
 ):
     protocol = REPLProtocol()
     request = Request(
@@ -77,6 +78,8 @@ def make_request(
         protocol,
         repl_app,
     )
+    if body is not None:
+        request.body = body.encode()
     request.stream = protocol
     request.conn_info = None
     return request
@@ -91,8 +94,9 @@ async def go(
     url: str = "/",
     headers: Union[Dict[str, Any], Sequence[Tuple[str, str]]] = {},
     method: str = "GET",
+    body: Optional[str] = None,
 ):
-    request = make_request(url, headers, method)
+    request = make_request(url, headers, method, body)
     response = await respond(request)
     return request, response
 
@@ -167,6 +171,7 @@ class SanicREPL(InteractiveConsole):
     def runsource(self, source, filename="<input>", symbol="single"):
         if source.strip() == "exit()":
             self._shutdown()
+            return False
 
         if self.is_paused():
             print("Console is paused. Please wait for it to be resumed.")

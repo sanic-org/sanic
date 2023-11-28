@@ -108,12 +108,29 @@ def _get_object_type(obj) -> str:
 def organize_docobjects(package_name: str) -> dict[str, str]:
     page_content: defaultdict[str, str] = defaultdict(str)
     docobjects = _extract_docobjects(package_name)
+    page_registry: defaultdict[str, list[str]] = defaultdict(list)
     for module, docobject in docobjects.items():
         builder = Builder(name="Partial")
         _docobject_to_html(docobject, builder)
         ref = module.rsplit(".", module.count(".") - 1)[0]
+        page_registry[ref].append(module)
         page_content[f"/api/{ref}.md"] += str(builder)
+    for ref, objects in page_registry.items():
+        page_content[f"/api/{ref}.md"] = _table_of_contents(objects) + page_content[f"/api/{ref}.md"]
     return page_content
+
+def _table_of_contents(objects: list[str]) -> str:
+    builder = Builder(name="Partial")
+    with builder.div(class_="table-of-contents"):
+        builder.h3("Table of Contents", class_="is-size-4")
+        for obj in objects:
+            module, name = obj.rsplit(".", 1)
+            builder.a(
+                E.strong(name), E.small(module),
+                href=f"#{slugify(obj.replace('.', '-'))}",
+                class_="table-of-contents-item",
+            )
+    return str(builder)
 
 
 def _extract_docobjects(package_name: str) -> dict[str, DocObject]:
@@ -310,7 +327,10 @@ def _render_params(builder: Builder, params: list[DocstringParam]) -> None:
                     E.br(),
                     E.span(
                         param.type_name,
-                        class_="has-text-weight-normal has-text-purple ml-2",
+                        class_=(
+                            "has-text-weight-normal has-text-purple "
+                            "is-size-7 ml-2"
+                        ),
                     ),
                 ]
                 dt_args.extend(parts)

@@ -119,8 +119,59 @@ class Sanic(
     StartupMixin,
     metaclass=TouchUpMeta,
 ):
-    """
-    The main application instance
+    """The main application instance
+
+    You will create an instance of this class and use it to register
+    routes, listeners, middleware, blueprints, error handlers, etc.
+
+    By convention, it is often called `app`. It must be named using
+    the `name` parameter and is roughly constrained to the same
+    restrictions as a Python module name, however, it can contain
+    hyphens (`-`).
+
+    ```python
+    # will cause an error because it contains spaces
+    Sanic("This is not legal")
+    ```
+
+    ```python
+    # this is legal
+    Sanic("Hyphens-are-legal_or_also_underscores")
+    ```
+
+    Args:
+        name (str): The name of the application. Must be a valid
+            Python module name (including hyphens).
+        config (Optional[config_type]): The configuration to use for
+            the application. Defaults to `None`.
+        ctx (Optional[ctx_type]): The context to use for the
+            application. Defaults to `None`.
+        router (Optional[Router]): The router to use for the
+            application. Defaults to `None`.
+        signal_router (Optional[SignalRouter]): The signal router to
+            use for the application. Defaults to `None`.
+        error_handler (Optional[ErrorHandler]): The error handler to
+            use for the application. Defaults to `None`.
+        env_prefix (Optional[str]): The prefix to use for environment
+            variables. Defaults to `SANIC_`.
+        request_class (Optional[Type[Request]]): The request class to
+            use for the application. Defaults to `Request`.
+        strict_slashes (bool): Whether to enforce strict slashes.
+            Defaults to `False`.
+        log_config (Optional[Dict[str, Any]]): The logging configuration
+            to use for the application. Defaults to `None`.
+        configure_logging (bool): Whether to configure logging.
+            Defaults to `True`.
+        dumps (Optional[Callable[..., AnyStr]]): The function to use
+            for serializing JSON. Defaults to `None`.
+        loads (Optional[Callable[..., Any]]): The function to use
+            for deserializing JSON. Defaults to `None`.
+        inspector (bool): Whether to enable the inspector. Defaults
+            to `False`.
+        inspector_class (Optional[Type[Inspector]]): The inspector
+            class to use for the application. Defaults to `None`.
+        certloader_class (Optional[Type[CertLoader]]): The certloader
+            class to use for the application. Defaults to `None`.
     """
 
     __touchup__ = (
@@ -1369,6 +1420,12 @@ class Sanic(
             protocol = request.transport.get_protocol()
             ws = await protocol.websocket_handshake(request, subprotocols)
 
+        await self.dispatch(
+            "websocket.handler.before",
+            inline=True,
+            context={"request": request, "websocket": ws},
+            fail_not_found=False,
+        )
         # schedule the application handler
         # its future is kept in self.websocket_tasks in case it
         # needs to be cancelled due to the server being stopped
@@ -1377,10 +1434,24 @@ class Sanic(
         cancelled = False
         try:
             await fut
+            await self.dispatch(
+                "websocket.handler.after",
+                inline=True,
+                context={"request": request, "websocket": ws},
+                reverse=True,
+                fail_not_found=False,
+            )
         except (CancelledError, ConnectionClosed):  # type: ignore
             cancelled = True
         except Exception as e:
             self.error_handler.log(request, e)
+            await self.dispatch(
+                "websocket.handler.exception",
+                inline=True,
+                context={"request": request, "websocket": ws, "exception": e},
+                reverse=True,
+                fail_not_found=False,
+            )
         finally:
             self.websocket_tasks.remove(fut)
             if cancelled:

@@ -9,6 +9,15 @@ from webapp.worker.style import setup_style
 
 from sanic import Request, Sanic, html, redirect
 
+KNOWN_REDIRECTS = {
+    "guide/deployment/configuration.html": "guide/running/configuration.html",
+    "guide/deployment/development.html": "guide/running/development.html",
+    "guide/deployment/running.html": "guide/running/running.html",
+    "guide/deployment/manager.html": "guide/running/manager.html",
+    "guide/deployment/app-loader.html": "guide/running/app-loader.html",
+    "guide/deployment/inspector.html": "guide/running/inspector.html",
+}
+
 
 def _compile_sidebar_order(items: list[MenuItem]) -> list[str]:
     order = []
@@ -62,7 +71,22 @@ def create_app(root: Path) -> Sanic:
         language: str,
         path: str = "",
     ):
-        return html(page_renderer.render(request, language, path))
+        # TODO: Add more language support
+        if language not in app.config.LANGUAGES:
+            return redirect(
+                request.app.url_for("page", language="en", path=path)
+            )
+        if path in KNOWN_REDIRECTS:
+            return redirect(
+                request.app.url_for(
+                    "page", language=language, path=KNOWN_REDIRECTS[path]
+                ),
+                status=301,
+            )
+        return html(
+            page_renderer.render(request, language, path),
+            headers={"vary": "hx-request"},
+        )
 
     @app.on_request
     async def set_language(request: Request):

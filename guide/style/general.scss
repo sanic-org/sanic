@@ -7,9 +7,18 @@ code { color: #{$grey-dark}; }
     }
 }
 
-a[target=_blank]::after {
-    content: "⇗";
-    margin-left: 0.25em;
+a{
+    &[target=_blank]::after {
+        content: "⇗";
+        margin-left: 0.25em;
+    }
+    & > code {
+        border-bottom: 1px solid $primary;
+        &:hover {
+            background-color: $primary;
+            color: $white;
+        }
+    }
 }
 h1 a.anchor,
 h2 a.anchor,
@@ -49,4 +58,8 @@ p + p { margin-top: 1rem; }
     h2 { margin-left: 0; }
     article { margin-left: 0; }
 }
-
+@media screen and (min-width: $widescreen) {
+    .section {
+	padding: 3rem 0rem;
+    }
+}

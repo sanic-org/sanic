@@ -12,10 +12,7 @@ if TYPE_CHECKING:
 
 
 class AsyncioServer:
-    """
-    Wraps an asyncio server with functionality that might be useful to
-    a user who needs to manage the server lifecycle manually.
-    """
+    """Wraps an asyncio server with functionality that might be useful to a user who needs to manage the server lifecycle manually."""  # noqa: E501
 
     __slots__ = ("app", "connections", "loop", "serve_coro", "server")
 
@@ -35,45 +32,38 @@ class AsyncioServer:
         self.server = None
 
     def startup(self):
-        """
-        Trigger "before_server_start" events
-        """
+        """Trigger "startup" operations on the app"""
         return self.app._startup()
 
     def before_start(self):
-        """
-        Trigger "before_server_start" events
-        """
+        """Trigger "before_server_start" events"""
         return self._server_event("init", "before")
 
     def after_start(self):
-        """
-        Trigger "after_server_start" events
-        """
+        """Trigger "after_server_start" events"""
         return self._server_event("init", "after")
 
     def before_stop(self):
-        """
-        Trigger "before_server_stop" events
-        """
+        """Trigger "before_server_stop" events"""
         return self._server_event("shutdown", "before")
 
     def after_stop(self):
-        """
-        Trigger "after_server_stop" events
-        """
+        """Trigger "after_server_stop" events"""
         return self._server_event("shutdown", "after")
 
     def is_serving(self) -> bool:
+        """Returns True if the server is running, False otherwise"""
         if self.server:
             return self.server.is_serving()
         return False
 
     def wait_closed(self):
+        """Wait until the server is closed"""
         if self.server:
             return self.server.wait_closed()
 
     def close(self):
+        """Close the server"""
         if self.server:
             self.server.close()
             coro = self.wait_closed()
@@ -81,9 +71,11 @@ class AsyncioServer:
             return task
 
     def start_serving(self):
+        """Start serving requests"""
         return self._serve(self.server.start_serving)
 
     def serve_forever(self):
+        """Serve requests until the server is stopped"""
         return self._serve(self.server.serve_forever)
 
     def _serve(self, serve_func):

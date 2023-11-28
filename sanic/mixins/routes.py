@@ -58,32 +58,52 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteWrapper:
-        """
-        Decorate a function to be registered as a route
+        """Decorate a function to be registered as a route.
 
+        Args:
+            uri (str): Path of the URL.
+            methods (Optional[Iterable[str]]): List or tuple of
+                methods allowed.
+            host (Optional[Union[str, List[str]]]): The host, if required.
+            strict_slashes (Optional[bool]): Whether to apply strict slashes
+                to the route.
+            stream (bool): Whether to allow the request to stream its body.
+            version (Optional[Union[int, str, float]]): Route specific
+                versioning.
+            name (Optional[str]): User-defined route name for url_for.
+            ignore_body (bool): Whether the handler should ignore request
+                body (e.g. `GET` requests).
+            apply (bool): Apply middleware to the route.
+            subprotocols (Optional[List[str]]): List of subprotocols.
+            websocket (bool): Enable WebSocket support.
+            unquote (bool): Unquote special characters in the URL path.
+            static (bool): Enable static route.
+            version_prefix (str): URL path that should be before the version
+                 value; default: `"/v"`.
+            error_format (Optional[str]): Error format for the route.
+            ctx_kwargs (Any): Keyword arguments that begin with a `ctx_*`
+                prefix will be appended to the route context (`route.ctx`).
 
-        **Example using context kwargs**
+        Returns:
+            RouteWrapper: Tuple of routes, decorated function.
 
-        .. code-block:: python
+        Examples:
+            Using the method to define a GET endpoint:
 
-            @app.route(..., ctx_foo="foobar")
-            async def route_handler(request: Request):
-                assert request.route.ctx.foo == "foobar"
+            ```python
+            @app.route("/hello")
+            async def hello(request: Request):
+                return text("Hello, World!")
+            ```
 
-        :param uri: path of the URL
-        :param methods: list or tuple of methods allowed
-        :param host: the host, if required
-        :param strict_slashes: whether to apply strict slashes to the route
-        :param stream: whether to allow the request to stream its body
-        :param version: route specific versioning
-        :param name: user defined route name for url_for
-        :param ignore_body: whether the handler should ignore request
-            body (eg. GET requests)
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: tuple of routes, decorated function
+            Adding context kwargs to the route:
+
+            ```python
+            @app.route("/greet", ctx_name="World")
+            async def greet(request: Request):
+                name = request.route.ctx.name
+                return text(f"Hello, {name}!")
+            ```
         """
 
         # Fix case where the user did not prefix the URL with a /
@@ -209,25 +229,56 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         unquote: bool = False,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """A helper method to register class instance or
-        functions as a handler to the application url
-        routes.
+        """A helper method to register class-based view or functions as a handler to the application url routes.
 
-        :param handler: function or class instance
-        :param uri: path of the URL
-        :param methods: list or tuple of methods allowed, these are overridden
-                        if using a HTTPMethodView
-        :param host:
-        :param strict_slashes:
-        :param version:
-        :param name: user defined route name for url_for
-        :param stream: boolean specifying if the handler is a stream handler
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: function or class instance
-        """
+        Args:
+            handler (RouteHandler): Function or class-based view used as a route handler.
+            uri (str): Path of the URL.
+            methods (Iterable[str]): List or tuple of methods allowed; these are overridden if using an HTTPMethodView.
+            host (Optional[Union[str, List[str]]]): Hostname or hostnames to match for this route.
+            strict_slashes (Optional[bool]): If set, a route's slashes will be strict. E.g. `/foo` will not match `/foo/`.
+            version (Optional[Union[int, str, float]]): Version of the API for this route.
+            name (Optional[str]): User-defined route name for `url_for`.
+            stream (bool): Boolean specifying if the handler is a stream handler.
+            version_prefix (str): URL path that should be before the version value; default: ``/v``.
+            error_format (Optional[str]): Custom error format string.
+            unquote (bool): Boolean specifying if the handler requires unquoting.
+            ctx_kwargs (Any): Keyword arguments that begin with a `ctx_*` prefix will be appended to the route context (``route.ctx``). See below for examples.
+
+        Returns:
+            RouteHandler: The route handler.
+
+        Examples:
+            ```python
+            from sanic import Sanic, text
+
+            app = Sanic("test")
+
+            async def handler(request):
+                return text("OK")
+
+            app.add_route(handler, "/test", methods=["GET", "POST"])
+            ```
+
+            You can use `ctx_kwargs` to add custom context to the route. This
+            can often be useful when wanting to add metadata to a route that
+            can be used by other parts of the application (like middleware).
+
+            ```python
+            from sanic import Sanic, text
+
+            app = Sanic("test")
+
+            async def handler(request):
+                return text("OK")
+
+            async def custom_middleware(request):
+                if request.route.ctx.monitor:
+                    do_some_monitoring()
+
+            app.add_route(handler, "/test", methods=["GET", "POST"], ctx_monitor=True)
+            app.register_middleware(custom_middleware)
+        """  # noqa: E501
         # Handle HTTPMethodView differently
         if hasattr(handler, "view_class"):
             methods = set()
@@ -271,21 +322,31 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """
-        Add an API URL under the **GET** *HTTP* method
+        """Decorate a function handler to create a route definition using the **GET** HTTP method.
 
-        :param uri: URL to be tagged to **GET** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Object decorated with :func:`route` method
-        """
+        Args:
+            uri (str): URL to be tagged to GET method of HTTP.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN for
+                the service to use.
+            strict_slashes (Optional[bool]): Instruct Sanic to check if the
+                request URLs need to terminate with a `/`.
+            version (Optional[Union[int, str, float]]): API Version.
+            name (Optional[str]): Unique name that can be used to identify
+                the route.
+            ignore_body (bool): Whether the handler should ignore request
+                body. This means the body of the request, if sent, will not
+                be consumed. In that instance, you will see a warning in
+                the logs. Defaults to `True`, meaning do not consume the body.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with a
+                `ctx_* prefix` will be appended to the route
+                context (`route.ctx`).
+
+        Returns:
+            RouteHandler: Object decorated with route method.
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -314,21 +375,29 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """
-        Add an API URL under the **POST** *HTTP* method
+        """Decorate a function handler to create a route definition using the **POST** HTTP method.
 
-        :param uri: URL to be tagged to **POST** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Object decorated with :func:`route` method
-        """
+        Args:
+            uri (str): URL to be tagged to POST method of HTTP.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN for
+                the service to use.
+            strict_slashes (Optional[bool]): Instruct Sanic to check if the
+                request URLs need to terminate with a `/`.
+            stream (bool): Whether or not to stream the request body.
+                Defaults to `False`.
+            version (Optional[Union[int, str, float]]): API Version.
+            name (Optional[str]): Unique name that can be used to identify
+                the route.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with a
+                `ctx_*` prefix will be appended to the route
+                context (`route.ctx`).
+
+        Returns:
+            RouteHandler: Object decorated with route method.
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -357,21 +426,29 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """
-        Add an API URL under the **PUT** *HTTP* method
+        """Decorate a function handler to create a route definition using the **PUT** HTTP method.
 
-        :param uri: URL to be tagged to **PUT** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Object decorated with :func:`route` method
-        """
+        Args:
+            uri (str): URL to be tagged to PUT method of HTTP.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN for
+                the service to use.
+            strict_slashes (Optional[bool]): Instruct Sanic to check if the
+                request URLs need to terminate with a `/`.
+            stream (bool): Whether or not to stream the request body.
+                Defaults to `False`.
+            version (Optional[Union[int, str, float]]): API Version.
+            name (Optional[str]): Unique name that can be used to identify
+                the route.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with a
+                `ctx_*` prefix will be appended to the route
+                context (`route.ctx`).
+
+        Returns:
+            RouteHandler: Object decorated with route method.
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -400,29 +477,31 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """
-        Add an API URL under the **HEAD** *HTTP* method
+        """Decorate a function handler to create a route definition using the **HEAD** HTTP method.
 
-        :param uri: URL to be tagged to **HEAD** method of *HTTP*
-        :type uri: str
-        :param host: Host IP or FQDN for the service to use
-        :type host: Optional[str], optional
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :type strict_slashes: Optional[bool], optional
-        :param version: API Version
-        :type version: Optional[str], optional
-        :param name: Unique name that can be used to identify the Route
-        :type name: Optional[str], optional
-        :param ignore_body: whether the handler should ignore request
-            body (eg. GET requests), defaults to True
-        :type ignore_body: bool, optional
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Object decorated with :func:`route` method
-        """
+        Args:
+            uri (str): URL to be tagged to HEAD method of HTTP.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN for
+                the service to use.
+            strict_slashes (Optional[bool]): Instruct Sanic to check if the
+                request URLs need to terminate with a `/`.
+            version (Optional[Union[int, str, float]]): API Version.
+            name (Optional[str]): Unique name that can be used to identify
+                the route.
+            ignore_body (bool): Whether the handler should ignore request
+                body. This means the body of the request, if sent, will not
+                be consumed. In that instance, you will see a warning in
+                the logs. Defaults to `True`, meaning do not consume the body.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with a
+                `ctx_*` prefix will be appended to the route
+                context (`route.ctx`).
+
+        Returns:
+            RouteHandler: Object decorated with route method.
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -451,29 +530,31 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """
-        Add an API URL under the **OPTIONS** *HTTP* method
+        """Decorate a function handler to create a route definition using the **OPTIONS** HTTP method.
 
-        :param uri: URL to be tagged to **OPTIONS** method of *HTTP*
-        :type uri: str
-        :param host: Host IP or FQDN for the service to use
-        :type host: Optional[str], optional
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :type strict_slashes: Optional[bool], optional
-        :param version: API Version
-        :type version: Optional[str], optional
-        :param name: Unique name that can be used to identify the Route
-        :type name: Optional[str], optional
-        :param ignore_body: whether the handler should ignore request
-            body (eg. GET requests), defaults to True
-        :type ignore_body: bool, optional
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Object decorated with :func:`route` method
-        """
+        Args:
+            uri (str): URL to be tagged to OPTIONS method of HTTP.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN for
+                the service to use.
+            strict_slashes (Optional[bool]): Instruct Sanic to check if the
+                request URLs need to terminate with a `/`.
+            version (Optional[Union[int, str, float]]): API Version.
+            name (Optional[str]): Unique name that can be used to identify
+                the route.
+            ignore_body (bool): Whether the handler should ignore request
+                body. This means the body of the request, if sent, will not
+                be consumed. In that instance, you will see a warning in
+                the logs. Defaults to `True`, meaning do not consume the body.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with a
+                `ctx_*` prefix will be appended to the route
+                context (`route.ctx`).
+
+        Returns:
+            RouteHandler: Object decorated with route method.
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -502,31 +583,29 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """
-        Add an API URL under the **PATCH** *HTTP* method
+        """Decorate a function handler to create a route definition using the **PATCH** HTTP method.
 
-        :param uri: URL to be tagged to **PATCH** method of *HTTP*
-        :type uri: str
-        :param host: Host IP or FQDN for the service to use
-        :type host: Optional[str], optional
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :type strict_slashes: Optional[bool], optional
-        :param stream: whether to allow the request to stream its body
-        :type stream: Optional[bool], optional
-        :param version: API Version
-        :type version: Optional[str], optional
-        :param name: Unique name that can be used to identify the Route
-        :type name: Optional[str], optional
-        :param ignore_body: whether the handler should ignore request
-            body (eg. GET requests), defaults to True
-        :type ignore_body: bool, optional
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Object decorated with :func:`route` method
-        """
+        Args:
+            uri (str): URL to be tagged to PATCH method of HTTP.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN for
+                the service to use.
+            strict_slashes (Optional[bool]): Instruct Sanic to check if the
+                request URLs need to terminate with a `/`.
+            stream (bool): Set to `True` if full request streaming is needed,
+                `False` otherwise. Defaults to `False`.
+            version (Optional[Union[int, str, float]]): API Version.
+            name (Optional[str]): Unique name that can be used to identify
+                the route.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with a
+                `ctx_*` prefix will be appended to the route
+                context (`route.ctx`).
+
+        Returns:
+            RouteHandler: Object decorated with route method.
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -555,21 +634,28 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
-        """
-        Add an API URL under the **DELETE** *HTTP* method
+        """Decorate a function handler to create a route definition using the **DELETE** HTTP method.
 
-        :param uri: URL to be tagged to **DELETE** method of *HTTP*
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param version: API Version
-        :param name: Unique name that can be used to identify the Route
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Object decorated with :func:`route` method
-        """
+        Args:
+            uri (str): URL to be tagged to the DELETE method of HTTP.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN for the
+                service to use.
+            strict_slashes (Optional[bool]): Instruct Sanic to check if the
+                request URLs need to terminate with a */*.
+            version (Optional[Union[int, str, float]]): API Version.
+            name (Optional[str]): Unique name that can be used to identify
+                the Route.
+            ignore_body (bool): Whether or not to ignore the body in the
+                request. Defaults to `False`.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with a `ctx_*`
+                prefix will be appended to the route context (`route.ctx`).
+
+        Returns:
+            RouteHandler: Object decorated with route method.
+        """  # noqa: E501
         return cast(
             RouteHandler,
             self.route(
@@ -599,21 +685,30 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ):
-        """
-        Decorate a function to be registered as a websocket route
+        """Decorate a function to be registered as a websocket route.
 
-        :param uri: path of the URL
-        :param host: Host IP or FQDN details
-        :param strict_slashes: If the API endpoint needs to terminate
-                               with a "/" or not
-        :param subprotocols: optional list of str with supported subprotocols
-        :param name: A unique name assigned to the URL so that it can
-                     be used with :func:`url_for`
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: tuple of routes, decorated function
+        Args:
+            uri (str): Path of the URL.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN details.
+            strict_slashes (Optional[bool]): If the API endpoint needs to
+                terminate with a `"/"` or not.
+            subprotocols (Optional[List[str]]): Optional list of str with
+                supported subprotocols.
+            version (Optional[Union[int, str, float]]): WebSocket
+                protocol version.
+            name (Optional[str]): A unique name assigned to the URL so that
+                it can be used with url_for.
+            apply (bool): If set to False, it doesn't apply the route to the
+                app. Default is `True`.
+            version_prefix (str): URL path that should be before the version
+                value. Defaults to `"/v"`.
+            error_format (Optional[str]): Custom error format string.
+            **ctx_kwargs (Any): Keyword arguments that begin with
+                a `ctx_* prefix` will be appended to the route
+                context (`route.ctx`).
+
+        Returns:
+            tuple: Tuple of routes, decorated function.
         """
         return self.route(
             uri=uri,
@@ -643,26 +738,27 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         error_format: Optional[str] = None,
         **ctx_kwargs: Any,
     ):
-        """
-        A helper method to register a function as a websocket route.
+        """A helper method to register a function as a websocket route.
 
-        :param handler: a callable function or instance of a class
-                        that can handle the websocket request
-        :param host: Host IP or FQDN details
-        :param uri: URL path that will be mapped to the websocket
-                    handler
-                    handler
-        :param strict_slashes: If the API endpoint needs to terminate
-                with a "/" or not
-        :param subprotocols: Subprotocols to be used with websocket
-                handshake
-        :param name: A unique name assigned to the URL so that it can
-                be used with :func:`url_for`
-        :param version_prefix: URL path that should be before the version
-            value; default: ``/v``
-        :param  ctx_kwargs: Keyword arguments that begin with a ctx_* prefix
-            will be appended to the route context (``route.ctx``)
-        :return: Objected decorated by :func:`websocket`
+        Args:
+            handler (Callable): A callable function or instance of a class
+                that can handle the websocket request.
+            uri (str): URL path that will be mapped to the websocket handler.
+            host (Optional[Union[str, List[str]]]): Host IP or FQDN details.
+            strict_slashes (Optional[bool]): If the API endpoint needs to
+                terminate with a `"/"` or not.
+            subprotocols (Optional[List[str]]): Subprotocols to be used with
+                websocket handshake.
+            version (Optional[Union[int, str, float]]): Versioning information.
+            name (Optional[str]): A unique name assigned to the URL.
+            version_prefix (str): URL path before the version value.
+                Defaults to `"/v"`.
+            error_format (Optional[str]): Format for error handling.
+            **ctx_kwargs (Any): Keyword arguments beginning with `ctx_*`
+                prefix will be appended to the route context (`route.ctx`).
+
+        Returns:
+            Callable: Object passed as the handler.
         """
         return self.websocket(
             uri=uri,

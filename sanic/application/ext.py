@@ -10,6 +10,20 @@ if TYPE_CHECKING:
 
 
 def setup_ext(app: Sanic, *, fail: bool = False, **kwargs):
+    """Setup Sanic Extensions.
+
+    Requires Sanic Extensions to be installed.
+
+    Args:
+        app (Sanic): Sanic application.
+        fail (bool, optional): Raise an error if Sanic Extensions is not
+            installed. Defaults to `False`.
+        **kwargs: Keyword arguments to pass to `sanic_ext.Extend`.
+
+    Returns:
+        sanic_ext.Extend: Sanic Extensions instance.
+    """
+
     if not app.config.AUTO_EXTEND:
         return
 

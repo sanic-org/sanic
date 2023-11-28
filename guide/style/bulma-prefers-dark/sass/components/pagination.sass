@@ -1,0 +1,49 @@
+$pagination-color-dark: $grey-lighter !default
+$pagination-border-color-dark: $grey-darker !default
+
+$pagination-hover-color-dark: $link-hover-dark !default
+$pagination-hover-border-color-dark: $link-hover-border-dark !default
+
+$pagination-focus-color-dark: $link-focus-dark !default
+$pagination-focus-border-color-dark: $link-focus-border-dark !default
+
+$pagination-active-color-dark: $link-active-dark !default
+$pagination-active-border-color-dark: $link-active-border-dark !default
+
+$pagination-disabled-color-dark: $grey !default
+$pagination-disabled-background-color-dark: $grey-darker !default
+$pagination-disabled-border-color-dark: $grey-darker !default
+
+$pagination-current-color-dark: $link-invert-dark !default
+$pagination-current-background-color-dark: $link-dark !default
+$pagination-current-border-color-dark: $link-dark !default
+
+$pagination-ellipsis-color-dark: $grey-dark !default
+
+$pagination-shadow-inset-dark: inset 0 1px 2px rgba($white, 0.2)
+
+.pagination-previous,
+.pagination-next,
+.pagination-link
+  border-color: $pagination-border-color-dark
+  color: $pagination-color-dark
+  &:hover
+    border-color: $pagination-hover-border-color-dark
+    color: $pagination-hover-color-dark
+  &:focus
+    border-color: $pagination-focus-border-color-dark
+  &:active
+    box-shadow: $pagination-shadow-inset-dark
+  &[disabled]
+    background-color: $pagination-disabled-background-color-dark
+    border-color: $pagination-disabled-border-color-dark
+    color: $pagination-disabled-color-dark
+
+.pagination-link
+  &.is-current
+    background-color: $pagination-current-background-color-dark
+    border-color: $pagination-current-border-color-dark
+    color: $pagination-current-color-dark
+
+.pagination-ellipsis
+  color: $pagination-ellipsis-color-dark

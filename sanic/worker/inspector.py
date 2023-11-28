@@ -15,6 +15,27 @@ from sanic.response import json
 
 
 class Inspector:
+    """Inspector for Sanic workers.
+
+    This class is used to create an inspector for Sanic workers. It is
+    instantiated by the worker class and is used to create a Sanic app
+    that can be used to inspect and control the workers and the server.
+
+    It is not intended to be used directly by the user.
+
+    See [Inspector](/en/guide/deployment/inspector) for more information.
+
+    Args:
+        publisher (Connection): The connection to the worker.
+        app_info (Dict[str, Any]): Information about the app.
+        worker_state (Mapping[str, Any]): The state of the worker.
+        host (str): The host to bind the inspector to.
+        port (int): The port to bind the inspector to.
+        api_key (str): The API key to use for authentication.
+        tls_key (Union[Path, str, Default]): The path to the TLS key file.
+        tls_cert (Union[Path, str, Default]): The path to the TLS cert file.
+    """
+
     def __init__(
         self,
         publisher: Connection,
@@ -100,12 +121,26 @@ class Inspector:
         return obj
 
     def reload(self, zero_downtime: bool = False) -> None:
+        """Reload the workers
+
+        Args:
+            zero_downtime (bool, optional): Whether to use zero downtime
+                reload. Defaults to `False`.
+        """
         message = "__ALL_PROCESSES__:"
         if zero_downtime:
             message += ":STARTUP_FIRST"
         self._publisher.send(message)
 
-    def scale(self, replicas) -> str:
+    def scale(self, replicas: Union[str, int]) -> str:
+        """Scale the number of workers
+
+        Args:
+            replicas (Union[str, int]): The number of workers to scale to.
+
+        Returns:
+            str: A log message.
+        """
         num_workers = 1
         if replicas:
             num_workers = int(replicas)
@@ -116,5 +151,6 @@ class Inspector:
         return log_msg
 
     def shutdown(self) -> None:
+        """Shutdown the workers"""
         message = "__TERMINATE__"
         self._publisher.send(message)

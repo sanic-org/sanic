@@ -1,0 +1,257 @@
+root:
+    - label: User Guide
+      items:
+          - label: General
+            items:
+                - label: Introduction
+                  path: guide/introduction.html
+                - label: Getting Started
+                  path: guide/getting-started.html
+          - label: Basics
+            items:
+                - label: Sanic Application
+                  path: guide/basics/app.html
+                - label: Handlers
+                  path: guide/basics/handlers.html
+                - label: Request
+                  path: guide/basics/request.html
+                - label: Response
+                  path: guide/basics/response.html
+                - label: Routing
+                  path: guide/basics/routing.html
+                - label: Listeners
+                  path: guide/basics/listeners.html
+                - label: Middleware
+                  path: guide/basics/middleware.html
+                - label: Headers
+                  path: guide/basics/headers.html
+                - label: Cookies
+                  path: guide/basics/cookies.html
+                - label: Background Tasks
+                  path: guide/basics/tasks.html
+          - label: Advanced
+            items:
+                - label: Class Based Views
+                  path: guide/advanced/class-based-views.html
+                - label: Proxy Configuration
+                  path: guide/advanced/proxy-headers.html
+                - label: Streaming
+                  path: guide/advanced/streaming.html
+                - label: Websockets
+                  path: guide/advanced/websockets.html
+                - label: Versioning
+                  path: guide/advanced/versioning.html
+                - label: Signals
+                  path: guide/advanced/signals.html
+          - label: Best Practices
+            items:
+                - label: Blueprints
+                  path: guide/best-practices/blueprints.html
+                - label: Exceptions
+                  path: guide/best-practices/exceptions.html
+                - label: Decorators
+                  path: guide/best-practices/decorators.html
+                - label: Logging
+                  path: guide/best-practices/logging.html
+                - label: Testing
+                  path: guide/best-practices/testing.html
+          - label: Running Sanic
+            items:
+                - label: Configuration
+                  path: guide/running/configuration.html
+                - label: Development
+                  path: guide/running/development.html
+                - label: Server
+                  path: guide/running/running.html
+                - label: Worker Manager
+                  path: guide/running/manager.html
+                - label: Dynamic Applications
+                  path: guide/running/app-loader.html
+                - label: Inspector
+                  path: guide/running/inspector.html
+          - label: Deployment
+            items:
+                - label: Caddy
+                  path: guide/deployment/caddy.html
+                - label: Nginx
+                  path: guide/deployment/nginx.html
+                - label: Docker
+                  path: guide/deployment/docker.html
+          - label: How to ...
+            items:
+                - label: Table of Contents
+                  path: guide/how-to/table-of-contents.html
+                - label: Application Mounting
+                  path: guide/how-to/mounting.html
+                - label: Authentication
+                  path: guide/how-to/authentication.html
+                - label: Autodiscovery
+                  path: guide/how-to/autodiscovery.html
+                - label: CORS
+                  path: guide/how-to/cors.html
+                - label: ORM
+                  path: guide/how-to/orm.html
+                - label: Static Redirects
+                  path: guide/how-to/static-redirects.html
+                - label: TLS/SSL/HTTPS
+                  path: guide/how-to/tls.html
+    - label: Plugins
+      items:
+          - label: Sanic Extensions
+            items:
+                - label: Getting Started
+                  path: plugins/sanic-ext/getting-started.html
+                - label: HTTP - Methods
+                  path: plugins/sanic-ext/http/methods.html
+                - label: HTTP - CORS Protection
+                  path: plugins/sanic-ext/http/cors.html
+                - label: OpenAPI - Basics
+                  path: plugins/sanic-ext/openapi/basics.html
+                - label: OpenAPI - UI
+                  path: plugins/sanic-ext/openapi/ui.html
+                - label: OpenAPI - Decorators
+                  path: plugins/sanic-ext/openapi/decorators.html
+                # - label: OpenAPI - Advanced
+                #   path: plugins/sanic-ext/openapi/advanced.html
+                - label: OpenAPI - Auto Documentation
+                  path: plugins/sanic-ext/openapi/autodoc.html
+                - label: OpenAPI - Security
+                  path: plugins/sanic-ext/openapi/security.html
+                - label: Convenience
+                  path: plugins/sanic-ext/convenience.html
+                - label: Templating - Jinja
+                  path: plugins/sanic-ext/templating/jinja.html
+                - label: Templating - html5tagger
+                  path: plugins/sanic-ext/templating/html5tagger.html
+                - label: Dependency Injection
+                  path: plugins/sanic-ext/injection.html
+                - label: Validation
+                  path: plugins/sanic-ext/validation.html
+                - label: Health Monitor
+                  path: plugins/sanic-ext/health-monitor.html
+                - label: Background Logger
+                  path: plugins/sanic-ext/logger.html
+                - label: Configuration
+                  path: plugins/sanic-ext/configuration.html
+                - label: Custom Extensions
+                  path: plugins/sanic-ext/custom.html
+          - label: Sanic Testing
+            items:
+                - label: Getting Started
+                  path: plugins/sanic-testing/getting-started.html
+                - label: Test Clients
+                  path: plugins/sanic-testing/clients.html
+    - label: Release Notes
+      items:
+          - label: "2023"
+            items:
+                - label: Sanic 23.6
+                  path: release-notes/2023/v23.6.html
+                - label: Sanic 23.3
+                  path: release-notes/2023/v23.3.html
+          - label: "2022"
+            items:
+                - label: Sanic 22.12
+                  path: release-notes/2022/v22.12.html
+                - label: Sanic 22.9
+                  path: release-notes/2022/v22.9.html
+                - label: Sanic 22.6
+                  path: release-notes/2022/v22.6.html
+                - label: Sanic 22.3
+                  path: release-notes/2022/v22.3.html
+          - label: "2021"
+            items:
+                - label: Sanic 21.12
+                  path: release-notes/2021/v21.12.html
+                - label: Sanic 21.9
+                  path: release-notes/2021/v21.9.html
+                - label: Sanic 21.6
+                  path: release-notes/2021/v21.6.html
+                - label: Sanic 21.3
+                  path: release-notes/2021/v21.3.html
+    - label: Organization
+      items:
+          - label: Contributing
+            path: organization/contributing.html
+          - label: Code of Conduct
+            path: organization/code-of-conduct.html
+          - label: S.C.O.P.E. (Governance)
+            path: organization/scope.html
+          - label: Policies
+            path: organization/policies.html
+    - label: API Reference
+      items:
+          - label: Application
+            items:
+                - label: sanic.app
+                  path: /api/sanic.app.html
+                - label: sanic.config
+                  path: /api/sanic.config.html
+                - label: sanic.application
+                  path: /api/sanic.application.html
+          - label: Blueprint
+            items:
+                - label: sanic.blueprints
+                  path: /api/sanic.blueprints.html
+                - label: sanic.blueprint_group
+                  path: /api/sanic.blueprint_group.html
+          - label: Constant
+            items:
+                - label: sanic.constants
+                  path: /api/sanic.constants.html
+          - label: Core
+            items:
+                - label: sanic.cookies
+                  path: /api/sanic.cookies.html
+                - label: sanic.handlers
+                  path: /api/sanic.handlers.html
+                - label: sanic.headers
+                  path: /api/sanic.headers.html
+                - label: sanic.middleware
+                  path: /api/sanic.middleware.html
+                - label: sanic.mixins
+                  path: /api/sanic.mixins.html
+                - label: sanic.request
+                  path: /api/sanic.request.html
+                - label: sanic.response
+                  path: /api/sanic.response.html
+                - label: sanic.views
+                  path: /api/sanic.views.html
+          - label: Display
+            items:
+                - label: sanic.pages
+                  path: /api/sanic.pages.html
+          - label: Exception
+            items:
+                - label: sanic.errorpages
+                  path: /api/sanic.errorpages.html
+                - label: sanic.exceptions
+                  path: /api/sanic.exceptions.html
+          - label: Model
+            items:
+                - label: sanic.models
+                  path: /api/sanic.models.html
+          - label: Routing
+            items:
+                - label: sanic.router
+                  path: /api/sanic.router.html
+                - label: sanic.signals
+                  path: /api/sanic.signals.html
+          - label: Server
+            items:
+                - label: sanic.http
+                  path: /api/sanic.http.html
+                - label: sanic.server
+                  path: /api/sanic.server.html
+                - label: sanic.worker
+                  path: /api/sanic.worker.html
+          - label: Utility
+            items:
+                - label: sanic.compat
+                  path: /api/sanic.compat.html
+                - label: sanic.helpers
+                  path: /api/sanic.helpers.html
+                - label: sanic.log
+                  path: /api/sanic.log.html
+                - label: sanic.utils
+                  path: /api/sanic.utils.html

@@ -44,7 +44,6 @@ class Event(Enum):
 
 
 RESERVED_NAMESPACES = {
-    "sanic": ("sanic.__signal__.__init__",),
     "server": (
         Event.SERVER_EXCEPTION_REPORT.value,
         Event.SERVER_INIT_AFTER.value,

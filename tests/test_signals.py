@@ -464,7 +464,7 @@ def test_event_on_bp_not_registered():
         ("server.init.before", True),
         ("server.init.somethingelse", False),
         ("http.request.start", False),
-        ("sanic.notice.anything", False),
+        ("sanic.notice.anything", True),
     ),
 )
 def test_signal_reservation(app, event, expected):

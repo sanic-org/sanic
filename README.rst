@@ -25,7 +25,7 @@ Sanic | Build fast. Run fast.
    :target: https://sanicframework.org/
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
-.. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord
+.. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord&label=Discord&color=5865F2
    :target: https://discord.gg/FARQzAEMAA
 .. |Tests| image:: https://github.com/sanic-org/sanic/actions/workflows/tests.yml/badge.svg?branch=main
    :target: https://github.com/sanic-org/sanic/actions/workflows/tests.yml

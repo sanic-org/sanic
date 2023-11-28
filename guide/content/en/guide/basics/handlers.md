@@ -180,12 +180,8 @@ All handlers are named automatically. This is useful for debugging, and for gene
 .. column::
 
     ```python
-    # Two handlers, same function,
-    # different names:
-    # - "foo"
-    # - "foo_handler"
-    @app.get("/foo", name="foo")
-    @app.get("/bar")
-    async def foo_handler(request):
+    @app.get("/foo/<arg>", name="foo_arg")
+    @app.get("/foo")
+    async def foo(request, arg=None):
         return text("I said foo!")
     ```

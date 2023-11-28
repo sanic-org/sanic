@@ -38,6 +38,9 @@ class Event(Enum):
     HTTP_LIFECYCLE_SEND = "http.lifecycle.send"
     HTTP_MIDDLEWARE_AFTER = "http.middleware.after"
     HTTP_MIDDLEWARE_BEFORE = "http.middleware.before"
+    WEBSOCKET_HANDLER_AFTER = "websocket.handler.after"
+    WEBSOCKET_HANDLER_BEFORE = "websocket.handler.before"
+    WEBSOCKET_HANDLER_EXCEPTION = "websocket.handler.exception"
 
 
 RESERVED_NAMESPACES = {
@@ -65,6 +68,11 @@ RESERVED_NAMESPACES = {
         Event.HTTP_MIDDLEWARE_AFTER.value,
         Event.HTTP_MIDDLEWARE_BEFORE.value,
     ),
+    "websocket": {
+        Event.WEBSOCKET_HANDLER_AFTER.value,
+        Event.WEBSOCKET_HANDLER_BEFORE.value,
+        Event.WEBSOCKET_HANDLER_EXCEPTION.value,
+    },
 }
 
 

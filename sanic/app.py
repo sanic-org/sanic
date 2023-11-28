@@ -1369,6 +1369,12 @@ class Sanic(
             protocol = request.transport.get_protocol()
             ws = await protocol.websocket_handshake(request, subprotocols)
 
+        await self.dispatch(
+            "websocket.handler.before",
+            inline=True,
+            context={"request": request, "websocket": ws},
+            fail_not_found=False,
+        )
         # schedule the application handler
         # its future is kept in self.websocket_tasks in case it
         # needs to be cancelled due to the server being stopped
@@ -1377,10 +1383,24 @@ class Sanic(
         cancelled = False
         try:
             await fut
+            await self.dispatch(
+                "websocket.handler.after",
+                inline=True,
+                context={"request": request, "websocket": ws},
+                reverse=True,
+                fail_not_found=False,
+            )
         except (CancelledError, ConnectionClosed):  # type: ignore
             cancelled = True
         except Exception as e:
             self.error_handler.log(request, e)
+            await self.dispatch(
+                "websocket.handler.exception",
+                inline=True,
+                context={"request": request, "websocket": ws, "exception": e},
+                reverse=True,
+                fail_not_found=False,
+            )
         finally:
             self.websocket_tasks.remove(fut)
             if cancelled:

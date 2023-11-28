@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 
 from asyncio import BaseTransport
-from typing import TYPE_CHECKING, Any, AnyStr, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 
 if TYPE_CHECKING:
@@ -19,10 +19,10 @@ else:
     from typing import Protocol
 
     class HTMLProtocol(Protocol):
-        def __html__(self) -> AnyStr:
+        def __html__(self) -> Union[str, bytes]:
             ...
 
-        def _repr_html_(self) -> AnyStr:
+        def _repr_html_(self) -> Union[str, bytes]:
             ...
 
     class Range(Protocol):

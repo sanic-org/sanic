@@ -72,7 +72,7 @@ def create_app(root: Path) -> Sanic:
         path: str = "",
     ):
         # TODO: Add more language support
-        if language not in app.config.LANGUAGES:
+        if language != "api" and language not in app.config.LANGUAGES:
             return redirect(
                 request.app.url_for("page", language="en", path=path)
             )

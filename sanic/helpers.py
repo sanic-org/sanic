@@ -171,7 +171,11 @@ class Default:
     default value, and `object()` is hard to be typed.
     """
 
-    pass
+    def __repr__(self):
+        return "<Default>"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
 
 _default = Default()

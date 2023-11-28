@@ -502,7 +502,7 @@ def test_dynamic_route_int(app):
 
     request, response = app.test_client.get("/folder/12345")
     assert response.text == "OK"
-    assert type(results[0]) is int
+    assert isinstance(results[0], int)
 
     request, response = app.test_client.get("/folder/asdf")
     assert response.status == 404
@@ -518,7 +518,7 @@ def test_dynamic_route_number(app):
 
     request, response = app.test_client.get("/weight/12345")
     assert response.text == "OK"
-    assert type(results[0]) is float
+    assert isinstance(results[0], float)
 
     request, response = app.test_client.get("/weight/1234.56")
     assert response.status == 200
@@ -567,7 +567,7 @@ def test_dynamic_route_uuid(app):
     url = "/quirky/123e4567-e89b-12d3-a456-426655440000"
     request, response = app.test_client.get(url)
     assert response.text == "OK"
-    assert type(results[0]) is uuid.UUID
+    assert isinstance(results[0], uuid.UUID)
 
     generated_uuid = uuid.uuid4()
     request, response = app.test_client.get(f"/quirky/{generated_uuid}")
@@ -861,7 +861,7 @@ def test_dynamic_add_route_int(app):
 
     request, response = app.test_client.get("/folder/12345")
     assert response.text == "OK"
-    assert type(results[0]) is int
+    assert isinstance(results[0], int)
 
     request, response = app.test_client.get("/folder/asdf")
     assert response.status == 404
@@ -878,7 +878,7 @@ def test_dynamic_add_route_number(app):
 
     request, response = app.test_client.get("/weight/12345")
     assert response.text == "OK"
-    assert type(results[0]) is float
+    assert isinstance(results[0], float)
 
     request, response = app.test_client.get("/weight/1234.56")
     assert response.status == 200

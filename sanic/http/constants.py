@@ -2,8 +2,7 @@ from enum import Enum, IntEnum
 
 
 class Stage(Enum):
-    """
-    Enum for representing the stage of the request/response cycle
+    """Enum for representing the stage of the request/response cycle
 
     | ``IDLE``  Waiting for request
     | ``REQUEST``  Request headers being received
@@ -21,6 +20,8 @@ class Stage(Enum):
 
 
 class HTTP(IntEnum):
+    """Enum for representing HTTP versions"""
+
     VERSION_1 = 1
     VERSION_3 = 3
 

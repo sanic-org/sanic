@@ -17,16 +17,22 @@ class StrEnum(str, Enum):  # no cov
 
 
 class Server(StrEnum):
+    """Server types."""
+
     SANIC = auto()
     ASGI = auto()
 
 
 class Mode(StrEnum):
+    """Server modes."""
+
     PRODUCTION = auto()
     DEBUG = auto()
 
 
 class ServerStage(IntEnum):
+    """Server stages."""
+
     STOPPED = auto()
     PARTIAL = auto()
     SERVING = auto()

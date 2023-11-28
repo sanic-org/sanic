@@ -1,0 +1,15 @@
+root:
+    - label: Home
+      path: index.html
+    - label: Community
+      items:
+          - label: Forums
+            href: https://community.sanicframework.org
+          - label: Discord
+            href: https://discord.gg/FARQzAEMAA
+          - label: Twitter
+            href: https://twitter.com/sanicframework
+    - label: Help
+      path: ./help.html
+    - label: GitHub
+      href: https://github.com/sanic-org/sanic

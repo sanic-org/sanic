@@ -109,6 +109,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
         "_http",
         "_exception",
         "recv_buffer",
+        "_callback_check_timeouts",
     )
 
     def __init__(
@@ -135,6 +136,7 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
         self._exception = None
+        self._callback_check_timeouts = None
 
     async def connection_task(self):  # no cov
         """
@@ -214,7 +216,10 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
                     )
                     / 2
                 )
-                self.loop.call_later(max(0.1, interval), self.check_timeouts)
+                _interval = max(0.1, interval)
+                self._callback_check_timeouts = self.loop.call_later(
+                    _interval, self.check_timeouts
+                )
                 return
             cancel_msg_args = ()
             if sys.version_info >= (3, 9):
@@ -222,6 +227,19 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
             self._task.cancel(*cancel_msg_args)
         except Exception:
             error_logger.exception("protocol.check_timeouts")
+
+    def close(self, timeout: Optional[float] = None):
+        """
+        Requires to prevent checking timeouts for closed connections
+        """
+        if timeout is not None:
+            super().close(timeout=timeout)
+            return
+        if self._callback_check_timeouts:
+            self._callback_check_timeouts.cancel()
+            if self.transport:
+                self.transport.close()
+                self.abort()
 
     async def send(self, data):  # no cov
         """

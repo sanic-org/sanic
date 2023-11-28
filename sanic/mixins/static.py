@@ -46,43 +46,71 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
         directory_view: bool = False,
         directory_handler: Optional[DirectoryHandler] = None,
     ):
-        """
-        Register a root to serve files from. The input can either be a
-        file or a directory. This method will enable an easy and simple way
-        to setup the :class:`Route` necessary to serve the static files.
+        """Register a root to serve files from. The input can either be a file or a directory.
 
-        :param uri: URL path to be used for serving static content
-        :param file_or_directory: Path for the Static file/directory with
-            static files
-        :param pattern: Regex Pattern identifying the valid static files
-        :param use_modified_since: If true, send file modified time, and return
-            not modified if the browser's matches the server's
-        :param use_content_range: If true, process header for range requests
-            and sends the file part that is requested
-        :param stream_large_files: If true, use the
-            :func:`StreamingHTTPResponse.file_stream` handler rather
-            than the :func:`HTTPResponse.file` handler to send the file.
-            If this is an integer, this represents the threshold size to
-            switch to :func:`StreamingHTTPResponse.file_stream`
-        :param name: user defined name used for url_for
-        :param host: Host IP or FQDN for the service to use
-        :param strict_slashes: Instruct :class:`Sanic` to check if the request
-            URLs need to terminate with a */*
-        :param content_type: user defined content type for header
-        :param apply: If true, will register the route immediately
-        :param resource_type: Explicitly declare a resource to be a "
-            file" or a "dir"
-        :param index: When exposing against a directory, index is the name that
-            will be served as the default file. When multiple files names are
-            passed, then they will be tried in order.
-        :param directory_view: Whether to fallback to showing the directory
-            viewer when exposing a directory
-        :param directory_handler: An instance of :class:`DirectoryHandler`
-            that can be used for explicitly controlling and subclassing the
-            behavior of the default directory handler
-        :return: routes registered on the router
-        :rtype: List[sanic.router.Route]
-        """
+        This method provides an easy and simple way to set up the route necessary to serve static files.
+
+        Args:
+            uri (str): URL path to be used for serving static content.
+            file_or_directory (Union[PathLike, str]): Path to the static file
+                or directory with static files.
+            pattern (str, optional): Regex pattern identifying the valid
+                static files. Defaults to `r"/?.+"`.
+            use_modified_since (bool, optional): If true, send file modified
+                time, and return not modified if the browser's matches the
+                server's. Defaults to `True`.
+            use_content_range (bool, optional): If true, process header for
+                range requests and sends  the file part that is requested.
+                Defaults to `False`.
+            stream_large_files (Union[bool, int], optional): If `True`, use
+                the `StreamingHTTPResponse.file_stream` handler rather than
+                the `HTTPResponse.file handler` to send the file. If this
+                is an integer, it represents the threshold size to switch
+                to `StreamingHTTPResponse.file_stream`. Defaults to `False`,
+                which means that the response will not be streamed.
+            name (str, optional): User-defined name used for url_for.
+                Defaults to `"static"`.
+            host (Optional[str], optional): Host IP or FQDN for the
+                service to use.
+            strict_slashes (Optional[bool], optional): Instruct Sanic to
+                check if the request URLs need to terminate with a slash.
+            content_type (Optional[str], optional): User-defined content type
+                for header.
+            apply (bool, optional): If true, will register the route
+                immediately. Defaults to `True`.
+            resource_type (Optional[str], optional): Explicitly declare a
+                resource to be a `"file"` or a `"dir"`.
+            index (Optional[Union[str, Sequence[str]]], optional): When
+                exposing against a directory, index is  the name that will
+                be served as the default file. When multiple file names are
+                passed, then they will be tried in order.
+            directory_view (bool, optional): Whether to fallback to showing
+                the directory viewer when exposing a directory. Defaults
+                to `False`.
+            directory_handler (Optional[DirectoryHandler], optional): An
+                instance of DirectoryHandler that can be used for explicitly
+                controlling and subclassing the behavior of the default
+                directory handler.
+
+        Returns:
+            List[sanic.router.Route]: Routes registered on the router.
+
+        Examples:
+            Serving a single file:
+            ```python
+            app.static('/foo', 'path/to/static/file.txt')
+            ```
+
+            Serving all files from a directory:
+            ```python
+            app.static('/static', 'path/to/static/directory')
+            ```
+
+            Serving large files with a specific threshold:
+            ```python
+            app.static('/static', 'path/to/large/files', stream_large_files=1000000)
+            ```
+        """  # noqa: E501
 
         name = self._generate_name(name)
 

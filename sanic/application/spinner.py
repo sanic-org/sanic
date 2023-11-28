@@ -15,6 +15,11 @@ if os.name == "nt":  # noqa
 
 
 class Spinner:  # noqa
+    """Spinner class to show a loading spinner in the terminal.
+
+    Used internally by the `loading` context manager.
+    """
+
     def __init__(self, message: str) -> None:
         self.message = message
         self.queue: Queue[int] = Queue()

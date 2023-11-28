@@ -48,16 +48,42 @@ def _unquote(str):  # no cov
     return "".join(res)
 
 
-def parse_cookie(raw: str):
-    cookies: Dict[str, List] = {}
+def parse_cookie(raw: str) -> Dict[str, List[str]]:
+    """Parses a raw cookie string into a dictionary.
+
+    The function takes a raw cookie string (usually from HTTP headers) and
+    returns a dictionary where each key is a cookie name and the value is a
+    list of values for that cookie. The function handles quoted values and
+    skips invalid cookie names.
+
+    Args:
+        raw (str): The raw cookie string to be parsed.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary containing the cookie names as keys
+        and a list of values for each cookie.
+
+    Example:
+        ```python
+        raw = 'name1=value1; name2="value2"; name3=value3'
+        cookies = parse_cookie(raw)
+        # cookies will be {'name1': ['value1'], 'name2': ['value2'], 'name3': ['value3']}
+        ```
+    """  # noqa: E501
+    cookies: Dict[str, List[str]] = {}
 
     for token in raw.split(";"):
-        name, __, value = token.partition("=")
+        name, sep, value = token.partition("=")
         name = name.strip()
         value = value.strip()
 
-        if not name:
-            continue
+        # Support cookies =value or plain value with no name
+        # https://github.com/httpwg/http-extensions/issues/159
+        if not sep:
+            if not name:
+                # Empty value like ;; or a cookie header with no value
+                continue
+            name, value = "", name
 
         if COOKIE_NAME_RESERVED_CHARS.search(name):  # no cov
             continue
@@ -74,6 +100,31 @@ def parse_cookie(raw: str):
 
 
 class CookieRequestParameters(RequestParameters):
+    """A container for accessing single and multiple cookie values.
+
+    Because the HTTP standard allows for multiple cookies with the same name,
+    a standard dictionary cannot be used to access cookie values. This class
+    provides a way to access cookie values in a way that is similar to a
+    dictionary, but also allows for accessing multiple values for a single
+    cookie name when necessary.
+
+    Args:
+        cookies (Dict[str, List[str]]): A dictionary containing the cookie
+            names as keys and a list of values for each cookie.
+
+    Example:
+        ```python
+        raw = 'name1=value1; name2="value2"; name3=value3'
+        cookies = parse_cookie(raw)
+        # cookies will be {'name1': ['value1'], 'name2': ['value2'], 'name3': ['value3']}
+
+        request_cookies = CookieRequestParameters(cookies)
+        request_cookies['name1']  # 'value1'
+        request_cookies.get('name1')  # 'value1'
+        request_cookies.getlist('name1')  # ['value1']
+        ```
+    """  # noqa: E501
+
     def __getitem__(self, key: str) -> Optional[str]:
         deprecation(
             f"You are accessing cookie key '{key}', which is currently in "

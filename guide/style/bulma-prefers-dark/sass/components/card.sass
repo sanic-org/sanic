@@ -1,0 +1,26 @@
+$card-color-dark: $text-dark !default
+$card-background-color-dark: $black !default
+$card-shadow-dark: 0 2px 3px rgba($white, 0.1), 0 0 0 1px rgba($white, 0.1) !default
+
+$card-header-color-dark: $text-strong-dark !default
+$card-header-shadow-dark: 0 1px 2px rgba($white, 0.1) !default
+
+$card-footer-border-top-dark: 1px solid $border-dark !default
+
+.card
+  background-color: $card-background-color-dark
+  box-shadow: $card-shadow-dark
+  color: $card-color-dark
+
+.card-header
+  box-shadow: $card-header-shadow-dark
+
+.card-header-title
+  color: $card-header-color-dark
+
+.card-footer
+  border-top: $card-footer-border-top-dark
+
+.card-footer-item
+  &:not(:last-child)
+    border-right: $card-footer-border-top-dark

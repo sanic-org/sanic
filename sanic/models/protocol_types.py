@@ -3,10 +3,11 @@ from __future__ import annotations
 import sys
 
 from asyncio import BaseTransport
-from typing import TYPE_CHECKING, Any, AnyStr
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 
 if TYPE_CHECKING:
+    from sanic.http.constants import HTTP
     from sanic.models.asgi import ASGIScope
 
 
@@ -18,26 +19,21 @@ else:
     from typing import Protocol
 
     class HTMLProtocol(Protocol):
-        def __html__(self) -> AnyStr:
+        def __html__(self) -> Union[str, bytes]:
             ...
 
-        def _repr_html_(self) -> AnyStr:
+        def _repr_html_(self) -> Union[str, bytes]:
             ...
 
     class Range(Protocol):
-        def start(self) -> int:
-            ...
-
-        def end(self) -> int:
-            ...
-
-        def size(self) -> int:
-            ...
-
-        def total(self) -> int:
-            ...
+        start: Optional[int]
+        end: Optional[int]
+        size: Optional[int]
+        total: Optional[int]
+        __slots__ = ()
 
 
 class TransportProtocol(BaseTransport):
     scope: ASGIScope
+    version: HTTP
     __slots__ = ()

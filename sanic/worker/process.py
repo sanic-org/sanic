@@ -133,16 +133,6 @@ class WorkerProcess:
         except AssertionError:
             return False
 
-    # def _run(self, **kwargs):
-    #     atexit.register(self._exit)
-    #     self.target(**kwargs)
-
-    # def _exit(self):
-    #     try:
-    #         del self.worker_state[self.name]
-    #     except ConnectionRefusedError:
-    #         logger.debug("Monitor process has already exited.")
-
     def spawn(self):
         if self.state not in (ProcessState.IDLE, ProcessState.RESTARTING):
             raise Exception("Cannot spawn a worker process until it is idle.")

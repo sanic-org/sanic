@@ -137,6 +137,10 @@ function initSearch() {
         );
     });
 }
+function initMermaid() {
+    const mermaids = document.querySelectorAll(".mermaid");
+    mermaid.init(undefined, mermaids);
+}
 function refreshAnchors() {
     anchors = document.querySelectorAll("h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]");
 };
@@ -158,7 +162,7 @@ function setMenuLinkActive(href) {
             g.classList.remove("is-open");
         }
     });
-}
+}	
 function copyCode(button) {
     const codeBlock = button.parentElement;
     const code = codeBlock.querySelector("code").innerText;
@@ -190,6 +194,7 @@ function init() {
 
 function afterSwap(e) {
     setMenuLinkActive(e.detail.pathInfo.requestPath);
+    initMermaid();
     window.scrollTo(0, 0);
 }
 document.addEventListener("DOMContentLoaded", init);

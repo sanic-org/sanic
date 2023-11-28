@@ -2,7 +2,19 @@
 
 Whereas listeners allow you to attach functionality to the lifecycle of a worker process, middleware allows you to attach functionality to the lifecycle of an HTTP stream.
 
+```python
+@app.on_request
+async def example(request):
+	print("I execute before the handler.")
+```
+
 You can execute middleware either _before_ the handler is executed, or _after_.
+
+```python
+@app.on_response
+async def example(request, response):
+	print("I execute after the handler.")
+```
 
 .. mermaid::
 

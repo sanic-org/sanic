@@ -980,7 +980,7 @@ class Request(Generic[sanic_type, ctx_type]):
             if proto:
                 # Give ws/wss if websocket, otherwise keep the same
                 scheme = proto.replace("http", scheme)
-            elif self.conn_info.ssl:
+            elif self.conn_info and self.conn_info.ssl:
                 scheme += "s"
             self._scheme = scheme
 

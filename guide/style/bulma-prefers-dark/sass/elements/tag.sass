@@ -1,0 +1,27 @@
+$tag-background-color-dark: $background-dark !default
+$tag-color-dark: $text-dark !default
+
+.tag:not(body)
+  background-color: $tag-background-color-dark
+  color: $tag-color-dark
+  // Colors
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}
+      background-color: $color
+      color: $color-invert
+  // Colors Dark
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}-dark
+      background-color: $color
+      color: $color-invert
+  // Modifiers
+  &.is-delete
+    &:hover,
+    &:focus
+      background-color: darken($tag-background-color-dark, 5%)
+    &:active
+      background-color: darken($tag-background-color-dark, 10%)

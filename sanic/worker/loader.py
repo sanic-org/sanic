@@ -21,6 +21,20 @@ DEFAULT_APP_NAME = "app"
 
 
 class AppLoader:
+    """A helper to load application instances.
+
+    Generally used by the worker to load the application instance.
+
+    See [Dynamic Applications](/en/guide/deployment/app-loader) for information on when you may need to use this.
+
+    Args:
+        module_input (str): The module to load the application from.
+        as_factory (bool): Whether the application is a factory.
+        as_simple (bool): Whether the application is a simple server.
+        args (Any): Arguments to pass to the application factory.
+        factory (Callable[[], SanicApp]): A callable that returns a Sanic application instance.
+    """  # noqa: E501
+
     def __init__(
         self,
         module_input: str = "",

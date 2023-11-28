@@ -1,0 +1,48 @@
+$message-background-color-dark: $background-dark !default
+
+$message-header-background-color-dark: $text-dark !default
+$message-header-color-dark: $text-invert-dark !default
+
+$message-body-border-color-dark: $border-dark !default
+$message-body-color-dark: $text-dark !default
+
+$message-body-pre-background-color-dark: $black !default
+
+.message
+  background-color: $message-background-color-dark
+  // Colors
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}
+      background-color: $background-dark
+      .message-header
+        background-color: $color
+        color: $color-invert
+      .message-body
+        border-color: $color
+        color: $text-dark
+
+  // Dark Colors
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}-dark
+      background-color: $background-dark
+      .message-header
+        background-color: $color
+        color: $color-invert
+      .message-body
+        border-color: $color
+        color: $text-dark
+
+.message-header
+  background-color: $message-header-background-color-dark
+  color: $message-header-color-dark
+
+.message-body
+  border-color: $message-body-border-color-dark
+  color: $message-body-color-dark
+  code,
+  pre
+    background-color: $message-body-pre-background-color-dark

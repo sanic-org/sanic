@@ -13,6 +13,16 @@ from sanic.response import file, html, redirect
 
 
 class DirectoryHandler:
+    """Serve files from a directory.
+
+    Args:
+        uri (str): The URI to serve the files at.
+        directory (Path): The directory to serve files from.
+        directory_view (bool): Whether to show a directory listing or not.
+        index (Optional[Union[str, Sequence[str]]]): The index file(s) to
+            serve if the directory is requested. Defaults to None.
+    """
+
     def __init__(
         self,
         uri: str,
@@ -30,6 +40,19 @@ class DirectoryHandler:
         self.index = tuple(index)
 
     async def handle(self, request: Request, path: str):
+        """Handle the request.
+
+        Args:
+            request (Request): The incoming request object.
+            path (str): The path to the file to serve.
+
+        Raises:
+            NotFound: If the file is not found.
+            IsADirectoryError: If the path is a directory and directory_view is False.
+
+        Returns:
+            Response: The response object.
+        """  # noqa: E501
         current = path.strip("/")[len(self.base) :].strip("/")  # noqa: E203
         for file_name in self.index:
             index_file = self.directory / current / file_name

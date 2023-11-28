@@ -1,0 +1,57 @@
+$tabs-border-bottom-color-dark: $border-dark !default
+$tabs-link-color-dark: $text-dark !default
+$tabs-link-hover-border-bottom-color-dark: $text-strong-dark !default
+$tabs-link-hover-color-dark: $text-strong-dark !default
+$tabs-link-active-border-bottom-color-dark: $link-dark !default
+$tabs-link-active-color-dark: $link-dark !default
+
+$tabs-boxed-link-hover-background-color-dark: $background-dark !default
+$tabs-boxed-link-hover-border-bottom-color-dark: $border-dark !default
+
+$tabs-boxed-link-active-background-color-dark: $black !default
+$tabs-boxed-link-active-border-color-dark: $border-dark !default
+
+$tabs-toggle-link-border-color-dark: $border-dark !default
+$tabs-toggle-link-hover-background-color-dark: $background-dark !default
+$tabs-toggle-link-hover-border-color-dark: $border-hover-dark !default
+$tabs-toggle-link-active-background-color-dark: $link-dark !default
+$tabs-toggle-link-active-border-color-dark: $link-dark !default
+$tabs-toggle-link-active-color-dark: $link-invert-dark !default
+
+.tabs
+  a
+    border-bottom-color: $tabs-border-bottom-color-dark
+    color: $tabs-link-color-dark
+    &:hover
+      border-bottom-color: $tabs-link-hover-border-bottom-color-dark
+      color: $tabs-link-hover-color-dark
+  li
+    &.is-active
+      a
+        border-bottom-color: $tabs-link-active-border-bottom-color-dark
+        color: $tabs-link-active-color-dark
+  ul
+    border-bottom-color: $tabs-border-bottom-color-dark
+  // Styles
+  &.is-boxed
+    a
+      &:hover
+        background-color: $tabs-boxed-link-hover-background-color-dark
+        border-bottom-color: $tabs-boxed-link-hover-border-bottom-color-dark
+    li
+      &.is-active
+        a
+          background-color: $tabs-boxed-link-active-background-color-dark
+          border-color: $tabs-boxed-link-active-border-color-dark
+  &.is-toggle
+    a
+      border-color: $tabs-toggle-link-border-color-dark
+      &:hover
+        background-color: $tabs-toggle-link-hover-background-color-dark
+        border-color: $tabs-toggle-link-hover-border-color-dark
+    li
+      &.is-active
+        a
+          background-color: $tabs-toggle-link-active-background-color-dark
+          border-color: $tabs-toggle-link-active-border-color-dark
+          color: $tabs-toggle-link-active-color-dark

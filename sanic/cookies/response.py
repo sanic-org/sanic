@@ -53,10 +53,14 @@ _is_legal_key = re.compile("[%s]+" % re.escape(LEGAL_CHARS)).fullmatch
 
 # In v24.3, we should remove this as being a subclass of dict
 class CookieJar(dict):
-    """
+    """A container to manipulate cookies.
+
     CookieJar dynamically writes headers as cookies are added and removed
     It gets around the limitation of one header per name by using the
     MultiHeader class to provide a unique key that encodes to Set-Cookie.
+
+    Args:
+        headers (Header): The headers object to write cookies to.
     """
 
     HEADER_KEY = "Set-Cookie"
@@ -114,6 +118,7 @@ class CookieJar(dict):
         return super().__iter__()
 
     def keys(self):  # no cov
+        """Deprecated in v24.3"""
         deprecation(
             "Accessing CookieJar.keys() has been deprecated and will be "
             "removed in v24.3. To learn more, please see: "
@@ -123,6 +128,7 @@ class CookieJar(dict):
         return super().keys()
 
     def values(self):  # no cov
+        """Deprecated in v24.3"""
         deprecation(
             "Accessing CookieJar.values() has been deprecated and will be "
             "removed in v24.3. To learn more, please see: "
@@ -132,6 +138,7 @@ class CookieJar(dict):
         return super().values()
 
     def items(self):  # no cov
+        """Deprecated in v24.3"""
         deprecation(
             "Accessing CookieJar.items() has been deprecated and will be "
             "removed in v24.3. To learn more, please see: "
@@ -141,6 +148,7 @@ class CookieJar(dict):
         return super().items()
 
     def get(self, *args, **kwargs):  # no cov
+        """Deprecated in v24.3"""
         deprecation(
             "Accessing cookies from the CookieJar using get is deprecated "
             "and will be removed in v24.3. You should instead use the "
@@ -151,6 +159,7 @@ class CookieJar(dict):
         return super().get(*args, **kwargs)
 
     def pop(self, key, *args, **kwargs):  # no cov
+        """Deprecated in v24.3"""
         deprecation(
             "Using CookieJar.pop() has been deprecated and will be "
             "removed in v24.3. To learn more, please see: "
@@ -162,6 +171,7 @@ class CookieJar(dict):
 
     @property
     def header_key(self):  # no cov
+        """Deprecated in v24.3"""
         deprecation(
             "The CookieJar.header_key property has been deprecated and will "
             "be removed in version 24.3. Use CookieJar.HEADER_KEY. ",
@@ -171,6 +181,7 @@ class CookieJar(dict):
 
     @property
     def cookie_headers(self) -> Dict[str, str]:  # no cov
+        """Deprecated in v24.3"""
         deprecation(
             "The CookieJar.coookie_headers property has been deprecated "
             "and will be removed in version 24.3. If you need to check if a "
@@ -181,6 +192,11 @@ class CookieJar(dict):
 
     @property
     def cookies(self) -> List[Cookie]:
+        """A list of cookies in the CookieJar.
+
+        Returns:
+            List[Cookie]: A list of cookies in the CookieJar.
+        """
         return self.headers.getall(self.HEADER_KEY)
 
     def get_cookie(
@@ -191,6 +207,22 @@ class CookieJar(dict):
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> Optional[Cookie]:
+        """Fetch a cookie from the CookieJar.
+
+        Args:
+            key (str): The key of the cookie to fetch.
+            path (str, optional): The path of the cookie. Defaults to `"/"`.
+            domain (Optional[str], optional): The domain of the cookie.
+                Defaults to `None`.
+            host_prefix (bool, optional): Whether to add __Host- as a prefix to the key.
+                This requires that path="/", domain=None, and secure=True.
+                Defaults to `False`.
+            secure_prefix (bool, optional): Whether to add __Secure- as a prefix to the key.
+                This requires that secure=True. Defaults to `False`.
+
+        Returns:
+            Optional[Cookie]: The cookie if it exists, otherwise `None`.
+        """  # noqa: E501
         for cookie in self.cookies:
             if (
                 cookie.key == Cookie.make_key(key, host_prefix, secure_prefix)
@@ -208,6 +240,22 @@ class CookieJar(dict):
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> bool:
+        """Check if a cookie exists in the CookieJar.
+
+        Args:
+            key (str): The key of the cookie to check.
+            path (str, optional): The path of the cookie. Defaults to `"/"`.
+            domain (Optional[str], optional): The domain of the cookie.
+                Defaults to `None`.
+            host_prefix (bool, optional): Whether to add __Host- as a prefix to the key.
+                This requires that path="/", domain=None, and secure=True.
+                Defaults to `False`.
+            secure_prefix (bool, optional): Whether to add __Secure- as a prefix to the key.
+                This requires that secure=True. Defaults to `False`.
+
+        Returns:
+            bool: Whether the cookie exists.
+        """  # noqa: E501
         for cookie in self.cookies:
             if (
                 cookie.key == Cookie.make_key(key, host_prefix, secure_prefix)
@@ -234,44 +282,59 @@ class CookieJar(dict):
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> Cookie:
-        """
-        Add a cookie to the CookieJar
+        """Add a cookie to the CookieJar.
 
-        :param key: Key of the cookie
-        :type key: str
-        :param value: Value of the cookie
-        :type value: str
-        :param path: Path of the cookie, defaults to None
-        :type path: Optional[str], optional
-        :param domain: Domain of the cookie, defaults to None
-        :type domain: Optional[str], optional
-        :param secure: Whether to set it as a secure cookie, defaults to True
-        :type secure: bool
-        :param max_age: Max age of the cookie in seconds; if set to 0 a
-            browser should delete it, defaults to None
-        :type max_age: Optional[int], optional
-        :param expires: When the cookie expires; if set to None browsers
-            should set it as a session cookie, defaults to None
-        :type expires: Optional[datetime], optional
-        :param httponly: Whether to set it as HTTP only, defaults to False
-        :type httponly: bool
-        :param samesite: How to set the samesite property, should be
-            strict, lax or none (case insensitive), defaults to Lax
-        :type samesite: Optional[SameSite], optional
-        :param partitioned: Whether to set it as partitioned, defaults to False
-        :type partitioned: bool
-        :param comment: A cookie comment, defaults to None
-        :type comment: Optional[str], optional
-        :param host_prefix: Whether to add __Host- as a prefix to the key.
-            This requires that path="/", domain=None, and secure=True,
-            defaults to False
-        :type host_prefix: bool
-        :param secure_prefix: Whether to add __Secure- as a prefix to the key.
-            This requires that secure=True, defaults to False
-        :type secure_prefix: bool
-        :return: The instance of the created cookie
-        :rtype: Cookie
-        """
+        Args:
+            key (str): Key of the cookie.
+            value (str): Value of the cookie.
+            path (str, optional): Path of the cookie. Defaults to "/".
+            domain (Optional[str], optional): Domain of the cookie. Defaults to None.
+            secure (bool, optional): Whether to set it as a secure cookie. Defaults to True.
+            max_age (Optional[int], optional): Max age of the cookie in seconds; if set to 0 a
+                browser should delete it. Defaults to None.
+            expires (Optional[datetime], optional): When the cookie expires; if set to None browsers
+                should set it as a session cookie. Defaults to None.
+            httponly (bool, optional): Whether to set it as HTTP only. Defaults to False.
+            samesite (Optional[SameSite], optional): How to set the samesite property, should be
+                strict, lax, or none (case insensitive). Defaults to "Lax".
+            partitioned (bool, optional): Whether to set it as partitioned. Defaults to False.
+            comment (Optional[str], optional): A cookie comment. Defaults to None.
+            host_prefix (bool, optional): Whether to add __Host- as a prefix to the key.
+                This requires that path="/", domain=None, and secure=True. Defaults to False.
+            secure_prefix (bool, optional): Whether to add __Secure- as a prefix to the key.
+                This requires that secure=True. Defaults to False.
+
+        Returns:
+            Cookie: The instance of the created cookie.
+
+        Raises:
+            ServerError: If host_prefix is set without secure=True.
+            ServerError: If host_prefix is set without path="/" and domain=None.
+            ServerError: If host_prefix is set with domain.
+            ServerError: If secure_prefix is set without secure=True.
+            ServerError: If partitioned is set without host_prefix=True.
+
+        Examples:
+            Basic usage
+            ```python
+            cookie = add_cookie('name', 'value')
+            ```
+
+            Adding a cookie with a custom path and domain
+            ```python
+            cookie = add_cookie('name', 'value', path='/custom', domain='example.com')
+            ```
+
+            Adding a secure, HTTP-only cookie with a comment
+            ```python
+            cookie = add_cookie('name', 'value', secure=True, httponly=True, comment='My Cookie')
+            ```
+
+            Adding a cookie with a max age of 60 seconds
+            ```python
+            cookie = add_cookie('name', 'value', max_age=60)
+            ```
+        """  # noqa: E501
         cookie = Cookie(
             key,
             value,
@@ -359,7 +422,41 @@ class CookieJar(dict):
 # All of the current property accessors should be removed in favor
 # of actual slotted properties.
 class Cookie(dict):
-    """A stripped down version of Morsel from SimpleCookie"""
+    """A representation of a HTTP cookie, providing an interface to manipulate cookie attributes intended for a response.
+
+    This class is a simplified representation of a cookie, similar to the Morsel SimpleCookie in Python's standard library.
+    It allows the manipulation of various cookie attributes including path, domain, security settings, and others.
+
+    Several "smart defaults" are provided to make it easier to create cookies that are secure by default. These include:
+
+    - Setting the `secure` flag to `True` by default
+    - Setting the `samesite` flag to `Lax` by default
+
+    Args:
+        key (str): The key (name) of the cookie.
+        value (str): The value of the cookie.
+        path (str, optional): The path for the cookie. Defaults to "/".
+        domain (Optional[str], optional): The domain for the cookie.
+            Defaults to `None`.
+        secure (bool, optional): Whether the cookie is secure.
+            Defaults to `True`.
+        max_age (Optional[int], optional): The maximum age of the cookie
+            in seconds. Defaults to `None`.
+        expires (Optional[datetime], optional): The expiration date of the
+            cookie. Defaults to `None`.
+        httponly (bool, optional): HttpOnly flag for the cookie.
+            Defaults to `False`.
+        samesite (Optional[SameSite], optional): The SameSite attribute for
+            the cookie. Defaults to `"Lax"`.
+        partitioned (bool, optional): Whether the cookie is partitioned.
+            Defaults to `False`.
+        comment (Optional[str], optional): A comment for the cookie.
+            Defaults to `None`.
+        host_prefix (bool, optional): Whether to use the host prefix.
+            Defaults to `False`.
+        secure_prefix (bool, optional): Whether to use the secure prefix.
+            Defaults to `False`.
+    """  # noqa: E501
 
     HOST_PREFIX = "__Host-"
     SECURE_PREFIX = "__Secure-"
@@ -481,19 +578,23 @@ class Cookie(dict):
 
         super().__setitem__(key, value)
 
-    def encode(self, encoding):
-        """
-        Encode the cookie content in a specific type of encoding instructed
-        by the developer. Leverages the :func:`str.encode` method provided
-        by python.
+    def encode(self, encoding: str) -> bytes:
+        """Encode the cookie content in a specific type of encoding instructed by the developer.
+
+        Leverages the `str.encode` method provided by Python.
 
         This method can be used to encode and embed ``utf-8`` content into
         the cookies.
 
-        :param encoding: Encoding to be used with the cookie
-        :return: Cookie encoded in a codec of choosing.
-        :except: UnicodeEncodeError
-        """
+        .. warning::
+            Direct encoding of a Cookie object has been deprecated and will be removed in v24.3.
+
+        Args:
+            encoding (str): The encoding type to be used.
+
+        Returns:
+            bytes: The encoded cookie content.
+        """  # noqa: E501
         deprecation(
             "Direct encoding of a Cookie object has been deprecated and will "
             "be removed in v24.3.",
@@ -531,6 +632,7 @@ class Cookie(dict):
 
     @property
     def path(self) -> str:  # no cov
+        """The path of the cookie. Defaults to `"/"`."""
         return self["path"]
 
     @path.setter
@@ -539,6 +641,7 @@ class Cookie(dict):
 
     @property
     def expires(self) -> Optional[datetime]:  # no cov
+        """The expiration date of the cookie. Defaults to `None`."""
         return self.get("expires")
 
     @expires.setter
@@ -547,6 +650,7 @@ class Cookie(dict):
 
     @property
     def comment(self) -> Optional[str]:  # no cov
+        """A comment for the cookie. Defaults to `None`."""
         return self.get("comment")
 
     @comment.setter
@@ -555,6 +659,7 @@ class Cookie(dict):
 
     @property
     def domain(self) -> Optional[str]:  # no cov
+        """The domain of the cookie. Defaults to `None`."""
         return self.get("domain")
 
     @domain.setter
@@ -563,6 +668,7 @@ class Cookie(dict):
 
     @property
     def max_age(self) -> Optional[int]:  # no cov
+        """The maximum age of the cookie in seconds. Defaults to `None`."""
         return self.get("max-age")
 
     @max_age.setter
@@ -571,6 +677,7 @@ class Cookie(dict):
 
     @property
     def secure(self) -> bool:  # no cov
+        """Whether the cookie is secure. Defaults to `True`."""
         return self.get("secure", False)
 
     @secure.setter
@@ -579,6 +686,7 @@ class Cookie(dict):
 
     @property
     def httponly(self) -> bool:  # no cov
+        """Whether the cookie is HTTP only. Defaults to `False`."""
         return self.get("httponly", False)
 
     @httponly.setter
@@ -587,6 +695,7 @@ class Cookie(dict):
 
     @property
     def samesite(self) -> Optional[SameSite]:  # no cov
+        """The SameSite attribute for the cookie. Defaults to `"Lax"`."""
         return self.get("samesite")
 
     @samesite.setter
@@ -595,6 +704,7 @@ class Cookie(dict):
 
     @property
     def partitioned(self) -> bool:  # no cov
+        """Whether the cookie is partitioned. Defaults to `False`."""
         return self.get("partitioned", False)
 
     @partitioned.setter
@@ -605,6 +715,29 @@ class Cookie(dict):
     def make_key(
         cls, key: str, host_prefix: bool = False, secure_prefix: bool = False
     ) -> str:
+        """Create a cookie key with the appropriate prefix.
+
+        Cookies can have one ow two prefixes. The first is `__Host-` which
+        requires that the cookie be set with `path="/", domain=None, and
+        secure=True`. The second is `__Secure-` which requires that
+        `secure=True`.
+
+        They cannot be combined.
+
+        Args:
+            key (str): The key (name) of the cookie.
+            host_prefix (bool, optional): Whether to add __Host- as a prefix to the key.
+                This requires that path="/", domain=None, and secure=True.
+                Defaults to `False`.
+            secure_prefix (bool, optional): Whether to add __Secure- as a prefix to the key.
+                This requires that secure=True. Defaults to `False`.
+
+        Raises:
+            ServerError: If both host_prefix and secure_prefix are set.
+
+        Returns:
+            str: The key with the appropriate prefix.
+        """  # noqa: E501
         if host_prefix and secure_prefix:
             raise ServerError(
                 "Both host_prefix and secure_prefix were requested. "

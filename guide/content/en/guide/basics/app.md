@@ -1,10 +1,12 @@
 # Sanic Application
 
+See API docs: [sanic.app](/api/sanic.app)
+
 ## Instance
 
 .. column::
 
-    The most basic building block is the `Sanic()` instance. It is not required, but the custom is to instantiate this in a file called `server.py`.
+    The most basic building block is the :class:`sanic.app.Sanic` instance. It is not required, but the custom is to instantiate this in a file called `server.py`.
 
 .. column::
 
@@ -18,32 +20,35 @@
 
 ## Application context
 
-Most applications will have the need to share/reuse data or objects across different parts of the code base. The most common example is DB connections. 
-
-.. column::
-
-    In versions of Sanic prior to v21.3, this was commonly done by attaching an attribute to the application instance
-
-.. column::
-
-    ```python
-    # Raises a warning as deprecated feature in 21.3
-    app = Sanic("MyApp")
-    app.db = Database()
-    ```
+Most applications will have the need to share/reuse data or objects across different parts of the code base. Sanic helps be providing the `ctx` object on application instances. It is a free space for the developer to attach any objects or data that should existe throughout the lifetime of the application.
 
 
 .. column::
 
-    Because this can create potential problems with name conflicts, and to be consistent with [request context](./request.md#context) objects, v21.3 introduces application level context object.
+    The most common pattern is to attach a database instance to the application.
 
 .. column::
 
     ```python
-    # Correct way to attach objects to the application
     app = Sanic("MyApp")
     app.ctx.db = Database()
     ```
+
+
+.. column::
+
+    While the previous example will work and is illustrative, it is typically considered best practice to attach objects in one of the two application startup [listeners](./listeners).
+
+.. column::
+
+    ```python
+    app = Sanic("MyApp")
+
+    @app.before_server_start
+    async def attach_db(app, loop):
+        app.ctx.db = Database()
+    ```
+
 
 ## App Registry
 
@@ -68,7 +73,7 @@ Most applications will have the need to share/reuse data or objects across diffe
 
 .. column::
 
-    If you call `Sanic.get_app("non-existing")` on an app that does not exist, it will raise `SanicException` by default. You can, instead, force the method to return a new instance of Sanic with that name.
+    If you call `Sanic.get_app("non-existing")` on an app that does not exist, it will raise :class:`sanic.exceptions.SanicException` by default. You can, instead, force the method to return a new instance of Sanic with that name.
 
 .. column::
 
@@ -119,17 +124,54 @@ Most applications will have the need to share/reuse data or objects across diffe
 .. note:: Heads up
 
     Config keys _should_ be uppercase. But, this is mainly by convention, and lowercase will work most of the time.
-    ```
+    ```python
     app.config.GOOD = "yay!"
     app.config.bad = "boo"
     ```
 
 
-There is much [more detail about configuration](/guide/deployment/configuration.md) later on.
+There is much [more detail about configuration](../running/configuration.md) later on.
+
+## Factory pattern
+
+Many of the examples in these docs will show the instantiation of the :class:`sanic.app.Sanic` instance in a file called `server.py` in the "global scope" (i.e. not inside a function). This is a common pattern for very simple "hello world" style applications, but it is often beneficial to use a factory pattern instead.
+
+A "factory" is just a function that returns an instance of the object you want to use. This allows you to abstract the instantiation of the object, but also may make it easier to isolate the application instance.
+
+.. column::
+
+    A super simple factory pattern could look like this:
+    
+.. column::
+
+    ```python
+    # ./path/to/server.py
+    from sanic import Sanic
+    from .path.to.config import MyConfig
+    from .path.to.some.blueprint import bp
+    
+    
+    def create_app(config=MyConfig) -> Sanic:
+        app = Sanic("MyApp", config=config)
+        app.blueprint(bp)
+        return app
+    ```
+
+.. column::
+
+    When we get to running Sanic later, you will learn that the Sanic CLI can detect this pattern and use it to run your application.
+    
+.. column::
+
+    ```sh
+    sanic path.to.server:create_app
+    ```
 
 ## Customization
 
-The Sanic application instance can be customized for your application needs in a variety of ways at instantiation. 
+The Sanic application instance can be customized for your application needs in a variety of ways at instantiation.
+
+For complete details, see the [API docs](/api/sanic.app).
 
 ### Custom configuration
 
@@ -137,7 +179,7 @@ The Sanic application instance can be customized for your application needs in a
 
     This simplest form of custom configuration would be to pass your own object directly into that Sanic application instance
 
-    If you create a custom configuration object, it is *highly* recommended that you subclass the Sanic `Config` option to inherit its behavior. You could use this option for adding properties, or your own set of custom logic.
+    If you create a custom configuration object, it is *highly* recommended that you subclass the :class:`sanic.config.Config` option to inherit its behavior. You could use this option for adding properties, or your own set of custom logic.
 
     *Added in v21.6*
 
@@ -155,7 +197,7 @@ The Sanic application instance can be customized for your application needs in a
 
 .. column::
 
-    A useful example of this feature would be if you wanted to use a config file in a form that differs from what is [supported](../deployment/configuration.md#using-sanic-update-config).
+    A useful example of this feature would be if you wanted to use a config file in a form that differs from what is [supported](../running/configuration.md#using-sanicupdateconfig).
 
 .. column::
 
@@ -293,7 +335,7 @@ The Sanic application instance can be customized for your application needs in a
     ```python
     from orjson import dumps
 
-    app = Sanic(__name__, dumps=dumps)
+    app = Sanic("MyApp", dumps=dumps)
     ```
 
 ### Custom loads function
@@ -309,7 +351,7 @@ The Sanic application instance can be customized for your application needs in a
     ```python
     from orjson import loads
 
-    app = Sanic(__name__, loads=loads)
+    app = Sanic("MyApp", loads=loads)
     ```
 
 
@@ -318,7 +360,7 @@ The Sanic application instance can be customized for your application needs in a
 
     ### Custom typed application
 
-The correct, default type of a Sanic application instance is:
+Beginnint in v23.6, the correct type annotation of a default Sanic application instance is:
 
 ```python
 sanic.app.Sanic[sanic.config.Config, types.SimpleNamespace]
@@ -326,14 +368,14 @@ sanic.app.Sanic[sanic.config.Config, types.SimpleNamespace]
 
 It refers to two generic types:
 
-1. The first is the type of the configuration object. It defaults to `sanic.config.Config`, but can be any subclass of that.
-2. The second is the type of the application context. It defaults to `types.SimpleNamespace`, but can be **any object** as show above.
+1. The first is the type of the configuration object. It defaults to :class:`sanic.config.Config`, but can be any subclass of that.
+2. The second is the type of the application context. It defaults to [`SimpleNamespace()`](https://docs.python.org/3/library/types.html#types.SimpleNamespace), but can be **any object** as show above.
 
 Let's look at some examples of how the type will change.
 
 .. column::
 
-    Consider this example where we pass a custom subclass of `Config` and a custom context object.
+    Consider this example where we pass a custom subclass of :class:`sanic.config.Config` and a custom context object.
 
 .. column::
 
@@ -431,7 +473,9 @@ add_listeners(app)
 
 *Added in v23.6*
 
-### Custom typed request
+.. new:: NEW in v23.6
+
+    ### Custom typed request
 
 Sanic also allows you to customize the type of the request object. This is useful if you want to add custom properties to the request object, or be able to access your custom properties of a typed application instance.
 
@@ -511,7 +555,7 @@ Let's look at some examples of how the type will change.
         pass
     ```
 
-See more information in the [custom request context](./request.md#custom-request-context) section.
+See more information in the [custom request context](./request#custom-request-context) section.
 
 *Added in v23.6*
 

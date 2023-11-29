@@ -1,5 +1,4 @@
 import logging
-import os
 import ssl
 import subprocess
 import sys
@@ -32,18 +31,18 @@ from sanic.response import text
 from sanic.worker.loader import CertLoader
 
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
-localhost_dir = os.path.join(current_dir, "certs/localhost")
-password_dir = os.path.join(current_dir, "certs/password")
-sanic_dir = os.path.join(current_dir, "certs/sanic.example")
-invalid_dir = os.path.join(current_dir, "certs/invalid.nonexist")
-localhost_cert = os.path.join(localhost_dir, "fullchain.pem")
-localhost_key = os.path.join(localhost_dir, "privkey.pem")
-sanic_cert = os.path.join(sanic_dir, "fullchain.pem")
-sanic_key = os.path.join(sanic_dir, "privkey.pem")
+current_dir = Path(__file__).parent.resolve()
+localhost_dir = current_dir / "certs/localhost"
+password_dir = current_dir / "certs/password"
+sanic_dir = current_dir / "certs/sanic.example"
+invalid_dir = current_dir / "certs/invalid.nonexist"
+localhost_cert = localhost_dir / "fullchain.pem"
+localhost_key = localhost_dir / "privkey.pem"
+sanic_cert = sanic_dir / "fullchain.pem"
+sanic_key = sanic_dir / "privkey.pem"
 password_dict = {
-    "cert": os.path.join(password_dir, "fullchain.pem"),
-    "key": os.path.join(password_dir, "privkey.pem"),
+    "cert": password_dir / "fullchain.pem",
+    "key": password_dir / "privkey.pem",
     "password": "password",
     "names": ["localhost"],
 }
@@ -383,7 +382,7 @@ def test_cert_file_on_pathlist(app):
         app.test_client.get("/test", server_kwargs={"ssl": ssl_list})
 
     assert "folder expected" in str(excinfo.value)
-    assert sanic_cert in str(excinfo.value)
+    assert str(sanic_cert) in str(excinfo.value)
 
 
 def test_missing_cert_path(app):

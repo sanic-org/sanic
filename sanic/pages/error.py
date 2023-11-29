@@ -22,6 +22,8 @@ for the inconvenience and appreciate your patience.\
 
 
 class ErrorPage(BasePage):
+    """Page for displaying an error."""
+
     STYLE_APPEND = tracerite.html.style
 
     def __init__(

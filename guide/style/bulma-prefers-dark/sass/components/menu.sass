@@ -1,0 +1,21 @@
+$menu-item-color-dark: $text-dark !default
+$menu-item-hover-color-dark: $text-strong-dark !default
+$menu-item-hover-background-color-dark: $background-dark !default
+$menu-item-active-color-dark: $link-invert-dark !default
+$menu-item-active-background-color-dark: $link-dark !default
+
+$menu-list-border-left-dark: 1px solid $border-dark !default
+
+.menu-list
+  a
+    color: $menu-item-color-dark
+    &:hover
+      background-color: $menu-item-hover-background-color-dark
+      color: $menu-item-hover-color-dark
+    // Modifiers
+    &.is-active
+      background-color: $menu-item-active-background-color-dark
+      color: $menu-item-active-color-dark
+  li
+    ul
+      border-left: $menu-list-border-left-dark

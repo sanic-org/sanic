@@ -33,7 +33,21 @@ _host_re = re.compile(
 
 
 class MediaType:
-    """A media type, as used in the Accept header."""
+    """A media type, as used in the Accept header.
+
+    This class is a representation of a media type, as used in the Accept
+    header. It encapsulates the type, subtype and any parameters, and
+    provides methods for matching against other media types.
+
+    Two separate methods are provided for searching the list:
+    - 'match' for finding the most preferred match (wildcards supported)
+    -  operator 'in' for checking explicit matches (wildcards as literals)
+
+    Args:
+        type_ (str): The type of the media type.
+        subtype (str): The subtype of the media type.
+        **params (str): Any parameters for the media type.
+    """
 
     def __init__(
         self,
@@ -73,14 +87,24 @@ class MediaType:
         self,
         mime_with_params: Union[str, MediaType],
     ) -> Optional[MediaType]:
-        """Check if this media type matches the given mime type/subtype.
+        """Match this media type against another media type.
+
+        Check if this media type matches the given mime type/subtype.
         Wildcards are supported both ways on both type and subtype.
         If mime contains a semicolon, optionally followed by parameters,
         the parameters of the two media types must match exactly.
-        Note:  Use the `==` operator instead to check for literal matches
-        without expanding wildcards.
-        @param media_type: A type/subtype string to match.
-        @return `self` if the media types are compatible, else `None`
+
+        .. note::
+            Use the `==` operator instead to check for literal matches
+            without expanding wildcards.
+
+
+        Args:
+            media_type (str): A type/subtype string to match.
+
+        Returns:
+            MediaType: Returns `self` if the media types are compatible.
+            None: Returns `None` if the media types are not compatible.
         """
         mt = (
             MediaType._parse(mime_with_params)
@@ -109,7 +133,11 @@ class MediaType:
 
     @property
     def has_wildcard(self) -> bool:
-        """Return True if this media type has a wildcard in it."""
+        """Return True if this media type has a wildcard in it.
+
+        Returns:
+            bool: True if this media type has a wildcard in it.
+        """
         return any(part == "*" for part in (self.subtype, self.type))
 
     @classmethod
@@ -134,7 +162,16 @@ class MediaType:
 
 
 class Matched:
-    """A matching result of a MIME string against a header."""
+    """A matching result of a MIME string against a header.
+
+    This class is a representation of a matching result of a MIME string
+    against a header. It encapsulates the MIME string, the header, and
+    provides methods for matching against other MIME strings.
+
+    Args:
+        mime (str): The MIME string to match.
+        header (MediaType): The header to match against, if any.
+    """
 
     def __init__(self, mime: str, header: Optional[MediaType]):
         self.mime = mime
@@ -179,6 +216,17 @@ class Matched:
         )
 
     def match(self, other: Union[str, Matched]) -> Optional[Matched]:
+        """Match this MIME string against another MIME string.
+
+        Check if this MIME string matches the given MIME string. Wildcards are supported both ways on both type and subtype.
+
+        Args:
+            other (str): A MIME string to match.
+
+        Returns:
+            Matched: Returns `self` if the MIME strings are compatible.
+            None: Returns `None` if the MIME strings are not compatible.
+        """  # noqa: E501
         accept = Matched.parse(other) if isinstance(other, str) else other
         if not self.header or not accept.header:
             return None
@@ -202,6 +250,9 @@ class AcceptList(list):
     Two separate methods are provided for searching the list:
     - 'match' for finding the most preferred match (wildcards supported)
     -  operator 'in' for checking explicit matches (wildcards as literals)
+
+    Args:
+        *args (MediaType): Any number of MediaType objects.
     """
 
     def match(self, *mimes: str, accept_wildcards=True) -> Matched:
@@ -224,10 +275,13 @@ class AcceptList(list):
         that matched, and is empty/falsy if no match was found. The matched
         header entry `MediaType` or `None` is available as the `m` attribute.
 
-        @param mimes: Any MIME types to search for in order of preference.
-        @param accept_wildcards: Match Accept entries with wildcards in them.
-        @return A match object with the mime string and the MediaType object.
-        """
+        Args:
+            mimes (List[str]): Any MIME types to search for in order of preference.
+            accept_wildcards (bool): Match Accept entries with wildcards in them.
+
+        Returns:
+            Match: A match object with the mime string and the MediaType object.
+        """  # noqa: E501
         a = sorted(
             (-acc.q, i, j, mime, acc)
             for j, acc in enumerate(self)
@@ -243,10 +297,19 @@ class AcceptList(list):
 
 
 def parse_accept(accept: Optional[str]) -> AcceptList:
-    """Parse an Accept header and order the acceptable media types in
-    according to RFC 7231, s. 5.3.2
+    """Parse an Accept header and order the acceptable media types according to RFC 7231, s. 5.3.2
+
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
-    """
+
+    Args:
+        accept (str): The Accept header value to parse.
+
+    Returns:
+        AcceptList: A list of MediaType objects, ordered by preference.
+
+    Raises:
+        InvalidHeader: If the header value is invalid.
+    """  # noqa: E501
     if not accept:
         if accept == "":
             return AcceptList()  # Empty header, accept nothing
@@ -274,6 +337,12 @@ def parse_content_header(value: str) -> Tuple[str, Options]:
     but runs faster and handles special characters better.
 
     Unescapes %22 to `"` and %0D%0A to `\n` in field values.
+
+    Args:
+        value (str): The header value to parse.
+
+    Returns:
+        Tuple[str, Options]: The header value and a dict of options.
     """
     pos = value.find(";")
     if pos == -1:
@@ -375,7 +444,14 @@ def parse_xforwarded(headers, config) -> Optional[Options]:
 
 
 def fwd_normalize(fwd: OptionsIterable) -> Options:
-    """Normalize and convert values extracted from forwarded headers."""
+    """Normalize and convert values extracted from forwarded headers.
+
+    Args:
+        fwd (OptionsIterable): An iterable of key-value pairs.
+
+    Returns:
+        Options: A dict of normalized key-value pairs.
+    """
     ret: Dict[str, Union[int, str]] = {}
     for key, val in fwd:
         if val is not None:
@@ -396,7 +472,14 @@ def fwd_normalize(fwd: OptionsIterable) -> Options:
 
 
 def fwd_normalize_address(addr: str) -> str:
-    """Normalize address fields of proxy headers."""
+    """Normalize address fields of proxy headers.
+
+    Args:
+        addr (str): An address string.
+
+    Returns:
+        str: A normalized address string.
+    """
     if addr == "unknown":
         raise ValueError()  # omit unknown value identifiers
     if addr.startswith("_"):
@@ -408,7 +491,12 @@ def fwd_normalize_address(addr: str) -> str:
 
 def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
     """Split host:port into hostname and port.
-    :return: None in place of missing elements
+
+    Args:
+        host (str): A host string.
+
+    Returns:
+        Tuple[Optional[str], Optional[int]]: A tuple of hostname and port.
     """
     m = _host_re.fullmatch(host)
     if not m:
@@ -424,7 +512,15 @@ _HTTP1_STATUSLINES = [
 
 
 def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
-    """Format a HTTP/1.1 response header."""
+    """Format a HTTP/1.1 response header.
+
+    Args:
+        status (int): The HTTP status code.
+        headers (HeaderBytesIterable): An iterable of header tuples.
+
+    Returns:
+        bytes: The formatted response header.
+    """
     # Note: benchmarks show that here bytes concat is faster than bytearray,
     # b"".join() or %-formatting. %timeit any changes you make.
     ret = _HTTP1_STATUSLINES[status]
@@ -438,7 +534,15 @@ def parse_credentials(
     header: Optional[str],
     prefixes: Optional[Union[List, Tuple, Set]] = None,
 ) -> Tuple[Optional[str], Optional[str]]:
-    """Parses any header with the aim to retrieve any credentials from it."""
+    """Parses any header with the aim to retrieve any credentials from it.
+
+    Args:
+        header (Optional[str]): The header to parse.
+        prefixes (Optional[Union[List, Tuple, Set]], optional): The prefixes to look for. Defaults to None.
+
+    Returns:
+        Tuple[Optional[str], Optional[str]]: The prefix and the credentials.
+    """  # noqa: E501
     if not prefixes or not isinstance(prefixes, (list, tuple, set)):
         prefixes = ("Basic", "Bearer", "Token")
     if header is not None:

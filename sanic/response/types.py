@@ -50,9 +50,7 @@ except ImportError:
 
 
 class BaseHTTPResponse:
-    """
-    The base class for all HTTP Responses
-    """
+    """The base class for all HTTP Responses"""
 
     __slots__ = (
         "asgi",
@@ -88,20 +86,12 @@ class BaseHTTPResponse:
 
     @property
     def cookies(self) -> CookieJar:
-        """
-        The response cookies. Cookies should be set and written as follows:
+        """The response cookies.
 
-        .. code-block:: python
+        See [Cookies](/en/guide/basics/cookies.html)
 
-                response.cookies["test"] = "It worked!"
-                response.cookies["test"]["domain"] = ".yummy-yummy-cookie.com"
-                response.cookies["test"]["httponly"] = True
-
-        `See user guide re: cookies
-        <https://sanic.dev/en/guide/basics/cookies.html>`
-
-        :return: the cookie jar
-        :rtype: CookieJar
+        Returns:
+            CookieJar: The response cookies
         """
         if self._cookies is None:
             self._cookies = CookieJar(self.headers)
@@ -109,14 +99,13 @@ class BaseHTTPResponse:
 
     @property
     def processed_headers(self) -> Iterator[Tuple[bytes, bytes]]:
-        """
-        Obtain a list of header tuples encoded in bytes for sending.
+        """Obtain a list of header tuples encoded in bytes for sending.
 
         Add and remove headers based on status and content_type.
 
-        :return: response headers
-        :rtype: Tuple[Tuple[bytes, bytes], ...]
-        """
+        Returns:
+            Iterator[Tuple[bytes, bytes]]: A list of header tuples encoded in bytes for sending
+        """  # noqa: E501
         # TODO: Make a blacklist set of header names and then filter with that
         if self.status in (304, 412):  # Not Modified, Precondition Failed
             self.headers = remove_entity_headers(self.headers)
@@ -133,12 +122,12 @@ class BaseHTTPResponse:
         data: Optional[AnyStr] = None,
         end_stream: Optional[bool] = None,
     ) -> None:
-        """
-        Send any pending response headers and the given data as body.
+        """Send any pending response headers and the given data as body.
 
-        :param data: str or bytes to be written
-        :param end_stream: whether to close the stream after this block
-        """
+        Args:
+            data (Optional[AnyStr], optional): str or bytes to be written. Defaults to `None`.
+            end_stream (Optional[bool], optional): whether to close the stream after this block. Defaults to `None`.
+        """  # noqa: E501
         if data is None and end_stream is None:
             end_stream = True
         if self.stream is None:
@@ -179,44 +168,28 @@ class BaseHTTPResponse:
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> Cookie:
-        """
-        Add a cookie to the CookieJar
+        """Add a cookie to the CookieJar
 
-        :param key: Key of the cookie
-        :type key: str
-        :param value: Value of the cookie
-        :type value: str
-        :param path: Path of the cookie, defaults to None
-        :type path: Optional[str], optional
-        :param domain: Domain of the cookie, defaults to None
-        :type domain: Optional[str], optional
-        :param secure: Whether to set it as a secure cookie, defaults to True
-        :type secure: bool
-        :param max_age: Max age of the cookie in seconds; if set to 0 a
-            browser should delete it, defaults to None
-        :type max_age: Optional[int], optional
-        :param expires: When the cookie expires; if set to None browsers
-            should set it as a session cookie, defaults to None
-        :type expires: Optional[datetime], optional
-        :param httponly: Whether to set it as HTTP only, defaults to False
-        :type httponly: bool
-        :param samesite: How to set the samesite property, should be
-            strict, lax or none (case insensitive), defaults to Lax
-        :type samesite: Optional[SameSite], optional
-        :param partitioned: Whether to set it as partitioned, defaults to False
-        :type partitioned: bool
-        :param comment: A cookie comment, defaults to None
-        :type comment: Optional[str], optional
-        :param host_prefix: Whether to add __Host- as a prefix to the key.
-            This requires that path="/", domain=None, and secure=True,
-            defaults to False
-        :type host_prefix: bool
-        :param secure_prefix: Whether to add __Secure- as a prefix to the key.
-            This requires that secure=True, defaults to False
-        :type secure_prefix: bool
-        :return: The instance of the created cookie
-        :rtype: Cookie
-        """
+        See [Cookies](/en/guide/basics/cookies.html)
+
+        Args:
+            key (str): The key to be added
+            value (str): The value to be added
+            path (str, optional): Path of the cookie. Defaults to `"/"`.
+            domain (Optional[str], optional): Domain of the cookie. Defaults to `None`.
+            secure (bool, optional): Whether the cookie is secure. Defaults to `True`.
+            max_age (Optional[int], optional): Max age of the cookie. Defaults to `None`.
+            expires (Optional[datetime], optional): Expiry date of the cookie. Defaults to `None`.
+            httponly (bool, optional): Whether the cookie is http only. Defaults to `False`.
+            samesite (Optional[SameSite], optional): SameSite policy of the cookie. Defaults to `"Lax"`.
+            partitioned (bool, optional): Whether the cookie is partitioned. Defaults to `False`.
+            comment (Optional[str], optional): Comment of the cookie. Defaults to `None`.
+            host_prefix (bool, optional): Whether to add __Host- as a prefix to the key. This requires that path="/", domain=None, and secure=True. Defaults to `False`.
+            secure_prefix (bool, optional): Whether to add __Secure- as a prefix to the key. This requires that secure=True. Defaults to `False`.
+
+        Returns:
+            Cookie: The cookie that was added
+        """  # noqa: E501
         return self.cookies.add_cookie(
             key=key,
             value=value,
@@ -242,8 +215,7 @@ class BaseHTTPResponse:
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> None:
-        """
-        Delete a cookie
+        """Delete a cookie
 
         This will effectively set it as Max-Age: 0, which a browser should
         interpret it to mean: "delete the cookie".
@@ -251,20 +223,15 @@ class BaseHTTPResponse:
         Since it is a browser/client implementation, your results may vary
         depending upon which client is being used.
 
-        :param key: The key to be deleted
-        :type key: str
-        :param path: Path of the cookie, defaults to None
-        :type path: Optional[str], optional
-        :param domain: Domain of the cookie, defaults to None
-        :type domain: Optional[str], optional
-        :param host_prefix: Whether to add __Host- as a prefix to the key.
-            This requires that path="/", domain=None, and secure=True,
-            defaults to False
-        :type host_prefix: bool
-        :param secure_prefix: Whether to add __Secure- as a prefix to the key.
-            This requires that secure=True, defaults to False
-        :type secure_prefix: bool
-        """
+        See [Cookies](/en/guide/basics/cookies.html)
+
+        Args:
+            key (str): The key to be deleted
+            path (str, optional): Path of the cookie. Defaults to `"/"`.
+            domain (Optional[str], optional): Domain of the cookie. Defaults to `None`.
+            host_prefix (bool, optional): Whether to add __Host- as a prefix to the key. This requires that path="/", domain=None, and secure=True. Defaults to `False`.
+            secure_prefix (bool, optional): Whether to add __Secure- as a prefix to the key. This requires that secure=True. Defaults to `False`.
+        """  # noqa: E501
         self.cookies.delete_cookie(
             key=key,
             path=path,
@@ -275,18 +242,14 @@ class BaseHTTPResponse:
 
 
 class HTTPResponse(BaseHTTPResponse):
-    """
-    HTTP response to be sent back to the client.
+    """HTTP response to be sent back to the client.
 
-    :param body: the body content to be returned
-    :type body: Optional[bytes]
-    :param status: HTTP response number. **Default=200**
-    :type status: int
-    :param headers: headers to be returned
-    :type headers: Optional;
-    :param content_type: content type to be returned (as a header)
-    :type content_type: Optional[str]
-    """
+    Args:
+        body (Optional[Any], optional): The body content to be returned. Defaults to `None`.
+        status (int, optional): HTTP response number. Defaults to `200`.
+        headers (Optional[Union[Header, Dict[str, str]]], optional): Headers to be returned. Defaults to `None`.
+        content_type (Optional[str], optional): Content type to be returned (as a header). Defaults to `None`.
+    """  # noqa: E501
 
     __slots__ = ()
 
@@ -306,6 +269,7 @@ class HTTPResponse(BaseHTTPResponse):
         self._cookies = None
 
     async def eof(self):
+        """Send a EOF (End of File) message to the client."""
         await self.send("", True)
 
     async def __aenter__(self):
@@ -316,22 +280,20 @@ class HTTPResponse(BaseHTTPResponse):
 
 
 class JSONResponse(HTTPResponse):
-    """
+    """Convenience class for JSON responses
+
     HTTP response to be sent back to the client, when the response
     is of json type. Offers several utilities to manipulate common
     json data types.
 
-    :param body: the body content to be returned
-    :type body: Optional[Any]
-    :param status: HTTP response number. **Default=200**
-    :type status: int
-    :param headers: headers to be returned
-    :type headers: Optional
-    :param content_type: content type to be returned (as a header)
-    :type content_type: Optional[str]
-    :param dumps: json.dumps function to use
-    :type dumps: Optional[Callable]
-    """
+    Args:
+        body (Optional[Any], optional): The body content to be returned. Defaults to `None`.
+        status (int, optional): HTTP response number. Defaults to `200`.
+        headers (Optional[Union[Header, Dict[str, str]]], optional): Headers to be returned. Defaults to `None`.
+        content_type (str, optional): Content type to be returned (as a header). Defaults to `"application/json"`.
+        dumps (Optional[Callable[..., str]], optional): The function to use for json encoding. Defaults to `None`.
+        **kwargs (Any, optional): The kwargs to pass to the json encoding function. Defaults to `{}`.
+    """  # noqa: E501
 
     __slots__ = (
         "_body",
@@ -376,16 +338,17 @@ class JSONResponse(HTTPResponse):
 
     @property
     def raw_body(self) -> Optional[Any]:
-        """Returns the raw body, as long as body has not been manually
-        set previously.
+        """Returns the raw body, as long as body has not been manually set previously.
 
         NOTE: This object should not be mutated, as it will not be
         reflected in the response body. If you need to mutate the
         response body, consider using one of the provided methods in
         this class or alternatively call set_body() with the mutated
         object afterwards or set the raw_body property to it.
-        """
 
+        Returns:
+            Optional[Any]: The raw body
+        """  # noqa: E501
         self._check_body_not_manually_set()
         return self._raw_body
 
@@ -399,6 +362,11 @@ class JSONResponse(HTTPResponse):
 
     @property  # type: ignore
     def body(self) -> Optional[bytes]:  # type: ignore
+        """Returns the response body.
+
+        Returns:
+            Optional[bytes]: The response body
+        """
         return self._body
 
     @body.setter
@@ -414,11 +382,24 @@ class JSONResponse(HTTPResponse):
         dumps: Optional[Callable[..., str]] = None,
         **dumps_kwargs: Any,
     ) -> None:
-        """Sets a new response body using the given dumps function
+        """Set the response body to the given value, using the given dumps function
+
+        Sets a new response body using the given dumps function
         and kwargs, or falling back to the defaults given when
         creating the object if none are specified.
-        """
 
+        Args:
+            body (Any): The body to set
+            dumps (Optional[Callable[..., str]], optional): The function to use for json encoding. Defaults to `None`.
+            **dumps_kwargs (Any, optional): The kwargs to pass to the json encoding function. Defaults to `{}`.
+
+        Examples:
+            ```python
+            response = JSONResponse({"foo": "bar"})
+            response.set_body({"bar": "baz"})
+            assert response.body == b'{"bar": "baz"}'
+            ```
+        """  # noqa: E501
         self._body_manually_set = False
         self._raw_body = body
 
@@ -428,10 +409,16 @@ class JSONResponse(HTTPResponse):
         self._body = self._encode_body(use_dumps(body, **use_dumps_kwargs))
 
     def append(self, value: Any) -> None:
-        """Appends a value to the response raw_body, ensuring that
-        body is kept up to date. This can only be used if raw_body
-        is a list.
-        """
+        """Appends a value to the response raw_body, ensuring that body is kept up to date.
+
+        This can only be used if raw_body is a list.
+
+        Args:
+            value (Any): The value to append
+
+        Raises:
+            SanicException: If the body is not a list
+        """  # noqa: E501
 
         self._check_body_not_manually_set()
 
@@ -442,10 +429,16 @@ class JSONResponse(HTTPResponse):
         self.raw_body = self._raw_body
 
     def extend(self, value: Any) -> None:
-        """Extends the response's raw_body with the given values, ensuring
-        that body is kept up to date. This can only be used if raw_body is
-        a list.
-        """
+        """Extends the response's raw_body with the given values, ensuring that body is kept up to date.
+
+        This can only be used if raw_body is a list.
+
+        Args:
+            value (Any): The values to extend with
+
+        Raises:
+            SanicException: If the body is not a list
+        """  # noqa: E501
 
         self._check_body_not_manually_set()
 
@@ -456,10 +449,17 @@ class JSONResponse(HTTPResponse):
         self.raw_body = self._raw_body
 
     def update(self, *args, **kwargs) -> None:
-        """Updates the response's raw_body with the given values, ensuring
-        that body is kept up to date. This can only be used if raw_body is
-        a dict.
-        """
+        """Updates the response's raw_body with the given values, ensuring that body is kept up to date.
+
+        This can only be used if raw_body is a dict.
+
+        Args:
+            *args: The args to update with
+            **kwargs: The kwargs to update with
+
+        Raises:
+            SanicException: If the body is not a dict
+        """  # noqa: E501
 
         self._check_body_not_manually_set()
 
@@ -470,10 +470,21 @@ class JSONResponse(HTTPResponse):
         self.raw_body = self._raw_body
 
     def pop(self, key: Any, default: Any = _default) -> Any:
-        """Pops a key from the response's raw_body, ensuring that body is
-        kept up to date. This can only be used if raw_body is a dict or a
-        list.
-        """
+        """Pops a key from the response's raw_body, ensuring that body is kept up to date.
+
+        This can only be used if raw_body is a dict or a list.
+
+        Args:
+            key (Any): The key to pop
+            default (Any, optional): The default value to return if the key is not found. Defaults to `_default`.
+
+        Raises:
+            SanicException: If the body is not a dict or a list
+            TypeError: If the body is a list and a default value is provided
+
+        Returns:
+            Any: The value that was popped
+        """  # noqa: E501
 
         self._check_body_not_manually_set()
 
@@ -495,12 +506,12 @@ class JSONResponse(HTTPResponse):
 
 
 class ResponseStream:
-    """
-    ResponseStream is a compat layer to bridge the gap after the deprecation
-    of StreamingHTTPResponse. It will be removed when:
+    """A compat layer to bridge the gap after the deprecation of StreamingHTTPResponse.
+
+    It will be removed when:
     - file_stream is moved to new style streaming
     - file and file_stream are combined into a single API
-    """
+    """  # noqa: E501
 
     __slots__ = (
         "_cookies",

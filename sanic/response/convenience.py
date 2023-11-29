@@ -21,11 +21,14 @@ from .types import HTTPResponse, JSONResponse, ResponseStream
 def empty(
     status: int = 204, headers: Optional[Dict[str, str]] = None
 ) -> HTTPResponse:
-    """
-    Returns an empty response to the client.
+    """Returns an empty response to the client.
 
-    :param status Response code.
-    :param headers Custom Headers.
+    Args:
+        status (int, optional): HTTP response code. Defaults to `204`.
+        headers ([type], optional): Custom HTTP headers. Defaults to `None`.
+
+    Returns:
+        HTTPResponse: An empty response to the client.
     """
     return HTTPResponse(body=b"", status=status, headers=headers)
 
@@ -38,15 +41,19 @@ def json(
     dumps: Optional[Callable[..., str]] = None,
     **kwargs: Any,
 ) -> JSONResponse:
-    """
-    Returns response object with body in json format.
+    """Returns response object with body in json format.
 
-    :param body: Response data to be serialized.
-    :param status: Response code.
-    :param headers: Custom Headers.
-    :param kwargs: Remaining arguments that are passed to the json encoder.
-    """
+    Args:
+        body (Any): Response data to be serialized.
+        status (int, optional): HTTP response code. Defaults to `200`.
+        headers (Dict[str, str], optional): Custom HTTP headers. Defaults to `None`.
+        content_type (str, optional): The content type (string) of the response. Defaults to `"application/json"`.
+        dumps (Callable[..., str], optional): A custom json dumps function. Defaults to `None`.
+        **kwargs (Any): Remaining arguments that are passed to the json encoder.
 
+    Returns:
+        JSONResponse: A response object with body in json format.
+    """  # noqa: E501
     return JSONResponse(
         body,
         status=status,
@@ -63,14 +70,20 @@ def text(
     headers: Optional[Dict[str, str]] = None,
     content_type: str = "text/plain; charset=utf-8",
 ) -> HTTPResponse:
-    """
-    Returns response object with body in text format.
+    """Returns response object with body in text format.
 
-    :param body: Response data to be encoded.
-    :param status: Response code.
-    :param headers: Custom Headers.
-    :param content_type: the content type (string) of the response
-    """
+    Args:
+        body (str): Response data.
+        status (int, optional): HTTP response code. Defaults to `200`.
+        headers (Dict[str, str], optional): Custom HTTP headers. Defaults to `None`.
+        content_type (str, optional): The content type (string) of the response. Defaults to `"text/plain; charset=utf-8"`.
+
+    Returns:
+        HTTPResponse: A response object with body in text format.
+
+    Raises:
+        TypeError: If the body is not a string.
+    """  # noqa: E501
     if not isinstance(body, str):
         raise TypeError(
             f"Bad body type. Expected str, got {type(body).__name__})"
@@ -87,14 +100,17 @@ def raw(
     headers: Optional[Dict[str, str]] = None,
     content_type: str = DEFAULT_HTTP_CONTENT_TYPE,
 ) -> HTTPResponse:
-    """
-    Returns response object without encoding the body.
+    """Returns response object without encoding the body.
 
-    :param body: Response data.
-    :param status: Response code.
-    :param headers: Custom Headers.
-    :param content_type: the content type (string) of the response.
-    """
+    Args:
+        body (Optional[AnyStr]): Response data.
+        status (int, optional): HTTP response code. Defaults to `200`.
+        headers (Dict[str, str], optional): Custom HTTP headers. Defaults to `None`.
+        content_type (str, optional): The content type (string) of the response. Defaults to `"application/octet-stream"`.
+
+    Returns:
+        HTTPResponse: A response object without encoding the body.
+    """  # noqa: E501
     return HTTPResponse(
         body=body,
         status=status,
@@ -108,20 +124,25 @@ def html(
     status: int = 200,
     headers: Optional[Dict[str, str]] = None,
 ) -> HTTPResponse:
-    """
-    Returns response object with body in html format.
+    """Returns response object with body in html format.
 
-    :param body: str or bytes-ish, or an object with __html__ or _repr_html_.
-    :param status: Response code.
-    :param headers: Custom Headers.
-    """
+    Body should be a `str` or `bytes` like object, or an object with `__html__` or `_repr_html_`.
+
+    Args:
+        body (Union[str, bytes, HTMLProtocol]): Response data.
+        status (int, optional): HTTP response code. Defaults to `200`.
+        headers (Dict[str, str], optional): Custom HTTP headers. Defaults to `None`.
+
+    Returns:
+        HTTPResponse: A response object with body in html format.
+    """  # noqa: E501
     if not isinstance(body, (str, bytes)):
         if hasattr(body, "__html__"):
             body = body.__html__()
         elif hasattr(body, "_repr_html_"):
             body = body._repr_html_()
 
-    return HTTPResponse(  # type: ignore
+    return HTTPResponse(
         body,
         status=status,
         headers=headers,
@@ -131,11 +152,20 @@ def html(
 
 async def validate_file(
     request_headers: Header, last_modified: Union[datetime, float, int]
-):
+) -> Optional[HTTPResponse]:
+    """Validate file based on request headers.
+
+    Args:
+        request_headers (Header): The request headers.
+        last_modified (Union[datetime, float, int]): The last modified date and time of the file.
+
+    Returns:
+        Optional[HTTPResponse]: A response object with status 304 if the file is not modified.
+    """  # noqa: E501
     try:
         if_modified_since = request_headers.getone("If-Modified-Since")
     except KeyError:
-        return
+        return None
     try:
         if_modified_since = parsedate_to_datetime(if_modified_since)
     except (TypeError, ValueError):
@@ -143,7 +173,7 @@ async def validate_file(
             "Ignorning invalid If-Modified-Since header received: " "'%s'",
             if_modified_since,
         )
-        return
+        return None
     if not isinstance(last_modified, datetime):
         last_modified = datetime.fromtimestamp(
             float(last_modified), tz=timezone.utc
@@ -170,6 +200,8 @@ async def validate_file(
     if last_modified.timestamp() <= if_modified_since.timestamp():
         return HTTPResponse(status=304)
 
+    return None
+
 
 async def file(
     location: Union[str, PurePath],
@@ -185,21 +217,23 @@ async def file(
     _range: Optional[Range] = None,
 ) -> HTTPResponse:
     """Return a response object with file data.
-    :param status: HTTP response code. Won't enforce the passed in
-        status if only a part of the content will be sent (206)
-        or file is being validated (304).
-    :param request_headers: The request headers.
-    :param validate_when_requested: If True, will validate the
-        file when requested.
-    :param location: Location of file on system.
-    :param mime_type: Specific mime_type.
-    :param headers: Custom Headers.
-    :param filename: Override filename.
-    :param last_modified: The last modified date and time of the file.
-    :param max_age: Max age for cache control.
-    :param no_store: Any cache should not store this response.
-    :param _range:
-    """
+
+    Args:
+        location (Union[str, PurePath]): Location of file on system.
+        status (int, optional): HTTP response code. Won't enforce the passed in status if only a part of the content will be sent (206) or file is being validated (304). Defaults to 200.
+        request_headers (Optional[Header], optional): The request headers.
+        validate_when_requested (bool, optional): If `True`, will validate the file when requested. Defaults to True.
+        mime_type (Optional[str], optional): Specific mime_type.
+        headers (Optional[Dict[str, str]], optional): Custom Headers.
+        filename (Optional[str], optional): Override filename.
+        last_modified (Optional[Union[datetime, float, int, Default]], optional): The last modified date and time of the file.
+        max_age (Optional[Union[float, int]], optional): Max age for cache control.
+        no_store (Optional[bool], optional): Any cache should not store this response. Defaults to None.
+        _range (Optional[Range], optional):
+
+    Returns:
+        HTTPResponse: The response object with the file data.
+    """  # noqa: E501
 
     if isinstance(last_modified, datetime):
         last_modified = last_modified.replace(microsecond=0).timestamp()
@@ -271,15 +305,17 @@ def redirect(
     status: int = 302,
     content_type: str = "text/html; charset=utf-8",
 ) -> HTTPResponse:
-    """
-    Abort execution and cause a 302 redirect (by default) by setting a
-    Location header.
+    """Cause a HTTP redirect (302 by default) by setting a Location header.
 
-    :param to: path or fully qualified URL to redirect to
-    :param headers: optional dict of headers to include in the new request
-    :param status: status code (int) of the new request, defaults to 302
-    :param content_type: the content type (string) of the response
-    """
+    Args:
+        to (str): path or fully qualified URL to redirect to
+        headers (Optional[Dict[str, str]], optional): optional dict of headers to include in the new request. Defaults to None.
+        status (int, optional): status code (int) of the new request, defaults to 302. Defaults to 302.
+        content_type (str, optional): the content type (string) of the response. Defaults to "text/html; charset=utf-8".
+
+    Returns:
+        HTTPResponse: A response object with the redirect.
+    """  # noqa: E501
     headers = headers or {}
 
     # URL Quote the URL before redirecting
@@ -310,7 +346,16 @@ async def file_stream(
     :param headers: Custom Headers.
     :param filename: Override filename.
     :param _range:
-    """
+
+    Args:
+        location (Union[str, PurePath]): Location of file on system.
+        status (int, optional): HTTP response code. Won't enforce the passed in status if only a part of the content will be sent (206) or file is being validated (304). Defaults to `200`.
+        chunk_size (int, optional): The size of each chunk in the stream (in bytes). Defaults to `4096`.
+        mime_type (Optional[str], optional): Specific mime_type.
+        headers (Optional[Dict[str, str]], optional): Custom HTTP headers.
+        filename (Optional[str], optional): Override filename.
+        _range (Optional[Range], optional): The range of bytes to send.
+    """  # noqa: E501
     headers = headers or {}
     if filename:
         headers.setdefault(

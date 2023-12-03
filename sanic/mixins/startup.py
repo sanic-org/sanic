@@ -89,7 +89,7 @@ else:  # no cov
 
 class StartupMixin(metaclass=SanicMeta):
     _app_registry: ClassVar[Dict[str, Sanic]]
-
+    name: str
     asgi: bool
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
@@ -790,6 +790,7 @@ class StartupMixin(metaclass=SanicMeta):
             server = "ASGI" if self.asgi else "unknown"  # type: ignore
 
         display = {
+            "app": self.name,
             "mode": " ".join(mode),
             "server": server,
             "python": platform.python_version(),

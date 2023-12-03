@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Dependency Injection
+---
+
 # Dependency Injection
 
 Dependency injection is a method to add arguments to a route handler based upon the defined function signature. Specifically, it looks at the **type annotations** of the arguments in the handler. This can be useful in a number of cases like:

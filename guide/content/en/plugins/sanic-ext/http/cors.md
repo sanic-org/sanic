@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - CORS protection
+---
+
 # CORS protection
 
 Cross-Origin Resource Sharing (aka CORS) is a *huge* topic by itself. The documentation here cannot go into enough detail about *what* it is. You are highly encouraged to do some research on your own to understand the security problem presented by it, and the theory behind the solutions. [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) are a great first step.

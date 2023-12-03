@@ -65,7 +65,11 @@ class DocsRenderer(HTMLRenderer):
     def link(self, text: str, url: str, title: str | None = None) -> str:
         url = self.safe_url(url).replace(".md", ".html")
         url, anchor = url.split("#", 1) if "#" in url else (url, None)
-        if not url.endswith("/") and not url.endswith(".html"):
+        if (
+            not url.endswith("/")
+            and not url.endswith(".html")
+            and not url.startswith("http")
+        ):
             url += ".html"
         if anchor:
             url += f"#{anchor}"

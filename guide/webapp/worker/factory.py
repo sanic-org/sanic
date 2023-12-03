@@ -53,7 +53,7 @@ def create_app(root: Path) -> Sanic:
 
     @app.before_server_start
     async def setup(app: Sanic):
-        app.ext.dependency(PageRenderer(base_title="TestApp"))
+        app.ext.dependency(PageRenderer(base_title="Sanic User Guide"))
         page_order = _compile_sidebar_order(app.config.SIDEBAR)
         app.ctx.pages = Page.load_pages(app.config.CONTENT_DIR, page_order)
         app.ctx.get_page = Page.get
@@ -83,9 +83,14 @@ def create_app(root: Path) -> Sanic:
                 ),
                 status=301,
             )
+        builder = page_renderer.render(request, language, path)
+        title_text = page_renderer.title()
         return html(
-            page_renderer.render(request, language, path),
-            headers={"vary": "hx-request"},
+            str(builder),
+            headers={
+                "vary": "hx-request",
+                "x-title": title_text,
+            },
         )
 
     @app.on_request

@@ -1,3 +1,8 @@
+---
+title: Full Speed Ahead - How We Built This Site with Sanic
+layout: main
+---
+
 .. attrs::
     :class: title
 

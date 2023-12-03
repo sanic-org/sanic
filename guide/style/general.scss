@@ -54,6 +54,7 @@ p + .code-block,
 p + p { margin-top: 1rem; }
 
 @media screen and (max-width: $tablet) {
+    html { font-size: 18px; }
     h1 { margin-left: 0; }
     h2 { margin-left: 0; }
     article { margin-left: 0; }

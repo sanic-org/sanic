@@ -272,7 +272,7 @@ th {
 
 html {
   background-color: white;
-  font-size: 22px;
+  font-size: 20px;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   min-width: 300px;
@@ -12779,6 +12779,8 @@ p + p {
   margin-top: 1rem; }
 
 @media screen and (max-width: 769px) {
+  html {
+    font-size: 18px; }
   h1 {
     margin-left: 0; }
   h2 {

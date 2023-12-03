@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Validation
+---
+
 # Validation
 
 One of the most commonly implemented features of a web application is user-input validation. For obvious reasons, this is not only a security issue, but also just plain good practice. You want to make sure your data conforms to expectations, and throw a `400` response when it does not.

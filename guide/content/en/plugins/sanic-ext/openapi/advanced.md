@@ -1,6 +1,10 @@
+---
+title: Sanic Extensions - Advanced OAS
+---
+
 # Advanced
 
-_Documentation coming EOQ1 2023_
+_Documentation in progress_
 
 ## CBV
 

@@ -15,7 +15,7 @@ features:
   details: The project is maintained and run by the community for the community.
 ---
 
-## ⚡ The lightning-fast asynchronous Python web framework
+### ⚡ The lightning-fast asynchronous Python web framework
 
 .. attrs::
     :class: columns is-multiline mt-6
@@ -72,7 +72,6 @@ features:
     :class: is-size-3 ml-6
     
     **And some {span:has-text-primary:you wouldn't believe}.**
-
 
 .. tab:: Production-grade
     

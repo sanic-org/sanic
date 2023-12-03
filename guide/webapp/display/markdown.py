@@ -52,7 +52,14 @@ class DocsRenderer(HTMLRenderer):
                 "a", {"href": f"#{ident}", "class": "anchor"}, "#"
             )
         return self._make_tag(
-            f"h{level}", {"id": ident, "class": f"is-size-{level}"}, text
+            f"h{level}",
+            {
+                "id": ident,
+                "class": (
+                    f"is-size-{level}-desktop " f"is-size-{level+2}-touch"
+                ),
+            },
+            text,
         )
 
     def link(self, text: str, url: str, title: str | None = None) -> str:
@@ -107,7 +114,6 @@ class DocsRenderer(HTMLRenderer):
             {"href": href, "class": "inline-directive"},
             display,
         )
-            
 
     def _make_tag(
         self, tag: str, attributes: dict[str, str], text: str | None = None

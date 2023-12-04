@@ -68,7 +68,7 @@ def _pagination_right(request: Request) -> Builder:
 
 def _content() -> Builder:
     year = datetime.now().year
-    inner = E.p(
+    legal = E.p(
         E.a(
             "MIT Licensed",
             href="https://github.com/sanic-org/sanic/blob/master/LICENSE",
@@ -78,10 +78,19 @@ def _content() -> Builder:
             E.small(f"Copyright © 2018-{year} Sanic Community Organization")
         ),
     )
+    powered = E.p(
+        E.a("This site is powered", href="/en/built-with-sanic.html"),
+        E.img(
+            src="/assets/images/sanic-framework-logo-circle-32x32.png",
+            alt="Sanic Logo",
+            style="vertical-align: middle;",
+            class_="ml-1",
+        ),
+    )
+    with_love = E.p("~ Made with ❤️ and ☕️ ~")
     return E.div(
-        inner,
-        E.p("This site "),
-        E.a("powered by Sanic", href="/en/built-with-sanic.html"),
-        E.p("~ Made with ❤️ and ☕️ ~"),
+        legal,
+        powered,
+        with_love,
         class_="content has-text-centered",
     )

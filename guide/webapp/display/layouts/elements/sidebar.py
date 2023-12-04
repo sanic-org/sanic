@@ -19,11 +19,23 @@ def _menu_items(request: Request) -> list[Builder]:
             request.app.config.GENERAL.current_version
         ),
         E.hr(),
-        E.p("Need ").a("help", href=f"/{request.ctx.language}/help.html")("?"),
-        E.hr(),
-        E.p("Want more? ").a(
-            "sanicbook.com", href="https://sanicbook.com", target="_blank"
+        E.ul.li("Need ").a("help", href=f"/{request.ctx.language}/help.html")(
+            "?"
         ),
+        E.li("How we ").a(
+            "built this site w/ Sanic",
+            href="/{request.ctx.language}/built-with-sanic.html",
+        ),
+        E.li.a(
+            "Awesome Sanic",
+            href="https://github.com/mekicha/awesome-sanic",
+            target="_blank",
+        ),
+        E.hr(),
+        E.p("Want more? ")
+        .a("sanicbook.com", href="https://sanicbook.com", target="_blank")
+        .br.img(src="https://sanicbook.com/images/SanicCoverFinal.png"),
+        E.br.small("Book proceeds fund our journey"),
     ]
 
 

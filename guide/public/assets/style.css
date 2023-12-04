@@ -13070,6 +13070,26 @@ h3 + .code-block {
         .table-of-contents .table-of-contents-item strong {
           display: inline;
           margin: 0 0 0 0.75rem; } }
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: transparent;
+  z-index: 9999; }
+  .loading-bar.is-loading {
+    background-color: #ff0d68;
+    animation: pulsingLoading 1s linear infinite; }
+
+@keyframes pulsingLoading {
+  0%, 100% {
+    transform: scaleX(1);
+    opacity: 1; }
+  50% {
+    transform: scaleX(0.25);
+    opacity: 0.5; } }
+
 @media screen and (min-width: 769px) {
   .hero.is-large .hero-body {
     padding: 18rem 6rem 3rem; } }

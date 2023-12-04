@@ -14,9 +14,6 @@ help:
 	@echo "pretty"
 	@echo "		Analyze and fix linting and format using ruff"
 	@echo ""
-	@echo "beautify [sort_imports=1] [include_tests=1]"
-	@echo "		Analyze and fix linting issue using black and optionally fix import sort using isort"
-	@echo ""
 	@echo "docs"
 	@echo "		Generate Sanic documentation"
 	@echo ""
@@ -55,11 +52,11 @@ docker-test: clean
 	docker run -t sanic/test-image tox
 
 .PHONY: fix
-black:
+fix:
 	ruff check sanic --fix
 
 .PHONY: format
-isort:
+format:
 	ruff format sanic
 
 .PHONY: pretty

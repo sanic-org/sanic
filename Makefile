@@ -7,12 +7,12 @@ help:
 	@echo "		Install Sanic"
 	@echo "docker-test"
 	@echo "		Run Sanic Unit Tests using Docker"
-	@echo "black"
-	@echo "		Analyze and fix linting issues using Black"
-	@echo "isort"
-	@echo "		Analyze and fix import order using isort"
+	@echo "fix"
+	@echo "		Analyze and fix linting issues using ruff"
+	@echo "format"
+	@echo "		Analyze and format using ruff"
 	@echo "pretty"
-	@echo "		Analyze and fix linting issue using black and isort"
+	@echo "		Analyze and fix linting and format using ruff"
 	@echo ""
 	@echo "beautify [sort_imports=1] [include_tests=1]"
 	@echo "		Analyze and fix linting issue using black and optionally fix import sort using isort"
@@ -54,28 +54,16 @@ docker-test: clean
 	docker build -t sanic/test-image -f docker/Dockerfile .
 	docker run -t sanic/test-image tox
 
-.PHONY: beautify
-beautify: black
-ifdef sort_imports
-ifdef include_tests
-	$(warning It is suggested that you do not run sort import on tests)
-	isort -rc sanic tests
-else
-	$(info Sorting Imports)
-	isort -rc sanic tests
-endif
-endif
-
-.PHONY: black
+.PHONY: fix
 black:
-	black sanic tests
+	ruff check sanic --fix
 
-.PHONY: isort
+.PHONY: format
 isort:
-	isort sanic tests
+	ruff format sanic
 
 .PHONY: pretty
-pretty: black isort
+pretty: fix format
 
 .PHONY: docs-clean
 docs-clean:

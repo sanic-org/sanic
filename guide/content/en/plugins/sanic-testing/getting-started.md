@@ -1,3 +1,7 @@
+---
+title: Sanic Testing - Getting Started
+---
+
 # Getting Started
 
 Sanic Testing is the *official* testing client for Sanic. Its primary use is to power the tests of the Sanic project itself. However, it is also meant as an easy-to-use client for getting your API tests up and running quickly.

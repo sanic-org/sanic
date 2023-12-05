@@ -1,14 +1,24 @@
 from datetime import datetime
-
+from collections import deque
 from html5tagger import Builder, E  # type: ignore
 from sanic import Request
 
 
-def do_footer(builder: Builder, request: Request) -> None:
+def do_footer(
+    builder: Builder,
+    request: Request,
+    extra_classes: str = "",
+    with_pagination: bool = True,
+) -> None:
+    content = deque([_content()])
+    if with_pagination:
+        content.appendleft(_pagination(request))
+    css_classes = "footer"
+    if extra_classes:
+        css_classes += f" {extra_classes}"
     builder.footer(
-        _pagination(request),
-        _content(),
-        class_="footer",
+        *content,
+        class_=css_classes,
     )
 
 
@@ -70,6 +80,8 @@ def _content() -> Builder:
     )
     return E.div(
         inner,
+        E.p("This site "),
+        E.a("powered by Sanic", href="/en/built-with-sanic.html"),
         E.p("~ Made with ❤️ and ☕️ ~"),
         class_="content has-text-centered",
     )

@@ -14,7 +14,7 @@ class ExceptionMixin(metaclass=SanicMeta):
     def exception(
         self,
         *exceptions: Union[Type[Exception], List[Type[Exception]]],
-        apply: bool = True
+        apply: bool = True,
     ) -> Callable:
         """Decorator used to register an exception handler for the current application or blueprint instance.
 

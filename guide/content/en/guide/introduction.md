@@ -1,6 +1,6 @@
 # Introduction
 
-Sanic is a Python 3.7+ web server and web framework that’s written to go fast. It allows the usage of the async/await syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic is a Python 3.8+ web server and web framework that’s written to go fast. It allows the usage of the async/await syntax added in Python 3.5, which makes your code non-blocking and speedy.
 
 .. attrs::
     :class: introduction-table
@@ -21,7 +21,7 @@ First things first, before you jump in the water, you should know that Sanic is 
 
 Right there in that first sentence there is a huge mistake because Sanic is _both_ a **framework** and a **web server**. In the deployment section we will talk a little bit more about this. 
 
-But, remember, out of the box Sanic comes with everything you need to write, deploy, and scale a production grade web application. :rocket:
+But, remember, out of the box Sanic comes with everything you need to write, deploy, and scale a production grade web application. 🚀
 
 ## Goal
 

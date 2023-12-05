@@ -1,3 +1,7 @@
+---
+title: Dynamic Applications
+---
+
 # Dynamic Applications
 
 Running Sanic has been optimized to work with the CLI. If you have not read it yet, you should read [Running Sanic](./running.md#sanic-server) to become familiar with the options. 

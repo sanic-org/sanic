@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Custom
+---
+
 # Custom extensions
 
 It is possible to create your own custom extensions.

@@ -61,6 +61,7 @@ from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
+from sanic.server.goodbye import get_goodbye
 from sanic.server.loop import try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
@@ -1174,7 +1175,7 @@ class StartupMixin(metaclass=SanicMeta):
             unix = kwargs.get("unix")
             if unix:
                 remove_unix_socket(unix)
-            logger.info("Goodbye.")
+            logger.debug(get_goodbye())
         if exit_code:
             os._exit(exit_code)
 

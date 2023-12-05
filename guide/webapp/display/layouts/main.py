@@ -16,7 +16,7 @@ class MainLayout(BaseLayout):
         self, request: Request, full: bool = True
     ) -> Generator[None, None, None]:
         if full:
-            self.builder.div(class_="loading-bar is-loading")
+            self.builder.div(class_="loading-bar")
             with self.builder.div(class_="is-flex"):
                 self._sidebar(request)
                 with self.builder.main(class_="is-flex-grow-1"):

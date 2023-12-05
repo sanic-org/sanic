@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Getting Started
+---
+
 # Getting Started
 
 Sanic Extensions is an *officially supported* plugin developed, and maintained by the SCO. The primary goal of this project is to add additional features to help Web API and Web application development easier.

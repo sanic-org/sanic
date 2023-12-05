@@ -1,3 +1,7 @@
+---
+title: Sanic Application
+---
+
 # Sanic Application
 
 See API docs: [sanic.app](/api/sanic.app)

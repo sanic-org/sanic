@@ -129,6 +129,7 @@ function initTabs() {
 }
 function initSearch() {
     const searchInput = document.querySelector("#search");
+    if (!searchInput) { return; }
     searchInput.addEventListener("keyup", () => {
         const value = searchInput.value;
         searchInput.setAttribute(
@@ -196,6 +197,10 @@ function afterSwap(e) {
     setMenuLinkActive(e.detail.pathInfo.requestPath);
     initMermaid();
     window.scrollTo(0, 0);
+    const newTitle = event.detail.xhr.getResponseHeader('X-Title');
+    if (newTitle) {
+	document.title = newTitle;
+    }
 }
 document.addEventListener("DOMContentLoaded", init);
 document.body.addEventListener("htmx:afterSwap", afterSwap);

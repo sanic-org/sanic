@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - HTTP Methods
+---
+
 # HTTP Methods
 
 ## Auto-endpoints

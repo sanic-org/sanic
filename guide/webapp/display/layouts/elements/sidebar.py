@@ -19,6 +19,8 @@ def _menu_items(request: Request) -> list[Builder]:
             request.app.config.GENERAL.current_version
         ),
         E.hr(),
+        E.p("Need ").a("help", href=f"/{request.ctx.language}/help.html")("?"),
+        E.hr(),
         E.p("Want more? ").a(
             "sanicbook.com", href="https://sanicbook.com", target="_blank"
         ),

@@ -846,7 +846,7 @@ class StartupMixin(metaclass=SanicMeta):
 
     @staticmethod
     def get_server_location(
-        server_settings: Optional[Dict[str, Any]] = None
+        server_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Using the server settings, retrieve the server location.
 

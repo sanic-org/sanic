@@ -64,7 +64,7 @@ class Reloader:
                     trigger_events(before_trigger, loop, app)
                 self.reload(",".join(changed) if changed else "unknown")
                 if after_trigger:
-                    trigger_events(after_trigger, loop, app)
+                    trigger_events(after_trigger, loop, app, changed=changed)
             sleep(self.interval)
         else:
             if reloader_stop:

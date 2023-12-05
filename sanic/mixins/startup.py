@@ -67,7 +67,6 @@ from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve
 from sanic.server.socket import configure_socket, remove_unix_socket
-from sanic.worker.constants import ProcessState
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer

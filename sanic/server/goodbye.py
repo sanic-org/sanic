@@ -1,4 +1,8 @@
-import sys, random
+# flake8: noqa: E501
+
+import random
+import sys
+
 
 # fmt: off
 ascii_phrases = {
@@ -6,15 +10,15 @@ ascii_phrases = {
     'Goodbye', 'Adios', 'Au revoir', 'Arrivederci', 'Sayonara', 'Auf Wiedersehen',
     'Do svidaniya', 'Annyeong', 'Tot ziens', 'Ha det', 'Selamat tinggal',
     'Hasta luego', 'Nos vemos', 'Salut', 'Ciao', 'A presto',
-    'Dag', 'Tot later', 'Vi ses', 'Adjø', 'Sampai jumpa', 'Dadah'
+    'Dag', 'Tot later', 'Vi ses', 'Sampai jumpa',
 }
 
 non_ascii_phrases = {
     'Tschüss', 'Zài jiàn', 'Bāi bāi', 'Míngtiān jiàn', 'Adeus', 'Tchau', 'Até logo',
-    'Hejdå', 'À bientôt', 'Bis später', 
-    'じゃね', 'またね', '안녕히 계세요', '안녕히 가세요', '잘 가', 'שלום',
-    'להתראות', 'נתראה', 'مع السلامة', 'إلى اللقاء', 'وداعاً', 'अलविदा',
-    'फिर मिलेंगे', 'नमस्ते'
+    'Hejdå', 'À bientôt', 'Bis später', 'Adjø',
+    'じゃね', 'またね', '안녕히 계세요', '잘 가', 'שלום',
+    'להתראות', 'مع السلامة', 'إلى اللقاء', 'وداعاً', 'अलविदा',
+    'फिर मिलेंगे',
 }
 
 all_phrases = ascii_phrases | non_ascii_phrases

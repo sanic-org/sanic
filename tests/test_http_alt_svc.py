@@ -42,7 +42,7 @@ def test_http1_response_has_alt_svc():
 
             """
         )
-        response = await client.recv()
+        response = await client.recv(1024)
         await client.close()
 
     @app.after_server_start

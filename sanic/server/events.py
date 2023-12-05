@@ -12,6 +12,7 @@ def trigger_events(
     events: Optional[Iterable[Callable[..., Any]]],
     loop,
     app: Optional[Sanic] = None,
+    **kwargs,
 ):
     """Trigger event callbacks (functions or async)
 
@@ -23,8 +24,12 @@ def trigger_events(
     if events:
         for event in events:
             try:
-                result = event() if not app else event(app)
+                result = event(**kwargs) if not app else event(app, **kwargs)
             except TypeError:
-                result = event(loop) if not app else event(app, loop)
+                result = (
+                    event(loop, **kwargs)
+                    if not app
+                    else event(app, loop, **kwargs)
+                )
             if isawaitable(result):
                 loop.run_until_complete(result)

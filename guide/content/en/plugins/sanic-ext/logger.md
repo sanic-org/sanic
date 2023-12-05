@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Background logger
+---
+
 # Background logger
 
 The background logger requires both `sanic>=22.9` and `sanic-ext>=22.9`.

@@ -89,7 +89,7 @@ else:  # no cov
 
 class StartupMixin(metaclass=SanicMeta):
     _app_registry: ClassVar[Dict[str, Sanic]]
-
+    name: str
     asgi: bool
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
@@ -790,6 +790,7 @@ class StartupMixin(metaclass=SanicMeta):
             server = "ASGI" if self.asgi else "unknown"  # type: ignore
 
         display = {
+            "app": self.name,
             "mode": " ".join(mode),
             "server": server,
             "python": platform.python_version(),
@@ -845,7 +846,7 @@ class StartupMixin(metaclass=SanicMeta):
 
     @staticmethod
     def get_server_location(
-        server_settings: Optional[Dict[str, Any]] = None
+        server_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Using the server settings, retrieve the server location.
 

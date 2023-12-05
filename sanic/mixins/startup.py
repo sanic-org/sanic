@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import platform
 import sys
+
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -26,6 +27,7 @@ from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import SHUT_RDWR, socket
 from ssl import SSLContext
+from time import sleep
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -70,6 +72,7 @@ from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.reloader import Reloader
 from sanic.worker.serve import worker_serve
+
 
 if TYPE_CHECKING:
     from sanic import Sanic
@@ -1156,8 +1159,6 @@ class StartupMixin(metaclass=SanicMeta):
             loop.close()
             cls._cleanup_env_vars()
             cls._cleanup_apps()
-
-            from time import sleep
 
             limit = 100
             while cls._get_process_states(worker_state):

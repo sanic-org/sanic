@@ -75,6 +75,8 @@ RESERVED_NAMESPACES = {
     },
 }
 
+GENERIC_SIGNAL_FORMAT = "__generic__.__signal__.%s"
+
 
 def _blank():
     ...
@@ -101,6 +103,20 @@ class SignalRouter(BaseRouter):
         self.allow_fail_builtin = True
         self.ctx.loop = None
 
+    @staticmethod
+    def format_event(event: str) -> str:
+        """Ensure event strings in proper format
+
+        Args:
+            event (str): event string
+
+        Returns:
+            str: formatted event string
+        """
+        if "." not in event:
+            event = GENERIC_SIGNAL_FORMAT % event
+        return event
+
     def get(  # type: ignore
         self,
         event: str,
@@ -118,6 +134,7 @@ class SignalRouter(BaseRouter):
         Raises:
             NotFound: If no handlers are found
         """  # noqa: E501
+        event = self.format_event(event)
         extra = condition or {}
         try:
             group, param_basket = self.find_route(
@@ -157,6 +174,7 @@ class SignalRouter(BaseRouter):
         fail_not_found: bool = True,
         reverse: bool = False,
     ) -> Any:
+        event = self.format_event(event)
         try:
             group, handlers, params = self.get(event, condition=condition)
         except NotFound as e:
@@ -236,6 +254,7 @@ class SignalRouter(BaseRouter):
             RuntimeError: If the signal is dispatched outside of an event loop
         """  # noqa: E501
 
+        event = self.format_event(event)
         dispatch = self._dispatch(
             event,
             context=context,
@@ -259,6 +278,7 @@ class SignalRouter(BaseRouter):
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
     ) -> Signal:
+        event = self.format_event(event)
         event_definition = event
         parts = self._build_event_parts(event)
         if parts[2].startswith("<"):

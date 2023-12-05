@@ -28,4 +28,4 @@ all_phrases = ascii_phrases | non_ascii_phrases
 def get_goodbye() -> str:  # pragma: no cover
     is_utf8 = sys.stdout.encoding.lower() == "utf-8"
     phrases = all_phrases if is_utf8 else ascii_phrases
-    return random.choice(list(phrases))
+    return random.choice(list(phrases))  # nosec: B311

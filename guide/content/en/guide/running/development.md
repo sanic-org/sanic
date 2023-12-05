@@ -100,9 +100,8 @@ As seen in the screenshot above, the REPL will automatically add a few variables
 
 - `app` - The Sanic application instance. This is the same instance that is passed to the `sanic` CLI.
 - `sanic` - The `sanic` module. This is the same module that is imported when you run `import sanic`.
-- `Sanic` - The `Sanic` class. This is the same class that is imported when you run `from sanic import Sanic`.
-- `client` - An instance of `httpx.Client` that is configured to make requests to your application. This is useful for testing your application from the REPL. **Note:** This is only available if `httpx` is installed in your environment.
 - `do` - A function that will create a mock `Request` object and pass it to your application. This is useful for testing your application from the REPL.
+- `client` - An instance of `httpx.Client` that is configured to make requests to your application. This is useful for testing your application from the REPL. **Note:** This is only available if `httpx` is installed in your environment.
 
 ### Async/Await support
 
@@ -178,6 +177,24 @@ Or, by destructuring the tuple:
 >>> response
 <JSONResponse: 200 application/json>
 ```
+
+### When to use `do` vs `client`?
+
+.. column::
+
+    **Use `do` when ...**
+
+    - You want to test a route that does not exist in the running application
+    - You want to test a route that has been modified in the REPL
+    - You make a change to your application inside the REPL
+
+.. column::
+
+    **Use `client` when ...**
+
+    - You want to test a route that already exists in the running application
+    - You want to test a route that has been modified in your source code
+    - You want to send an actual HTTP request to your application
 
 *Added in v23.12*
 

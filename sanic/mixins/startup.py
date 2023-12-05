@@ -816,9 +816,7 @@ class StartupMixin(metaclass=SanicMeta):
             module_name = package_name.replace("-", "_")
             try:
                 module = import_module(module_name)
-                packages.append(
-                    f"{package_name}=={module.__version__}"  # type: ignore
-                )
+                packages.append(f"{package_name}=={module.__version__}")  # type: ignore
             except ImportError:  # no cov
                 ...
 

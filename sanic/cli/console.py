@@ -7,11 +7,8 @@ import traceback
 from ast import PyCF_ALLOW_TOP_LEVEL_AWAIT
 from asyncio import iscoroutine, new_event_loop
 from code import InteractiveConsole
-from dataclasses import dataclass
 from types import FunctionType
 from typing import Any, Dict, NamedTuple, Optional, Sequence, Tuple, Union
-
-from httpx import request
 
 import sanic
 
@@ -39,7 +36,7 @@ except ImportError:
     HTTPX_AVAILABLE = False
 
 try:
-    import readline
+    import readline  # noqa
 except ImportError:
     print(
         "Module 'readline' not available. History navigation will be limited.",
@@ -117,24 +114,25 @@ class SanicREPL(InteractiveConsole):
         locals_available = {
             "app": app,
             "sanic": sanic,
-            "Sanic": Sanic,
             "do": do,
         }
         client_availability = ""
         variable_descriptions = [
             f"  - {Colors.BOLD + Colors.SANIC}app{Colors.END}: The Sanic application instance - {Colors.BOLD + Colors.BLUE}{str(app)}{Colors.END}",  # noqa: E501
-            f"  - {Colors.BOLD + Colors.SANIC}sanic{Colors.END}: The Sanic module - {Colors.BOLD + Colors.BLUE}from sanic import Sanic{Colors.END}",  # noqa: E501
-            f"  - {Colors.BOLD + Colors.SANIC}Sanic{Colors.END}: The Sanic class - {Colors.BOLD + Colors.BLUE}import sanic{Colors.END}",  # noqa: E501
-            f"  - {Colors.BOLD + Colors.SANIC}client{Colors.END}: The Sanic client instance using httpx - {Colors.BOLD + Colors.BLUE}from httpx import Client{Colors.END}",  # noqa: E501
+            f"  - {Colors.BOLD + Colors.SANIC}sanic{Colors.END}: The Sanic module - {Colors.BOLD + Colors.BLUE}import sanic{Colors.END}",  # noqa: E501
             f"  - {Colors.BOLD + Colors.SANIC}do{Colors.END}: An async function to fake a request to the application - {Colors.BOLD + Colors.BLUE}Result(request, response){Colors.END}",  # noqa: E501
         ]
         if HTTPX_AVAILABLE:
             locals_available["client"] = SanicClient(app)
+            variable_descriptions.append(
+                f"  - {Colors.BOLD + Colors.SANIC}client{Colors.END}: A client to access the Sanic app instance using httpx - {Colors.BOLD + Colors.BLUE}from httpx import Client{Colors.END}",  # noqa: E501
+            )
         else:
             del variable_descriptions[3]
             client_availability = (
                 f"\n{Colors.YELLOW}The HTTP client has been disabled. "
-                f"To enable it, install httpx:\n\tpip install httpx{Colors.END}\n"
+                "To enable it, install httpx:\n\t"
+                f"pip install httpx{Colors.END}\n"
             )
         super().__init__(locals=locals_available)
         self.compile.compiler.flags |= PyCF_ALLOW_TOP_LEVEL_AWAIT
@@ -150,22 +148,21 @@ class SanicREPL(InteractiveConsole):
             daemon=True,
         )
         self._async_thread = threading.Thread(
-            target=self.loop.run_forever, daemon=True
+            target=self.loop.run_forever,
+            daemon=True,
         )
         self.app = app
         self.resume()
-        self.exit_message = (
-            "Closing the REPL. Press CTRL+C to exit completely."
-        )
+        self.exit_message = "Closing the REPL."
         self.banner_message = "\n".join(
             [
-                f"\n{Colors.BOLD}Welcome to the Sanic interactive console{Colors.END}",
+                f"\n{Colors.BOLD}Welcome to the Sanic interactive console{Colors.END}",  # noqa: E501
                 client_availability,
-                "The following objects are available for your convenience:",
+                "The following objects are available for your convenience:",  # noqa: E501
                 *variable_descriptions,
-                "\nThe async/await keywords are available for use here.",
+                "\nThe async/await keywords are available for use here.",  # noqa: E501
                 f"To exit, press {Colors.BOLD}CTRL+C{Colors.END}, "
-                f"{Colors.BOLD}CTRL+D{Colors.END}, or type {Colors.BOLD}exit(){Colors.END}.\n",
+                f"{Colors.BOLD}CTRL+D{Colors.END}, or type {Colors.BOLD}exit(){Colors.END}.\n",  # noqa: E501
             ]
         )
 

@@ -156,15 +156,15 @@ async def stop(app, _):
     await app.ctx.redirect.close()
 
 async def runner(app, app_server):
-    app.is_running = True
+    app.state.is_running = True
     try:
         app.signalize()
         app.finalize()
         app.state.is_started = True
         await app_server.serve_forever()
     finally:
-        app.is_running = False
-        app.is_stopping = True
+        app.state.is_running = False
+        app.state.is_stopping = True
 ```
 
 ## Get certificates for your domain names

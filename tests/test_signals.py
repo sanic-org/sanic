@@ -65,7 +65,6 @@ def test_add_signal_decorator(app):
     (
         "<foo>.bar.bax",
         "foo.<bar>.baz",
-        "foo",
         "foo.bar",
         "foo.bar.baz.qux",
     ),
@@ -290,6 +289,54 @@ async def test_dispatch_signal_triggers_event(app):
     await fut
 
     assert app_counter == 1
+
+
+@pytest.mark.asyncio
+async def test_dispatch_simple_signal_triggers(app):
+    counter = 0
+
+    @app.signal("foo")
+    def sync_signal():
+        nonlocal counter
+
+        counter += 1
+
+    app.signal_router.finalize()
+
+    await app.dispatch("foo")
+    assert counter == 1
+
+
+@pytest.mark.asyncio
+async def test_dispatch_simple_signal_triggers_dynamic(app):
+    counter = 0
+
+    @app.signal("<foo:int>")
+    def sync_signal(foo):
+        nonlocal counter
+
+        counter += foo
+
+    app.signal_router.finalize()
+
+    await app.dispatch("9")
+    assert counter == 9
+
+
+@pytest.mark.asyncio
+async def test_dispatch_simple_signal_triggers(app):
+    counter = 0
+
+    @app.signal("foo.bar.<baz:int>")
+    def sync_signal(baz):
+        nonlocal counter
+
+        counter += baz
+
+    app.signal_router.finalize()
+
+    await app.dispatch("foo.bar.9")
+    assert counter == 9
 
 
 @pytest.mark.asyncio

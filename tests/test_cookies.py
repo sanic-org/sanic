@@ -7,10 +7,26 @@ import pytest
 from sanic import Request, Sanic
 from sanic.compat import Header
 from sanic.cookies import Cookie, CookieJar
-from sanic.cookies.request import CookieRequestParameters
+from sanic.cookies.request import CookieRequestParameters, parse_cookie
 from sanic.exceptions import ServerError
 from sanic.response import text
 from sanic.response.convenience import json
+
+
+def test_request_cookies():
+    cdict = parse_cookie("foo=one; foo=two; abc = xyz;;bare;=bare2")
+    assert cdict == {
+        "foo": ["one", "two"],
+        "abc": ["xyz"],
+        "": ["bare", "bare2"],
+    }
+    c = CookieRequestParameters(cdict)
+    assert c.getlist("foo") == ["one", "two"]
+    assert c.getlist("abc") == ["xyz"]
+    assert c.getlist("") == ["bare", "bare2"]
+    assert (
+        c.getlist("bare") == None
+    )  # [] might be sensible but we got None for now
 
 
 # ------------------------------------------------------------ #

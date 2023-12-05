@@ -1,0 +1,15 @@
+footer .level,
+footer .level .level-right,
+footer .level .level-left {
+    display: flex !important;
+}
+.tabs li a { font-size: 0.7rem; }
+.box {
+    box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1);
+}
+.container { padding: 0 0.5rem; }
+@media (prefers-color-scheme: dark) {
+    .box {
+        box-shadow: 0 2px 3px rgba(128, 128, 128, 0.1), 0 0 0 1px rgba(128, 128, 128, 0.1);
+    }
+}

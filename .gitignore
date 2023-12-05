@@ -23,3 +23,4 @@ pip-wheel-metadata/
 .venv/*
 venv/*
 .vscode/*
+guide/node_modules/

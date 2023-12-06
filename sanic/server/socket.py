@@ -36,7 +36,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     return sock
 
 
-def bind_unix_socket(path: Path, *, mode=0o666, backlog=100) -> socket.socket:
+def bind_unix_socket(path: Path | str, *, mode=0o666, backlog=100) -> socket.socket:
     """Create unix socket.
     :param path: filesystem path
     :param backlog: Maximum number of connections to queue
@@ -44,6 +44,7 @@ def bind_unix_socket(path: Path, *, mode=0o666, backlog=100) -> socket.socket:
     """
 
     # Sanitise and pre-verify socket path
+    path = Path(path)
     folder = path.parent
     if not folder.is_dir():
         raise FileNotFoundError(f"Socket folder does not exist: {folder}")

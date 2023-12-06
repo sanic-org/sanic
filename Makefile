@@ -53,11 +53,11 @@ docker-test: clean
 
 .PHONY: fix
 fix:
-	ruff check sanic --fix
+	ruff check sanic examples scripts --fix
 
 .PHONY: format
 format:
-	ruff format sanic
+	ruff format sanic examples scripts
 
 .PHONY: pretty
 pretty: fix format

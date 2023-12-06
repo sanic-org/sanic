@@ -35,7 +35,10 @@ LOG_SETTINGS = {
     },
     "formatters": {
         "default": {
-            "format": "%(asctime)s %(levelname)s %(name)s:%(lineno)d %(request_id)s | %(message)s",
+            "format": (
+                "%(asctime)s %(levelname)s %(name)s:%(lineno)d"
+                " %(request_id)s | %(message)s"
+            ),
         },
     },
     "loggers": {

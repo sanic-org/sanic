@@ -12638,6 +12638,16 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
     top: 18px;
     width: 0%;
     left: 50%; }
+  .burger::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -1rem;
+    left: -0.5rem;
+    width: 3rem;
+    height: 3rem;
+    background: var(--menu-background);
+    z-index: -1; }
 
 .menu {
   background-color: var(--menu-background);

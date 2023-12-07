@@ -1066,6 +1066,9 @@ class Sanic(
                     scheme = netloc[:8].split(":", 1)[0]
                 else:
                     scheme = "http"
+                # Replace http/https with ws/wss for WebSocket handlers
+                if route.extra.websocket:
+                    scheme = scheme.replace("http", "ws")
 
             if "://" in netloc[:8]:
                 netloc = netloc.split("://", 1)[-1]

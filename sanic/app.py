@@ -2383,6 +2383,20 @@ class Sanic(
         if hasattr(self, "multiplexer"):
             self.multiplexer.ack()
 
+    def set_serving(self, serving: bool) -> None:
+        """Set the serving state of the application.
+
+        This method is used to set the serving state of the application.
+        It is used internally by Sanic and should not typically be called
+        manually.
+
+        Args:
+            serving (bool): Whether the application is serving.
+        """
+        self.state.is_running = serving
+        if hasattr(self, "multiplexer"):
+            self.multiplexer.set_serving(serving)
+
     async def _server_event(
         self,
         concern: str,

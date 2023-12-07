@@ -17,6 +17,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from contextlib import contextmanager, suppress
+from enum import Enum
 from functools import partial, wraps
 from inspect import isawaitable
 from os import environ
@@ -714,7 +715,12 @@ class Sanic(
         )
 
     async def event(
-        self, event: str, timeout: Optional[Union[int, float]] = None
+        self,
+        event: Union[str, Enum],
+        timeout: Optional[Union[int, float]] = None,
+        *,
+        condition: Optional[Dict[str, Any]] = None,
+        exclusive: bool = True,
     ) -> None:
         """Wait for a specific event to be triggered.
 
@@ -737,13 +743,18 @@ class Sanic(
             timeout (Optional[Union[int, float]]): An optional timeout value
                 in seconds. If provided, the wait will be terminated if the
                 timeout is reached. Defaults to `None`, meaning no timeout.
+            condition: If provided, method will only return when the signal
+                is dispatched with the given condition.
+            exclusive: When true (default), the signal can only be dispatched
+                when the condition has been met. When ``False``, the signal can
+                be dispatched either with or without it.
 
         Raises:
             NotFound: If the event is not found and auto-registration of
                 events is not enabled.
 
         Returns:
-            None
+            The context dict of the dispatched signal.
 
         Examples:
             ```python
@@ -759,16 +770,18 @@ class Sanic(
             ```
         """
 
-        signal = self.signal_router.name_index.get(event)
-        if not signal:
+        waiter = self.signal_router.get_waiter(event, condition, exclusive)
+        if not waiter:
             if self.config.EVENT_AUTOREGISTER:
                 self.signal_router.reset()
                 self.add_signal(None, event)
-                signal = self.signal_router.name_index[event]
+                waiter = self.signal_router.get_waiter(
+                    event, condition, exclusive
+                )
                 self.signal_router.finalize()
             else:
                 raise NotFound("Could not find signal %s" % event)
-        return await wait_for(signal.ctx.event.wait(), timeout=timeout)
+        return await wait_for(waiter.wait(), timeout=timeout)
 
     def report_exception(
         self, handler: Callable[[Sanic, Exception], Coroutine[Any, Any, None]]

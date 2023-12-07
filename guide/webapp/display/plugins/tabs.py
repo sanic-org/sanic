@@ -39,9 +39,13 @@ class Tabs(DirectivePlugin):
             md.renderer.register("tab", self._render_tab)
 
     def _render_tab(self, renderer: HTMLRenderer, text: str, **attrs):
-        start = '<div class="tabs mt-6"><ul>\n' if attrs.get("first") else ""
+        start = (
+            '<div class="tab-container mt-6"><div class="tabs"><ul>\n'
+            if attrs.get("first")
+            else ""
+        )
         end = (
-            '</ul></div><div class="tab-display"></div>\n'
+            '</ul></div><div class="tab-display"></div></div>\n'
             if attrs.get("last")
             else ""
         )

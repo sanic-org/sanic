@@ -39,6 +39,24 @@ class WorkerMultiplexer:
             "state": ProcessState.ACKED.name,
         }
 
+    def set_serving(self, serving: bool) -> None:
+        """Set the worker to serving.
+
+        Args:
+            serving (bool): Whether the worker is serving.
+        """
+        self._state._state[self.name] = {
+            **self._state._state[self.name],
+            "serving": serving,
+        }
+
+    def exit(self):
+        """Run cleanup at worker exit."""
+        try:
+            del self._state._state[self.name]
+        except ConnectionRefusedError:
+            logger.debug("Monitor process has already exited.")
+
     def restart(
         self,
         name: str = "",

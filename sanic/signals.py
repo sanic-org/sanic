@@ -40,6 +40,9 @@ class Event(Enum):
     HTTP_LIFECYCLE_SEND = "http.lifecycle.send"
     HTTP_MIDDLEWARE_AFTER = "http.middleware.after"
     HTTP_MIDDLEWARE_BEFORE = "http.middleware.before"
+    WEBSOCKET_HANDLER_AFTER = "websocket.handler.after"
+    WEBSOCKET_HANDLER_BEFORE = "websocket.handler.before"
+    WEBSOCKET_HANDLER_EXCEPTION = "websocket.handler.exception"
 
 
 RESERVED_NAMESPACES = {
@@ -67,7 +70,14 @@ RESERVED_NAMESPACES = {
         Event.HTTP_MIDDLEWARE_AFTER.value,
         Event.HTTP_MIDDLEWARE_BEFORE.value,
     ),
+    "websocket": {
+        Event.WEBSOCKET_HANDLER_AFTER.value,
+        Event.WEBSOCKET_HANDLER_BEFORE.value,
+        Event.WEBSOCKET_HANDLER_EXCEPTION.value,
+    },
 }
+
+GENERIC_SIGNAL_FORMAT = "__generic__.__signal__.%s"
 
 
 def _blank():
@@ -128,9 +138,25 @@ class SignalRouter(BaseRouter):
         self.allow_fail_builtin = True
         self.ctx.loop = None
 
+    @staticmethod
+    def format_event(event: Union[str, Enum]) -> str:
+        """Ensure event strings in proper format
+
+        Args:
+            event (str): event string
+
+        Returns:
+            str: formatted event string
+        """
+        if isinstance(event, Enum):
+            event = str(event.value)
+        if "." not in event:
+            event = GENERIC_SIGNAL_FORMAT % event
+        return event
+
     def get(  # type: ignore
         self,
-        event: str,
+        event: Union[str, Enum],
         condition: Optional[Dict[str, str]] = None,
     ):
         """Get the handlers for a signal
@@ -145,6 +171,7 @@ class SignalRouter(BaseRouter):
         Raises:
             NotFound: If no handlers are found
         """  # noqa: E501
+        event = self.format_event(event)
         extra = condition or {}
         try:
             group, param_basket = self.find_route(
@@ -184,6 +211,7 @@ class SignalRouter(BaseRouter):
         fail_not_found: bool = True,
         reverse: bool = False,
     ) -> Any:
+        event = self.format_event(event)
         try:
             group, handlers, params = self.get(event, condition=condition)
         except NotFound as e:
@@ -237,7 +265,7 @@ class SignalRouter(BaseRouter):
 
     async def dispatch(
         self,
-        event: str,
+        event: Union[str, Enum],
         *,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
@@ -262,6 +290,7 @@ class SignalRouter(BaseRouter):
             RuntimeError: If the signal is dispatched outside of an event loop
         """  # noqa: E501
 
+        event = self.format_event(event)
         dispatch = self._dispatch(
             event,
             context=context,
@@ -281,12 +310,10 @@ class SignalRouter(BaseRouter):
     def get_waiter(
         self,
         event: Union[str, Enum],
-        condition: Optional[Dict[str, Any]],
-        exclusive: bool,
+        condition: Optional[Dict[str, Any]] = None,
+        exclusive: bool = True,
     ):
-        event_definition = (
-            str(event.value) if isinstance(event, Enum) else event
-        )
+        event_definition = self.format_event(event)
         name, trigger, _ = self._get_event_parts(event_definition)
         signal = cast(Signal, self.name_index.get(name))
         if not signal:
@@ -302,7 +329,7 @@ class SignalRouter(BaseRouter):
             exclusive=bool(exclusive),
         )
 
-    def _get_event_parts(self, event):
+    def _get_event_parts(self, event: str) -> Tuple[str, str, str]:
         parts = self._build_event_parts(event)
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])
@@ -319,15 +346,15 @@ class SignalRouter(BaseRouter):
     def add(  # type: ignore
         self,
         handler: SignalHandler,
-        event: str,
+        event: Union[str, Enum],
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
     ) -> Signal:
-        event_definition = event
-        name, trigger, event = self._get_event_parts(event)
+        event_definition = self.format_event(event)
+        name, trigger, event_string = self._get_event_parts(event_definition)
 
         signal = super().add(
-            event,
+            event_string,
             handler,
             name=name,
             append=True,
@@ -367,11 +394,7 @@ class SignalRouter(BaseRouter):
 
     def _build_event_parts(self, event: str) -> Tuple[str, str, str]:
         parts = path_to_parts(event, self.delimiter)
-        if (
-            len(parts) != 3
-            or parts[0].startswith("<")
-            or parts[1].startswith("<")
-        ):
+        if len(parts) != 3 or parts[0].startswith("<") or parts[1].startswith("<"):
             raise InvalidSignal("Invalid signal event: %s" % event)
 
         if (
@@ -379,9 +402,7 @@ class SignalRouter(BaseRouter):
             and event not in RESERVED_NAMESPACES[parts[0]]
             and not (parts[2].startswith("<") and parts[2].endswith(">"))
         ):
-            raise InvalidSignal(
-                "Cannot declare reserved signal event: %s" % event
-            )
+            raise InvalidSignal("Cannot declare reserved signal event: %s" % event)
         return parts
 
     def _clean_trigger(self, trigger: str) -> str:

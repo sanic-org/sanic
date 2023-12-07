@@ -25,7 +25,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
         attach_to: str = "request",
         apply: bool = True,
         *,
-        priority: int = 0
+        priority: int = 0,
     ) -> MiddlewareType:
         ...
 
@@ -36,7 +36,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
         attach_to: str = "request",
         apply: bool = True,
         *,
-        priority: int = 0
+        priority: int = 0,
     ) -> Callable[[MiddlewareType], MiddlewareType]:
         ...
 
@@ -46,7 +46,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
         attach_to: str = "request",
         apply: bool = True,
         *,
-        priority: int = 0
+        priority: int = 0,
     ) -> Union[MiddlewareType, Callable[[MiddlewareType], MiddlewareType]]:
         """Decorator for registering middleware.
 

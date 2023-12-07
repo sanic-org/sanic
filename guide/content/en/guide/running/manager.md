@@ -1,3 +1,7 @@
+---
+title: Worker Manager
+---
+
 # Worker Manager
 
 The worker manager and its functionality was introduced in version 22.9.

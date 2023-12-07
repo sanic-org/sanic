@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - OAS
+---
+
 # Openapi
 
 - Adding documentation with decorators

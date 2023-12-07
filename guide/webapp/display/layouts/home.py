@@ -5,7 +5,7 @@ from typing import Generator
 
 from html5tagger import Builder, E
 from sanic import Request
-
+from webapp.display.layouts.elements.footer import do_footer
 from .base import BaseLayout
 
 
@@ -15,8 +15,9 @@ class HomeLayout(BaseLayout):
         self, request: Request, full: bool = True
     ) -> Generator[None, None, None]:
         self._hero(request.ctx.language)
-        with self.builder.div(class_="container"):
+        with self.builder.div(class_="home container"):
             yield
+        self._footer(request)
 
     def _hero(self, language: str) -> None:
         with self.builder.section(class_="hero is-large has-text-centered"):
@@ -48,3 +49,11 @@ class HomeLayout(BaseLayout):
                 target="_blank",
             )
         return builder
+
+    def _footer(self, request: Request) -> None:
+        do_footer(
+            self.builder,
+            request,
+            extra_classes="mb-0 mt-6",
+            with_pagination=False,
+        )

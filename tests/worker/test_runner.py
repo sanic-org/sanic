@@ -35,9 +35,10 @@ def test_run_server_forever(remove_unix_socket: Mock, do_cleanup: bool):
     after_stop.return_value = Mock()
     unix = Mock()
 
-    _run_server_forever(
-        loop, before_stop, after_stop, cleanup if do_cleanup else None, unix
-    )
+    with pytest.raises(KeyboardInterrupt):
+        _run_server_forever(
+            loop, before_stop, after_stop, cleanup if do_cleanup else None, unix
+        )
 
     loop.run_forever.assert_called_once_with()
     loop.run_until_complete.assert_has_calls(

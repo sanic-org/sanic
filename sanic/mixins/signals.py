@@ -65,7 +65,7 @@ class SignalMixin(metaclass=SanicMeta):
     def add_signal(
         self,
         handler: Optional[Callable[..., Any]],
-        event: str,
+        event: Union[str, Enum],
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
     ) -> Callable[..., Any]:
@@ -88,7 +88,7 @@ class SignalMixin(metaclass=SanicMeta):
         """
         if not handler:
 
-            async def noop():
+            async def noop(**context):
                 ...
 
             handler = noop

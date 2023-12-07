@@ -141,7 +141,7 @@ async def handler(request):
 
 .. warning:: 
 
-    By default, Sanic will **only** consume the incoming request body on non-safe HTTP methods (`POST`, `PUT`, `PATCH`, `DELETE`). If you want to receive data in the HTTP request on any other method, you will need to do one of the following two options:
+    By default, Sanic will **only** consume the incoming request body on non-safe HTTP methods: `POST`, `PUT`, `PATCH`, `DELETE`. If you want to receive data in the HTTP request on any other method, you will need to do one of the following two options:
 
     **Option #1 - Tell Sanic to consume the body using `ignore_body`**
     ```python
@@ -172,7 +172,6 @@ async def handler(request):
         return text("Tag - {}".format(tag))
     ```
 
-
 .. column::
 
     You can declare a type for the parameter. This will be enforced when matching, and also will type cast the variable.
@@ -181,6 +180,18 @@ async def handler(request):
 
     ```python
     @app.get("/foo/<foo_id:uuid>")
+    async def uuid_handler(request, foo_id: UUID):
+        return text("UUID - {}".format(foo_id))
+    ```
+
+.. column::
+
+    For some standard types like `str`, `int`, and `UUID`, Sanic can infer the path parameter type from the function signature. This means that it may not always be necessary to include the type in the path parameter definition.
+
+.. column::
+
+    ```python
+    @app.get("/foo/<foo_id>")  # Notice there is no :uuid in the path parameter
     async def uuid_handler(request, foo_id: UUID):
         return text("UUID - {}".format(foo_id))
     ```

@@ -27,6 +27,7 @@ from multiprocessing.context import BaseContext
 from pathlib import Path
 from socket import SHUT_RDWR, socket
 from ssl import SSLContext
+from time import sleep
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -60,6 +61,7 @@ from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
+from sanic.server.goodbye import get_goodbye
 from sanic.server.loop import try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
@@ -89,7 +91,7 @@ else:  # no cov
 
 class StartupMixin(metaclass=SanicMeta):
     _app_registry: ClassVar[Dict[str, Sanic]]
-
+    name: str
     asgi: bool
     config: Config
     listeners: Dict[str, List[ListenerType[Any]]]
@@ -790,6 +792,7 @@ class StartupMixin(metaclass=SanicMeta):
             server = "ASGI" if self.asgi else "unknown"  # type: ignore
 
         display = {
+            "app": self.name,
             "mode": " ".join(mode),
             "server": server,
             "python": platform.python_version(),
@@ -845,7 +848,7 @@ class StartupMixin(metaclass=SanicMeta):
 
     @staticmethod
     def get_server_location(
-        server_settings: Optional[Dict[str, Any]] = None
+        server_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Using the server settings, retrieve the server location.
 
@@ -1145,7 +1148,6 @@ class StartupMixin(metaclass=SanicMeta):
                 app.router.reset()
                 app.signal_router.reset()
 
-            sync_manager.shutdown()
             for sock in socks:
                 try:
                     sock.shutdown(SHUT_RDWR)
@@ -1157,11 +1159,30 @@ class StartupMixin(metaclass=SanicMeta):
             loop.close()
             cls._cleanup_env_vars()
             cls._cleanup_apps()
+
+            limit = 100
+            while cls._get_process_states(worker_state):
+                sleep(0.1)
+                limit -= 1
+                if limit <= 0:
+                    error_logger.warning(
+                        "Worker shutdown timed out. "
+                        "Some processes may still be running."
+                    )
+                    break
+            sync_manager.shutdown()
             unix = kwargs.get("unix")
             if unix:
                 remove_unix_socket(unix)
+            logger.debug(get_goodbye())
         if exit_code:
             os._exit(exit_code)
+
+    @staticmethod
+    def _get_process_states(worker_state) -> List[str]:
+        return [
+            state for s in worker_state.values() if (state := s.get("state"))
+        ]
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:

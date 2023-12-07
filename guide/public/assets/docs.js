@@ -2,6 +2,9 @@ let burger;
 let menu;
 let menuLinks;
 let menuGroups;
+let anchors;
+let lastUpdated = 0;
+let updateFrequency = 300;
 function trigger(el, eventType) {
     if (typeof eventType === "string" && typeof el[eventType] === "function") {
         el[eventType]();
@@ -43,6 +46,30 @@ function hasActiveLink(element) {
         return siblinkLinks.some((el) => el.classList.contains("is-active"));
     }
     return false;
+}
+function scrollHandler(e) {
+    let now = Date.now();
+    if (now - lastUpdated < updateFrequency) return;
+    
+    let closestAnchor = null;
+    let closestDistance = Infinity;
+
+    if (!anchors) { return; }
+
+    anchors.forEach(anchor => {
+        const rect = anchor.getBoundingClientRect();
+        const distance = Math.abs(rect.top);
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestAnchor = anchor;
+        }
+    });
+
+    if (closestAnchor) {
+        history.replaceState(null, null, "#" + closestAnchor.id);
+	lastUpdated = now;
+    }
 }
 function initBurger() {
     if (!burger || !menu) {
@@ -102,6 +129,7 @@ function initTabs() {
 }
 function initSearch() {
     const searchInput = document.querySelector("#search");
+    if (!searchInput) { return; }
     searchInput.addEventListener("keyup", () => {
         const value = searchInput.value;
         searchInput.setAttribute(
@@ -110,6 +138,14 @@ function initSearch() {
         );
     });
 }
+function initMermaid() {
+    const mermaids = document.querySelectorAll(".mermaid");
+    mermaid.init(undefined, mermaids);
+}
+function refreshAnchors() {
+    anchors = document.querySelectorAll("h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]");
+};
+
 function setMenuLinkActive(href) {
     burger.classList.remove("is-active");
     menu.classList.remove("is-active");
@@ -127,7 +163,7 @@ function setMenuLinkActive(href) {
             g.classList.remove("is-open");
         }
     });
-}
+}	
 function copyCode(button) {
     const codeBlock = button.parentElement;
     const code = codeBlock.querySelector("code").innerText;
@@ -149,6 +185,7 @@ function init() {
     refreshMenu();
     refreshMenuLinks();
     refreshMenuGroups();
+    refreshAnchors();
     initBurger();
     initMenuGroups();
     initDetails();
@@ -158,7 +195,13 @@ function init() {
 
 function afterSwap(e) {
     setMenuLinkActive(e.detail.pathInfo.requestPath);
+    initMermaid();
     window.scrollTo(0, 0);
+    const newTitle = event.detail.xhr.getResponseHeader('X-Title');
+    if (newTitle) {
+	document.title = newTitle;
+    }
 }
 document.addEventListener("DOMContentLoaded", init);
 document.body.addEventListener("htmx:afterSwap", afterSwap);
+document.addEventListener("scroll", scrollHandler);

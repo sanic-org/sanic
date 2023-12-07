@@ -1,3 +1,7 @@
+---
+title: Background tasks
+---
+
 # Background tasks
 
 ## Creating Tasks

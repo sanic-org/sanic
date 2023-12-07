@@ -186,7 +186,7 @@ Version 23.6 added `server.exception.report`.
 Checkout [path parameters](../basics/routing.md#path-parameters) for more information on allowed type definitions.
 
 
-.. warning:: Only the third part of an event (the action) may be dynamic:
+.. info:: Only the third part of an event (the action) may be dynamic:
 
     - `foo.bar.<thing>` 🆗
     - `foo.<bar>.baz` ❌

@@ -64,7 +64,7 @@
 
 ## Defining a view
 
-A class-based view should subclass `HTTPMethodView`. You can then implement class methods with the name of the corresponding HTTP method. If a request is received that has no defined method, a `405: Method not allowed` response will be generated.
+A class-based view should subclass :class:`sanic.views.HTTPMethodView`. You can then implement class methods with the name of the corresponding HTTP method. If a request is received that has no defined method, a `405: Method not allowed` response will be generated.
 
 .. column::
 

@@ -17,6 +17,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from contextlib import contextmanager, suppress
+from enum import Enum
 from functools import partial, wraps
 from inspect import isawaitable
 from os import environ
@@ -724,7 +725,12 @@ class Sanic(
         )
 
     async def event(
-        self, event: str, timeout: Optional[Union[int, float]] = None
+        self,
+        event: Union[str, Enum],
+        timeout: Optional[Union[int, float]] = None,
+        *,
+        condition: Optional[Dict[str, Any]] = None,
+        exclusive: bool = True,
     ) -> None:
         """Wait for a specific event to be triggered.
 
@@ -747,13 +753,18 @@ class Sanic(
             timeout (Optional[Union[int, float]]): An optional timeout value
                 in seconds. If provided, the wait will be terminated if the
                 timeout is reached. Defaults to `None`, meaning no timeout.
+            condition: If provided, method will only return when the signal
+                is dispatched with the given condition.
+            exclusive: When true (default), the signal can only be dispatched
+                when the condition has been met. When ``False``, the signal can
+                be dispatched either with or without it.
 
         Raises:
             NotFound: If the event is not found and auto-registration of
                 events is not enabled.
 
         Returns:
-            None
+            The context dict of the dispatched signal.
 
         Examples:
             ```python
@@ -769,16 +780,18 @@ class Sanic(
             ```
         """
 
-        signal = self.signal_router.name_index.get(event)
-        if not signal:
+        waiter = self.signal_router.get_waiter(event, condition, exclusive)
+        if not waiter:
             if self.config.EVENT_AUTOREGISTER:
                 self.signal_router.reset()
                 self.add_signal(None, event)
-                signal = self.signal_router.name_index[event]
+                waiter = self.signal_router.get_waiter(
+                    event, condition, exclusive
+                )
                 self.signal_router.finalize()
             else:
                 raise NotFound("Could not find signal %s" % event)
-        return await wait_for(signal.ctx.event.wait(), timeout=timeout)
+        return await wait_for(waiter.wait(), timeout=timeout)
 
     def report_exception(
         self, handler: Callable[[Sanic, Exception], Coroutine[Any, Any, None]]
@@ -1063,6 +1076,9 @@ class Sanic(
                     scheme = netloc[:8].split(":", 1)[0]
                 else:
                     scheme = "http"
+                # Replace http/https with ws/wss for WebSocket handlers
+                if route.extra.websocket:
+                    scheme = scheme.replace("http", "ws")
 
             if "://" in netloc[:8]:
                 netloc = netloc.split("://", 1)[-1]
@@ -1430,6 +1446,12 @@ class Sanic(
             protocol = request.transport.get_protocol()
             ws = await protocol.websocket_handshake(request, subprotocols)
 
+        await self.dispatch(
+            "websocket.handler.before",
+            inline=True,
+            context={"request": request, "websocket": ws},
+            fail_not_found=False,
+        )
         # schedule the application handler
         # its future is kept in self.websocket_tasks in case it
         # needs to be cancelled due to the server being stopped
@@ -1438,10 +1460,24 @@ class Sanic(
         cancelled = False
         try:
             await fut
+            await self.dispatch(
+                "websocket.handler.after",
+                inline=True,
+                context={"request": request, "websocket": ws},
+                reverse=True,
+                fail_not_found=False,
+            )
         except (CancelledError, ConnectionClosed):  # type: ignore
             cancelled = True
         except Exception as e:
             self.error_handler.log(request, e)
+            await self.dispatch(
+                "websocket.handler.exception",
+                inline=True,
+                context={"request": request, "websocket": ws, "exception": e},
+                reverse=True,
+                fail_not_found=False,
+            )
         finally:
             self.websocket_tasks.remove(fut)
             if cancelled:
@@ -2372,6 +2408,20 @@ class Sanic(
         """
         if hasattr(self, "multiplexer"):
             self.multiplexer.ack()
+
+    def set_serving(self, serving: bool) -> None:
+        """Set the serving state of the application.
+
+        This method is used to set the serving state of the application.
+        It is used internally by Sanic and should not typically be called
+        manually.
+
+        Args:
+            serving (bool): Whether the application is serving.
+        """
+        self.state.is_running = serving
+        if hasattr(self, "multiplexer"):
+            self.multiplexer.set_serving(serving)
 
     async def _server_event(
         self,

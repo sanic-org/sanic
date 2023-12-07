@@ -1,3 +1,7 @@
+---
+title: Sanic Application
+---
+
 # Sanic Application
 
 See API docs: [sanic.app](/api/sanic.app)
@@ -197,7 +201,7 @@ For complete details, see the [API docs](/api/sanic.app).
 
 .. column::
 
-    A useful example of this feature would be if you wanted to use a config file in a form that differs from what is [supported](../deployment/configuration.md#using-sanic-update-config).
+    A useful example of this feature would be if you wanted to use a config file in a form that differs from what is [supported](../running/configuration.md#using-sanicupdateconfig).
 
 .. column::
 

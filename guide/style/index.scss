@@ -1,6 +1,4 @@
-$body-size: 24px;
-
-
+$body-size: 20px;
 
 @import "./colors.scss";
 @import "./bulma/bulma.sass";
@@ -9,4 +7,5 @@ $body-size: 24px;
 @import "./menu.scss";
 @import "./general.scss";
 @import "./elements.scss";
+@import "./home.scss";
 @import "./overrides.scss";

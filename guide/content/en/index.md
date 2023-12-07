@@ -1,4 +1,5 @@
 ---
+title: The lightning-fast asynchronous Python web framework
 layout: home
 features:
 - title: Simple and lightweight
@@ -15,7 +16,7 @@ features:
   details: The project is maintained and run by the community for the community.
 ---
 
-## ⚡ The lightning-fast asynchronous Python web framework
+### ⚡ The lightning-fast asynchronous Python web framework
 
 .. attrs::
     :class: columns is-multiline mt-6
@@ -72,7 +73,6 @@ features:
     :class: is-size-3 ml-6
     
     **And some {span:has-text-primary:you wouldn't believe}.**
-
 
 .. tab:: Production-grade
     
@@ -304,8 +304,8 @@ features:
     From the moment it is installed, Sanic includes helpful tools to help the developer get their job done.
 
     - **One server** - Develop locally in DEV mode on the same server that will run your PRODUCTION application
-    - **Auto reload** - Reload running applications every time you save a Python fil, but also auto-reload **on any arbitrary directory** like HTML template directories
-    - **Debuggin tools** - Super helpful (and beautiful) [error pages](/en/guide/best-practices/exceptions) that help you traverse the trace stack easily
+    - **Auto reload** - Reload running applications every time you save a Python file, but also auto-reload **on any arbitrary directory** like HTML template directories
+    - **Debugging tools** - Super helpful (and beautiful) [error pages](/en/guide/best-practices/exceptions) that help you traverse the trace stack easily
     - **Auto TLS** - Running a localhost website with `https` can be difficult, [Sanic makes it easy](/en/guide/how-to/tls)
     - **Streamlined testing** - Built-in testing capabilities, making it easier for developers to create and run tests, ensuring the quality and reliability of their services
     - **Modern Python** - Thoughtful use of type hints to help the developer IDE experience

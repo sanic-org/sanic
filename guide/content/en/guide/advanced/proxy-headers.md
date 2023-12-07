@@ -74,23 +74,27 @@ async def forwarded(request):
     )
 ```
 
+---
+
+##### Example 1
+
+Without configured FORWARDED_SECRET, x-headers should be respected
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: for=1.1.1.1, for=injected;host=", for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret,for=broken;;secret=b0rked, for=127.0.0.3;scheme=http;port=1234' \
+	-H "X-Real-IP: 127.0.0.2" \
+	-H "X-Forwarded-For: 127.0.1.1" \
+	-H "X-Scheme: ws" \
+	-H "Host: local.site" | jq
+```
+
 .. column::
 
-    ---
-
-    ##### Example 1
-    Without configured FORWARDED_SECRET, x-headers should be respected
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: for=1.1.1.1, for=injected;host=", for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret,for=broken;;secret=b0rked, for=127.0.0.3;scheme=http;port=1234' \
-        -H "X-Real-IP: 127.0.0.2" \
-        -H "X-Forwarded-For: 127.0.1.1" \
-        -H "X-Scheme: ws" \
-        -H "Host: local.site" | jq
     ```
 
 .. column::
@@ -111,22 +115,26 @@ async def forwarded(request):
 
 ---
 
+##### Example 2
+
+FORWARDED_SECRET now configured
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: for=1.1.1.1, for=injected;host=", for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret,for=broken;;secret=b0rked, for=127.0.0.3;scheme=http;port=1234' \
+	-H "X-Real-IP: 127.0.0.2" \
+	-H "X-Forwarded-For: 127.0.1.1" \
+	-H "X-Scheme: ws" \
+	-H "Host: local.site" | jq
+```
+
 .. column::
 
-    ##### Example 2
-    FORWARDED_SECRET now configured
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: for=1.1.1.1, for=injected;host=", for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret,for=broken;;secret=b0rked, for=127.0.0.3;scheme=http;port=1234' \
-        -H "X-Real-IP: 127.0.0.2" \
-        -H "X-Forwarded-For: 127.0.1.1" \
-        -H "X-Scheme: ws" \
-        -H "Host: local.site" | jq
     ```
 
 .. column::
@@ -150,21 +158,25 @@ async def forwarded(request):
 
 ---
 
+##### Example 3
+
+Empty Forwarded header -> use X-headers
+
+```sh
+curl localhost:8000/fwd \
+	-H "X-Real-IP: 127.0.0.2" \
+	-H "X-Forwarded-For: 127.0.1.1" \
+	-H "X-Scheme: ws" \
+	-H "Host: local.site" | jq
+```
+
 .. column::
 
-    ##### Example 3
-    Empty Forwarded header -> use X-headers
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H "X-Real-IP: 127.0.0.2" \
-        -H "X-Forwarded-For: 127.0.1.1" \
-        -H "X-Scheme: ws" \
-        -H "Host: local.site" | jq
     ```
 
 .. column::
@@ -185,18 +197,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 4
+
+Header present but not matching anything
+
+```sh
+curl localhost:8000/fwd \
+	-H "Forwarded: nomatch" | jq
+```
+
 .. column::
 
-    ##### Example 4
-    Header present but not matching anything
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H "Forwarded: nomatch" | jq
     ```
 
 .. column::
@@ -215,19 +231,23 @@ async def forwarded(request):
 
 ---
 
+##### Example 5
+
+Forwarded header present but no matching secret -> use X-headers
+
+```sh
+curl localhost:8000/fwd \
+	-H "Forwarded: for=1.1.1.1;secret=x, for=127.0.0.1" \
+	-H "X-Real-IP: 127.0.0.2" | jq
+```
+
 .. column::
 
-    ##### Example 5
-    Forwarded header present but no matching secret -> use X-headers
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H "Forwarded: for=1.1.1.1;secret=x, for=127.0.0.1" \
-        -H "X-Real-IP: 127.0.0.2" | jq
     ```
 
 .. column::
@@ -247,18 +267,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 6
+
+Different formatting and hitting both ends of the header
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: Secret="mySecret";For=127.0.0.4;Port=1234' | jq
+```
+
 .. column::
 
-    ##### Example 6
-    Different formatting and hitting both ends of the header
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: Secret="mySecret";For=127.0.0.4;Port=1234' | jq
     ```
 
 .. column::
@@ -280,18 +304,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 7
+
+Test escapes (modify this if you see anyone implementing quoted-pairs)
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: for=test;quoted="\,x=x;y=\";secret=mySecret' | jq
+```
+
 .. column::
 
-    ##### Example 7
-    Test escapes (modify this if you see anyone implementing quoted-pairs)
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: for=test;quoted="\,x=x;y=\";secret=mySecret' | jq
     ```
 
 .. column::
@@ -313,18 +341,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 8
+
+Secret insulated by malformed field #1
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: for=test;secret=mySecret;b0rked;proto=wss;' | jq
+```
+
 .. column::
 
-    ##### Example 8
-    Secret insulated by malformed field #1
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: for=test;secret=mySecret;b0rked;proto=wss;' | jq
     ```
 
 .. column::
@@ -345,18 +377,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 9
+
+Secret insulated by malformed field #2
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: for=test;b0rked;secret=mySecret;proto=wss' | jq
+```
+
 .. column::
 
-    ##### Example 9
-    Secret insulated by malformed field #2
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: for=test;b0rked;secret=mySecret;proto=wss' | jq
     ```
 
 .. column::
@@ -377,18 +413,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 10
+
+Unexpected termination should not lose existing acceptable values
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: b0rked;secret=mySecret;proto=wss' | jq
+```
+
 .. column::
 
-    ##### Example 10
-    Unexpected termination should not lose existing acceptable values
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: b0rked;secret=mySecret;proto=wss' | jq
     ```
 
 .. column::
@@ -409,18 +449,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 11
+
+Field normalization
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret' | jq
+```
+
 .. column::
 
-    ##### Example 11
-    Field normalization
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "mySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret' | jq
     ```
 
 .. column::
@@ -444,18 +488,22 @@ async def forwarded(request):
 
 ---
 
+##### Example 12
+
+Using "by" field as secret
+
+```sh
+curl localhost:8000/fwd \
+	-H 'Forwarded: for=1.2.3.4; by=_proxySecret' | jq
+```
+
 .. column::
 
-    ##### Example 12
-    Using "by" field as secret
     ```python
+    # Sanic application config
     app.config.PROXIES_COUNT = 1
     app.config.REAL_IP_HEADER = "x-real-ip"
     app.config.FORWARDED_SECRET = "_proxySecret"
-    ```
-    ```bash
-    $ curl localhost:8000/fwd \
-        -H 'Forwarded: for=1.2.3.4; by=_proxySecret' | jq
     ```
 
 .. column::

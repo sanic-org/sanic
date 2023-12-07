@@ -9,6 +9,15 @@ from webapp.worker.style import setup_style
 
 from sanic import Request, Sanic, html, redirect
 
+KNOWN_REDIRECTS = {
+    "guide/deployment/configuration.html": "guide/running/configuration.html",
+    "guide/deployment/development.html": "guide/running/development.html",
+    "guide/deployment/running.html": "guide/running/running.html",
+    "guide/deployment/manager.html": "guide/running/manager.html",
+    "guide/deployment/app-loader.html": "guide/running/app-loader.html",
+    "guide/deployment/inspector.html": "guide/running/inspector.html",
+}
+
 
 def _compile_sidebar_order(items: list[MenuItem]) -> list[str]:
     order = []
@@ -44,7 +53,7 @@ def create_app(root: Path) -> Sanic:
 
     @app.before_server_start
     async def setup(app: Sanic):
-        app.ext.dependency(PageRenderer(base_title="TestApp"))
+        app.ext.dependency(PageRenderer(base_title="Sanic User Guide"))
         page_order = _compile_sidebar_order(app.config.SIDEBAR)
         app.ctx.pages = Page.load_pages(app.config.CONTENT_DIR, page_order)
         app.ctx.get_page = Page.get
@@ -62,7 +71,27 @@ def create_app(root: Path) -> Sanic:
         language: str,
         path: str = "",
     ):
-        return html(page_renderer.render(request, language, path))
+        # TODO: Add more language support
+        if language != "api" and language not in app.config.LANGUAGES:
+            return redirect(
+                request.app.url_for("page", language="en", path=path)
+            )
+        if path in KNOWN_REDIRECTS:
+            return redirect(
+                request.app.url_for(
+                    "page", language=language, path=KNOWN_REDIRECTS[path]
+                ),
+                status=301,
+            )
+        builder = page_renderer.render(request, language, path)
+        title_text = page_renderer.title()
+        return html(
+            str(builder),
+            headers={
+                "vary": "hx-request",
+                "x-title": title_text,
+            },
+        )
 
     @app.on_request
     async def set_language(request: Request):

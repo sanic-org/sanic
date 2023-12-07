@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - OAS Decorators
+---
+
 # Decorators
 
 The primary mechanism for adding content to your schema is by decorating your endpoints. If you have

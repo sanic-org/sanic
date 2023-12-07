@@ -61,7 +61,7 @@ root:
                   path: guide/running/configuration.html
                 - label: Development
                   path: guide/running/development.html
-                - label: Server
+                - label: Running Sanic
                   path: guide/running/running.html
                 - label: Worker Manager
                   path: guide/running/manager.html

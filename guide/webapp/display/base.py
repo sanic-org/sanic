@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from html5tagger import Builder, Document  # type: ignore
+from html5tagger import Builder, Document, E  # type: ignore
 
 
 class BaseRenderer:
@@ -17,11 +17,13 @@ class BaseRenderer:
                 "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js",
             ]
             builder = Document(
-                self.base_title, lang=language, _urls=urls, _viewport=True
+                self.title(), lang=language, _urls=urls, _viewport=True
             )
             builder.full = True
-            return builder
         else:
             builder = Builder(name="Partial")
             builder.full = False
-            return builder
+        return builder
+
+    def title(self) -> str:
+        return self.base_title

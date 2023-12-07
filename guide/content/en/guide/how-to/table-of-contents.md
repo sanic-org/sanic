@@ -1,3 +1,7 @@
+---
+title: Table of Contents
+---
+
 # Table of Contents
 
 We have compiled fully working examples to answer common questions and user cases. For the most part, the examples are as minimal as possible, but should be complete and runnable solutions.

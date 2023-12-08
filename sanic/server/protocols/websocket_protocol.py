@@ -123,9 +123,7 @@ class WebSocketProtocol(HttpProtocol):
                 state=OPEN,
                 logger=logger,
             )
-            resp = ws_proto.accept(
-                self.sanic_request_to_ws_request(request)
-            )
+            resp = ws_proto.accept(self.sanic_request_to_ws_request(request))
         except Exception:
             msg = (
                 "Failed to open a WebSocket connection.\n"

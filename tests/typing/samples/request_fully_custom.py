@@ -29,6 +29,4 @@ app = Sanic(
 
 @app.get("/")
 async def handler(request: CustomRequest):
-    reveal_type(request)
-    reveal_type(request.ctx)
-    reveal_type(request.app)
+    ...

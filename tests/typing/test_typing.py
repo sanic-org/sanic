@@ -1,7 +1,6 @@
 # flake8: noqa: E501
 
 import subprocess
-import sys
 
 from pathlib import Path
 from typing import List, Tuple

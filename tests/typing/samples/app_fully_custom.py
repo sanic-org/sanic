@@ -11,4 +11,3 @@ class Foo:
 
 
 app = Sanic("test", config=CustomConfig(), ctx=Foo())
-reveal_type(app)

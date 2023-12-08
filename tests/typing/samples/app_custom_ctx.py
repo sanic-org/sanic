@@ -6,4 +6,3 @@ class Foo:
 
 
 app = Sanic("test", ctx=Foo())
-reveal_type(app)

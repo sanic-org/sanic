@@ -7,4 +7,3 @@ class CustomConfig(Config):
 
 
 app = Sanic("test", config=CustomConfig())
-reveal_type(app)

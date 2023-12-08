@@ -7,7 +7,9 @@ from websockets.client import WebSocketClientProtocol
 from sanic import Request, Sanic, Websocket
 
 
-MimicClientType = Callable[[WebSocketClientProtocol], Coroutine[None, None, Any]]
+MimicClientType = Callable[
+    [WebSocketClientProtocol], Coroutine[None, None, Any]
+]
 
 
 @pytest.fixture
@@ -65,7 +67,9 @@ def test_ws_handler(
             msg = await ws.recv()
             await ws.send(msg)
 
-    _, ws_proxy = app.test_client.websocket("/ws", mimic=simple_ws_mimic_client)
+    _, ws_proxy = app.test_client.websocket(
+        "/ws", mimic=simple_ws_mimic_client
+    )
     assert ws_proxy.client_sent == ["test 1", "test 2", ""]
     assert ws_proxy.client_received == ["test 1", "test 2"]
 
@@ -79,7 +83,9 @@ def test_ws_handler_async_for(
         async for msg in ws:
             await ws.send(msg)
 
-    _, ws_proxy = app.test_client.websocket("/ws", mimic=simple_ws_mimic_client)
+    _, ws_proxy = app.test_client.websocket(
+        "/ws", mimic=simple_ws_mimic_client
+    )
     assert ws_proxy.client_sent == ["test 1", "test 2", ""]
     assert ws_proxy.client_received == ["test 1", "test 2"]
 
@@ -103,7 +109,9 @@ def test_request_url(
         await ws.recv()
 
     app.config.FORWARDED_SECRET = proxy
-    app.config.SERVER_NAME = "https://example.com" if proxy == "servername" else ""
+    app.config.SERVER_NAME = (
+        "https://example.com" if proxy == "servername" else ""
+    )
     _, ws_proxy = app.test_client.websocket(
         "/ws",
         mimic=simple_ws_mimic_client,
@@ -125,7 +133,9 @@ def test_ws_signals(
     signalapp(app)
 
     app.ctx.seq = []
-    _, ws_proxy = app.test_client.websocket("/ws", mimic=simple_ws_mimic_client)
+    _, ws_proxy = app.test_client.websocket(
+        "/ws", mimic=simple_ws_mimic_client
+    )
     assert ws_proxy.client_received == ["before: test 1", "after: test 2"]
     assert app.ctx.seq == ["before", "ws", "after"]
 
@@ -137,6 +147,8 @@ def test_ws_signals_exception(
     signalapp(app)
 
     app.ctx.seq = []
-    _, ws_proxy = app.test_client.websocket("/wserror", mimic=simple_ws_mimic_client)
+    _, ws_proxy = app.test_client.websocket(
+        "/wserror", mimic=simple_ws_mimic_client
+    )
     assert ws_proxy.client_received == ["before: test 1", "exception: test 2"]
     assert app.ctx.seq == ["before", "wserror", "exception"]

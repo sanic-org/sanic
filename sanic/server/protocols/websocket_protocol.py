@@ -123,7 +123,7 @@ class WebSocketProtocol(HttpProtocol):
                 state=OPEN,
                 logger=logger,
             )
-            resp: "http11.Response" = ws_proto.accept(
+            resp = ws_proto.accept(
                 self.sanic_request_to_ws_request(request)
             )
         except Exception:

@@ -312,7 +312,7 @@ class SignalRouter(BaseRouter):
         event: Union[str, Enum],
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
-    ) -> Signal:
+    ) -> Optional[SignalWaiter]:
         event_definition = self.format_event(event)
         name, trigger, _ = self._get_event_parts(event_definition)
         signal = cast(Signal, self.name_index.get(name))

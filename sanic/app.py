@@ -787,16 +787,16 @@ class Sanic(
         """
 
         waiter = self.signal_router.get_waiter(event, condition, exclusive)
+
+        if not waiter and self.config.EVENT_AUTOREGISTER:
+            self.signal_router.reset()
+            self.add_signal(None, event)
+            waiter = self.signal_router.get_waiter(event, condition, exclusive)
+            self.signal_router.finalize()
+
         if not waiter:
-            if self.config.EVENT_AUTOREGISTER:
-                self.signal_router.reset()
-                self.add_signal(None, event)
-                waiter = self.signal_router.get_waiter(
-                    event, condition, exclusive
-                )
-                self.signal_router.finalize()
-            else:
-                raise NotFound("Could not find signal %s" % event)
+            raise NotFound(f"Could not find signal {event}")
+
         return await wait_for(waiter.wait(), timeout=timeout)
 
     def report_exception(

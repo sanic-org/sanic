@@ -13074,21 +13074,6 @@ h3 + .code-block {
         .table-of-contents .table-of-contents-item strong {
           display: inline;
           margin: 0 0 0 0.75rem; } }
-<<<<<<< HEAD
-footer .level,
-footer .level .level-right,
-footer .level .level-left {
-  display: flex !important; }
-
-.box {
-  box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1); }
-
-@media (prefers-color-scheme: dark) {
-  .box {
-    box-shadow: 0 2px 3px rgba(128, 128, 128, 0.1), 0 0 0 1px rgba(128, 128, 128, 0.1); } }
-
-=======
->>>>>>> 160ec7ae19ade25bbc8d2417ffd66f78c03b8de5
 @media screen and (min-width: 769px) {
   .hero.is-large .hero-body {
     padding: 18rem 6rem 3rem; } }

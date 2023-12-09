@@ -1,7 +1,7 @@
 from enum import Enum, auto
 from functools import partial
-from typing import Callable, List, Optional, Union, overload
-from operator import attrgetter
+from typing import Callable, List, Optional, Union, cast, overload
+
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import BadRequest
 from sanic.models.futures import FutureListener
@@ -25,7 +25,7 @@ class ListenerEvent(str, Enum):
     AFTER_RELOAD_TRIGGER = auto()
 
 
-class ListenerMixin(metaclass=SanicMeta):    
+class ListenerMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
         self._future_listeners: List[FutureListener] = []
 
@@ -130,12 +130,29 @@ class ListenerMixin(metaclass=SanicMeta):
                 raise BadRequest(
                     "Invalid event registration: Missing event name."
                 )
-            return register_listener(listener_or_event, event_or_none, priority)
+            return register_listener(
+                listener_or_event, event_or_none, priority
+            )
         else:
-            return partial(register_listener, event=listener_or_event, priority=priority)
+            return partial(
+                register_listener, event=listener_or_event, priority=priority
+            )
+
+    def _setup_listener(
+        self,
+        listener: Optional[ListenerType[Sanic]],
+        event: str,
+        priority: int,
+    ) -> ListenerType[Sanic]:
+        if listener is not None:
+            return self.listener(listener, event, priority=priority)
+        return cast(
+            ListenerType[Sanic],
+            partial(self.listener, event_or_none=event, priority=priority),
+        )
 
     def main_process_start(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_start event.
 
@@ -156,10 +173,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Main process started")
             ```
         """  # noqa: E501
-        return self.listener(listener, "main_process_start")
+        return self._setup_listener(listener, "main_process_start", priority)
 
     def main_process_ready(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_ready event.
 
@@ -181,10 +198,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Main process ready")
             ```
         """  # noqa: E501
-        return self.listener(listener, "main_process_ready")
+        return self._setup_listener(listener, "main_process_ready", priority)
 
     def main_process_stop(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_stop event.
 
@@ -204,10 +221,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Main process stopped")
             ```
         """  # noqa: E501
-        return self.listener(listener, "main_process_stop")
+        return self._setup_listener(listener, "main_process_stop", priority)
 
     def reload_process_start(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the reload_process_start event.
 
@@ -227,10 +244,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Reload process started")
             ```
         """  # noqa: E501
-        return self.listener(listener, "reload_process_start")
+        return self._setup_listener(listener, "reload_process_start", priority)
 
     def reload_process_stop(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the reload_process_stop event.
 
@@ -250,10 +267,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Reload process stopped")
             ```
         """  # noqa: E501
-        return self.listener(listener, "reload_process_stop")
+        return self._setup_listener(listener, "reload_process_stop", priority)
 
     def before_reload_trigger(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the before_reload_trigger event.
 
@@ -274,10 +291,12 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Before reload trigger")
             ```
         """  # noqa: E501
-        return self.listener(listener, "before_reload_trigger")
+        return self._setup_listener(
+            listener, "before_reload_trigger", priority
+        )
 
     def after_reload_trigger(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_reload_trigger event.
 
@@ -298,10 +317,13 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("After reload trigger, changed files: ", changed)
             ```
         """  # noqa: E501
-        return self.listener(listener, "after_reload_trigger")
+        return self._setup_listener(listener, "after_reload_trigger", priority)
 
     def before_server_start(
-        self, listener: ListenerType[Sanic]
+        self,
+        listener: Optional[ListenerType[Sanic]] = None,
+        *,
+        priority: int = 0,
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the before_server_start event.
 
@@ -324,10 +346,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Before server start")
             ```
         """  # noqa: E501
-        return self.listener(listener, "before_server_start")
+        return self._setup_listener(listener, "before_server_start", priority)
 
     def after_server_start(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_server_start event.
 
@@ -354,10 +376,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("After server start")
             ```
         """  # noqa: E501
-        return self.listener(listener, "after_server_start")
+        return self._setup_listener(listener, "after_server_start", priority)
 
     def before_server_stop(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the before_server_stop event.
 
@@ -381,10 +403,10 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("Before server stop")
             ```
         """  # noqa: E501
-        return self.listener(listener, "before_server_stop")
+        return self._setup_listener(listener, "before_server_stop", priority)
 
     def after_server_stop(
-        self, listener: ListenerType[Sanic]
+        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_server_stop event.
 
@@ -408,4 +430,4 @@ class ListenerMixin(metaclass=SanicMeta):
                 print("After server stop")
             ```
         """  # noqa: E501
-        return self.listener(listener, "after_server_stop")
+        return self._setup_listener(listener, "after_server_stop", priority)

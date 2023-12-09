@@ -52,7 +52,11 @@ class SignalMixin(metaclass=SanicMeta):
 
         def decorator(handler: SignalHandler):
             future_signal = FutureSignal(
-                handler, event_value, HashableDict(condition or {}), exclusive, priority
+                handler,
+                event_value,
+                HashableDict(condition or {}),
+                exclusive,
+                priority,
             )
             self._future_signals.add(future_signal)
 

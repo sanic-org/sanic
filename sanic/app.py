@@ -433,7 +433,11 @@ class Sanic(
     # -------------------------------------------------------------------- #
 
     def register_listener(
-        self, listener: ListenerType[SanicVar], event: str, *, priority: int = 0
+        self,
+        listener: ListenerType[SanicVar],
+        event: str,
+        *,
+        priority: int = 0,
     ) -> ListenerType[SanicVar]:
         """Register the listener for a given event.
 
@@ -585,7 +589,9 @@ class Sanic(
         return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
-        return self.register_listener(listener.listener, listener.event, priority=listener.priority)
+        return self.register_listener(
+            listener.listener, listener.event, priority=listener.priority
+        )
 
     def _apply_route(
         self, route: FutureRoute, overwrite: bool = False
@@ -1425,7 +1431,7 @@ class Sanic(
                 if not hasattr(handler, "is_websocket"):
                     raise ServerError(
                         f"Invalid response type {response!r} "
-                       "(need HTTPResponse)"
+                        "(need HTTPResponse)"
                     )
 
         except CancelledError:  # type: ignore

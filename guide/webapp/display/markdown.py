@@ -38,9 +38,9 @@ class DocsRenderer(HTMLRenderer):
                     class_="code-block__copy",
                     onclick="copyCode(this)",
                 ):
-                    builder.div(
-                        class_="code-block__rectangle code-block__filled"
-                    ).div(class_="code-block__rectangle code-block__outlined")
+                    builder.div(class_="code-block__rectangle code-block__filled").div(
+                        class_="code-block__rectangle code-block__outlined"
+                    )
             else:
                 builder.pre(E.code(escape(code)))
         return str(builder)
@@ -48,16 +48,12 @@ class DocsRenderer(HTMLRenderer):
     def heading(self, text: str, level: int, **attrs) -> str:
         ident = slugify(text)
         if level > 1:
-            text += self._make_tag(
-                "a", {"href": f"#{ident}", "class": "anchor"}, "#"
-            )
+            text += self._make_tag("a", {"href": f"#{ident}", "class": "anchor"}, "#")
         return self._make_tag(
             f"h{level}",
             {
                 "id": ident,
-                "class": (
-                    f"is-size-{level}-desktop " f"is-size-{level+2}-touch"
-                ),
+                "class": (f"is-size-{level}-desktop " f"is-size-{level+2}-touch"),
             },
             text,
         )
@@ -122,9 +118,7 @@ class DocsRenderer(HTMLRenderer):
     def _make_tag(
         self, tag: str, attributes: dict[str, str], text: str | None = None
     ) -> str:
-        attrs = " ".join(
-            f'{key}="{value}"' for key, value in attributes.items()
-        )
+        attrs = " ".join(f'{key}="{value}"' for key, value in attributes.items())
         if text is None:
             return f"<{tag} {attrs} />"
         return f"<{tag} {attrs}>{text}</{tag}>"

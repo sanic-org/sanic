@@ -33,6 +33,7 @@ class FutureRoute(NamedTuple):
 class FutureListener(NamedTuple):
     listener: ListenerType
     event: str
+    priority: int
 
 
 class FutureMiddleware(NamedTuple):
@@ -65,6 +66,7 @@ class FutureSignal(NamedTuple):
     event: str
     condition: Optional[Dict[str, str]]
     exclusive: bool
+    priority: int
 
 
 class FutureRegistry(set):

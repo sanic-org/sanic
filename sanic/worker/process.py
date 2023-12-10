@@ -67,6 +67,20 @@ class WorkerProcess:
         self.set_state(ProcessState.JOINED)
         self._current_process.join()
 
+    def exit(self):
+        limit = 100
+        while self.is_alive() and limit > 0:
+            sleep(0.1)
+            limit -= 1
+
+        if not self.is_alive():
+            try:
+                del self.worker_state[self.name]
+            except ConnectionRefusedError:
+                logger.debug("Monitor process has already exited.")
+            except KeyError:
+                logger.debug("Could not find worker state to delete.")
+
     def terminate(self):
         if self.state is not ProcessState.TERMINATED:
             logger.debug(
@@ -79,7 +93,6 @@ class WorkerProcess:
             self.set_state(ProcessState.TERMINATED, force=True)
             try:
                 os.kill(self.pid, SIGINT)
-                del self.worker_state[self.name]
             except (KeyError, AttributeError, ProcessLookupError):
                 ...
 

@@ -12795,6 +12795,10 @@ p + p {
   .section {
     padding: 3rem 0rem; } }
 
+@media screen and (min-width: 1216px) {
+  .section {
+    padding: 3rem 0rem; } }
+
 .footer {
   margin-bottom: 4rem; }
   .footer a[target=_blank]::after {

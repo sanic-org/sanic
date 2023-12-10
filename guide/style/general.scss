@@ -68,3 +68,8 @@ p + p { margin-top: 1rem; }
 	padding: 3rem 0rem;
     }
 }
+@media screen and (min-width: $widescreen) {
+    .section {
+	padding: 3rem 0rem;
+    }
+}

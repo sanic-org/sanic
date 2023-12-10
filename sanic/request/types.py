@@ -964,20 +964,23 @@ class Request(Generic[sanic_type, ctx_type]):
             str: http|https|ws|wss or arbitrary value given by the headers.
         """
         if not hasattr(self, "_scheme"):
-            if "//" in self.app.config.get("SERVER_NAME", ""):
-                return self.app.config.SERVER_NAME.split("//")[0]
-            if "proto" in self.forwarded:
-                return str(self.forwarded["proto"])
-
             if (
                 self.app.websocket_enabled
-                and self.headers.getone("upgrade", "").lower() == "websocket"
+                and self.headers.upgrade.lower() == "websocket"
             ):
                 scheme = "ws"
             else:
                 scheme = "http"
-
-            if self.transport.get_extra_info("sslcontext"):
+            proto = None
+            sp = self.app.config.get("SERVER_NAME", "").split("://", 1)
+            if len(sp) == 2:
+                proto = sp[0]
+            elif "proto" in self.forwarded:
+                proto = str(self.forwarded["proto"])
+            if proto:
+                # Give ws/wss if websocket, otherwise keep the same
+                scheme = proto.replace("http", scheme)
+            elif self.conn_info and self.conn_info.ssl:
                 scheme += "s"
             self._scheme = scheme
 
@@ -1072,7 +1075,8 @@ class Request(Generic[sanic_type, ctx_type]):
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
         try:
-            if "//" in self.app.config.SERVER_NAME:
+            sp = self.app.config.get("SERVER_NAME", "").split("://", 1)
+            if len(sp) == 2:
                 return self.app.url_for(view_name, _external=True, **kwargs)
         except AttributeError:
             pass

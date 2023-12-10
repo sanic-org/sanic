@@ -155,7 +155,9 @@ def test_reload_delayed(monkeypatch):
     monkeypatch.setattr(threading.Thread, "start", orig)
 
 
-def test_reloader_triggers_start_stop_listeners(app: Sanic, app_loader: AppLoader):
+def test_reloader_triggers_start_stop_listeners(
+    app: Sanic, app_loader: AppLoader
+):
     results = []
 
     @app.reload_process_start

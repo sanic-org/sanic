@@ -13,7 +13,7 @@ app = Sanic("test", config=CustomConfig())
 
 @app.get("/")
 async def handler(
-    request: Request[Sanic[CustomConfig, SimpleNamespace], SimpleNamespace]
+    request: Request[Sanic[CustomConfig, SimpleNamespace], SimpleNamespace],
 ):
     reveal_type(request.ctx)
     reveal_type(request.app)

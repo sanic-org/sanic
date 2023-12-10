@@ -79,9 +79,13 @@ async def reload_start(*_):
 @app.main_process_start
 async def main_start(*_):
     print(">>>>>> main_start <<<<<<")
+	
+@app.before_server_start
+async def before_start(*_):
+	print(">>>>>> before_start <<<<<<")
 ```
 
-If this application were run with auto-reload turned on, the `reload_start` function would be called once. This is contrasted with `main_start`, which would be run every time a file is save and the reloader restarts the applicaition process.
+If this application were run with auto-reload turned on, the `reload_start` function would be called once when the reloader process starts. The `main_start` function would also be called once when the main process starts. **HOWEVER**, the `before_start` function would be called once for each worker process that is started, and subsequently every time that a file is saved and the worker is restarted.
 
 ## Attaching a listener
 
@@ -232,6 +236,65 @@ Given the following setup, we should expect to see this in the console if we run
 
     The practical result of this is that if the first listener in `before_server_start` handler setups a database connection, listeners that are registered after it can rely upon that connection being alive both when they are started and stopped.
 
+### Priority
+
+.. new:: v23.12
+
+    In v23.12, the `priority` keyword argument was added to listeners. This allows for fine-tuning the order of execution of listeners. The default priority is `0`. Listeners with a higher priority will be executed first. Listeners with the same priority will be executed in the order they were registered. Furthermore, listeners attached to the `app` instance will be executed before listeners attached to a `Blueprint` instance.
+	
+Overall the rules for deciding the order of execution are as follows:
+
+1. Priority in descending order
+2. Application listeners before Blueprint listeners
+3. Registration order
+
+.. column::
+
+    As an example, consider the following, which will print:
+
+    ```bash
+    third
+    bp_third
+    second
+    bp_second
+    first
+    fourth
+    bp_first
+    ```
+
+.. column::
+
+    ```python
+    @app.before_server_start
+    async def first(app):
+        print("first")
+
+    @app.listener("before_server_start", priority=2)
+    async def second(app):
+        print("second")
+
+    @app.before_server_start(priority=3)
+    async def third(app):
+        print("third")
+
+    @bp.before_server_start
+    async def bp_first(app):
+        print("bp_first")
+
+    @bp.listener("before_server_start", priority=2)
+    async def bp_second(app):
+        print("bp_second")
+
+    @bp.before_server_start(priority=3)
+    async def bp_third(app):
+        print("bp_third")
+
+    @app.before_server_start
+    async def fourth(app):
+        print("fourth")
+
+    app.blueprint(bp)
+    ```
 
 ## ASGI Mode
 

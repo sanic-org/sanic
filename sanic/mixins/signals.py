@@ -24,6 +24,7 @@ class SignalMixin(metaclass=SanicMeta):
         apply: bool = True,
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
+        priority: int = 0,
     ) -> Callable[[SignalHandler], SignalHandler]:
         """
         For creating a signal handler, used similar to a route handler:
@@ -51,7 +52,11 @@ class SignalMixin(metaclass=SanicMeta):
 
         def decorator(handler: SignalHandler):
             future_signal = FutureSignal(
-                handler, event_value, HashableDict(condition or {}), exclusive
+                handler,
+                event_value,
+                HashableDict(condition or {}),
+                exclusive,
+                priority,
             )
             self._future_signals.add(future_signal)
 

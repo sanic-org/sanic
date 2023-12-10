@@ -116,8 +116,11 @@ def organize_docobjects(package_name: str) -> dict[str, str]:
         page_registry[ref].append(module)
         page_content[f"/api/{ref}.md"] += str(builder)
     for ref, objects in page_registry.items():
-        page_content[f"/api/{ref}.md"] = _table_of_contents(objects) + page_content[f"/api/{ref}.md"]
+        page_content[f"/api/{ref}.md"] = (
+            _table_of_contents(objects) + page_content[f"/api/{ref}.md"]
+        )
     return page_content
+
 
 def _table_of_contents(objects: list[str]) -> str:
     builder = Builder(name="Partial")
@@ -126,7 +129,8 @@ def _table_of_contents(objects: list[str]) -> str:
         for obj in objects:
             module, name = obj.rsplit(".", 1)
             builder.a(
-                E.strong(name), E.small(module),
+                E.strong(name),
+                E.small(module),
                 href=f"#{slugify(obj.replace('.', '-'))}",
                 class_="table-of-contents-item",
             )
@@ -137,9 +141,7 @@ def _extract_docobjects(package_name: str) -> dict[str, DocObject]:
     docstrings = {}
     package = importlib.import_module(package_name)
 
-    for _, name, _ in pkgutil.walk_packages(
-        package.__path__, package_name + "."
-    ):
+    for _, name, _ in pkgutil.walk_packages(package.__path__, package_name + "."):
         module = importlib.import_module(name)
         for obj_name, obj in inspect.getmembers(module):
             if (
@@ -173,9 +175,7 @@ def _docobject_to_html(
 ) -> None:
     anchor_id = slugify(docobject.full_name.replace(".", "-"))
     anchor = E.a("#", class_="anchor", href=f"#{anchor_id}")
-    class_name, heading = _define_heading_and_class(
-        docobject, anchor, as_method
-    )
+    class_name, heading = _define_heading_and_class(docobject, anchor, as_method)
 
     with builder.div(class_=class_name):
         builder(heading)
@@ -229,9 +229,7 @@ def _docobject_to_html(
 
         if docobject.docstring.params:
             with builder.div(class_="box mt-5"):
-                builder.h5(
-                    "Parameters", class_="is-size-5 has-text-weight-bold"
-                )
+                builder.h5("Parameters", class_="is-size-5 has-text-weight-bold")
                 _render_params(builder, docobject.docstring.params)
 
         if docobject.docstring.returns:
@@ -256,9 +254,7 @@ def _signature_to_html(
     parts = []
     parts.append("<span class='function-signature'>")
     for decorator in decorators:
-        parts.append(
-            f"<span class='function-decorator'>@{decorator}</span><br>"
-        )
+        parts.append(f"<span class='function-decorator'>@{decorator}</span><br>")
     parts.append(
         f"<span class='is-italic'>{object_type}</span> "
         f"<span class='has-text-weight-bold'>{name}</span>("
@@ -272,9 +268,7 @@ def _signature_to_html(
         annotation = ""
         if param.annotation != inspect.Parameter.empty:
             annotation = escape(str(param.annotation))
-            parts.append(
-                f": <span class='param-annotation'>{annotation}</span>"
-            )
+            parts.append(f": <span class='param-annotation'>{annotation}</span>")
         if param.default != inspect.Parameter.empty:
             default = escape(str(param.default))
             if annotation == "str":
@@ -285,9 +279,7 @@ def _signature_to_html(
     parts.append(")")
     if signature.return_annotation != inspect.Signature.empty:
         return_annotation = escape(str(signature.return_annotation))
-        parts.append(
-            f": -> <span class='return-annotation'>{return_annotation}</span>"
-        )
+        parts.append(f": -> <span class='return-annotation'>{return_annotation}</span>")
     parts.append("</span>")
     return "".join(parts)
 
@@ -328,8 +320,7 @@ def _render_params(builder: Builder, params: list[DocstringParam]) -> None:
                     E.span(
                         param.type_name,
                         class_=(
-                            "has-text-weight-normal has-text-purple "
-                            "is-size-7 ml-2"
+                            "has-text-weight-normal has-text-purple " "is-size-7 ml-2"
                         ),
                     ),
                 ]
@@ -338,10 +329,7 @@ def _render_params(builder: Builder, params: list[DocstringParam]) -> None:
             builder.dd(
                 HTML(
                     render_markdown(
-                        param.description
-                        or param.arg_name
-                        or param.type_name
-                        or ""
+                        param.description or param.arg_name or param.type_name or ""
                     )
                 )
             )
@@ -354,11 +342,7 @@ def _render_raises(builder: Builder, raises: list[DocstringRaises]) -> None:
             with builder.dl(class_="mt-2"):
                 builder.dt(raise_.type_name, class_="is-family-monospace")
                 builder.dd(
-                    HTML(
-                        render_markdown(
-                            raise_.description or raise_.type_name or ""
-                        )
-                    )
+                    HTML(render_markdown(raise_.description or raise_.type_name or ""))
                 )
 
 
@@ -374,11 +358,7 @@ def _render_returns(builder: Builder, docobject: DocObject) -> None:
         if not return_type or return_type == inspect.Signature.empty:
             return_type = "N/A"
 
-        term = (
-            "Return"
-            if not docobject.docstring.returns.is_generator
-            else "Yields"
-        )
+        term = "Return" if not docobject.docstring.returns.is_generator else "Yields"
         builder.h5(term, class_="is-size-5 has-text-weight-bold")
         with builder.dl(class_="mt-2"):
             builder.dt(return_type, class_="is-family-monospace")
@@ -393,17 +373,11 @@ def _render_returns(builder: Builder, docobject: DocObject) -> None:
             )
 
 
-def _render_examples(
-    builder: Builder, examples: list[DocstringExample]
-) -> None:
+def _render_examples(builder: Builder, examples: list[DocstringExample]) -> None:
     with builder.div(class_="box mt-5"):
         builder.h5("Examples", class_="is-size-5 has-text-weight-bold")
         for example in examples:
             with builder.div(class_="mt-2"):
                 builder(
-                    HTML(
-                        render_markdown(
-                            example.description or example.snippet or ""
-                        )
-                    )
+                    HTML(render_markdown(example.description or example.snippet or ""))
                 )

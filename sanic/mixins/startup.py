@@ -114,8 +114,7 @@ class StartupMixin(metaclass=SanicMeta):
         """
         if not self.asgi:
             if self.config.USE_UVLOOP is True or (
-                isinstance(self.config.USE_UVLOOP, Default)
-                and not OS_IS_WINDOWS
+                isinstance(self.config.USE_UVLOOP, Default) and not OS_IS_WINDOWS
             ):
                 try_use_uvloop()
             elif OS_IS_WINDOWS:
@@ -387,8 +386,7 @@ class StartupMixin(metaclass=SanicMeta):
 
         if single_process and (fast or (workers > 1) or auto_reload):
             raise RuntimeError(
-                "Single process cannot be run with multiple workers "
-                "or auto-reload"
+                "Single process cannot be run with multiple workers " "or auto-reload"
             )
 
         if register_sys_signals is False and not single_process:
@@ -407,9 +405,7 @@ class StartupMixin(metaclass=SanicMeta):
             for directory in reload_dir:
                 direc = Path(directory)
                 if not direc.is_dir():
-                    logger.warning(
-                        f"Directory {directory} could not be located"
-                    )
+                    logger.warning(f"Directory {directory} could not be located")
                 self.state.reload_dirs.add(Path(directory))
 
         if loop is not None:
@@ -424,9 +420,7 @@ class StartupMixin(metaclass=SanicMeta):
             host, port = self.get_address(host, port, version, auto_tls)
 
         if protocol is None:
-            protocol = (
-                WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
+            protocol = WebSocketProtocol if self.websocket_enabled else HttpProtocol
 
         # Set explicitly passed configuration values
         for attribute, value in {
@@ -462,9 +456,7 @@ class StartupMixin(metaclass=SanicMeta):
             register_sys_signals=register_sys_signals,
             auto_tls=auto_tls,
         )
-        self.state.server_info.append(
-            ApplicationServerInfo(settings=server_settings)
-        )
+        self.state.server_info.append(ApplicationServerInfo(settings=server_settings))
 
         # if self.config.USE_UVLOOP is True or (
         #     self.config.USE_UVLOOP is _default and not OS_IS_WINDOWS
@@ -560,9 +552,7 @@ class StartupMixin(metaclass=SanicMeta):
             host, port = host, port = self.get_address(host, port)
 
         if protocol is None:
-            protocol = (
-                WebSocketProtocol if self.websocket_enabled else HttpProtocol
-            )
+            protocol = WebSocketProtocol if self.websocket_enabled else HttpProtocol
 
         # Set explicitly passed configuration values
         for attribute, value in {
@@ -805,10 +795,7 @@ class StartupMixin(metaclass=SanicMeta):
                 reload_display += ", ".join(
                     [
                         "",
-                        *(
-                            str(path.absolute())
-                            for path in self.state.reload_dirs
-                        ),
+                        *(str(path.absolute()) for path in self.state.reload_dirs),
                     ]
                 )
             display["auto-reload"] = reload_display
@@ -818,9 +805,7 @@ class StartupMixin(metaclass=SanicMeta):
             module_name = package_name.replace("-", "_")
             try:
                 module = import_module(module_name)
-                packages.append(
-                    f"{package_name}=={module.__version__}"  # type: ignore
-                )
+                packages.append(f"{package_name}=={module.__version__}")  # type: ignore
             except ImportError:  # no cov
                 ...
 
@@ -916,9 +901,7 @@ class StartupMixin(metaclass=SanicMeta):
     @classmethod
     def _get_startup_method(cls) -> str:
         return (
-            cls.start_method
-            if not isinstance(cls.start_method, Default)
-            else "spawn"
+            cls.start_method if not isinstance(cls.start_method, Default) else "spawn"
         )
 
     @classmethod
@@ -927,7 +910,15 @@ class StartupMixin(metaclass=SanicMeta):
             return
 
         method = cls._get_startup_method()
-        set_start_method(method, force=cls.test_mode)
+        try:
+            set_start_method(method, force=cls.test_mode)
+        except RuntimeError:
+            ctx = get_context()
+            if ctx.get_start_method() != method:
+                raise RuntimeError(
+                    f"Start method '{method}' was requested, but '{ctx.get_start_method()}' "
+                    "was already set."
+                ) from None
         cls.START_METHOD_SET = True
 
     @classmethod
@@ -999,9 +990,7 @@ class StartupMixin(metaclass=SanicMeta):
                     try:
                         primary = apps[0]
                     except IndexError:
-                        raise RuntimeError(
-                            "Did not find any applications."
-                        ) from None
+                        raise RuntimeError("Did not find any applications.") from None
 
             # This exists primarily for unit testing
             if not primary.state.server_info:  # no cov
@@ -1104,9 +1093,7 @@ class StartupMixin(metaclass=SanicMeta):
             inspector = None
             if primary.config.INSPECTOR:
                 display, extra = primary.get_motd_data()
-                packages = [
-                    pkg.strip() for pkg in display["packages"].split(",")
-                ]
+                packages = [pkg.strip() for pkg in display["packages"].split(",")]
                 module = import_module("sanic")
                 sanic_version = f"sanic=={module.__version__}"  # type: ignore
                 app_info = {
@@ -1137,9 +1124,7 @@ class StartupMixin(metaclass=SanicMeta):
             exit_code = 1
         except BaseException:
             kwargs = primary_server_info.settings
-            error_logger.exception(
-                "Experienced exception while trying to serve"
-            )
+            error_logger.exception("Experienced exception while trying to serve")
             raise
         finally:
             logger.info("Server Stopped")
@@ -1180,9 +1165,7 @@ class StartupMixin(metaclass=SanicMeta):
 
     @staticmethod
     def _get_process_states(worker_state) -> List[str]:
-        return [
-            state for s in worker_state.values() if (state := s.get("state"))
-        ]
+        return [state for s in worker_state.values() if (state := s.get("state"))]
 
     @classmethod
     def serve_single(cls, primary: Optional[Sanic] = None) -> None:
@@ -1263,9 +1246,7 @@ class StartupMixin(metaclass=SanicMeta):
         try:
             worker_serve(monitor_publisher=None, **kwargs)
         except BaseException:
-            error_logger.exception(
-                "Experienced exception while trying to serve"
-            )
+            error_logger.exception("Experienced exception while trying to serve")
             raise
         finally:
             logger.info("Server Stopped")

@@ -925,7 +925,19 @@ class StartupMixin(metaclass=SanicMeta):
             return
 
         method = cls._get_startup_method()
-        set_start_method(method, force=cls.test_mode)
+        try:
+            set_start_method(method, force=cls.test_mode)
+        except RuntimeError:
+            ctx = get_context()
+            actual = ctx.get_start_method()
+            if actual != method:
+                raise RuntimeError(
+                    f"Start method '{method}' was requested, but '{actual}' "
+                    "was already set.\nFor more information, see: "
+                    "https://sanic.dev/en/guide/running/manager.html#overcoming-a-coderuntimeerrorcode"
+                ) from None
+            else:
+                raise
         cls.START_METHOD_SET = True
 
     @classmethod
@@ -936,8 +948,9 @@ class StartupMixin(metaclass=SanicMeta):
         if method != actual:
             raise RuntimeError(
                 f"Start method '{method}' was requested, but '{actual}' "
-                "was actually set."
-            )
+                "was already set.\nFor more information, see: "
+                "https://sanic.dev/en/guide/running/manager.html#overcoming-a-coderuntimeerrorcode"
+            ) from None
         return get_context()
 
     @classmethod

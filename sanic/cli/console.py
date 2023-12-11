@@ -75,7 +75,7 @@ def make_request(
 ):
     headers = headers or {}
     protocol = REPLProtocol()
-    request = Request(
+    request = Request(  # type: ignore
         url.encode(),
         Header(headers),
         "1.1",
@@ -85,7 +85,7 @@ def make_request(
     )
     if body is not None:
         request.body = body.encode()
-    request.stream = protocol
+    request.stream = protocol  # type: ignore
     request.conn_info = None
     return request
 

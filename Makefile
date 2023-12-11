@@ -60,7 +60,7 @@ format:
 	ruff format sanic examples scripts
 
 .PHONY: pretty
-pretty: fix format
+pretty: format fix
 
 .PHONY: docs-clean
 docs-clean:

@@ -1,3 +1,4 @@
+from contextlib import suppress
 import json
 import os
 import sys
@@ -23,14 +24,22 @@ def tty():
     sys.stdout.isatty = orig
 
 
-def capture(command: List[str], caplog):
-    caplog.clear()
+def capture(command: List[str], caplog=None, capsys=None):
+    if capsys:
+        capsys.readouterr()
+    if caplog:
+        caplog.clear()
     os.chdir(Path(__file__).parent)
     try:
         main(command)
     except SystemExit:
         ...
-    return [record.message for record in caplog.records]
+    if capsys:
+        captured_err = capsys.readouterr()
+        return captured_err
+    if caplog:
+        return [record.message for record in caplog.records]
+    return None
 
 
 def read_app_info(lines: List[str]):
@@ -327,3 +336,15 @@ def test_inspector_command(command, params):
             main()
 
     client.assert_called_once_with(command[0], **params)
+
+
+def test_server_run_with_repl(caplog, capsys):
+    command = [
+        "fake.server.app",
+        "--repl",
+        "--dev",
+    ]
+    result = capture(command, capsys=capsys)
+
+    assert "Welcome to the Sanic interactive console" in result.err
+    assert ">>> " in result.out

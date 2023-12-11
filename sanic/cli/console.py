@@ -43,7 +43,7 @@ except ImportError:
         file=sys.stderr,
     )
 
-repl_app = Sanic("REPL")
+repl_app: Optional[Sanic] = None
 repl_response: Optional[HTTPResponse] = None
 
 
@@ -73,6 +73,7 @@ def make_request(
     method: str = "GET",
     body: Optional[str] = None,
 ):
+    assert repl_app, "No Sanic app has been registered."
     headers = headers or {}
     protocol = REPLProtocol()
     request = Request(  # type: ignore
@@ -91,6 +92,7 @@ def make_request(
 
 
 async def respond(request) -> HTTPResponse:
+    assert repl_app, "No Sanic app has been registered."
     await repl_app.handle_request(request)
     assert repl_response
     return repl_response

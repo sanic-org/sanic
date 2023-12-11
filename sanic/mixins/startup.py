@@ -936,6 +936,8 @@ class StartupMixin(metaclass=SanicMeta):
                     "was already set.\nFor more information, see: "
                     "https://sanic.dev/en/guide/running/manager.html#overcoming-a-coderuntimeerrorcode"
                 ) from None
+            else:
+                raise
         cls.START_METHOD_SET = True
 
     @classmethod

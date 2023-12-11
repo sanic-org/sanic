@@ -11,7 +11,7 @@ import pytest
 
 from sanic_routing import __version__ as __routing_version__
 
-from sanic import __version__
+from sanic import __version__, Sanic
 from sanic.__main__ import main
 from sanic.cli.inspector_client import InspectorClient
 
@@ -339,6 +339,7 @@ def test_inspector_command(command, params):
 
 
 def test_server_run_with_repl(caplog, capsys):
+    Sanic.test_mode = False
     command = [
         "fake.server.app",
         "--repl",
@@ -348,3 +349,4 @@ def test_server_run_with_repl(caplog, capsys):
 
     assert "Welcome to the Sanic interactive console" in result.err
     assert ">>> " in result.out
+    Sanic.test_mode = True

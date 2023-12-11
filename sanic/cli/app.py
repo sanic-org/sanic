@@ -152,10 +152,12 @@ Or, a path to a directory to run as a simple HTTP server:
         InspectorClient(host, port, secure, raw, api_key).do(action, **kwargs)
 
     def _repl(self, app: Sanic):
-        @app.main_process_ready
-        async def start_repl(app):
-            SanicREPL(app).run()
-            await app._startup()
+        if not Sanic.test_mode:
+
+            @app.main_process_ready
+            async def start_repl(app):
+                SanicREPL(app).run()
+                await app._startup()
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics

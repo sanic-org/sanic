@@ -37,13 +37,9 @@ def create_app(root: Path) -> Sanic:
     app.config.STYLE_DIR = root / "style"
     app.config.NODE_MODULES_DIR = root / "node_modules"
     app.config.LANGUAGES = ["en"]
-    app.config.SIDEBAR = load_menu(
-        app.config.CONFIG_DIR / "en" / "sidebar.yaml"
-    )
+    app.config.SIDEBAR = load_menu(app.config.CONFIG_DIR / "en" / "sidebar.yaml")
     app.config.NAVBAR = load_menu(app.config.CONFIG_DIR / "en" / "navbar.yaml")
-    app.config.GENERAL = load_config(
-        app.config.CONFIG_DIR / "en" / "general.yaml"
-    )
+    app.config.GENERAL = load_config(app.config.CONFIG_DIR / "en" / "general.yaml")
 
     setup_livereload(app)
     setup_style(app)
@@ -51,7 +47,7 @@ def create_app(root: Path) -> Sanic:
 
     app.static("/assets/", app.config.PUBLIC_DIR / "assets")
 
-    @app.before_server_start
+    @app.before_server_start(priority=1)
     async def setup(app: Sanic):
         app.ext.dependency(PageRenderer(base_title="Sanic User Guide"))
         page_order = _compile_sidebar_order(app.config.SIDEBAR)
@@ -73,9 +69,7 @@ def create_app(root: Path) -> Sanic:
     ):
         # TODO: Add more language support
         if language != "api" and language not in app.config.LANGUAGES:
-            return redirect(
-                request.app.url_for("page", language="en", path=path)
-            )
+            return redirect(request.app.url_for("page", language="en", path=path))
         if path in KNOWN_REDIRECTS:
             return redirect(
                 request.app.url_for(
@@ -95,8 +89,6 @@ def create_app(root: Path) -> Sanic:
 
     @app.on_request
     async def set_language(request: Request):
-        request.ctx.language = request.match_info.get(
-            "language", Page.DEFAULT_LANGUAGE
-        )
+        request.ctx.language = request.match_info.get("language", Page.DEFAULT_LANGUAGE)
 
     return app

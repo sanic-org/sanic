@@ -345,3 +345,102 @@ To run a managed custom process on Sanic, you must create a callable. If that pr
         Sanic.serve_single()
     ```
 
+## Sanic and multiprocessing
+
+Sanic makes heavy use of the [`multiprocessing` module](https://docs.python.org/3/library/multiprocessing.html) to manage the worker processes. You should generally avoid lower level usage of this module (like setting the start method) as it may interfere with the functionality of Sanic.
+
+### Start methods in Python
+
+Before explaining what Sanic tries to do, it is important to understand what the `start_method` is and why it is important. Python generally allows for three different methods of starting a process:
+
+- `fork`
+- `spawn`
+- `forkserver`
+
+The `fork` and `forkserver` methods are only available on Unix systems, and `spawn` is the only method available on Windows. On Unix systems where you have a choice, `fork` is generally the default system method.
+
+You are encouraged to read the [Python documentation](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods) to learn more about the differences between these methods. However, the important thing to know is that `fork` basically copies the entire memory of the parent process into the child process, whereas `spawn` will create a new process and then load the application into that process. This is the reason why you need to nest your Sanic `run` call inside of the `__name__ == "__main__"` block if you are not using the CLI.
+
+### Sanic and start methods
+
+By default, Sanic will try and use `spawn` as the start method. This is because it is the only method available on Windows, and it is the safest method on Unix systems. 
+
+.. column::
+
+    However, if you are running Sanic on a Unix system and you would like to use `fork` instead, you can do so by setting the `start_method` on the `Sanic` class. You will want to do this as early as possible in your application, and ideally in the global scope before you import any other modules.
+
+.. column::
+
+    ```python
+    from sanic import Sanic
+    
+    Sanic.start_method = "fork"
+    ```
+
+### Overcoming a `RuntimeError`
+
+You might have received a `RuntimeError` that looks like this:
+
+```
+RuntimeError: Start method 'spawn' was requested, but 'fork' was already set.
+```
+
+If so, that means somewhere in your application you are trying to set the start method that conflicts with what Sanic is trying to do. You have a few options to resolve this:
+
+.. column::
+
+    **OPTION 1:** You can tell Sanic that the start method has been set and to not try and set it again.
+
+.. column::
+
+    ```python
+    from sanic import Sanic
+
+    Sanic.START_METHOD_SET = True
+    ```
+
+.. column::
+
+    **OPTION 2:** You could tell Sanic that you intend to use `fork` and to not try and set it to `spawn`.
+
+.. column::
+
+    ```python
+    from sanic import Sanic
+
+    Sanic.start_method = "fork"
+    ```
+
+.. column::
+
+    **OPTION 3:** You can tell Python to use `spawn` instead of `fork` by setting the `multiprocessing` start method.
+
+.. column::
+
+    ```python
+    import multiprocessing
+
+    multiprocessing.set_start_method("spawn")
+    ```
+
+In any of these options, you should run this code as early as possible in your application. Depending upon exactly what your specific scenario is, you may need to combine some of the options.
+
+.. note::
+
+    The potential issues that arise from this problem are usually easily solved by just allowing Sanic to be in charge of multiprocessing. This usually means making use of the `main_process_start` and `main_process_ready` listeners to deal with multiprocessing issues. For example, you should move instantiating multiprocessing primitives that do a lot of work under the hood from the global scope and into a listener.
+    
+    ```python
+    # This is BAD; avoid the global scope
+    from multiprocessing import Queue
+    
+    q = Queue()
+    ```
+    
+    ```python
+    # This is GOOD; the queue is made in a listener and shared to all the processes on the shared_ctx
+    from multiprocessing import Queue
+
+    @app.main_process_start
+    async def main_process_start(app):
+        app.shared_ctx.q = Queue()
+    ```

@@ -164,5 +164,11 @@ def test_main_process_event(app, caplog):
         with caplog.at_level(logging.INFO):
             app.run(HOST, PORT, workers=num_workers)
 
-    assert caplog.record_tuples.count(("sanic.root", 20, "main_process_start")) == 2
-    assert caplog.record_tuples.count(("sanic.root", 20, "main_process_stop")) == 2
+    assert (
+        caplog.record_tuples.count(("sanic.root", 20, "main_process_start"))
+        == 2
+    )
+    assert (
+        caplog.record_tuples.count(("sanic.root", 20, "main_process_stop"))
+        == 2
+    )

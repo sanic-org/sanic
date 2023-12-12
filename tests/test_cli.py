@@ -1,4 +1,3 @@
-from contextlib import suppress
 import json
 import os
 import sys
@@ -8,11 +7,10 @@ from typing import List, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
-from sanic import helpers
 
 from sanic_routing import __version__ as __routing_version__
 
-from sanic import __version__, Sanic
+from sanic import __version__
 from sanic.__main__ import main
 from sanic.cli.inspector_client import InspectorClient
 

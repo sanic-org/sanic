@@ -86,7 +86,7 @@ sanic server:app --host=0.0.0.0 --port=1234 --debug
 
 .. column::
 
-    Or, perhaps more conveniently, when you run `--dev`, Sanic will automatically start the REPL for you.
+    Or, perhaps more conveniently, when you run `--dev`, Sanic will automatically start the REPL for you. However, in this case you might be prompted to hit the "ENTER" key before actually starting the REPL.
 
 .. column::
 
@@ -219,8 +219,8 @@ Or, by destructuring the tuple:
 .. new:: v23.12
 
     Added to the `--dev` flag in v23.12 is the ability to start a REPL. See the [Development REPL](./development.md#development-repl) section for more information.
-	
-	As of v23.12, the `--dev` flag is equivalent to `--debug --reload --repl`.
+    
+    As of v23.12, the `--dev` flag is roughly equivalent to `--debug --reload --repl`. Using `--dev` will require you to expressly begin the REPL by hitting "ENTER", while passing the `--repl` flag explicitly starts it.
 	
 .. column::
 

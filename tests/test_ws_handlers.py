@@ -1,3 +1,6 @@
+import base64
+import secrets
+
 from typing import Any, Callable, Coroutine
 
 import pytest
@@ -68,6 +71,23 @@ def test_ws_handler(
     _, ws_proxy = app.test_client.websocket("/ws", mimic=simple_ws_mimic_client)
     assert ws_proxy.client_sent == ["test 1", "test 2", ""]
     assert ws_proxy.client_received == ["test 1", "test 2"]
+
+
+def test_ws_handler_invalid_upgrade(app: Sanic):
+    @app.websocket("/ws")
+    async def ws_echo_handler(request: Request, ws: Websocket):
+        async for msg in ws:
+            await ws.send(msg)
+
+    ws_key = base64.b64encode(secrets.token_bytes(16)).decode("utf-8")
+    invalid_upgrade_headers = {
+        "Upgrade": "websocket",
+        # "Connection": "Upgrade",
+        "Sec-WebSocket-Key": ws_key,
+        "Sec-WebSocket-Version": "13",
+    }
+    _, response = app.test_client.get("/ws", headers=invalid_upgrade_headers)
+    assert response.status == 426
 
 
 def test_ws_handler_async_for(

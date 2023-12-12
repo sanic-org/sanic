@@ -22,7 +22,7 @@ def test_bp_group_indexing(app: Sanic):
     group = Blueprint.group(blueprint_1, blueprint_2)
     assert group[0] == blueprint_1
 
-    with raises(expected_exception=IndexError) as e:
+    with raises(expected_exception=IndexError):
         _ = group[3]
 
 

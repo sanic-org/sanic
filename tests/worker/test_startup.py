@@ -1,10 +1,11 @@
+import sys
+
+from multiprocessing import set_start_method
 from unittest.mock import patch
 
-import pytest, sys
+import pytest
 
 from sanic import Sanic
-
-from multiprocessing import Queue, set_start_method
 
 
 @pytest.mark.parametrize(

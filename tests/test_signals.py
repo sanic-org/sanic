@@ -1,7 +1,6 @@
 import asyncio
 
 from enum import Enum
-from inspect import isawaitable
 from itertools import count
 
 import pytest
@@ -98,11 +97,11 @@ async def test_dispatch_signal_triggers_correct_event(app):
     # Check for https://github.com/sanic-org/sanic/issues/2826
 
     @app.signal("foo.bar.baz")
-    def sync_signal(*args):
+    def sync_signal_baz(*args):
         pass
 
     @app.signal("foo.bar.spam")
-    def sync_signal(*args):
+    def sync_signal_spam(*args):
         pass
 
     app.signal_router.finalize()
@@ -516,7 +515,7 @@ async def test_dispatch_simple_signal_triggers(app):
 
 
 @pytest.mark.asyncio
-async def test_dispatch_simple_signal_triggers_dynamic(app):
+async def test_dispatch_simple_signal_triggers_dynamic_foo(app):
     counter = 0
 
     @app.signal("<foo:int>")
@@ -532,7 +531,7 @@ async def test_dispatch_simple_signal_triggers_dynamic(app):
 
 
 @pytest.mark.asyncio
-async def test_dispatch_simple_signal_triggers(app):
+async def test_dispatch_simple_signal_triggers_foo_bar(app):
     counter = 0
 
     @app.signal("foo.bar.<baz:int>")

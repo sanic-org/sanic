@@ -8,8 +8,8 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
-from sanic.exceptions import BadRequest, SanicException
 from sanic import Blueprint
+from sanic.exceptions import BadRequest, SanicException
 
 
 AVAILABLE_LISTENERS = [

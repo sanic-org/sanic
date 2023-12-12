@@ -13,6 +13,7 @@ from sanic.exceptions import ServerKilled
 from sanic.log import error_logger, logger
 from sanic.worker.constants import RestartOrder
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
+from sanic.worker.restarter import Restarter
 
 
 if not OS_IS_WINDOWS:
@@ -67,6 +68,7 @@ class WorkerManager:
         self.context = context
         self.transient: Dict[str, Worker] = {}
         self.durable: Dict[str, Worker] = {}
+        self.restarter = Restarter()
         self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
         self.worker_state[self.MAIN_IDENT] = {"pid": self.pid}
@@ -239,33 +241,13 @@ class WorkerManager:
             restart_order (RestartOrder, optional): The order in which to restart the processes.
                 Defaults to `RestartOrder.SHUTDOWN_FIRST`.
         """  # noqa: E501
-        restarted = set()
-        for process in self.transient_processes:
-            if process.restartable and (
-                not process_names or process.name in process_names
-            ):
-                process.restart(restart_order=restart_order, **kwargs)
-                restarted.add(process.name)
-        if process_names:
-            for process in self.durable_processes:
-                if process.restartable and process.name in process_names:
-                    if process.state not in (
-                        ProcessState.COMPLETED,
-                        ProcessState.FAILED,
-                        ProcessState.NONE,
-                    ):
-                        error_logger.error(
-                            f"Cannot restart process {process.name} because "
-                            "it is not in a final state. Current state is: "
-                            f"{process.state.name}."
-                        )
-                        continue
-                    process.restart(restart_order=restart_order, **kwargs)
-                    restarted.add(process.name)
-        if process_names and not restarted:
-            error_logger.error(
-                f"Failed to restart processes: {', '.join(process_names)}"
-            )
+        self.restarter.restart(
+            transient_processes=list(self.transient_processes),
+            durable_processes=list(self.durable_processes),
+            process_names=process_names,
+            restart_order=restart_order,
+            **kwargs,
+        )
 
     def scale(self, num_worker: int):
         if num_worker <= 0:

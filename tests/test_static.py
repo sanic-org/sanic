@@ -112,7 +112,7 @@ def test_static_file_pathlib(app, static_file_directory, file_name):
     ],
 )
 def test_static_file_pathlib_relative_path_traversal(
-    app, static_file_directory, file_name
+        app, static_file_directory, file_name
 ):
     """Get the current working directory and check if it ends with "sanic" """
     cwd = Path.cwd()
@@ -173,7 +173,7 @@ def test_static_file_content_type(app, static_file_directory, file_name):
     ],
 )
 def test_static_file_content_type_guessed(
-    app, static_file_directory, file_name, expected
+        app, static_file_directory, file_name, expected
 ):
     app.static(
         "/testing.file",
@@ -241,8 +241,8 @@ def test_static_content_range_correct(app, file_name, static_file_directory):
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
     static_content = bytes(get_file_content(static_file_directory, file_name))[
-        12:20
-    ]
+                     12:20
+                     ]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
@@ -261,8 +261,8 @@ def test_static_content_range_front(app, file_name, static_file_directory):
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
     static_content = bytes(get_file_content(static_file_directory, file_name))[
-        12:
-    ]
+                     12:
+                     ]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
@@ -281,8 +281,8 @@ def test_static_content_range_back(app, file_name, static_file_directory):
     assert "Content-Length" in response.headers
     assert "Content-Range" in response.headers
     static_content = bytes(get_file_content(static_file_directory, file_name))[
-        -12:
-    ]
+                     -12:
+                     ]
     assert int(response.headers["Content-Length"]) == len(static_content)
     assert response.body == static_content
 
@@ -290,7 +290,7 @@ def test_static_content_range_back(app, file_name, static_file_directory):
 @pytest.mark.parametrize("use_modified_since", [True, False])
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
 def test_static_content_range_empty(
-    app, file_name, static_file_directory, use_modified_since
+        app, file_name, static_file_directory, use_modified_since
 ):
     app.static(
         "/testing.file",
@@ -331,7 +331,7 @@ def test_static_content_range_error(app, file_name, static_file_directory):
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
 def test_static_content_range_invalid_unit(
-    app, file_name, static_file_directory
+        app, file_name, static_file_directory
 ):
     app.static(
         "/testing.file",
@@ -349,7 +349,7 @@ def test_static_content_range_invalid_unit(
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
 def test_static_content_range_invalid_start(
-    app, file_name, static_file_directory
+        app, file_name, static_file_directory
 ):
     app.static(
         "/testing.file",
@@ -367,7 +367,7 @@ def test_static_content_range_invalid_start(
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
 def test_static_content_range_invalid_end(
-    app, file_name, static_file_directory
+        app, file_name, static_file_directory
 ):
     app.static(
         "/testing.file",
@@ -385,7 +385,7 @@ def test_static_content_range_invalid_end(
 
 @pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])
 def test_static_content_range_invalid_parameters(
-    app, file_name, static_file_directory
+        app, file_name, static_file_directory
 ):
     app.static(
         "/testing.file",
@@ -422,12 +422,12 @@ def test_static_file_specified_host(app, static_file_directory, file_name):
 @pytest.mark.parametrize("stream_large_files", [True, 1024])
 @pytest.mark.parametrize("file_name", ["test.file", "large.file"])
 def test_static_stream_large_file(
-    app,
-    static_file_directory,
-    file_name,
-    use_modified_since,
-    stream_large_files,
-    large_file,
+        app,
+        static_file_directory,
+        file_name,
+        use_modified_since,
+        stream_large_files,
+        large_file,
 ):
     app.static(
         "/testing.file",
@@ -581,7 +581,8 @@ async def test_resource_type_default_error(app, static_file_directory):
     app.static("/static", static_file_directory)
     app.static("/file", get_file_path(static_file_directory, "test.file"))
 
-    message = r"Duplicate route names detected: test_resource_type_default_error\.static"
+    message = (r"Duplicate route names "
+               r"detected: test_resource_type_default_error\.static")
     with pytest.raises(ServerError, match=message):
         await app._startup()
 
@@ -646,7 +647,8 @@ def test_resource_type_unknown(app, static_file_directory, caplog):
     reason="Windows does not support double dotted directories",
 )
 def test_dotted_dir_ok(
-    app: Sanic, static_file_directory: str, double_dotted_directory_file: Path
+        app: Sanic, static_file_directory: str,
+        double_dotted_directory_file: Path
 ):
     app.static("/foo", static_file_directory)
     dot_relative_path = str(
@@ -671,7 +673,7 @@ def test_breakout(app: Sanic, static_file_directory: str):
     sys.platform != "win32", reason="Block backslash on Windows only"
 )
 def test_double_backslash_prohibited_on_win32(
-    app: Sanic, static_file_directory: str
+        app: Sanic, static_file_directory: str
 ):
     app.static("/foo", static_file_directory)
 

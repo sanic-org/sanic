@@ -14,7 +14,6 @@ from sanic_testing.testing import HOST, PORT
 from sanic import Blueprint, text
 from sanic.compat import use_context
 from sanic.log import logger
-from sanic.server.socket import configure_socket
 
 
 @pytest.mark.skipif(

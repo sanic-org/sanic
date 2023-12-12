@@ -12,7 +12,8 @@ from time import sleep
 import pytest
 
 
-# We need to interrupt the autoreloader without killing it, so that the server gets terminated
+# We need to interrupt the autoreloader without killing it,
+# so that the server gets terminated
 # https://stefan.sofa-rockers.org/2013/08/15/handling-sub-process-hierarchies-python-linux-os-x/
 
 try:

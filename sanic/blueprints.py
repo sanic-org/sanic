@@ -32,7 +32,7 @@ from sanic_routing.route import Route
 from sanic.base.root import BaseSanic
 from sanic.exceptions import SanicException
 from sanic.helpers import Default, _default
-from sanic.models.futures import FutureRoute, FutureStatic
+from sanic.models.futures import FutureRoute, FutureSignal, FutureStatic
 from sanic.models.handler_types import (
     ListenerType,
     MiddlewareType,
@@ -479,7 +479,15 @@ class Blueprint(BaseSanic):
                 continue
             future.condition.update({"__blueprint__": self.name})
             # Force exclusive to be False
-            app._apply_signal(tuple((*future[:-1], False)))
+            app._apply_signal(
+                FutureSignal(
+                    future.handler,
+                    future.event,
+                    future.condition,
+                    False,
+                    future.priority,
+                )
+            )
 
         self.routes += [route for route in routes if isinstance(route, Route)]
         self.websocket_routes += [

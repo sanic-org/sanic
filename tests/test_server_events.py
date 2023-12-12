@@ -9,6 +9,7 @@ import pytest
 from sanic_testing.testing import HOST, PORT
 
 from sanic.exceptions import BadRequest, SanicException
+from sanic import Blueprint
 
 
 AVAILABLE_LISTENERS = [
@@ -111,9 +112,7 @@ async def test_trigger_before_events_create_server(app):
     async def init_db(app, loop):
         app.ctx.db = MySanicDb()
 
-    srv = await app.create_server(
-        debug=True, return_asyncio_server=True, port=PORT
-    )
+    srv = await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
     await srv.startup()
     await srv.before_start()
 
@@ -170,9 +169,7 @@ def test_create_server_trigger_events(app):
     with closing(socket()) as sock:
         sock.bind(("127.0.0.1", 0))
 
-        serv_coro = app.create_server(
-            return_asyncio_server=True, sock=sock, debug=True
-        )
+        serv_coro = app.create_server(return_asyncio_server=True, sock=sock, debug=True)
         serv_task = asyncio.ensure_future(serv_coro, loop=loop)
         server = loop.run_until_complete(serv_task)
         loop.run_until_complete(server.startup())
@@ -202,9 +199,7 @@ async def test_missing_startup_raises_exception(app):
     async def init_db(app, loop):
         ...
 
-    srv = await app.create_server(
-        debug=True, return_asyncio_server=True, port=PORT
-    )
+    srv = await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
 
     with pytest.raises(SanicException):
         await srv.before_start()
@@ -221,3 +216,51 @@ def test_reload_listeners_attached(app):
 
     assert len(app.listeners.get("reload_process_start")) == 2
     assert len(app.listeners.get("reload_process_stop")) == 2
+
+
+def test_priority_ordering(app):
+    output = []
+    bp = Blueprint("bp")
+
+    @app.before_server_start
+    async def first(app):
+        output.append("first")
+
+    @app.listener("before_server_start", priority=2)
+    async def second(app):
+        output.append("second")
+
+    @app.before_server_start(priority=3)
+    async def third(app):
+        output.append("third")
+
+    @bp.before_server_start
+    async def bp_first(app):
+        output.append("bp_first")
+
+    @bp.listener("before_server_start", priority=2)
+    async def bp_second(app):
+        output.append("bp_second")
+
+    @bp.before_server_start(priority=3)
+    async def bp_third(app):
+        output.append("bp_third")
+
+    @app.before_server_start
+    async def fourth(app):
+        output.append("fourth")
+
+    app.blueprint(bp)
+    start_stop_app(app)
+
+    # The order of the listeners is:
+    # priority descending, app before bp, definition order ascending
+    assert output == [
+        "third",
+        "bp_third",
+        "second",
+        "bp_second",
+        "first",
+        "fourth",
+        "bp_first",
+    ]

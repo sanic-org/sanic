@@ -433,7 +433,11 @@ class Sanic(
     # -------------------------------------------------------------------- #
 
     def register_listener(
-        self, listener: ListenerType[SanicVar], event: str
+        self,
+        listener: ListenerType[SanicVar],
+        event: str,
+        *,
+        priority: int = 0,
     ) -> ListenerType[SanicVar]:
         """Register the listener for a given event.
 
@@ -454,10 +458,14 @@ class Sanic(
             raise BadRequest(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
-            self.signal(_event.value)(
+            self.signal(_event.value, priority=priority)(
                 partial(self._listener, listener=listener)
             )
         else:
+            if priority:
+                error_logger.warning(
+                    f"Priority is not supported for {_event.value}"
+                )
             self.listeners[_event.value].append(listener)
 
         return listener
@@ -581,7 +589,9 @@ class Sanic(
         return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
-        return self.register_listener(listener.listener, listener.event)
+        return self.register_listener(
+            listener.listener, listener.event, priority=listener.priority
+        )
 
     def _apply_route(
         self, route: FutureRoute, overwrite: bool = False
@@ -633,7 +643,13 @@ class Sanic(
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
         with self.amend():
-            return self.signal_router.add(*signal)
+            return self.signal_router.add(
+                handler=signal.handler,
+                event=signal.event,
+                condition=signal.condition,
+                exclusive=signal.exclusive,
+                priority=signal.priority,
+            )
 
     @overload
     def dispatch(
@@ -771,16 +787,16 @@ class Sanic(
         """
 
         waiter = self.signal_router.get_waiter(event, condition, exclusive)
+
+        if not waiter and self.config.EVENT_AUTOREGISTER:
+            self.signal_router.reset()
+            self.add_signal(None, event)
+            waiter = self.signal_router.get_waiter(event, condition, exclusive)
+            self.signal_router.finalize()
+
         if not waiter:
-            if self.config.EVENT_AUTOREGISTER:
-                self.signal_router.reset()
-                self.add_signal(None, event)
-                waiter = self.signal_router.get_waiter(
-                    event, condition, exclusive
-                )
-                self.signal_router.finalize()
-            else:
-                raise NotFound("Could not find signal %s" % event)
+            raise NotFound(f"Could not find signal {event}")
+
         return await wait_for(waiter.wait(), timeout=timeout)
 
     def report_exception(

@@ -13,5 +13,5 @@ app = Sanic("test")
 
 @app.get("/")
 async def handler(request: Request[Sanic[Config, SimpleNamespace], Foo]):
-    reveal_type(request.ctx)
-    reveal_type(request.app)
+    reveal_type(request.ctx)  # noqa
+    reveal_type(request.app)  # noqa

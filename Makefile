@@ -1,3 +1,4 @@
+RUFF_FORMATTED_FOLDERS = sanic examples scripts tests
 .DEFAULT: help
 
 .PHONY: help
@@ -53,11 +54,11 @@ docker-test: clean
 
 .PHONY: fix
 fix:
-	ruff check sanic examples scripts --fix
+	ruff check ${RUFF_FORMATTED_FOLDERS} --fix
 
 .PHONY: format
 format:
-	ruff format sanic examples scripts
+	ruff format ${RUFF_FORMATTED_FOLDERS}
 
 .PHONY: pretty
 pretty: fix format

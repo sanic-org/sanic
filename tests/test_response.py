@@ -641,7 +641,6 @@ def test_multiple_responses(
         "been responded to."
     )
 
-
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/1")
         assert response.status == 200

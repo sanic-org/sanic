@@ -1,9 +1,10 @@
-from typing import Optional
 from unittest.mock import Mock
+
 import pytest
+
+from sanic.worker.constants import ProcessState, RestartOrder
 from sanic.worker.process import WorkerProcess
 from sanic.worker.restarter import Restarter
-from sanic.worker.constants import ProcessState, RestartOrder
 
 
 def noop(*args, **kwargs):
@@ -26,11 +27,17 @@ def test_restart_transient():
     restarter = Restarter()
 
     restarter.restart([transient], [durable])
-    transient.restart.assert_called_once_with(restart_order=RestartOrder.SHUTDOWN_FIRST)
+    transient.restart.assert_called_once_with(
+        restart_order=RestartOrder.SHUTDOWN_FIRST
+    )
     durable.restart.assert_not_called()
     transient.restart.reset_mock()
-    restarter.restart([transient], [durable], restart_order=RestartOrder.STARTUP_FIRST)
-    transient.restart.assert_called_once_with(restart_order=RestartOrder.STARTUP_FIRST)
+    restarter.restart(
+        [transient], [durable], restart_order=RestartOrder.STARTUP_FIRST
+    )
+    transient.restart.assert_called_once_with(
+        restart_order=RestartOrder.STARTUP_FIRST
+    )
 
 
 @pytest.mark.parametrize(

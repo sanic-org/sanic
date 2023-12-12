@@ -75,7 +75,9 @@ def test_kill(os_mock: Mock):
 
 @patch("sanic.worker.process.os")
 @patch("sanic.worker.manager.os")
-def test_shutdown_signal_send_kill(manager_os_mock: Mock, process_os_mock: Mock):
+def test_shutdown_signal_send_kill(
+    manager_os_mock: Mock, process_os_mock: Mock
+):
     process = Mock()
     process.pid = 1234
     context = Mock()
@@ -135,7 +137,9 @@ def test_monitor_all(zero_downtime):
     p2 = Mock()
     sub = Mock()
     incoming = (
-        "__ALL_PROCESSES__::STARTUP_FIRST" if zero_downtime else "__ALL_PROCESSES__:"
+        "__ALL_PROCESSES__::STARTUP_FIRST"
+        if zero_downtime
+        else "__ALL_PROCESSES__:"
     )
     sub.recv.side_effect = [incoming, ""]
     context = Mock()
@@ -146,7 +150,9 @@ def test_monitor_all(zero_downtime):
     manager.monitor()
 
     restart_order = (
-        RestartOrder.STARTUP_FIRST if zero_downtime else RestartOrder.SHUTDOWN_FIRST
+        RestartOrder.STARTUP_FIRST
+        if zero_downtime
+        else RestartOrder.SHUTDOWN_FIRST
     )
     manager.restart.assert_called_once_with(
         process_names=None,
@@ -174,7 +180,9 @@ def test_monitor_all_with_files(zero_downtime):
     manager.monitor()
 
     restart_order = (
-        RestartOrder.STARTUP_FIRST if zero_downtime else RestartOrder.SHUTDOWN_FIRST
+        RestartOrder.STARTUP_FIRST
+        if zero_downtime
+        else RestartOrder.SHUTDOWN_FIRST
     )
     manager.restart.assert_called_once_with(
         process_names=None,
@@ -190,7 +198,9 @@ def test_monitor_one_process(zero_downtime):
     p2 = Mock()
     sub = Mock()
     incoming = (
-        f"{p1.name}:foo,bar:STARTUP_FIRST" if zero_downtime else f"{p1.name}:foo,bar"
+        f"{p1.name}:foo,bar:STARTUP_FIRST"
+        if zero_downtime
+        else f"{p1.name}:foo,bar"
     )
     sub.recv.side_effect = [incoming, ""]
     context = Mock()
@@ -201,7 +211,9 @@ def test_monitor_one_process(zero_downtime):
     manager.monitor()
 
     restart_order = (
-        RestartOrder.STARTUP_FIRST if zero_downtime else RestartOrder.SHUTDOWN_FIRST
+        RestartOrder.STARTUP_FIRST
+        if zero_downtime
+        else RestartOrder.SHUTDOWN_FIRST
     )
     manager.restart.assert_called_once_with(
         process_names=[p1.name],
@@ -323,7 +335,9 @@ def test_manage_basic(manager: WorkerManager):
 
 
 def test_manage_transient(manager: WorkerManager):
-    manager.manage("TEST", fake_serve, kwargs={"foo": "bar"}, workers=3, transient=True)
+    manager.manage(
+        "TEST", fake_serve, kwargs={"foo": "bar"}, workers=3, transient=True
+    )
     assert len(manager.transient) == 2
     assert len(manager.durable) == 0
 
@@ -338,7 +352,11 @@ def test_manage_transient(manager: WorkerManager):
 
 def test_manage_restartable(manager: WorkerManager):
     manager.manage(
-        "TEST", fake_serve, kwargs={"foo": "bar"}, restartable=True, auto_start=False
+        "TEST",
+        fake_serve,
+        kwargs={"foo": "bar"},
+        restartable=True,
+        auto_start=False,
     )
     assert len(manager.transient) == 1
     assert len(manager.durable) == 1
@@ -375,5 +393,9 @@ def test_transient_not_restartable(manager: WorkerManager):
     message = "Cannot create a transient worker that is not restartable"
     with pytest.raises(ValueError, match=message):
         manager.manage(
-            "TEST", fake_serve, kwargs={"foo": "bar"}, transient=True, restartable=False
+            "TEST",
+            fake_serve,
+            kwargs={"foo": "bar"},
+            transient=True,
+            restartable=False,
         )

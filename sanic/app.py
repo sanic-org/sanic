@@ -5,6 +5,7 @@ import logging
 import logging.config
 import re
 import sys
+
 from asyncio import (
     AbstractEventLoop,
     CancelledError,
@@ -61,7 +62,12 @@ from sanic.blueprint_group import BlueprintGroup
 from sanic.blueprints import Blueprint
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
-from sanic.exceptions import BadRequest, SanicException, ServerError, URLBuildError
+from sanic.exceptions import (
+    BadRequest,
+    SanicException,
+    ServerError,
+    URLBuildError,
+)
 from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
@@ -90,6 +96,7 @@ from sanic.types.shared_ctx import SharedContext
 from sanic.worker.inspector import Inspector
 from sanic.worker.loader import CertLoader
 from sanic.worker.manager import WorkerManager
+
 
 if TYPE_CHECKING:
     try:

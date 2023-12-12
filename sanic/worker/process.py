@@ -1,5 +1,7 @@
 import os
+
 from datetime import datetime, timezone
+from inspect import signature
 from multiprocessing.context import BaseContext
 from signal import SIGINT
 from threading import Thread
@@ -116,9 +118,10 @@ class WorkerProcess:
             self._terminate_now()
         else:
             self._old_process = self._current_process
-        self.kwargs.update(
-            {"config": {k.upper(): v for k, v in kwargs.items()}}
-        )
+        if self._add_config():
+            self.kwargs.update(
+                {"config": {k.upper(): v for k, v in kwargs.items()}}
+            )
         try:
             self.spawn()
             self.start()
@@ -160,6 +163,8 @@ class WorkerProcess:
         return self._current_process.exitcode
 
     def _terminate_now(self):
+        if not self._current_process.is_alive():
+            return
         logger.debug(
             f"{Colors.BLUE}Begin restart termination: "
             f"{Colors.BOLD}{Colors.SANIC}"
@@ -208,6 +213,15 @@ class WorkerProcess:
             self._old_process.terminate()
         delattr(self, "_old_process")
 
+    def _add_config(self) -> bool:
+        sig = signature(self.target)
+        if "config" in sig.parameters or any(
+            param.kind == param.VAR_KEYWORD
+            for param in sig.parameters.values()
+        ):
+            return True
+        return False
+
 
 class Worker:
     WORKER_PREFIX = "Sanic-"
@@ -222,6 +236,7 @@ class Worker:
         num: int = 1,
         restartable: bool = False,
         tracked: bool = True,
+        auto_start: bool = True,
     ):
         self.ident = ident
         self.num = num
@@ -232,6 +247,7 @@ class Worker:
         self.processes: Set[WorkerProcess] = set()
         self.restartable = restartable
         self.tracked = tracked
+        self.auto_start = auto_start
         for _ in range(num):
             self.create_process()
 

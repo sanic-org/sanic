@@ -13,6 +13,7 @@ class RestartOrder(UpperStrEnum):
 class ProcessState(IntEnum):
     """Process states."""
 
+    NONE = auto()
     IDLE = auto()
     RESTARTING = auto()
     STARTING = auto()

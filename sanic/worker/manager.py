@@ -1,4 +1,5 @@
 import os
+
 from contextlib import suppress
 from enum import IntEnum, auto
 from itertools import chain, count
@@ -12,6 +13,7 @@ from sanic.exceptions import ServerKilled
 from sanic.log import error_logger, logger
 from sanic.worker.constants import RestartOrder
 from sanic.worker.process import ProcessState, Worker, WorkerProcess
+
 
 if not OS_IS_WINDOWS:
     from signal import SIGKILL
@@ -90,6 +92,7 @@ class WorkerManager:
         transient: bool = False,
         restartable: Optional[bool] = None,
         tracked: bool = True,
+        auto_start: bool = True,
         workers: int = 1,
     ) -> Worker:
         """Instruct Sanic to manage a custom process.
@@ -103,10 +106,11 @@ class WorkerManager:
                 with any global restart (ex: auto-reload), defaults to `False`
             restartable (Optional[bool], optional): Whether to mark the process as restartable. If
                 `True` then the Worker Manager will be able to restart the process
-                if prompted. If transient=True, this property will be implied
-                to be True, defaults to None
+                if prompted. If `transient=True`, this property will be implied
+                to be `True`, defaults to `None`
             tracked (bool, optional): Whether to track the process after completion,
-                defaults to True
+                defaults to `True`
+            auto_start (bool, optional): Whether to start the process immediately, defaults to `True`
             workers (int, optional): The number of worker processes to run. Defaults to `1`.
 
 
@@ -117,7 +121,9 @@ class WorkerManager:
             raise ValueError(f"Worker {ident} already exists")
         restartable = restartable if restartable is not None else transient
         if transient and not restartable:
-            raise ValueError("Cannot create a transient worker that is not restartable")
+            raise ValueError(
+                "Cannot create a transient worker that is not restartable"
+            )
         container = self.transient if transient else self.durable
         worker = Worker(
             ident,
@@ -128,6 +134,7 @@ class WorkerManager:
             workers,
             restartable,
             tracked,
+            auto_start,
         )
         container[worker.ident] = worker
         return worker
@@ -184,8 +191,12 @@ class WorkerManager:
 
     def start(self):
         """Start the worker processes."""
-        for process in self.processes:
-            process.start()
+        for worker in self.workers:
+            for process in worker.processes:
+                if not worker.auto_start:
+                    process.set_state(ProcessState.NONE, True)
+                    continue
+                process.start()
 
     def join(self):
         """Join the worker processes."""
@@ -241,6 +252,7 @@ class WorkerManager:
                     if process.state not in (
                         ProcessState.COMPLETED,
                         ProcessState.FAILED,
+                        ProcessState.NONE,
                     ):
                         error_logger.error(
                             f"Cannot restart process {process.name} because "
@@ -261,7 +273,9 @@ class WorkerManager:
 
         change = num_worker - self.num_server
         if change == 0:
-            logger.info(f"No change needed. There are already {num_worker} workers.")
+            logger.info(
+                f"No change needed. There are already {num_worker} workers."
+            )
             return
 
         logger.info(f"Scaling from {self.num_server} to {num_worker} workers")
@@ -350,6 +364,8 @@ class WorkerManager:
         """Get all of the processes."""
         for worker in self.workers:
             for process in worker.processes:
+                if not process.pid:
+                    continue
                 yield process
 
     @property
@@ -398,7 +414,8 @@ class WorkerManager:
             return
         if worker.has_alive_processes():
             error_logger.error(
-                f"Worker {worker.ident} has alive processes and cannot be " "removed."
+                f"Worker {worker.ident} has alive processes and cannot be "
+                "removed."
             )
             return
         self.transient.pop(worker.ident, None)
@@ -456,7 +473,9 @@ class WorkerManager:
                 self._handle_manage(*message)
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
-                error_logger.error("Monitor received an invalid message: %s", message)
+                error_logger.error(
+                    "Monitor received an invalid message: %s", message
+                )
                 return MonitorCycle.CONTINUE
             return self._handle_message(message)
         return None

@@ -111,7 +111,8 @@ class WorkerMultiplexer:
         """
         if name and all_workers:
             raise ValueError(
-                "Ambiguous restart with both a named process and" " all_workers=True"
+                "Ambiguous restart with both a named process and"
+                " all_workers=True"
             )
         if not name:
             name = "__ALL_PROCESSES__:" if all_workers else self.name

@@ -5,7 +5,7 @@ on:
     types: [created]
 
 env:
-  IS_TEST: false
+  IS_TEST: true
   DOCKER_ORG_NAME: sanicframework
   DOCKER_IMAGE_NAME: sanic
   DOCKER_BASE_IMAGE_NAME: sanic-build
@@ -90,6 +90,9 @@ jobs:
     name: Build and publish package
     runs-on: ubuntu-latest
     needs: generate_info
+    environment: release
+    permissions:
+      id-token: write
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
@@ -109,17 +112,16 @@ jobs:
     - name: Build a binary wheel and a source tarball
       run: python -m build --sdist --wheel --outdir dist/ .
 
-    - name: Publish to PyPi 🚀
-      run: twine upload --non-interactive --disable-progress-bar dist/*
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ env.IS_TEST == 'true' && secrets.SANIC_TEST_PYPI_API_TOKEN || secrets.SANIC_PYPI_API_TOKEN }}
-        TWINE_REPOSITORY: ${{ env.IS_TEST == 'true' && 'testpypi' || 'pypi' }}
+    - name: Publish package distributions to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: ${{ env.IS_TEST == 'true' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
 
   publish_docker:
     name: Publish Docker / Python ${{ matrix.python-version }}
     needs: [generate_info, publish_package]
     runs-on: ubuntu-latest
+    if: ${{ env.IS_TEST == 'false' }}
     strategy:
       fail-fast: true
       matrix:

@@ -19,6 +19,7 @@ jobs:
     outputs:
       docker-tags: ${{ steps.generate_docker_info.outputs.tags }}
       pypi-version: ${{ steps.parse_version_tag.outputs.pypi-version }}
+      is-test: ${{ env.IS_TEST }}
     steps:
       - name: Parse version tag
         id: parse_version_tag
@@ -121,7 +122,7 @@ jobs:
     name: Publish Docker / Python ${{ matrix.python-version }}
     needs: [generate_info, publish_package]
     runs-on: ubuntu-latest
-    if: ${{ env.IS_TEST == 'false' }}
+    if: ${{ needs.generate_info.IS_TEST == 'false' }}
     strategy:
       fail-fast: true
       matrix:

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from collections import deque, namedtuple
@@ -12,7 +11,7 @@ from pytest import MonkeyPatch
 
 from sanic import Sanic
 from sanic.application.state import Mode
-from sanic.asgi import ASGIApp, Lifespan, MockTransport
+from sanic.asgi import Lifespan, MockTransport
 from sanic.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from sanic.request import Request
 from sanic.response import json, text

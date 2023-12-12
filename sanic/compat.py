@@ -45,6 +45,8 @@ else:
 
 
 class UpperStrEnum(StrEnum):
+    """Base class for string enums that are case insensitive."""
+
     def _generate_next_value_(name, start, count, last_values):
         return name.upper()
 
@@ -109,16 +111,13 @@ def pypy_windows_set_console_cp_patch() -> None:
 
 
 class Header(CIMultiDict):
-    """
-    Container used for both request and response headers. It is a subclass of
-    `CIMultiDict
-    <https://multidict.readthedocs.io/en/stable/multidict.html#cimultidictproxy>`_.
+    """Container used for both request and response headers.
+    It is a subclass of  [CIMultiDict](https://multidict.readthedocs.io/en/stable/multidict.html#cimultidictproxy)
 
     It allows for multiple values for a single key in keeping with the HTTP
     spec. Also, all keys are *case in-sensitive*.
 
-    Please checkout `the MultiDict documentation
-    <https://multidict.readthedocs.io/en/stable/multidict.html#multidict>`_
+    Please checkout [the MultiDict documentation](https://multidict.readthedocs.io/en/stable/multidict.html#multidict)
     for more details about how to use the object. In general, it should work
     very similar to a regular dictionary.
     """  # noqa: E501
@@ -130,9 +129,7 @@ class Header(CIMultiDict):
         return ",".join(self.getall(key, default=[]))
 
     def get_all(self, key: str):
-        """
-        Convenience method mapped to ``getall()``.
-        """
+        """Convenience method mapped to ``getall()``."""
         return self.getall(key, default=[])
 
 

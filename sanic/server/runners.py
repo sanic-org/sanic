@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 from ssl import SSLContext
 from typing import TYPE_CHECKING, Dict, Optional, Type, Union
 
@@ -84,7 +82,44 @@ def serve(
     :param asyncio_server_kwargs: key-value args for asyncio/uvloop
                                   create_server method
     :return: Nothing
-    """
+
+    Args:
+        host (str): Address to host on
+        port (int): Port to host on
+        app (Sanic): Sanic app instance
+        ssl (Optional[SSLContext], optional): SSLContext. Defaults to `None`.
+        sock (Optional[socket.socket], optional): Socket for the server to
+            accept connections from. Defaults to `None`.
+        unix (Optional[str], optional): Unix socket to listen on instead of
+            TCP port. Defaults to `None`.
+        reuse_port (bool, optional): `True` for multiple workers. Defaults
+            to `False`.
+        loop: asyncio compatible event loop. Defaults
+            to `None`.
+        protocol (Type[asyncio.Protocol], optional): Protocol to use. Defaults
+            to `HttpProtocol`.
+        backlog (int, optional): The maximum number of queued connections
+            passed to socket.listen(). Defaults to `100`.
+        register_sys_signals (bool, optional): Register SIGINT and SIGTERM.
+            Defaults to `True`.
+        run_multiple (bool, optional): Run multiple workers. Defaults
+            to `False`.
+        run_async (bool, optional): Return an AsyncServer object.
+            Defaults to `False`.
+        connections: Connections. Defaults to `None`.
+        signal (Signal, optional): Signal. Defaults to `Signal()`.
+        state: State. Defaults to `None`.
+        asyncio_server_kwargs (Optional[Dict[str, Union[int, float]]], optional):
+            key-value args for asyncio/uvloop create_server method. Defaults
+            to `None`.
+        version (str, optional): HTTP version. Defaults to `HTTP.VERSION_1`.
+
+    Raises:
+        ServerError: Cannot run HTTP/3 server without aioquic installed.
+
+    Returns:
+        AsyncioServer: AsyncioServer object if `run_async` is `True`.
+    """  # noqa: E501
     if not run_async and not loop:
         # create new event_loop after fork
         loop = asyncio.new_event_loop()
@@ -124,17 +159,15 @@ def _setup_system_signals(
     register_sys_signals: bool,
     loop: asyncio.AbstractEventLoop,
 ) -> None:  # no cov
-    # Ignore SIGINT when run_multiple
-    if run_multiple:
-        signal_func(SIGINT, SIG_IGN)
-        os.environ["SANIC_WORKER_PROCESS"] = "true"
-
+    signal_func(SIGINT, SIG_IGN)
+    signal_func(SIGTERM, SIG_IGN)
+    os.environ["SANIC_WORKER_PROCESS"] = "true"
     # Register signals for graceful termination
     if register_sys_signals:
         if OS_IS_WINDOWS:
             ctrlc_workaround_for_windows(app)
         else:
-            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+            for _signal in [SIGINT, SIGTERM]:
                 loop.add_signal_handler(
                     _signal, partial(app.stop, terminate=False)
                 )
@@ -145,8 +178,6 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
     try:
         server_logger.info("Starting worker [%s]", pid)
         loop.run_forever()
-    except KeyboardInterrupt:
-        pass
     finally:
         server_logger.info("Stopping worker [%s]", pid)
 
@@ -158,6 +189,7 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
         loop.run_until_complete(after_stop())
         remove_unix_socket(unix)
         loop.close()
+        server_logger.info("Worker complete [%s]", pid)
 
 
 def _serve_http_1(
@@ -251,8 +283,7 @@ def _serve_http_1(
             loop.run_until_complete(asyncio.sleep(0.1))
             start_shutdown = start_shutdown + 0.1
 
-        if sys.version_info > (3, 7):
-            app.shutdown_tasks(graceful - start_shutdown)
+        app.shutdown_tasks(graceful - start_shutdown)
 
         # Force close non-idle connection after waiting for
         # graceful_shutdown_timeout
@@ -262,8 +293,11 @@ def _serve_http_1(
             else:
                 conn.abort()
 
+        app.set_serving(False)
+
     _setup_system_signals(app, run_multiple, register_sys_signals, loop)
     loop.run_until_complete(app._server_event("init", "after"))
+    app.set_serving(True)
     _run_server_forever(
         loop,
         partial(app._server_event, "shutdown", "before"),

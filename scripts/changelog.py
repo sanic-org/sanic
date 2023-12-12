@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
-from os import path
 import sys
+
+from os import path
+
 
 if __name__ == "__main__":
     try:
-        import towncrier
         import click
+        import towncrier
     except ImportError:
         print(
-            "Please make sure you have a installed towncrier and click before using this tool"
+            "Please make sure you have installed towncrier and "
+            "click before using this tool"
         )
         sys.exit(1)
 

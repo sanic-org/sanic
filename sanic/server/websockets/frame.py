@@ -57,9 +57,7 @@ class WebsocketFrameAssembler:
         self.read_mutex = asyncio.Lock()
         self.write_mutex = asyncio.Lock()
 
-        self.completed_queue = asyncio.Queue(
-            maxsize=1
-        )  # type: asyncio.Queue[Data]
+        self.completed_queue = asyncio.Queue(maxsize=1)  # type: asyncio.Queue[Data]
 
         # put() sets this event to tell get() that a message can be fetched.
         self.message_complete = asyncio.Event()
@@ -96,6 +94,7 @@ class WebsocketFrameAssembler:
         If ``timeout`` is set and elapses before a complete message is
         received, :meth:`get` returns ``None``.
         """
+        completed: bool
         async with self.read_mutex:
             if timeout is not None and timeout <= 0:
                 if not self.message_complete.is_set():

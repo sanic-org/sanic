@@ -25,6 +25,30 @@ class MonitorCycle(IntEnum):
 
 
 class WorkerManager:
+    """Manage all of the processes.
+
+    This class is used to manage all of the processes. It is instantiated
+    by Sanic when in multiprocess mode (which is OOTB default) and is used
+    to start, stop, and restart the worker processes.
+
+    You can access it to interact with it **ONLY** when on the main process.
+
+    Therefore, you should really only access it from within the
+    `main_process_ready` event listener.
+
+    ```python
+    from sanic import Sanic
+
+    app = Sanic("MyApp")
+
+    @app.main_process_ready
+    async def ready(app: Sanic, _):
+        app.manager.manage("MyProcess", my_process, {"foo": "bar"})
+    ```
+
+    See [Worker Manager](/en/guide/deployment/manager) for more information.
+    """
+
     THRESHOLD = WorkerProcess.THRESHOLD
     MAIN_IDENT = "Sanic-Main"
 
@@ -68,38 +92,32 @@ class WorkerManager:
         tracked: bool = True,
         workers: int = 1,
     ) -> Worker:
-        """
-        Instruct Sanic to manage a custom process.
+        """Instruct Sanic to manage a custom process.
 
-        :param ident: A name for the worker process
-        :type ident: str
-        :param func: The function to call in the background process
-        :type func: Callable[..., Any]
-        :param kwargs: Arguments to pass to the function
-        :type kwargs: Dict[str, Any]
-        :param transient: Whether to mark the process as transient. If True
-            then the Worker Manager will restart the process along
-            with any global restart (ex: auto-reload), defaults to False
-        :type transient: bool, optional
-        :param restartable: Whether to mark the process as restartable. If
-            True then the Worker Manager will be able to restart the process
-            if prompted. If transient=True, this property will be implied
-            to be True, defaults to None
-        :type restartable: Optional[bool], optional
-        :param tracked: Whether to track the process after completion,
-            defaults to True
-        :param workers: The number of worker processes to run, defaults to 1
-        :type workers: int, optional
-        :return: The Worker instance
-        :rtype: Worker
-        """
+        Args:
+            ident (str): A name for the worker process
+            func (Callable[..., Any]): The function to call in the background process
+            kwargs (Dict[str, Any]): Arguments to pass to the function
+            transient (bool, optional): Whether to mark the process as transient. If `True`
+                then the Worker Manager will restart the process along
+                with any global restart (ex: auto-reload), defaults to `False`
+            restartable (Optional[bool], optional): Whether to mark the process as restartable. If
+                `True` then the Worker Manager will be able to restart the process
+                if prompted. If transient=True, this property will be implied
+                to be True, defaults to None
+            tracked (bool, optional): Whether to track the process after completion,
+                defaults to True
+            workers (int, optional): The number of worker processes to run. Defaults to `1`.
+
+
+        Returns:
+            Worker: The Worker instance
+        """  # noqa: E501
         if ident in self.transient or ident in self.durable:
             raise ValueError(f"Worker {ident} already exists")
         restartable = restartable if restartable is not None else transient
         if transient and not restartable:
-            raise ValueError(
-                "Cannot create a transient worker that is not restartable"
-            )
+            raise ValueError("Cannot create a transient worker that is not restartable")
         container = self.transient if transient else self.durable
         worker = Worker(
             ident,
@@ -115,6 +133,11 @@ class WorkerManager:
         return worker
 
     def create_server(self) -> Worker:
+        """Create a new server process.
+
+        Returns:
+            Worker: The Worker instance
+        """
         server_number = next(self._server_count)
         return self.manage(
             f"{WorkerProcess.SERVER_LABEL}-{server_number}",
@@ -125,6 +148,12 @@ class WorkerManager:
         )
 
     def shutdown_server(self, ident: Optional[str] = None) -> None:
+        """Shutdown a server process.
+
+        Args:
+            ident (Optional[str], optional): The name of the server process to shutdown.
+                If `None` then a random server will be chosen. Defaults to `None`.
+        """  # noqa: E501
         if not ident:
             servers = [
                 worker
@@ -146,16 +175,20 @@ class WorkerManager:
         del self.transient[worker.ident]
 
     def run(self):
+        """Run the worker manager."""
         self.start()
         self.monitor()
         self.join()
         self.terminate()
+        self.cleanup()
 
     def start(self):
+        """Start the worker processes."""
         for process in self.processes:
             process.start()
 
     def join(self):
+        """Join the worker processes."""
         logger.debug("Joining processes", extra={"verbosity": 1})
         joined = set()
         for process in self.processes:
@@ -171,9 +204,15 @@ class WorkerManager:
             self.join()
 
     def terminate(self):
+        """Terminate the worker processes."""
         if not self._shutting_down:
             for process in self.processes:
                 process.terminate()
+
+    def cleanup(self):
+        """Cleanup the worker processes."""
+        for process in self.processes:
+            process.exit()
 
     def restart(
         self,
@@ -181,6 +220,14 @@ class WorkerManager:
         restart_order=RestartOrder.SHUTDOWN_FIRST,
         **kwargs,
     ):
+        """Restart the worker processes.
+
+        Args:
+            process_names (Optional[List[str]], optional): The names of the processes to restart.
+                If `None` then all processes will be restarted. Defaults to `None`.
+            restart_order (RestartOrder, optional): The order in which to restart the processes.
+                Defaults to `RestartOrder.SHUTDOWN_FIRST`.
+        """  # noqa: E501
         restarted = set()
         for process in self.transient_processes:
             if process.restartable and (
@@ -214,9 +261,7 @@ class WorkerManager:
 
         change = num_worker - self.num_server
         if change == 0:
-            logger.info(
-                f"No change needed. There are already {num_worker} workers."
-            )
+            logger.info(f"No change needed. There are already {num_worker} workers.")
             return
 
         logger.info(f"Scaling from {self.num_server} to {num_worker} workers")
@@ -231,6 +276,17 @@ class WorkerManager:
         self.num_server = num_worker
 
     def monitor(self):
+        """Monitor the worker processes.
+
+        First, wait for all of the workers to acknowledge that they are ready.
+        Then, wait for messages from the workers. If a message is received
+        then it is processed and the state of the worker is updated.
+
+        Also used to restart, shutdown, and scale the workers.
+
+        Raises:
+            ServerKilled: Raised when a worker fails to come online.
+        """
         self.wait_for_ack()
         while True:
             try:
@@ -247,6 +303,7 @@ class WorkerManager:
                 break
 
     def wait_for_ack(self):  # no cov
+        """Wait for all of the workers to acknowledge that they are ready."""
         misses = 0
         message = (
             "It seems that one or more of your workers failed to come "
@@ -281,6 +338,7 @@ class WorkerManager:
 
     @property
     def workers(self) -> List[Worker]:
+        """Get all of the workers."""
         return list(self.transient.values()) + list(self.durable.values())
 
     @property
@@ -289,12 +347,14 @@ class WorkerManager:
 
     @property
     def processes(self):
+        """Get all of the processes."""
         for worker in self.workers:
             for process in worker.processes:
                 yield process
 
     @property
     def transient_processes(self):
+        """Get all of the transient processes."""
         for worker in self.transient.values():
             for process in worker.processes:
                 yield process
@@ -306,12 +366,14 @@ class WorkerManager:
                 yield process
 
     def kill(self):
+        """Kill all of the processes."""
         for process in self.processes:
             logger.info("Killing %s [%s]", process.name, process.pid)
             os.kill(process.pid, SIGKILL)
         raise ServerKilled
 
     def shutdown_signal(self, signal, frame):
+        """Handle the shutdown signal."""
         if self._shutting_down:
             logger.info("Shutdown interrupted. Killing.")
             with suppress(ServerKilled):
@@ -322,6 +384,7 @@ class WorkerManager:
         self.shutdown()
 
     def shutdown(self):
+        """Shutdown the worker manager."""
         for process in self.processes:
             if process.is_alive():
                 process.terminate()
@@ -335,8 +398,7 @@ class WorkerManager:
             return
         if worker.has_alive_processes():
             error_logger.error(
-                f"Worker {worker.ident} has alive processes and cannot be "
-                "removed."
+                f"Worker {worker.ident} has alive processes and cannot be " "removed."
             )
             return
         self.transient.pop(worker.ident, None)
@@ -348,6 +410,7 @@ class WorkerManager:
 
     @property
     def pid(self):
+        """Get the process ID of the main process."""
         return os.getpid()
 
     def _all_workers_ack(self):
@@ -393,9 +456,7 @@ class WorkerManager:
                 self._handle_manage(*message)
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
-                error_logger.error(
-                    "Monitor received an invalid message: %s", message
-                )
+                error_logger.error("Monitor received an invalid message: %s", message)
                 return MonitorCycle.CONTINUE
             return self._handle_message(message)
         return None

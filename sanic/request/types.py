@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from asyncio import BaseProtocol
 from contextvars import ContextVar
 from inspect import isawaitable
+from types import SimpleNamespace
 from typing import (
     TYPE_CHECKING,
     Any,
     DefaultDict,
     Dict,
+    Generic,
     List,
     Optional,
     Tuple,
@@ -15,6 +18,7 @@ from typing import (
 )
 
 from sanic_routing.route import Route
+from typing_extensions import TypeVar
 
 from sanic.http.constants import HTTP  # type: ignore
 from sanic.http.stream import Stream
@@ -23,13 +27,13 @@ from sanic.models.http_types import Credentials
 
 
 if TYPE_CHECKING:
-    from sanic.server import ConnInfo
     from sanic.app import Sanic
+    from sanic.config import Config
+    from sanic.server import ConnInfo
 
 import uuid
 
 from collections import defaultdict
-from types import SimpleNamespace
 from urllib.parse import parse_qs, parse_qsl, urlunparse
 
 from httptools import parse_url
@@ -68,10 +72,32 @@ try:
 except ImportError:
     from json import loads as json_loads  # type: ignore
 
+if TYPE_CHECKING:
+    # The default argument of TypeVar is proposed to be added in Python 3.13
+    # by PEP 696 (https://www.python.org/dev/peps/pep-0696/).
+    # Therefore, we use typing_extensions.TypeVar for compatibility.
+    # For more information, see:
+    # https://discuss.python.org/t/pep-696-type-defaults-for-typevarlikes
+    sanic_type = TypeVar(
+        "sanic_type", bound=Sanic, default=Sanic[Config, SimpleNamespace]
+    )
+else:
+    sanic_type = TypeVar("sanic_type")
+ctx_type = TypeVar("ctx_type")
 
-class Request:
-    """
-    Properties of an HTTP request such as URL, headers, etc.
+
+class Request(Generic[sanic_type, ctx_type]):
+    """State of HTTP request.
+
+    Args:
+        url_bytes (bytes): Raw URL bytes.
+        headers (Header): Request headers.
+        version (str): HTTP version.
+        method (str): HTTP method.
+        transport (TransportProtocol): Transport protocol.
+        app (Sanic): Sanic instance.
+        head (bytes, optional): Request head. Defaults to `b""`.
+        stream_id (int, optional): HTTP/3 stream ID. Defaults to `0`.
     """
 
     _current: ContextVar[Request] = ContextVar("request")
@@ -80,6 +106,7 @@ class Request:
     __slots__ = (
         "__weakref__",
         "_cookies",
+        "_ctx",
         "_id",
         "_ip",
         "_parsed_url",
@@ -96,7 +123,6 @@ class Request:
         "app",
         "body",
         "conn_info",
-        "ctx",
         "head",
         "headers",
         "method",
@@ -125,7 +151,7 @@ class Request:
         version: str,
         method: str,
         transport: TransportProtocol,
-        app: Sanic,
+        app: sanic_type,
         head: bytes = b"",
         stream_id: int = 0,
     ):
@@ -149,7 +175,7 @@ class Request:
         # Init but do not inhale
         self.body = b""
         self.conn_info: Optional[ConnInfo] = None
-        self.ctx = SimpleNamespace()
+        self._ctx: Optional[ctx_type] = None
         self.parsed_accept: Optional[AcceptList] = None
         self.parsed_args: DefaultDict[
             Tuple[bool, bool, str, str], RequestParameters
@@ -170,48 +196,96 @@ class Request:
         self.route: Optional[Route] = None
         self.stream: Optional[Stream] = None
         self._match_info: Dict[str, Any] = {}
-        self._protocol = None
+        self._protocol: Optional[BaseProtocol] = None
 
     def __repr__(self):
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.method} {self.path}>"
 
+    @staticmethod
+    def make_context() -> ctx_type:
+        """Create a new context object.
+
+        This method is called when a new request context is pushed. It is
+        a great candidate for overriding in a subclass if you want to
+        control the type of context object that is created.
+
+        By default, it returns a `types.SimpleNamespace` instance.
+
+        Returns:
+            ctx_type: A new context object.
+        """
+        return cast(ctx_type, SimpleNamespace())
+
     @classmethod
     def get_current(cls) -> Request:
-        """
-        Retrieve the current request object
+        """Retrieve the current request object
 
-        This implements `Context Variables
-        <https://docs.python.org/3/library/contextvars.html>`_
+        This implements [Context Variables](https://docs.python.org/3/library/contextvars.html)
         to allow for accessing the current request from anywhere.
 
-        Raises :exc:`sanic.exceptions.ServerError` if it is outside of
-        a request lifecycle.
+        A typical usecase is when you want to access the current request
+        from a function that is not a handler, such as a logging function:
 
-        .. code-block:: python
+        ```python
+        import logging
 
-            from sanic import Request
+        class LoggingFormater(logging.Formatter):
+            def format(self, record):
+                request = Request.get_current()
+                record.url = request.url
+                record.ip = request.ip
+                return super().format(record)
+        ```
 
-            current_request = Request.get_current()
+        Returns:
+            Request: The current request object
 
-        :return: the current :class:`sanic.request.Request`
-        """
+        Raises:
+            sanic.exceptions.ServerError: If it is outside of a request
+                lifecycle.
+        """  # noqa: E501
         request = cls._current.get(None)
         if not request:
             raise ServerError("No current request")
         return request
 
     @classmethod
-    def generate_id(*_):
+    def generate_id(*_) -> Union[uuid.UUID, str, int]:
+        """Generate a unique ID for the request.
+
+        This method is called to generate a unique ID for each request.
+        By default, it returns a `uuid.UUID` instance.
+
+        Returns:
+            Union[uuid.UUID, str, int]: A unique ID for the request.
+        """
         return uuid.uuid4()
 
     @property
-    def stream_id(self):
-        """
-        Access the HTTP/3 stream ID.
+    def ctx(self) -> ctx_type:
+        """The current request context.
 
-        Raises :exc:`sanic.exceptions.ServerError` if it is not an
-        HTTP/3 request.
+        This is a context object for the current request. It is created
+        by `Request.make_context` and is a great place to store data
+        that you want to be accessible during the request lifecycle.
+
+        Returns:
+            ctx_type: The current request context.
+        """
+        if not self._ctx:
+            self._ctx = self.make_context()
+        return self._ctx
+
+    @property
+    def stream_id(self) -> int:
+        """Access the HTTP/3 stream ID.
+
+        Raises:
+            sanic.exceptions.ServerError: If the request is not HTTP/3.
+
+        Returns:
+            int: The HTTP/3 stream ID.
         """
         if self.protocol.version is not HTTP.VERSION_3:
             raise ServerError(
@@ -219,7 +293,17 @@ class Request:
             )
         return self._stream_id
 
-    def reset_response(self):
+    def reset_response(self) -> None:
+        """Reset the response object.
+
+        This clears much of the state of the object. It should
+        generally not be called directly, but is called automatically as
+        part of the request lifecycle.
+
+        Raises:
+            sanic.exceptions.ServerError: If the response has already been
+                sent.
+        """
         try:
             if (
                 self.stream is not None
@@ -228,8 +312,8 @@ class Request:
                 raise ServerError(
                     "Cannot reset response because previous response was sent."
                 )
-            self.stream.response.stream = None
-            self.stream.response = None
+            self.stream.response.stream = None  # type: ignore
+            self.stream.response = None  # type: ignore
             self.responded = False
         except AttributeError:
             pass
@@ -251,44 +335,44 @@ class Request:
         **The first typical usecase** is if you wish to respond to the
         request without returning from the handler:
 
-        .. code-block:: python
+        ```python
+        @app.get("/")
+        async def handler(request: Request):
+            data = ...  # Process something
 
-            @app.get("/")
-            async def handler(request: Request):
-                data = ...  # Process something
+            json_response = json({"data": data})
+            await request.respond(json_response)
 
-                json_response = json({"data": data})
-                await request.respond(json_response)
-
-                # You are now free to continue executing other code
-                ...
-
-            @app.on_response
-            async def add_header(_, response: HTTPResponse):
-                # Middlewares still get executed as expected
-                response.headers["one"] = "two"
+        @app.on_response
+        async def add_header(_, response: HTTPResponse):
+            # Middlewares still get executed as expected
+            response.headers["one"] = "two"
+        ```
 
         **The second possible usecase** is for when you want to directly
         respond to the request:
 
-        .. code-block:: python
+        ```python
+        response = await request.respond(content_type="text/csv")
+        await response.send("foo,")
+        await response.send("bar")
 
-            response = await request.respond(content_type="text/csv")
-            await response.send("foo,")
-            await response.send("bar")
+        # You can control the completion of the response by calling
+        # the 'eof()' method:
+        await response.eof()
+        ```
 
-            # You can control the completion of the response by calling
-            # the 'eof()' method:
-            await response.eof()
+        Args:
+            response (ResponseType): Response instance to send.
+            status (int): Status code to return in the response.
+            headers (Optional[Dict[str, str]]): Headers to return in the response, defaults to None.
+            content_type (Optional[str]): Content-Type header of the response, defaults to None.
 
-        :param response: response instance to send
-        :param status: status code to return in the response
-        :param headers: headers to return in the response
-        :param content_type: Content-Type header of the response
-        :return: final response being sent (may be different from the
-            ``response`` parameter because of middlewares) which can be
-            used to manually send data
-        """
+        Returns:
+            FinalResponseType: Final response being sent (may be different from the
+                "response" parameter because of middlewares), which can be
+                used to manually send data.
+        """  # noqa: E501
         try:
             if self.stream is not None and self.stream.response:
                 raise ServerError("Second respond call is not allowed.")
@@ -341,17 +425,16 @@ class Request:
 
     @property
     def name(self) -> Optional[str]:
-        """
-        The route name
+        """The route name
 
         In the following pattern:
 
-        .. code-block::
+        ```
+        <AppName>.[<BlueprintName>.]<HandlerName>
+        ```
 
-            <AppName>.[<BlueprintName>.]<HandlerName>
-
-        :return: Route name
-        :rtype: Optional[str]
+        Returns:
+            Optional[str]: The route name
         """
         if self._name:
             return self._name
@@ -361,74 +444,85 @@ class Request:
 
     @property
     def endpoint(self) -> Optional[str]:
-        """
-        :return: Alias of :attr:`sanic.request.Request.name`
-        :rtype: Optional[str]
+        """Alias of `sanic.request.Request.name`
+
+        Returns:
+            Optional[str]: The route name
         """
         return self.name
 
     @property
     def uri_template(self) -> Optional[str]:
-        """
-        :return: The defined URI template
-        :rtype: Optional[str]
+        """The defined URI template
+
+        Returns:
+            Optional[str]: The defined URI template
         """
         if self.route:
             return f"/{self.route.path}"
         return None
 
     @property
-    def protocol(self):
-        """
-        :return: The HTTP protocol instance
+    def protocol(self) -> TransportProtocol:
+        """The HTTP protocol instance
+
+        Returns:
+            Protocol: The HTTP protocol instance
         """
         if not self._protocol:
             self._protocol = self.transport.get_protocol()
-        return self._protocol
+        return self._protocol  # type: ignore
 
     @property
     def raw_headers(self) -> bytes:
-        """
-        :return: The unparsed HTTP headers
-        :rtype: bytes
+        """The unparsed HTTP headers
+
+        Returns:
+            bytes: The unparsed HTTP headers
         """
         _, headers = self.head.split(b"\r\n", 1)
         return bytes(headers)
 
     @property
     def request_line(self) -> bytes:
-        """
-        :return: The first line of a HTTP request
-        :rtype: bytes
+        """The first line of a HTTP request
+
+        Returns:
+            bytes: The first line of a HTTP request
         """
         reqline, _ = self.head.split(b"\r\n", 1)
         return bytes(reqline)
 
     @property
     def id(self) -> Optional[Union[uuid.UUID, str, int]]:
-        """
-        A request ID passed from the client, or generated from the backend.
+        """A request ID passed from the client, or generated from the backend.
 
         By default, this will look in a request header defined at:
-        ``self.app.config.REQUEST_ID_HEADER``. It defaults to
-        ``X-Request-ID``. Sanic will try to cast the ID into a ``UUID`` or an
-        ``int``. If there is not a UUID from the client, then Sanic will try
-        to generate an ID by calling ``Request.generate_id()``. The default
-        behavior is to generate a ``UUID``. You can customize this behavior
-        by subclassing ``Request``.
+        `self.app.config.REQUEST_ID_HEADER`. It defaults to
+        `X-Request-ID`. Sanic will try to cast the ID into a `UUID` or an
+        `int`.
 
-        .. code-block:: python
+        If there is not a UUID from the client, then Sanic will try
+        to generate an ID by calling `Request.generate_id()`. The default
+        behavior is to generate a `UUID`. You can customize this behavior
+        by subclassing `Request` and overwriting that method.
 
-            from sanic import Request, Sanic
-            from itertools import count
+        ```python
+        from sanic import Request, Sanic
+        from itertools import count
 
-            class IntRequest(Request):
-                counter = count()
+        class IntRequest(Request):
+            counter = count()
 
-                def generate_id(self):
-                    return next(self.counter)
+            def generate_id(self):
+                return next(self.counter)
 
-            app = Sanic("MyApp", request_class=IntRequest)
+        app = Sanic("MyApp", request_class=IntRequest)
+        ```
+
+        Returns:
+            Optional[Union[uuid.UUID, str, int]]: A request ID passed from the
+                client, or generated from the backend.
         """
         if not self._id:
             self._id = self.headers.getone(
@@ -450,16 +544,28 @@ class Request:
 
     @property
     def json(self) -> Any:
-        """
-        :return: The request body parsed as JSON
-        :rtype: Any
+        """The request body parsed as JSON
+
+        Returns:
+            Any: The request body parsed as JSON
         """
         if self.parsed_json is None:
             self.load_json()
 
         return self.parsed_json
 
-    def load_json(self, loads=None):
+    def load_json(self, loads=None) -> Any:
+        """Load the request body as JSON
+
+        Args:
+            loads (Callable, optional): A custom JSON loader. Defaults to None.
+
+        Raises:
+            BadRequest: If the request body cannot be parsed as JSON
+
+        Returns:
+            Any: The request body parsed as JSON
+        """
         try:
             if not loads:
                 loads = self.__class__._loads
@@ -479,8 +585,8 @@ class Request:
         A convenience handler for easier RFC-compliant matching of MIME types,
         parsed as a list that can match wildcards and includes */* by default.
 
-        :return: The ``Accept`` header parsed
-        :rtype: AcceptList
+        Returns:
+            AcceptList: Accepted response content types
         """
         if self.parsed_accept is None:
             self.parsed_accept = parse_accept(self.headers.get("accept"))
@@ -490,7 +596,8 @@ class Request:
     def token(self) -> Optional[str]:
         """Attempt to return the auth header token.
 
-        :return: token related to request
+        Returns:
+            Optional[str]: The auth header token
         """
         if self.parsed_token is None:
             prefixes = ("Bearer", "Token")
@@ -507,8 +614,9 @@ class Request:
         Covers NoAuth, Basic Auth, Bearer Token, Api Token authentication
         schemas.
 
-        :return: A Credentials object with token, or username and password
-                 related to the request
+        Returns:
+            Optional[Credentials]: A Credentials object with token, or username
+                and password related to the request
         """
         if self.parsed_credentials is None:
             try:
@@ -526,15 +634,14 @@ class Request:
     def get_form(
         self, keep_blank_values: bool = False
     ) -> Optional[RequestParameters]:
-        """
-        Method to extract and parse the form data from a request.
+        """Method to extract and parse the form data from a request.
 
-        :param keep_blank_values:
-            Whether to discard blank values from the form data
-        :type keep_blank_values: bool
-        :return: the parsed form data
-        :rtype: Optional[RequestParameters]
-        """
+        Args:
+            keep_blank_values (bool): Whether to discard blank values from the form data.
+
+        Returns:
+            Optional[RequestParameters]: The parsed form data.
+        """  # noqa: E501
         self.parsed_form = RequestParameters()
         self.parsed_files = RequestParameters()
         content_type = self.headers.getone(
@@ -563,9 +670,11 @@ class Request:
         return self.parsed_form
 
     @property
-    def form(self):
-        """
-        :return: The request body parsed as form data
+    def form(self) -> Optional[RequestParameters]:
+        """The request body parsed as form data
+
+        Returns:
+            Optional[RequestParameters]: The request body parsed as form data
         """
         if self.parsed_form is None:
             self.get_form()
@@ -573,10 +682,12 @@ class Request:
         return self.parsed_form
 
     @property
-    def files(self):
-        """
-        :return: The request body parsed as uploaded files
-        """
+    def files(self) -> Optional[RequestParameters]:
+        """The request body parsed as uploaded files
+
+        Returns:
+            Optional[RequestParameters]: The request body parsed as uploaded files
+        """  # noqa: E501
         if self.parsed_files is None:
             self.form  # compute form to get files
 
@@ -589,32 +700,30 @@ class Request:
         encoding: str = "utf-8",
         errors: str = "replace",
     ) -> RequestParameters:
-        """
-        Method to parse ``query_string`` using ``urllib.parse.parse_qs``.
-        This methods is used by ``args`` property.
-        Can be used directly if you need to change default parameters.
+        """Parse `query_string` using `urllib.parse.parse_qs`.
 
-        :param keep_blank_values:
-            flag indicating whether blank values in
-            percent-encoded queries should be treated as blank strings.
-            A true value indicates that blanks should be retained as blank
-            strings.  The default false value indicates that blank values
-            are to be ignored and treated as if they were  not included.
-        :type keep_blank_values: bool
-        :param strict_parsing:
-            flag indicating what to do with parsing errors.
-            If false (the default), errors are silently ignored. If true,
-            errors raise a ValueError exception.
-        :type strict_parsing: bool
-        :param encoding:
-            specify how to decode percent-encoded sequences
-            into Unicode characters, as accepted by the bytes.decode() method.
-        :type encoding: str
-        :param errors:
-            specify how to decode percent-encoded sequences
-            into Unicode characters, as accepted by the bytes.decode() method.
-        :type errors: str
-        :return: RequestParameters
+        This methods is used by the `args` property, but it also
+        can be used directly if you need to change default parameters.
+
+        Args:
+            keep_blank_values (bool): Flag indicating whether blank values in
+                percent-encoded queries should be treated as blank strings.
+                A `True` value indicates that blanks should be retained as
+                blank strings. The default `False` value indicates that
+                blank values are to be ignored and treated as if they were
+                not included.
+            strict_parsing (bool): Flag indicating what to do with parsing
+                errors. If `False` (the default), errors are silently ignored.
+                If `True`, errors raise a `ValueError` exception.
+            encoding (str): Specify how to decode percent-encoded sequences
+                into Unicode characters, as accepted by the
+                `bytes.decode()` method.
+            errors (str): Specify how to decode percent-encoded sequences
+                into Unicode characters, as accepted by the
+                `bytes.decode()` method.
+
+        Returns:
+            RequestParameters: A dictionary containing the parsed arguments.
         """
         if (
             keep_blank_values,
@@ -640,9 +749,7 @@ class Request:
         ]
 
     args = property(get_args)
-    """
-    Convenience property to access :meth:`Request.get_args` with
-    default values.
+    """Convenience property to access `Request.get_args` with default values.
     """
 
     def get_query_args(
@@ -652,32 +759,31 @@ class Request:
         encoding: str = "utf-8",
         errors: str = "replace",
     ) -> list:
-        """
-        Method to parse `query_string` using `urllib.parse.parse_qsl`.
-        This methods is used by `query_args` property.
-        Can be used directly if you need to change default parameters.
+        """Parse `query_string` using `urllib.parse.parse_qsl`.
 
-        :param keep_blank_values:
-            flag indicating whether blank values in
-            percent-encoded queries should be treated as blank strings.
-            A true value indicates that blanks should be retained as blank
-            strings.  The default false value indicates that blank values
-            are to be ignored and treated as if they were  not included.
-        :type keep_blank_values: bool
-        :param strict_parsing:
-            flag indicating what to do with parsing errors.
-            If false (the default), errors are silently ignored. If true,
-            errors raise a ValueError exception.
-        :type strict_parsing: bool
-        :param encoding:
-            specify how to decode percent-encoded sequences
-            into Unicode characters, as accepted by the bytes.decode() method.
-        :type encoding: str
-        :param errors:
-            specify how to decode percent-encoded sequences
-            into Unicode characters, as accepted by the bytes.decode() method.
-        :type errors: str
-        :return: list
+        This methods is used by `query_args` propertyn but can be used
+        directly if you need to change default parameters.
+
+        Args:
+            keep_blank_values (bool): Flag indicating whether blank values in
+                percent-encoded queries should be treated as blank strings.
+                A `True` value indicates that blanks should be retained as
+                blank strings. The default `False` value indicates that
+                blank values are to be ignored and treated as if they were
+                not included.
+            strict_parsing (bool): Flag indicating what to do with
+                parsing errors. If `False` (the default), errors are
+                silently ignored. If `True`, errors raise a
+                `ValueError` exception.
+            encoding (str): Specify how to decode percent-encoded sequences
+                into Unicode characters, as accepted by the
+                `bytes.decode()` method.
+            errors (str): Specify how to decode percent-encoded sequences
+                into Unicode characters, as accepted by the
+                `bytes.decode()` method.
+
+        Returns:
+            list: A list of tuples containing the parsed arguments.
         """
         if (
             keep_blank_values,
@@ -700,10 +806,8 @@ class Request:
         ]
 
     query_args = property(get_query_args)
-    """
-    Convenience property to access :meth:`Request.get_query_args` with
-    default values.
-    """
+    """Convenience property to access `Request.get_query_args` with default values.
+    """  # noqa: E501
 
     def get_cookies(self) -> RequestParameters:
         cookie = self.headers.getone("cookie", "")
@@ -712,9 +816,10 @@ class Request:
 
     @property
     def cookies(self) -> RequestParameters:
-        """
-        :return: Incoming cookies on the request
-        :rtype: Dict[str, str]
+        """Incoming cookies on the request
+
+        Returns:
+            RequestParameters: Incoming cookies on the request
         """
 
         if self.parsed_cookies is None:
@@ -723,16 +828,19 @@ class Request:
 
     @property
     def content_type(self) -> str:
-        """
-        :return: Content-Type header form the request
-        :rtype: str
+        """Content-Type header form the request
+
+        Returns:
+            str: Content-Type header form the request
         """
         return self.headers.getone("content-type", DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
-    def match_info(self):
-        """
-        :return: matched info after resolving route
+    def match_info(self) -> Dict[str, Any]:
+        """Matched path parameters after resolving route
+
+        Returns:
+            Dict[str, Any]: Matched path parameters after resolving route
         """
         return self._match_info
 
@@ -740,53 +848,64 @@ class Request:
     def match_info(self, value):
         self._match_info = value
 
-    # Transport properties (obtained from local interface only)
-
     @property
     def ip(self) -> str:
-        """
-        :return: peer ip of the socket
-        :rtype: str
+        """Peer ip of the socket
+
+        Returns:
+            str: Peer ip of the socket
         """
         return self.conn_info.client_ip if self.conn_info else ""
 
     @property
     def port(self) -> int:
-        """
-        :return: peer port of the socket
-        :rtype: int
+        """Peer port of the socket
+
+        Returns:
+            int: Peer port of the socket
         """
         return self.conn_info.client_port if self.conn_info else 0
 
     @property
-    def socket(self):
+    def socket(self) -> Union[Tuple[str, int], Tuple[None, None]]:
+        """Information about the connected socket if available
+
+        Returns:
+            Tuple[Optional[str], Optional[int]]: Information about the
+                connected socket if available, in the form of a tuple of
+                (ip, port)
         """
-        :return: Information about the connected socket if available
-        """
-        return self.conn_info.peername if self.conn_info else (None, None)
+        return (
+            self.conn_info.peername
+            if self.conn_info and self.conn_info.peername
+            else (None, None)
+        )
 
     @property
     def path(self) -> str:
-        """
-        :return: path of the local HTTP request
-        :rtype: str
+        """Path of the local HTTP request
+
+        Returns:
+            str: Path of the local HTTP request
         """
         return self._parsed_url.path.decode("utf-8")
 
     @property
-    def network_paths(self):
+    def network_paths(self) -> Optional[List[Any]]:
+        """Access the network paths if available
+
+        Returns:
+            Optional[List[Any]]: Access the network paths if available
         """
-        Access the network paths if available
-        """
+        if self.conn_info is None:
+            return None
         return self.conn_info.network_paths
 
     # Proxy properties (using SERVER_NAME/forwarded/request/transport info)
 
     @property
     def forwarded(self) -> Options:
-        """
-        Active proxy information obtained from request headers, as specified in
-        Sanic configuration.
+        """Active proxy information obtained from request headers, as specified in Sanic configuration.
 
         Field names by, for, proto, host, port and path are normalized.
         - for and by IPv6 addresses are bracketed
@@ -795,9 +914,9 @@ class Request:
 
         Additional values may be available from new style Forwarded headers.
 
-        :return: forwarded address info
-        :rtype: Dict[str, str]
-        """
+        Returns:
+            Options: proxy information from request headers
+        """  # noqa: E501
         if self.parsed_forwarded is None:
             self.parsed_forwarded = (
                 parse_forwarded(self.headers, self.app.config)
@@ -808,46 +927,60 @@ class Request:
 
     @property
     def remote_addr(self) -> str:
-        """
-        Client IP address, if available.
-        1. proxied remote address `self.forwarded['for']`
-        2. local remote address `self.ip`
+        """Client IP address, if available from proxy.
 
-        :return: IPv4, bracketed IPv6, UNIX socket name or arbitrary string
-        :rtype: str
+        Returns:
+            str: IPv4, bracketed IPv6, UNIX socket name or arbitrary string
         """
         if not hasattr(self, "_remote_addr"):
-            self._remote_addr = str(
-                self.forwarded.get("for", "")
-            )  # or self.ip
+            self._remote_addr = str(self.forwarded.get("for", ""))
         return self._remote_addr
 
     @property
-    def scheme(self) -> str:
+    def client_ip(self) -> str:
         """
-        Determine request scheme.
+        Client IP address.
+        1. proxied remote address `self.forwarded['for']`
+        2. local peer address `self.ip`
+
+        New in Sanic 23.6. Prefer this over `remote_addr` for determining the
+        client address regardless of whether the service runs behind a proxy
+        or not (proxy deployment needs separate configuration).
+
+        Returns:
+            str: IPv4, bracketed IPv6, UNIX socket name or arbitrary string
+        """
+        return self.remote_addr or self.ip
+
+    @property
+    def scheme(self) -> str:
+        """Determine request scheme.
+
         1. `config.SERVER_NAME` if in full URL format
         2. proxied proto/scheme
         3. local connection protocol
 
-        :return: http|https|ws|wss or arbitrary value given by the headers.
-        :rtype: str
+        Returns:
+            str: http|https|ws|wss or arbitrary value given by the headers.
         """
         if not hasattr(self, "_scheme"):
-            if "//" in self.app.config.get("SERVER_NAME", ""):
-                return self.app.config.SERVER_NAME.split("//")[0]
-            if "proto" in self.forwarded:
-                return str(self.forwarded["proto"])
-
             if (
                 self.app.websocket_enabled
-                and self.headers.getone("upgrade", "").lower() == "websocket"
+                and self.headers.upgrade.lower() == "websocket"
             ):
                 scheme = "ws"
             else:
                 scheme = "http"
-
-            if self.transport.get_extra_info("sslcontext"):
+            proto = None
+            sp = self.app.config.get("SERVER_NAME", "").split("://", 1)
+            if len(sp) == 2:
+                proto = sp[0]
+            elif "proto" in self.forwarded:
+                proto = str(self.forwarded["proto"])
+            if proto:
+                # Give ws/wss if websocket, otherwise keep the same
+                scheme = proto.replace("http", scheme)
+            elif self.conn_info and self.conn_info.ssl:
                 scheme += "s"
             self._scheme = scheme
 
@@ -855,16 +988,16 @@ class Request:
 
     @property
     def host(self) -> str:
-        """
-        The currently effective server 'host' (hostname or hostname:port).
+        """The currently effective server 'host' (hostname or hostname:port).
+
         1. `config.SERVER_NAME` overrides any client headers
         2. proxied host of original request
         3. request host header
         hostname and port may be separated by
         `sanic.headers.parse_host(request.host)`.
 
-        :return: the first matching host found, or empty string
-        :rtype: str
+        Returns:
+            str: the first matching host found, or empty string
         """
         server_name = self.app.config.get("SERVER_NAME")
         if server_name:
@@ -875,39 +1008,40 @@ class Request:
 
     @property
     def server_name(self) -> str:
-        """
-        :return: hostname the client connected to, by ``request.host``
-        :rtype: str
+        """hostname the client connected to, by `request.host`
+
+        Returns:
+            str: hostname the client connected to, by `request.host`
         """
         return parse_host(self.host)[0] or ""
 
     @property
     def server_port(self) -> int:
-        """
-        The port the client connected to, by forwarded ``port`` or
-        ``request.host``.
+        """The port the client connected to, by forwarded `port` or `request.host`.
 
-        Default port is returned as 80 and 443 based on ``request.scheme``.
+        Default port is returned as 80 and 443 based on `request.scheme`.
 
-        :return: port number
-        :rtype: int
-        """
+        Returns:
+            int: The port the client connected to, by forwarded `port` or `request.host`.
+        """  # noqa: E501
         port = self.forwarded.get("port") or parse_host(self.host)[1]
         return int(port or (80 if self.scheme in ("http", "ws") else 443))
 
     @property
     def server_path(self) -> str:
-        """
-        :return: full path of current URL; uses proxied or local path
-        :rtype: str
+        """Full path of current URL; uses proxied or local path
+
+        Returns:
+            str: Full path of current URL; uses proxied or local path
         """
         return str(self.forwarded.get("path") or self.path)
 
     @property
     def query_string(self) -> str:
-        """
-        :return: representation of the requested query
-        :rtype: str
+        """Representation of the requested query
+
+        Returns:
+            str: Representation of the requested query
         """
         if self._parsed_url.query:
             return self._parsed_url.query.decode("utf-8")
@@ -916,27 +1050,33 @@ class Request:
 
     @property
     def url(self) -> str:
-        """
-        :return: the URL
-        :rtype: str
+        """The URL
+
+        Returns:
+            str: The URL
         """
         return urlunparse(
             (self.scheme, self.host, self.path, None, self.query_string, None)
         )
 
     def url_for(self, view_name: str, **kwargs) -> str:
-        """
-        Same as :func:`sanic.Sanic.url_for`, but automatically determine
-        `scheme` and `netloc` base on the request. Since this method is aiming
+        """Retrieve a URL for a given view name.
+
+        Same as `sanic.Sanic.url_for`, but automatically determine `scheme`
+        and `netloc` base on the request. Since this method is aiming
         to generate correct schema & netloc, `_external` is implied.
 
-        :param kwargs: takes same parameters as in :func:`sanic.Sanic.url_for`
-        :return: an absolute url to the given view
-        :rtype: str
+        Args:
+            view_name (str): The view name to generate URL for.
+            **kwargs: Arbitrary keyword arguments to build URL query string.
+
+        Returns:
+            str: The generated URL.
         """
         # Full URL SERVER_NAME can only be handled in app.url_for
         try:
-            if "//" in self.app.config.SERVER_NAME:
+            sp = self.app.config.get("SERVER_NAME", "").split("://", 1)
+            if len(sp) == 2:
                 return self.app.url_for(view_name, _external=True, **kwargs)
         except AttributeError:
             pass
@@ -958,10 +1098,13 @@ class Request:
 
     @property
     def scope(self) -> ASGIScope:
-        """
-        :return: The ASGI scope of the request.
-                 If the app isn't an ASGI app, then raises an exception.
-        :rtype: Optional[ASGIScope]
+        """The ASGI scope of the request.
+
+        Returns:
+            ASGIScope: The ASGI scope of the request.
+
+        Raises:
+            NotImplementedError: If the app isn't an ASGI app.
         """
         if not self.app.asgi:
             raise NotImplementedError(
@@ -973,27 +1116,33 @@ class Request:
 
     @property
     def is_safe(self) -> bool:
-        """
-        :return: Whether the HTTP method is safe.
-            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.1
-        :rtype: bool
+        """Whether the HTTP method is safe.
+
+        See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.1
+
+        Returns:
+            bool: Whether the HTTP method is safe.
         """
         return self.method in SAFE_HTTP_METHODS
 
     @property
     def is_idempotent(self) -> bool:
-        """
-        :return: Whether the HTTP method is iempotent.
-            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.2
-        :rtype: bool
+        """Whether the HTTP method is iempotent.
+
+        See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.2
+
+        Returns:
+            bool: Whether the HTTP method is iempotent.
         """
         return self.method in IDEMPOTENT_HTTP_METHODS
 
     @property
     def is_cacheable(self) -> bool:
-        """
-        :return: Whether the HTTP method is cacheable.
-            See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.3
-        :rtype: bool
+        """Whether the HTTP method is cacheable.
+
+        See https://datatracker.ietf.org/doc/html/rfc7231#section-4.2.3
+
+        Returns:
+            bool: Whether the HTTP method is cacheable.
         """
         return self.method in CACHEABLE_HTTP_METHODS

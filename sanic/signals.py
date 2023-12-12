@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
+from collections import deque
+from dataclasses import dataclass
 from enum import Enum
 from inspect import isawaitable
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -16,11 +18,13 @@ from sanic.models.handler_types import SignalHandler
 
 
 class Event(Enum):
+    """Event names for the SignalRouter"""
+
+    SERVER_EXCEPTION_REPORT = "server.exception.report"
     SERVER_INIT_AFTER = "server.init.after"
     SERVER_INIT_BEFORE = "server.init.before"
     SERVER_SHUTDOWN_AFTER = "server.shutdown.after"
     SERVER_SHUTDOWN_BEFORE = "server.shutdown.before"
-    SERVER_LIFECYCLE_EXCEPTION = "server.lifecycle.exception"
     HTTP_LIFECYCLE_BEGIN = "http.lifecycle.begin"
     HTTP_LIFECYCLE_COMPLETE = "http.lifecycle.complete"
     HTTP_LIFECYCLE_EXCEPTION = "http.lifecycle.exception"
@@ -36,15 +40,18 @@ class Event(Enum):
     HTTP_LIFECYCLE_SEND = "http.lifecycle.send"
     HTTP_MIDDLEWARE_AFTER = "http.middleware.after"
     HTTP_MIDDLEWARE_BEFORE = "http.middleware.before"
+    WEBSOCKET_HANDLER_AFTER = "websocket.handler.after"
+    WEBSOCKET_HANDLER_BEFORE = "websocket.handler.before"
+    WEBSOCKET_HANDLER_EXCEPTION = "websocket.handler.exception"
 
 
 RESERVED_NAMESPACES = {
     "server": (
+        Event.SERVER_EXCEPTION_REPORT.value,
         Event.SERVER_INIT_AFTER.value,
         Event.SERVER_INIT_BEFORE.value,
         Event.SERVER_SHUTDOWN_AFTER.value,
         Event.SERVER_SHUTDOWN_BEFORE.value,
-        Event.SERVER_LIFECYCLE_EXCEPTION.value,
     ),
     "http": (
         Event.HTTP_LIFECYCLE_BEGIN.value,
@@ -63,7 +70,14 @@ RESERVED_NAMESPACES = {
         Event.HTTP_MIDDLEWARE_AFTER.value,
         Event.HTTP_MIDDLEWARE_BEFORE.value,
     ),
+    "websocket": {
+        Event.WEBSOCKET_HANDLER_AFTER.value,
+        Event.WEBSOCKET_HANDLER_BEFORE.value,
+        Event.WEBSOCKET_HANDLER_EXCEPTION.value,
+    },
 }
+
+GENERIC_SIGNAL_FORMAT = "__generic__.__signal__.%s"
 
 
 def _blank():
@@ -71,14 +85,49 @@ def _blank():
 
 
 class Signal(Route):
-    ...
+    """A `Route` that is used to dispatch signals to handlers"""
+
+
+@dataclass
+class SignalWaiter:
+    """A record representing a future waiting for a signal"""
+
+    signal: Signal
+    event_definition: str
+    trigger: str = ""
+    requirements: Optional[Dict[str, str]] = None
+    exclusive: bool = True
+
+    future: Optional[asyncio.Future] = None
+
+    async def wait(self):
+        """Block until the signal is next dispatched.
+
+        Return the context of the signal dispatch, if any.
+        """
+        loop = asyncio.get_running_loop()
+        self.future = loop.create_future()
+        self.signal.ctx.waiters.append(self)
+        try:
+            return await self.future
+        finally:
+            self.signal.ctx.waiters.remove(self)
+
+    def matches(self, event, condition):
+        return (
+            (condition is None and not self.exclusive)
+            or (condition is None and not self.requirements)
+            or condition == self.requirements
+        ) and (self.trigger or event == self.event_definition)
 
 
 class SignalGroup(RouteGroup):
-    ...
+    """A `RouteGroup` that is used to dispatch signals to handlers"""
 
 
 class SignalRouter(BaseRouter):
+    """A `BaseRouter` that is used to dispatch signals to handlers"""
+
     def __init__(self) -> None:
         super().__init__(
             delimiter=".",
@@ -89,11 +138,40 @@ class SignalRouter(BaseRouter):
         self.allow_fail_builtin = True
         self.ctx.loop = None
 
+    @staticmethod
+    def format_event(event: Union[str, Enum]) -> str:
+        """Ensure event strings in proper format
+
+        Args:
+            event (str): event string
+
+        Returns:
+            str: formatted event string
+        """
+        if isinstance(event, Enum):
+            event = str(event.value)
+        if "." not in event:
+            event = GENERIC_SIGNAL_FORMAT % event
+        return event
+
     def get(  # type: ignore
         self,
-        event: str,
+        event: Union[str, Enum],
         condition: Optional[Dict[str, str]] = None,
     ):
+        """Get the handlers for a signal
+
+        Args:
+            event (str): The event to get the handlers for
+            condition (Optional[Dict[str, str]], optional): A dictionary of conditions to match against the handlers. Defaults to `None`.
+
+        Returns:
+            Tuple[SignalGroup, List[SignalHandler], Dict[str, Any]]: A tuple of the `SignalGroup` that matched, a list of the handlers that matched, and a dictionary of the params that matched
+
+        Raises:
+            NotFound: If no handlers are found
+        """  # noqa: E501
+        event = self.format_event(event)
         extra = condition or {}
         try:
             group, param_basket = self.find_route(
@@ -133,6 +211,7 @@ class SignalRouter(BaseRouter):
         fail_not_found: bool = True,
         reverse: bool = False,
     ) -> Any:
+        event = self.format_event(event)
         try:
             group, handlers, params = self.get(event, condition=condition)
         except NotFound as e:
@@ -144,18 +223,20 @@ class SignalRouter(BaseRouter):
                     error_logger.warning(str(e))
                 return None
 
-        events = [signal.ctx.event for signal in group]
-        for signal_event in events:
-            signal_event.set()
         if context:
             params.update(context)
+        params.pop("__trigger__", None)
 
         signals = group.routes
         if not reverse:
             signals = signals[::-1]
         try:
             for signal in signals:
-                params.pop("__trigger__", None)
+                for waiter in signal.ctx.waiters:
+                    if waiter.matches(event, condition):
+                        waiter.future.set_result(dict(params))
+
+            for signal in signals:
                 requirements = signal.extra.requirements
                 if (
                     (condition is None and signal.ctx.exclusive is False)
@@ -174,19 +255,17 @@ class SignalRouter(BaseRouter):
             if self.ctx.app.debug and self.ctx.app.state.verbosity >= 1:
                 error_logger.exception(e)
 
-            if event != Event.SERVER_LIFECYCLE_EXCEPTION.value:
+            if event != Event.SERVER_EXCEPTION_REPORT.value:
                 await self.dispatch(
-                    Event.SERVER_LIFECYCLE_EXCEPTION.value,
+                    Event.SERVER_EXCEPTION_REPORT.value,
                     context={"exception": e},
                 )
+                setattr(e, "__dispatched__", True)
             raise e
-        finally:
-            for signal_event in events:
-                signal_event.clear()
 
     async def dispatch(
         self,
-        event: str,
+        event: Union[str, Enum],
         *,
         context: Optional[Dict[str, Any]] = None,
         condition: Optional[Dict[str, str]] = None,
@@ -194,6 +273,24 @@ class SignalRouter(BaseRouter):
         inline: bool = False,
         reverse: bool = False,
     ) -> Union[asyncio.Task, Any]:
+        """Dispatch a signal to all handlers that match the event
+
+        Args:
+            event (str): The event to dispatch
+            context (Optional[Dict[str, Any]], optional): A dictionary of context to pass to the handlers. Defaults to `None`.
+            condition (Optional[Dict[str, str]], optional): A dictionary of conditions to match against the handlers. Defaults to `None`.
+            fail_not_found (bool, optional): Whether to raise an exception if no handlers are found. Defaults to `True`.
+            inline (bool, optional): Whether to run the handlers inline. An inline run means it will return the value of the signal handler. When `False` (which is the default) the signal handler will run in a background task. Defaults to `False`.
+            reverse (bool, optional): Whether to run the handlers in reverse order. Defaults to `False`.
+
+        Returns:
+            Union[asyncio.Task, Any]: If `inline` is `True` then the return value of the signal handler will be returned. If `inline` is `False` then an `asyncio.Task` will be returned.
+
+        Raises:
+            RuntimeError: If the signal is dispatched outside of an event loop
+        """  # noqa: E501
+
+        event = self.format_event(event)
         dispatch = self._dispatch(
             event,
             context=context,
@@ -210,14 +307,29 @@ class SignalRouter(BaseRouter):
         await asyncio.sleep(0)
         return task
 
-    def add(  # type: ignore
+    def get_waiter(
         self,
-        handler: SignalHandler,
-        event: str,
+        event: Union[str, Enum],
         condition: Optional[Dict[str, Any]] = None,
         exclusive: bool = True,
-    ) -> Signal:
-        event_definition = event
+    ) -> Optional[SignalWaiter]:
+        event_definition = self.format_event(event)
+        name, trigger, _ = self._get_event_parts(event_definition)
+        signal = cast(Signal, self.name_index.get(name))
+        if not signal:
+            return None
+
+        if event_definition.endswith(".*") and not trigger:
+            trigger = "*"
+        return SignalWaiter(
+            signal=signal,
+            event_definition=event_definition,
+            trigger=trigger,
+            requirements=condition,
+            exclusive=bool(exclusive),
+        )
+
+    def _get_event_parts(self, event: str) -> Tuple[str, str, str]:
         parts = self._build_event_parts(event)
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])
@@ -229,19 +341,26 @@ class SignalRouter(BaseRouter):
         if not trigger:
             event = ".".join([*parts[:2], "<__trigger__>"])
 
-        try:
-            # Attaching __requirements__ and __trigger__ to the handler
-            # is deprecated and will be removed in v23.6.
-            handler.__requirements__ = condition  # type: ignore
-            handler.__trigger__ = trigger  # type: ignore
-        except AttributeError:
-            pass
+        return name, trigger, event
+
+    def add(  # type: ignore
+        self,
+        handler: SignalHandler,
+        event: Union[str, Enum],
+        condition: Optional[Dict[str, Any]] = None,
+        exclusive: bool = True,
+        *,
+        priority: int = 0,
+    ) -> Signal:
+        event_definition = self.format_event(event)
+        name, trigger, event_string = self._get_event_parts(event_definition)
 
         signal = super().add(
-            event,
+            event_string,
             handler,
             name=name,
             append=True,
+            priority=priority,
         )  # type: ignore
 
         signal.ctx.exclusive = exclusive
@@ -252,6 +371,18 @@ class SignalRouter(BaseRouter):
         return cast(Signal, signal)
 
     def finalize(self, do_compile: bool = True, do_optimize: bool = False):
+        """Finalize the router and compile the routes
+
+        Args:
+            do_compile (bool, optional): Whether to compile the routes. Defaults to `True`.
+            do_optimize (bool, optional): Whether to optimize the routes. Defaults to `False`.
+
+        Returns:
+            SignalRouter: The router
+
+        Raises:
+            RuntimeError: If the router is finalized outside of an event loop
+        """  # noqa: E501
         self.add(_blank, "sanic.__signal__.__init__")
 
         try:
@@ -260,7 +391,7 @@ class SignalRouter(BaseRouter):
             raise RuntimeError("Cannot finalize signals outside of event loop")
 
         for signal in self.routes:
-            signal.ctx.event = asyncio.Event()
+            signal.ctx.waiters = deque()
 
         return super().finalize(do_compile=do_compile, do_optimize=do_optimize)
 

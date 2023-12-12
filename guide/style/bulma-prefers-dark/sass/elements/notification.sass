@@ -1,0 +1,21 @@
+$notification-background-color-dark: $background-dark !default
+
+.notification
+  background-color: $notification-background-color-dark
+  code,
+  pre
+    background: $black
+  // Colors
+  @each $name, $pair in $colors
+    $color: darken(nth($pair, 1), 10%)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}
+      background-color: $color
+      color: $color-invert
+  // Colors Dark
+  @each $name, $pair in $colors
+    $color: nth($pair, 1)
+    $color-invert: nth($pair, 2)
+    &.is-#{$name}-dark
+      background-color: $color
+      color: $color-invert

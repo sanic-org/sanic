@@ -310,3 +310,29 @@ def test_request_idempotent(method, idempotent):
 def test_request_cacheable(method, cacheable):
     request = Request(b"/", {}, None, method, None, None)
     assert request.is_cacheable is cacheable
+
+
+def test_custom_ctx():
+    class CustomContext:
+        FOO = "foo"
+
+    class CustomRequest(Request[Sanic, CustomContext]):
+        @staticmethod
+        def make_context() -> CustomContext:
+            return CustomContext()
+
+    app = Sanic("Test", request_class=CustomRequest)
+
+    @app.get("/")
+    async def handler(request: CustomRequest):
+        return response.json(
+            [
+                isinstance(request, CustomRequest),
+                isinstance(request.ctx, CustomContext),
+                request.ctx.FOO,
+            ]
+        )
+
+    _, resp = app.test_client.get("/")
+
+    assert resp.json == [True, True, "foo"]

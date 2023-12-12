@@ -59,9 +59,7 @@ def str_to_bool(val: str) -> bool:
 
 with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
-        version = re.findall(
-            r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M
-        )[0]
+        version = re.findall(r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M)[0]
     except IndexError:
         raise RuntimeError("Unable to determine version.")
 
@@ -83,12 +81,11 @@ setup_kwargs = {
     "packages": find_packages(exclude=("tests", "tests.*")),
     "package_data": {"sanic": ["py.typed", "pages/styles/*"]},
     "platforms": "any",
-    "python_requires": ">=3.7",
+    "python_requires": ">=3.8",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -97,14 +94,13 @@ setup_kwargs = {
     "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }
 
-env_dependency = (
-    '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
-)
+env_dependency = '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
 ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.15.0" + env_dependency
 types_ujson = "types-ujson" + env_dependency
 requirements = [
-    "sanic-routing>=22.8.0",
+    # "sanic-routing>=23.6.0",
+    "sanic-routing @ git+https://github.com/sanic-org/sanic-routing.git",
     "httptools>=0.0.10",
     uvloop,
     ujson,
@@ -113,21 +109,20 @@ requirements = [
     "multidict>=5.0,<7.0",
     "html5tagger>=1.2.1",
     "tracerite>=1.0.0",
+    "typing-extensions>=4.4.0",
 ]
 
 tests_require = [
-    "sanic-testing>=23.3.0",
+    "sanic-testing>=23.6.0",
     "pytest==7.1.*",
     "coverage",
     "beautifulsoup4",
     "pytest-sanic",
     "pytest-benchmark",
     "chardet==3.*",
-    "flake8",
-    "black",
-    "isort>=5.0.0",
+    "ruff",
     "bandit",
-    "mypy>=0.901,<0.910",
+    "mypy",
     "docutils",
     "pygments",
     "uvicorn<0.15.0",
@@ -143,6 +138,7 @@ docs_require = [
     "m2r2",
     "enum-tools[sphinx]",
     "mistune<2.0.0",
+    "autodocsumm>=0.2.11",
 ]
 
 dev_require = tests_require + [

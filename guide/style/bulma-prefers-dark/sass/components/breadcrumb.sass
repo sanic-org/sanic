@@ -1,0 +1,17 @@
+$breadcrumb-item-color-dark: $link-dark !default
+$breadcrumb-item-hover-color-dark: $link-hover-dark !default
+$breadcrumb-item-active-color-dark: $text-strong-dark !default
+
+$breadcrumb-item-separator-color-dark: $grey-dark !default
+
+.breadcrumb
+  a
+    color: $breadcrumb-item-color-dark
+    &:hover
+      color: $breadcrumb-item-hover-color-dark
+  li
+    &.is-active
+      a
+        color: $breadcrumb-item-active-color-dark
+    & + li::before
+      color: $breadcrumb-item-separator-color-dark

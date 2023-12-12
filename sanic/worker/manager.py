@@ -504,6 +504,7 @@ class WorkerManager:
         transient: bool,
         restartable: Optional[bool],
         tracked: bool,
+        auto_start: bool,
         workers: int,
     ) -> None:
         try:
@@ -514,10 +515,13 @@ class WorkerManager:
                 transient=transient,
                 restartable=restartable,
                 tracked=tracked,
+                auto_start=auto_start,
                 workers=workers,
             )
         except Exception:
             error_logger.exception("Failed to manage worker %s", ident)
         else:
+            if not auto_start:
+                return
             for process in worker.processes:
                 process.start()

@@ -47,6 +47,7 @@ class WorkerMultiplexer:
         transient: bool = False,
         restartable: Optional[bool] = None,
         tracked: bool = False,
+        auto_start: bool = True,
         workers: int = 1,
     ) -> None:
         """Manages the initiation and monitoring of a worker process.
@@ -62,6 +63,7 @@ class WorkerMultiplexer:
                 the Worker Manager can restart the process if prompted. Defaults to `None`.
             tracked (bool, optional): Flag to indicate whether the process should be tracked
                 after its completion. Defaults to `False`.
+            auto_start (bool, optional): Flag to indicate whether the process should be started
             workers (int, optional): The number of worker processes to run. Defaults to 1.
 
         This method packages the provided arguments into a bundle and sends them back to the
@@ -74,6 +76,7 @@ class WorkerMultiplexer:
             transient,
             restartable,
             tracked,
+            auto_start,
             workers,
         )
         self._monitor_publisher.send(bundle)

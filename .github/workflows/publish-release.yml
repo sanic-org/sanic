@@ -114,7 +114,7 @@ jobs:
       run: python -m build --sdist --wheel --outdir dist/ .
 
     - name: Publish package distribution
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@release/v1.8.11
       with:
         # repository-url: ${{ env.IS_TEST == 'true' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         repository-url: 'https://test.pypi.org/legacy/'

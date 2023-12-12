@@ -18,7 +18,7 @@ async def _search(request: Request, language: str, searcher: Searcher):
     return html(str(builder))
 
 
-@bp.after_server_start
+@bp.before_server_start
 async def setup_search(app: Sanic):
     stemmer = Stemmer()
     pages: list[Page] = app.ctx.pages

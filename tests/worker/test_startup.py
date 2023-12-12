@@ -1,10 +1,11 @@
+import sys
+
+from multiprocessing import set_start_method
 from unittest.mock import patch
 
-import pytest, sys
+import pytest
 
 from sanic import Sanic
-
-from multiprocessing import Queue, set_start_method
 
 
 @pytest.mark.parametrize(
@@ -27,7 +28,9 @@ def test_get_context(start_method, platform, expected):
         assert Sanic._get_startup_method() == expected
 
 
-@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Only test on Linux")
+@pytest.mark.skipif(
+    not sys.platform.startswith("linux"), reason="Only test on Linux"
+)
 def test_set_startup_catch():
     Sanic.START_METHOD_SET = False
     set_start_method("fork", force=True)

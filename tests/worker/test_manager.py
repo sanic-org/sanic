@@ -94,25 +94,25 @@ def test_restart_all():
             call(
                 name="Sanic-Server-0-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
             call(
                 name="Sanic-Server-1-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
             call(
                 name="Sanic-Server-0-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
             call(
                 name="Sanic-Server-1-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
         ]

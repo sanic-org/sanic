@@ -14,6 +14,7 @@ import sanic
 
 from sanic import Request, Sanic
 from sanic.compat import Header
+from sanic.helpers import Default
 from sanic.http.constants import Stage
 from sanic.log import Colors
 from sanic.models.protocol_types import TransportProtocol
@@ -110,7 +111,7 @@ async def do(
 
 
 class SanicREPL(InteractiveConsole):
-    def __init__(self, app: Sanic):
+    def __init__(self, app: Sanic, start: Optional[Default] = None):
         global repl_app
         repl_app = app
         locals_available = {
@@ -139,6 +140,7 @@ class SanicREPL(InteractiveConsole):
         super().__init__(locals=locals_available)
         self.compile.compiler.flags |= PyCF_ALLOW_TOP_LEVEL_AWAIT
         self.loop = new_event_loop()
+        self._start = start
         self._pause_event = threading.Event()
         self._started_event = threading.Event()
         self._interact_thread = threading.Thread(
@@ -213,6 +215,11 @@ class SanicREPL(InteractiveConsole):
         self._shutdown()
 
     def _monitor(self):
+        if isinstance(self._start, Default):
+            enter = f"{Colors.BOLD + Colors.SANIC}ENTER{Colors.END}"
+            start = input(f"\nPress {enter} at anytime to start the REPL.\n\n")
+            if start:
+                return
         try:
             while True:
                 if not self._started_event.is_set():

@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
+from sanic import helpers
 
 from sanic_routing import __version__ as __routing_version__
 
@@ -339,14 +340,26 @@ def test_inspector_command(command, params):
 
 
 def test_server_run_with_repl(caplog, capsys):
-    Sanic.test_mode = False
-    command = [
-        "fake.server.app",
-        "--repl",
-        "--dev",
-    ]
-    result = capture(command, capsys=capsys)
+    record = (
+        "sanic.error",
+        40,
+        "Can't start REPL in non-interactive mode. "
+        "You can only run with --repl in a TTY.",
+    )
 
+    def run():
+        command = [
+            "fake.server.app",
+            "--repl",
+        ]
+        return capture(command, capsys=capsys)
+
+    with patch("sanic.cli.app.is_atty", return_value=True):
+        result = run()
+
+    assert record not in caplog.record_tuples
     assert "Welcome to the Sanic interactive console" in result.err
     assert ">>> " in result.out
-    Sanic.test_mode = True
+
+    result = run()
+    assert record in caplog.record_tuples

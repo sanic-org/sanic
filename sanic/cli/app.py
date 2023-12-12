@@ -14,6 +14,7 @@ from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
 from sanic.cli.console import SanicREPL
 from sanic.cli.inspector import make_inspector_parser
 from sanic.cli.inspector_client import InspectorClient
+from sanic.helpers import _default, is_atty
 from sanic.log import error_logger
 from sanic.worker.loader import AppLoader
 
@@ -152,12 +153,18 @@ Or, a path to a directory to run as a simple HTTP server:
         InspectorClient(host, port, secure, raw, api_key).do(action, **kwargs)
 
     def _repl(self, app: Sanic):
-        if not Sanic.test_mode:
+        if is_atty():
 
             @app.main_process_ready
             async def start_repl(app):
-                SanicREPL(app).run()
+                SanicREPL(app, self.args.repl).run()
                 await app._startup()
+
+        elif self.args.repl is True:
+            error_logger.error(
+                "Can't start REPL in non-interactive mode. "
+                "You can only run with --repl in a TTY."
+            )
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics
@@ -237,8 +244,10 @@ Or, a path to a directory to run as a simple HTTP server:
             if getattr(self.args, maybe_arg, False):
                 kwargs[maybe_arg] = True
 
-        if self.args.dev and "--no-repl" not in sys.argv:
-            self.args.repl = True
+        if self.args.dev and all(
+            arg not in sys.argv for arg in ("--repl", "--no-repl")
+        ):
+            self.args.repl = _default
 
         if self.args.path:
             kwargs["auto_reload"] = True

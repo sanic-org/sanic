@@ -114,10 +114,9 @@ jobs:
       run: python -m build --sdist --wheel --outdir dist/ .
 
     - name: Publish package distribution
-      uses: pypa/gh-action-pypi-publish@release/v1.8.11
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        repository-url: https://test.pypi.org/legacy/
-        repository_url: https://test.pypi.org/legacy/
+        repository-url: ${{ env.IS_TEST == 'true' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
 
   publish_docker:
     name: Publish Docker / Python ${{ matrix.python-version }}

@@ -367,7 +367,8 @@ class WorkerManager:
         """Kill all of the processes."""
         for process in self.processes:
             logger.info("Killing %s [%s]", process.name, process.pid)
-            os.kill(process.pid, SIGKILL)
+            with suppress(ProcessLookupError):
+                os.kill(process.pid, SIGKILL)
         raise ServerKilled
 
     def shutdown_signal(self, signal, frame):

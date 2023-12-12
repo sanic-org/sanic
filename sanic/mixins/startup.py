@@ -1166,7 +1166,9 @@ class StartupMixin(metaclass=SanicMeta):
                     ...
                 sock.close()
             socks = []
+
             trigger_events(main_stop, loop, primary)
+
             loop.close()
             cls._cleanup_env_vars()
             cls._cleanup_apps()
@@ -1192,7 +1194,12 @@ class StartupMixin(metaclass=SanicMeta):
     @staticmethod
     def _get_process_states(worker_state) -> List[str]:
         return [
-            state for s in worker_state.values() if (state := s.get("state"))
+            state
+            for s in worker_state.values()
+            if (
+                (state := s.get("state"))
+                and state not in ("TERMINATED", "FAILED", "COMPLETED", "NONE")
+            )
         ]
 
     @classmethod

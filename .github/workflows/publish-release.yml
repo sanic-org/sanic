@@ -116,7 +116,8 @@ jobs:
     - name: Publish package distribution
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        repository-url: ${{ env.IS_TEST == 'true' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
+        # repository-url: ${{ env.IS_TEST == 'true' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
+        repository-url: 'https://test.pypi.org/legacy/'
 
   publish_docker:
     name: Publish Docker / Python ${{ matrix.python-version }}

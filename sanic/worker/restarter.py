@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from sanic.log import error_logger
 from sanic.worker.constants import RestartOrder
@@ -13,7 +13,7 @@ class Restarter:
         process_names: Optional[List[str]] = None,
         restart_order=RestartOrder.SHUTDOWN_FIRST,
         **kwargs,
-    ):
+    ) -> None:
         """Restart the worker processes.
 
         Args:
@@ -46,8 +46,8 @@ class Restarter:
         process_names: List[str],
         restart_order: RestartOrder,
         **kwargs,
-    ):
-        restarted = set()
+    ) -> Set[str]:
+        restarted: Set[str] = set()
         for process in processes:
             if not process.restartable or (
                 process_names and process.name not in process_names
@@ -63,8 +63,8 @@ class Restarter:
         process_names: List[str],
         restart_order: RestartOrder,
         **kwargs,
-    ):
-        restarted = set()
+    ) -> Set[str]:
+        restarted: Set[str] = set()
         if not process_names:
             return restarted
         for process in processes:

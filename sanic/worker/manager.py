@@ -453,7 +453,7 @@ class WorkerManager:
                 self._handle_terminate()
                 return MonitorCycle.BREAK
             elif isinstance(message, tuple) and len(message) == 7:
-                self._handle_manage(*message)
+                self._handle_manage(*message)  # type: ignore
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
                 error_logger.error(

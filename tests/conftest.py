@@ -214,12 +214,12 @@ def ext_instance():
 
 
 @pytest.fixture(autouse=True)  # type: ignore
-def sanic_ext(ext_instance):  # noqa
-    sanic_ext = MagicMock(__version__="1.2.3")
-    sanic_ext.Extend = MagicMock()
-    sanic_ext.Extend.return_value = ext_instance
-    sys.modules["sanic_ext"] = sanic_ext
-    yield sanic_ext
+def mock_sanic_ext(ext_instance):  # noqa
+    mock_sanic_ext = MagicMock(__version__="1.2.3")
+    mock_sanic_ext.Extend = MagicMock()
+    mock_sanic_ext.Extend.return_value = ext_instance
+    sys.modules["sanic_ext"] = mock_sanic_ext
+    yield mock_sanic_ext
     with suppress(KeyError):
         del sys.modules["sanic_ext"]
 

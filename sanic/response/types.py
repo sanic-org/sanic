@@ -80,9 +80,7 @@ class BaseHTTPResponse:
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
             return b""
-        return (
-            data.encode() if hasattr(data, "encode") else data  # type: ignore
-        )
+        return data.encode() if hasattr(data, "encode") else data  # type: ignore
 
     @property
     def cookies(self) -> CookieJar:
@@ -141,11 +139,7 @@ class BaseHTTPResponse:
                 "Response stream was ended, no more response data is "
                 "allowed to be sent."
             )
-        data = (
-            data.encode()  # type: ignore
-            if hasattr(data, "encode")
-            else data or b""
-        )
+        data = data.encode() if hasattr(data, "encode") else data or b""  # type: ignore
         await self.stream.send(
             data,  # type: ignore
             end_stream=end_stream or False,

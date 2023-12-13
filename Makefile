@@ -61,7 +61,7 @@ format:
 	ruff format ${RUFF_FORMATTED_FOLDERS}
 
 .PHONY: pretty
-pretty: fix format
+pretty: format fix
 
 .PHONY: docs-clean
 docs-clean:

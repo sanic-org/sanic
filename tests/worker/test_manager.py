@@ -399,3 +399,46 @@ def test_transient_not_restartable(manager: WorkerManager):
             transient=True,
             restartable=False,
         )
+
+
+def test_remove_worker(manager: WorkerManager, caplog):
+    worker = manager.manage("TEST", fake_serve, kwargs={})
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    manager.remove_worker(worker)
+    message = "Worker TEST is tracked and cannot be removed."
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+    assert ("sanic.error", 40, message) in caplog.record_tuples
+
+
+def test_remove_untracked_worker(manager: WorkerManager, caplog):
+    caplog.set_level(20)
+    worker = manager.manage("TEST", fake_serve, kwargs={}, tracked=False)
+    worker.has_alive_processes = Mock(return_value=True)
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    manager.remove_worker(worker)
+    message = "Worker TEST has alive processes and cannot be removed."
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+    assert ("sanic.error", 40, message) in caplog.record_tuples
+
+    worker.has_alive_processes = Mock(return_value=False)
+    manager.remove_worker(worker)
+    message = "Removed worker TEST"
+
+    assert "Sanic-TEST-0" not in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 0
+    assert ("sanic.root", 20, message) in caplog.record_tuples

@@ -70,7 +70,7 @@ def test_fail_if_not_loaded(app: Sanic):
 
 
 def test_can_access_app_ext_while_running(
-        app: Sanic, mock_sanic_ext, ext_instance
+    app: Sanic, mock_sanic_ext, ext_instance
 ):
     class IceCream:
         flavor: str

@@ -1286,7 +1286,7 @@ async def test_request_string_representation_asgi(app):
         ),
         (
             "------sanic\r\n"
-            'Content-Disposition: form-data; filename*='
+            "Content-Disposition: form-data; filename*="
             '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
@@ -1295,7 +1295,7 @@ async def test_request_string_representation_asgi(app):
         ),
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*='
+            "content-disposition: form-data; filename*="
             '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
@@ -1305,7 +1305,7 @@ async def test_request_string_representation_asgi(app):
         # Umlaut using NFC normalization (Windows, Linux, Android)
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*='
+            "content-disposition: form-data; filename*="
             '"utf-8\'\'filename_%C3%A4_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
@@ -1315,7 +1315,7 @@ async def test_request_string_representation_asgi(app):
         # Umlaut using NFD normalization (MacOS client)
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*='
+            "content-disposition: form-data; filename*="
             '"utf-8\'\'filename_a%CC%88_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
@@ -1374,7 +1374,7 @@ def test_request_multipart_files(app, payload, filename):
         ),
         (
             "------sanic\r\n"
-            'Content-Disposition: form-data; filename*='
+            "Content-Disposition: form-data; filename*="
             '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
@@ -1383,7 +1383,7 @@ def test_request_multipart_files(app, payload, filename):
         ),
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*='
+            "content-disposition: form-data; filename*="
             '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
@@ -1498,7 +1498,7 @@ def test_request_multipart_file_duplicate_filed_name(app):
 
     headers = {
         "Content-Type": "multipart/form-data;"
-                        " boundary=e73ffaa8b1b2472b8ec848de833cb05b"
+        " boundary=e73ffaa8b1b2472b8ec848de833cb05b"
     }
 
     request, _ = app.test_client.post(
@@ -1534,7 +1534,7 @@ async def test_request_multipart_file_duplicate_filed_name_asgi(app):
 
     headers = {
         "Content-Type": "multipart/form-data;"
-                        " boundary=e73ffaa8b1b2472b8ec848de833cb05b"
+        " boundary=e73ffaa8b1b2472b8ec848de833cb05b"
     }
 
     request, _ = await app.asgi_client.post("/", data=payload, headers=headers)

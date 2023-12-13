@@ -467,8 +467,9 @@ def test_logger_vhosts(caplog):
         )
 
     logmsg = [
-        msg for name, levelno, msg in caplog.record_tuples if (
-            msg.startswith("Certificate"))
+        msg
+        for name, levelno, msg in caplog.record_tuples
+        if (msg.startswith("Certificate"))
     ][0]
 
     assert logmsg == (

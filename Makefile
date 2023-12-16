@@ -1,4 +1,4 @@
-RUFF_FORMATTED_FOLDERS = sanic examples scripts tests
+RUFF_FORMATTED_FOLDERS = sanic examples scripts tests guide docs
 .DEFAULT: help
 
 .PHONY: help

@@ -1,13 +1,7 @@
+from importlib.metadata import version
 from typing import Optional, Sequence, cast
 
-
-try:  # websockets < 11.0
-    from websockets.connection import State
-    from websockets.server import ServerConnection as ServerProtocol
-except ImportError:  # websockets >= 11.0
-    from websockets.protocol import State  # type: ignore
-    from websockets.server import ServerProtocol  # type: ignore
-
+from packaging.version import parse
 from websockets import http11
 from websockets.datastructures import Headers as WSHeaders
 from websockets.typing import Subprotocol
@@ -18,6 +12,14 @@ from sanic.request import Request
 from sanic.server import HttpProtocol
 
 from ..websockets.impl import WebsocketImplProtocol
+
+
+if parse(version("websockets")) < parse("11.0.0"):
+    from websockets.connection import State
+    from websockets.server import ServerConnection as ServerProtocol
+else:
+    from websockets.protocol import State  # type: ignore
+    from websockets.server import ServerProtocol  # type: ignore
 
 
 OPEN = State.OPEN

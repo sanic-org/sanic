@@ -110,6 +110,7 @@ requirements = [
     "html5tagger>=1.2.1",
     "tracerite>=1.0.0",
     "typing-extensions>=4.4.0",
+    "packaging>=23.2"
 ]
 
 tests_require = [

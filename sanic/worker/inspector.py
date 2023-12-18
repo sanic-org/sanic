@@ -1,21 +1,23 @@
 from __future__ import annotations
 
+from asyncio import sleep
+from dataclasses import dataclass
 from datetime import datetime
 from inspect import isawaitable
-from logging import debug
 from multiprocessing.connection import Connection
 from os import environ
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Mapping, Union, Tuple
-from asyncio import sleep
+from typing import TYPE_CHECKING, Any, Dict, Mapping, Tuple, Union
+
+from websockets import ConnectionClosed, connect, connection
+
 from sanic.exceptions import Unauthorized
 from sanic.helpers import Default, _default
 from sanic.log import logger
 from sanic.request import Request
 from sanic.response import json
-from dataclasses import dataclass
-from websockets import connection, connect, ConnectionClosed
 from sanic.server.websockets.impl import WebsocketImplProtocol
+
 
 if TYPE_CHECKING:
     from sanic import Sanic
@@ -38,7 +40,9 @@ class NodeClient:
 
     async def run(self, state_getter) -> None:
         try:
-            async for ws in connect(f"ws://{self.hub_host}:{self.hub_port}/hub"):
+            async for ws in connect(
+                f"ws://{self.hub_host}:{self.hub_port}/hub"
+            ):
                 try:
                     await self._run_node(ws, state_getter)
                 except ConnectionClosed:
@@ -139,7 +143,8 @@ class Inspector:
         if hub_host == host and hub_port == port:
             if not hub_mode:
                 raise ValueError(
-                    "Hub mode must be enabled when using the same host and port"
+                    "Hub mode must be enabled when using the same "
+                    "host and port for the hub and the inspector"
                 )
             hub_mode = True
         if (hub_host and not hub_port) or (hub_port and not hub_host):

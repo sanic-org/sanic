@@ -657,3 +657,15 @@ def test_stop_trigger_terminate(app: Sanic):
 
     app.stop(unregister=False)
     app.multiplexer.terminate.assert_called_once()
+
+
+def test_refresh_pass_passthru_data_to_new_instance(app: Sanic):
+    # arrange
+    passthru = {
+        '_inspector': 2,
+        'config': {'TOUCHUP': 23}
+    }
+    app = app.refresh(passthru)
+
+    assert app.inspector == 2
+    assert app.config.TOUCHUP == 23

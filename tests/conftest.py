@@ -4,6 +4,7 @@ import logging
 import os
 import random
 import re
+import socket
 import string
 import sys
 import uuid
@@ -30,6 +31,19 @@ Sanic.test_mode = True
 
 if sys.platform in ["win32", "cygwin"]:
     collect_ignore = ["test_worker.py"]
+
+
+def get_port():
+    sock = socket.socket()
+    sock.bind(
+        ("", 0)
+    )  # Bind to 0 port, so os will pick available port for us.
+    return sock.getsockname()[1]
+
+
+@pytest.fixture(scope="function")
+def port():
+    yield get_port()
 
 
 async def _handler(request):

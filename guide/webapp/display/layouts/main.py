@@ -1,11 +1,10 @@
 from contextlib import contextmanager
 from typing import Generator
 
+from sanic import Request
 from webapp.display.layouts.elements.footer import do_footer
 from webapp.display.layouts.elements.navbar import do_navbar
 from webapp.display.layouts.elements.sidebar import do_sidebar
-
-from sanic import Request
 
 from .base import BaseLayout
 

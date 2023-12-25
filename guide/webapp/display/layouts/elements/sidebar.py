@@ -1,8 +1,8 @@
+from html5tagger import Builder, E  # type: ignore
+
+from sanic import Request
 from webapp.display.layouts.models import MenuItem
 from webapp.display.text import slugify
-
-from html5tagger import Builder, E  # type: ignore
-from sanic import Request
 
 
 def do_sidebar(builder: Builder, request: Request) -> None:

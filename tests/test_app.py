@@ -20,6 +20,8 @@ from sanic.log import LOGGING_CONFIG_DEFAULTS
 from sanic.response import text
 from sanic.router import Route
 
+from .conftest import get_port
+
 
 @pytest.fixture(autouse=True)
 def clear_app_registry():
@@ -37,19 +39,19 @@ def test_app_loop_running(app: Sanic):
 
 
 @pytest.mark.asyncio
-def test_create_asyncio_server(app: Sanic):
+def test_create_asyncio_server(app: Sanic, port: int):
     loop = asyncio.get_event_loop()
-    asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+    asyncio_srv_coro = app.create_server(return_asyncio_server=True, port=port)
     assert isawaitable(asyncio_srv_coro)
     srv = loop.run_until_complete(asyncio_srv_coro)
     assert srv.is_serving() is True
 
 
 @pytest.mark.asyncio
-def test_asyncio_server_no_start_serving(app: Sanic):
+def test_asyncio_server_no_start_serving(app: Sanic, port):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
-        port=43123,
+        port=port,
         return_asyncio_server=True,
         asyncio_server_kwargs=dict(start_serving=False),
     )
@@ -76,11 +78,13 @@ def test_asyncio_server_start_serving(app: Sanic):
 
 
 @pytest.mark.asyncio
-def test_create_server_main(app: Sanic, caplog):
+def test_create_server_main(app: Sanic, caplog, port):
     app.listener("main_process_start")(lambda *_: ...)
     loop = asyncio.get_event_loop()
     with caplog.at_level(logging.INFO):
-        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        asyncio_srv_coro = app.create_server(
+            return_asyncio_server=True, port=port
+        )
         loop.run_until_complete(asyncio_srv_coro)
     assert (
         "sanic.root",
@@ -91,10 +95,10 @@ def test_create_server_main(app: Sanic, caplog):
 
 
 @pytest.mark.asyncio
-def test_create_server_no_startup(app: Sanic):
+def test_create_server_no_startup(app: Sanic, port):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
-        port=43124,
+        port=port,
         return_asyncio_server=True,
         asyncio_server_kwargs=dict(start_serving=False),
     )
@@ -107,11 +111,13 @@ def test_create_server_no_startup(app: Sanic):
 
 
 @pytest.mark.asyncio
-def test_create_server_main_convenience(app: Sanic, caplog):
+def test_create_server_main_convenience(app: Sanic, caplog, port):
     app.main_process_start(lambda *_: ...)
     loop = asyncio.get_event_loop()
     with caplog.at_level(logging.INFO):
-        asyncio_srv_coro = app.create_server(return_asyncio_server=True)
+        asyncio_srv_coro = app.create_server(
+            return_asyncio_server=True, port=port
+        )
         loop.run_until_complete(asyncio_srv_coro)
     assert (
         "sanic.root",
@@ -131,9 +137,9 @@ def test_app_loop_not_running(app: Sanic):
     )
 
 
-def test_app_run_raise_type_error(app: Sanic):
+def test_app_run_raise_type_error(app: Sanic, port):
     with pytest.raises(TypeError) as excinfo:
-        app.run(loop="loop")
+        app.run(loop="loop", port=port)
 
     assert str(excinfo.value) == (
         "loop is not a valid argument. To use an existing loop, "
@@ -489,6 +495,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
             srv_coro = app.create_server(
                 return_asyncio_server=True,
                 asyncio_server_kwargs=dict(start_serving=False),
+                port=get_port(),
             )
             loop.run_until_complete(srv_coro)
 
@@ -527,6 +534,7 @@ def test_multiple_uvloop_configs_display_warning(caplog):
             srv_coro = app.create_server(
                 return_asyncio_server=True,
                 asyncio_server_kwargs=dict(start_serving=False),
+                port=get_port(),
             )
             srv = loop.run_until_complete(srv_coro)
             loop.run_until_complete(srv.startup())
@@ -542,15 +550,15 @@ def test_multiple_uvloop_configs_display_warning(caplog):
     assert counter[(logging.WARNING, message)] == 3
 
 
-def test_cannot_run_fast_and_workers(app: Sanic):
+def test_cannot_run_fast_and_workers(app: Sanic, port):
     message = "You cannot use both fast=True and workers=X"
     with pytest.raises(RuntimeError, match=message):
-        app.run(fast=True, workers=4)
+        app.run(fast=True, workers=4, port=port)
 
 
-def test_no_workers(app: Sanic):
+def test_no_workers(app: Sanic, port):
     with pytest.raises(RuntimeError, match="Cannot serve with no workers"):
-        app.run(workers=0)
+        app.run(workers=0, port=port)
 
 
 @pytest.mark.parametrize(
@@ -562,13 +570,13 @@ def test_no_workers(app: Sanic):
     ),
 )
 def test_cannot_run_single_process_and_workers_or_auto_reload(
-    app: Sanic, extra
+    app: Sanic, extra, port
 ):
     message = (
         "Single process cannot be run with multiple workers or auto-reload"
     )
     with pytest.raises(RuntimeError, match=message):
-        app.run(single_process=True, **extra)
+        app.run(single_process=True, port=port, **extra)
 
 
 def test_default_configure_logging():

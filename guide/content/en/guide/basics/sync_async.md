@@ -1,6 +1,10 @@
+---
+title: Sync and Async in Sanic
+---
+
 # Sync and Async in Sanic
 
-Sanic is an **asynchronous** framework - it is designed to be responsive to requests, which allows it to theoretically serve more requests, more quickly, than a synchronous framework. It shares this functionality with other asynchronous frameworks like [starlette](https://www.starlette.io/) and a more full-featured, batteries included framework that is in the public spotlight, [FastAPI](https://fastapi.tiangolo.com/) (which uses starlette under the hood).
+Sanic is an **asynchronous** framework - it is designed to be responsive to requests, which allows it to theoretically serve more requests, more quickly, than a synchronous framework. Other python asynchronous frameworks also share the same limitations when calling synchronous code, so the guide below will hopefully serve you if you end up in a situation using something other than Sanic in the future.
 
 There are preventable situations where this is not the case. Using synchronous functions in asynchronous code is the biggest hurdle for many Sanic adopters.
 

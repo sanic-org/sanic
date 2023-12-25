@@ -18,6 +18,7 @@ Let’s start with as simple an explanation as we can produce and an example. Mo
 
 Our first example, below, is a standard program. The ***execution flow*** can be understood by simply reading the code.
 
+Ex. 1
 ```py test1.py
 #!/usr/bin/env python3.11
 import time
@@ -50,6 +51,7 @@ I go third (2s)
 
 So changing the order of the statements as is done below changes the output:
 
+Ex. 2
 ```py test2.py
 #!/usr/bin/env python3.11
 import time
@@ -93,6 +95,7 @@ Scheduled code is considered **non-blocking**, because the process should not wa
 
 To illustrate this, the simplest possible example is used below:
 
+Ex. 3
 ```py test3.py
 #!/usr/bin/env python3.11
 import asyncio
@@ -125,5 +128,48 @@ Also in the example **main** is now a coroutine as well. This is because corouti
 .. tip:: Note
 
     💡 It is not impossible for regular functions to schedule coroutines, but it is beyond the scope of this guide.
+
+Scheduling has been referenced several times at this point, and it should be discussed.
+
+There are as many good articles about async/await in python as there are poorly written ones, but one that appears high in search results states that ***await*** pauses execution. That doesn't make sense, though, does it? What would be the point in telling a function that it should just not do anything.
+
+However this guide is not going to dig into the material impact of scheduling, but while analogies in describing async/await are always suspect, consider this example scenario:
+
+You wish to brew a cup of tea.
+
+Using an electric kettle, you fill it with water, and start the kettle.
+
+Most human beings are not that interested in standing at the kettle, doing nothing until it boils, but with regular functions, that's what happens: Fill kettle. Boil. Use water to make drink. The operations happen in order, and you cannot do anything else until they complete.
+
+For someone making a drink, that seems like a waste of time. A person does not need to stand around and watch the kettle until it boils, instead, other things can be done. So the kettle is left to do its task, which by filling it and turning it on, we can consider to be scheduled, and when it is done, we can come back to it and make our hot drink.
+
+Let's review with pythonic pseudocode the two different things going on here:
+
+Ex. 4
+```py
+def fill(kettle):
+    # fills kettle
+    kettle.add(water)
+
+def boil_water(kettle):
+    # boils water at ocean level
+    while kettle.water['temp'] < 100:
+        # keep heating water until the water boils
+        kettle.heat(100, 'C')
+        time.sleep(5) # wait 5 seconds
+
+def make_drink(kettle, drink):
+    drink.add(kettle.water)
+    drink.steep()
+
+kettle = Kettle() # Empty kettle
+drink = Tea() # tea leaves in a cup
+fill(kettle)
+boil_water(kettle)
+make_drink(kettle, drink)
+```
+
+Effectively we have the same sequence of events from our very first example, and as mentioned above, we are stuck waiting for the tasks to execute in order, and we would be stuck waiting for the water to boil.
+
 
 

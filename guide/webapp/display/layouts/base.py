@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Generator
 
 from html5tagger import Builder
+
 from sanic import Request
 
 

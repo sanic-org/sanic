@@ -1,6 +1,8 @@
-from datetime import datetime
 from collections import deque
+from datetime import datetime
+
 from html5tagger import Builder, E  # type: ignore
+
 from sanic import Request
 
 

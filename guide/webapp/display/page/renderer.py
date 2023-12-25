@@ -3,10 +3,10 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Type
 
-from webapp.display.base import BaseRenderer
-
 from html5tagger import HTML, Builder  # type: ignore
-from sanic import Request, request
+
+from sanic import Request
+from webapp.display.base import BaseRenderer
 
 from ..layouts.base import BaseLayout
 from .page import Page

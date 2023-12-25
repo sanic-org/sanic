@@ -1,10 +1,10 @@
 # from urllib.parse import unquote
 
+from sanic import Blueprint, Request, Sanic, html
 from webapp.display.page import Page
 from webapp.display.search.renderer import SearchRenderer
 from webapp.display.search.search import Document, Searcher, Stemmer
 
-from sanic import Blueprint, Request, Sanic, html
 
 bp = Blueprint("search", url_prefix="/<language>/search")
 

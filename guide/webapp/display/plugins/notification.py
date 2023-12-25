@@ -1,6 +1,5 @@
-from mistune.directives import Admonition
-
 from html5tagger import HTML, E
+from mistune.directives import Admonition
 
 
 class Notification(Admonition):

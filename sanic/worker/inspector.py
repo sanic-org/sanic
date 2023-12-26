@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from asyncio import sleep
+from asyncio import sleep, run as run_async
 from dataclasses import dataclass
 from datetime import datetime
 from inspect import isawaitable
@@ -8,6 +8,7 @@ from multiprocessing.connection import Connection
 from os import environ
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Tuple, Union
+from signal import SIGTERM, SIGINT, signal
 
 from websockets import ConnectionClosed, connect, connection
 
@@ -37,16 +38,18 @@ class NodeClient:
     def __init__(self, hub_host: str, hub_port: int) -> None:
         self.hub_host = hub_host
         self.hub_port = hub_port
+        self._run = True
 
     async def run(self, state_getter) -> None:
         try:
-            async for ws in connect(
-                f"ws://{self.hub_host}:{self.hub_port}/hub"
-            ):
+            async for ws in connect(f"ws://{self.hub_host}:{self.hub_port}/hub"):
+                # async with connect(f"ws://{self.hub_host}:{self.hub_port}/hub") as ws:
                 try:
-                    await self._run_node(ws, state_getter)
+                    close = await self._run_node(ws, state_getter)
+                    if close:
+                        ...
                 except ConnectionClosed:
-                    continue
+                    ...
         except BaseException:
             ...
         finally:
@@ -56,9 +59,13 @@ class NodeClient:
         return connect(f"ws://{hub_host}:{hub_port}/hub")
 
     async def _run_node(self, ws: connection, state_getter) -> None:
-        while True:
+        while self._run:
             await ws.send(str(state_getter()))
             await sleep(3)
+        return True
+
+    def close(self, *args):
+        self._run = False
 
 
 class Inspector:
@@ -118,7 +125,9 @@ class Inspector:
 
         self.app = Sanic("Inspector")
         self._setup()
-        if run:
+        if self.node_mode:
+            run_async(self._run_node())
+        elif run:
             self.app.run(
                 host=self.host,
                 port=self.port,
@@ -260,6 +269,13 @@ class Inspector:
             else:
                 logger.info("Hub received message: %s", message)
 
-    async def _run_node(self, app: Sanic) -> None:
+    async def _run_node(self) -> None:
         client = NodeClient(self.hub_host, self.hub_port)
-        app.add_task(client.run(self._state_to_json))
+
+        def signal_close(*args, **kwargs):
+            client.close()
+
+        signal(SIGTERM, signal_close)
+        signal(SIGINT, signal_close)
+
+        await client.run(self._state_to_json)

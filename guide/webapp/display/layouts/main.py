@@ -30,7 +30,9 @@ class MainLayout(BaseLayout):
             self._footer(request)
 
     @contextmanager
-    def _content_wrapper(self, request: Request) -> Generator[None, None, None]:
+    def _content_wrapper(
+        self, request: Request
+    ) -> Generator[None, None, None]:
         current_page = request.ctx.current_page
         section_class = "section"
         if current_page and current_page.meta.content_class:

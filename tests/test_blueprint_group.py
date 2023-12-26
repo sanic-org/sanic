@@ -25,6 +25,7 @@ def test_bp_group_indexing(app: Sanic):
     with raises(expected_exception=IndexError):
         _ = group[3]
 
+
 def test_bp_group_set_item_by_index(app: Sanic):
     blueprint_1 = Blueprint("blueprint_1", url_prefix="/bp1")
     blueprint_2 = Blueprint("blueprint_2", url_prefix="/bp2")
@@ -33,7 +34,6 @@ def test_bp_group_set_item_by_index(app: Sanic):
     group[0] = blueprint_2
 
     assert group[0] == blueprint_2
-
 
 
 def test_bp_group_with_additional_route_params(app: Sanic):

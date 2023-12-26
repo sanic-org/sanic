@@ -33,7 +33,11 @@ class MainLayout(BaseLayout):
     def _content_wrapper(
         self, request: Request
     ) -> Generator[None, None, None]:
-        current_page = request.ctx.current_page
+        current_page = (
+            request.ctx.current_page
+            if hasattr(request.ctx, "current_page")
+            else None
+        )
         section_class = "section"
         if current_page and current_page.meta.content_class:
             section_class += f" {current_page.meta.content_class}"

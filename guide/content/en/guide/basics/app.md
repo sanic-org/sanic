@@ -360,11 +360,9 @@ For complete details, see the [API docs](/api/sanic.app).
 
 
 
-.. new:: NEW in v23.6
+### Custom typed application
 
-    ### Custom typed application
-
-Beginnint in v23.6, the correct type annotation of a default Sanic application instance is:
+Beginning in v23.6, the correct type annotation of a default Sanic application instance is:
 
 ```python
 sanic.app.Sanic[sanic.config.Config, types.SimpleNamespace]
@@ -477,9 +475,7 @@ add_listeners(app)
 
 *Added in v23.6*
 
-.. new:: NEW in v23.6
-
-    ### Custom typed request
+### Custom typed request
 
 Sanic also allows you to customize the type of the request object. This is useful if you want to add custom properties to the request object, or be able to access your custom properties of a typed application instance.
 

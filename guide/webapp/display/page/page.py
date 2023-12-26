@@ -13,9 +13,7 @@ from ..markdown import render_markdown
 from .docobject import organize_docobjects
 
 
-_PAGE_CACHE: dict[
-    str, dict[str, tuple[Page | None, Page | None, Page | None]]
-] = {}
+_PAGE_CACHE: dict[str, dict[str, tuple[Page | None, Page | None, Page | None]]] = {}
 _LAYOUTS_CACHE: dict[str, Type[BaseLayout]] = {
     "home": HomeLayout,
     "main": MainLayout,
@@ -30,6 +28,7 @@ class PageMeta:
     description: str = ""
     layout: str = "main"
     features: list[dict[str, str]] = field(default_factory=list)
+    content_class: str = ""
 
 
 @dataclass

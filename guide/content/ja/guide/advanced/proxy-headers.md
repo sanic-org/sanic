@@ -1,19 +1,19 @@
-# Proxy configuration
+# プロキシ設定
 
-When you use a reverse proxy server (e.g. nginx), the value of `request.ip` will contain the IP of a proxy, typically `127.0.0.1`. Almost always, this is **not** what you will want.
+リバースプロキシサーバー(nginxなど)を使用する場合、`request.ip`の値にはプロキシのIP(通常は`127.0.0.1`)が含まれます。 ほとんどの場合、これはあなたが望むもの**ではありません**。
 
-Sanic may be configured to use proxy headers for determining the true client IP, available as `request.remote_addr`. The full external URL is also constructed from header fields _if available_.
+Sanicは、`request.remote_addr`として利用可能な本当のクライアントIPを決定するためにプロキシヘッダーを使用するように構成できます。 完全な外部URLは、_使用できれば_ヘッダーフィールドからも構築されます。
 
-.. tip:: Heads up
+.. tip:: ヒント
 
 ```
-Without proper precautions, a malicious client may use proxy headers to spoof its own IP. To avoid such issues, Sanic does not use any proxy headers unless explicitly enabled.
+適切な予防措置がなければ、悪意のあるクライアントはプロキシヘッダーを使用して独自のIPを偽装することができます。このような問題を回避するために、Sanicは明示的に有効になっていない限り、プロキシヘッダーを使用しません。
 ```
 
 .. column::
 
 ```
-Services behind reverse proxies must configure one or more of the following [configuration values](/guide/deployment/configuration.md):
+リバースプロキシを使うサービスは、次の[構成値](/guide/deployment/configuration.md)の1つ以上を設定する必要があります。
 
 - `FORWARDED_SECRET`
 - `REAL_IP_HEADER`
@@ -30,29 +30,29 @@ app.config.PROXIES_COUNT = 2
 ```
 ````
 
-## Forwarded header
+## Forwarded ヘッダー
 
-In order to use the `Forwarded` header, you should set `app.config.FORWARDED_SECRET` to a value known to the trusted proxy server. The secret is used to securely identify a specific proxy server.
+`Forwarded`ヘッダーを使用するには、信頼できるプロキシサーバーに設定されている値を`app.config.FORWARDED_SECRET`に設定する必要があります。 このシークレットは、特定のプロキシサーバーを安全に識別するために使用されます。
 
-Sanic ignores any elements without the secret key, and will not even parse the header if no secret is set.
+Sanicはシークレットキーのない要素を無視し、シークレットが設定されていない場合はヘッダーを解析することもありません。
 
-All other proxy headers are ignored once a trusted forwarded element is found, as it already carries complete information about the client.
+信頼された転送要素が見つかると、他のすべてのプロキシヘッダは無視されます。クライアントに関する完全な情報をすでに運んでいるからです。
 
-To learn more about the `Forwarded` header, read the related [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded) and [Nginx](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/) articles.
+`Forwarded`ヘッダーの詳細については、関連する[MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded)および[Nginx](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/)の記事を参照してください。(訳注: 両方とも英語です)
 
-## Traditional proxy headers
+## 従来のプロキシヘッダー
 
-### IP Headers
+### IP ヘッダー
 
-When your proxy forwards you the IP address in a known header, you can tell Sanic what that is with the `REAL_IP_HEADER` config value.
+プロキシが既知のヘッダーにIPアドレスを転送するとき`REAL_IP_HEADER`の値を指定すると、Sanicにそれが何かを教えることができます。
 
 ### X-Forwarded-For
 
-This header typically contains a chain of IP addresses through each layer of a proxy. Setting `PROXIES_COUNT` tells Sanic how deep to look to get an actual IP address for the client. This value should equal the _expected_ number of IP addresses in the chain.
+このヘッダーには、通常、プロキシの各レイヤーを介したIPアドレスのチェーンが含まれています。 `PROXIES_COUNT`を設定すると、クライアントの実際のIPアドレスを取得する深さがSanicに指示されます。 この値は、チェーン内のIPアドレスの _期待される_ 数に等しいはずです。
 
-### Other X-headers
+### その他のXヘッダー
 
-If a client IP is found by one of these methods, Sanic uses the following headers for URL parts:
+クライアントIPがこれらのメソッドのいずれかで見つかった場合、Sanicは以下のURLパーツのヘッダを使用します:
 
 - x-forwarded-proto
 - x-forwarded-host
@@ -60,9 +60,9 @@ If a client IP is found by one of these methods, Sanic uses the following header
 - x-forwarded-path
 - x-scheme
 
-## Examples
+## 例
 
-In the following examples, all requests will assume that the endpoint looks like this:
+以下の例では、すべてのリクエストはエンドポイントが次のようになると仮定します。
 
 ```python
 @app.route("/fwd")
@@ -80,9 +80,9 @@ async def forwarded(request):
 
 ***
 
-##### Example 1
+##### 例1
 
-Without configured FORWARDED_SECRET, x-headers should be respected
+FORWARDED_SECRETが設定されていない場合、Xヘッダは尊重されます。
 
 ```sh
 curl localhost:8000/fwd \
@@ -107,7 +107,7 @@ app.config.REAL_IP_HEADER = "x-real-ip"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "127.0.0.2",
   "scheme": "ws",
@@ -123,9 +123,9 @@ app.config.REAL_IP_HEADER = "x-real-ip"
 
 ***
 
-##### Example 2
+##### 例2
 
-FORWARDED_SECRET now configured
+FORWARDED_SECRETが設定された場合
 
 ```sh
 curl localhost:8000/fwd \
@@ -150,8 +150,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 .. column::
 
 ````
-```bash
-# curl response
+```curlの応答
 {
   "remote_addr": "[::2]",
   "scheme": "https",
@@ -164,15 +163,14 @@ app.config.FORWARDED_SECRET = "mySecret"
     "path": "/app/",
     "secret": "mySecret"
   }
-}
 ```
 ````
 
 ***
 
-##### Example 3
+##### 例3
 
-Empty Forwarded header -> use X-headers
+空の転送ヘッダー - > Xヘッダーを使用する
 
 ```sh
 curl localhost:8000/fwd \
@@ -197,7 +195,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "127.0.0.2",
   "scheme": "ws",
@@ -213,9 +211,9 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 4
+##### 例4
 
-Header present but not matching anything
+ヘッダーは存在するのに何も一致しない場合。
 
 ```sh
 curl localhost:8000/fwd \
@@ -237,7 +235,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "",
   "scheme": "http",
@@ -251,9 +249,9 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 5
+##### 例5
 
-Forwarded header present but no matching secret -> use X-headers
+Forwarded ヘッダーは存在するが、一致するシークレットはない場合 -> Xヘッダを使用
 
 ```sh
 curl localhost:8000/fwd \
@@ -276,7 +274,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "127.0.0.2",
   "scheme": "http",
@@ -291,9 +289,9 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 6
+##### 例6
 
-Different formatting and hitting both ends of the header
+フォーマットが異なり、ヘッダーの両端がヒットする場合
 
 ```sh
 curl localhost:8000/fwd \
@@ -315,7 +313,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "127.0.0.4",
   "scheme": "http",
@@ -332,9 +330,9 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 7
+##### 例7
 
-Test escapes (modify this if you see anyone implementing quoted-pairs)
+エスケープをテストする場合(quoted-pairsを実装しているのを見かけたら修正してあげてください)。
 
 ```sh
 curl localhost:8000/fwd \
@@ -356,7 +354,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "test",
   "scheme": "http",

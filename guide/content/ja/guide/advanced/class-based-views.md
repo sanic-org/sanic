@@ -1,15 +1,15 @@
-# Class Based Views
+# クラスベースビュー
 
-## Why use them?
+## なぜ使うのか？
 
 .. column::
 
 ```
-### The problem
+### 問題点
 
-A common pattern when designing an API is to have multiple functionality on the same endpoint that depends upon the HTTP method.
+APIを設計する際の一般的なパターンは、同じエンドポイントに対してHTTPメソッドによって複数の機能を持つことです。
 
-While both of these options work, they are not good design practices and may be hard to maintain over time as your project grows.
+これらのオプションは両方とも機能しますが、優れた設計慣行ではなく、プロジェクトが成長するにつれて時間の経過とともに維持するのが難しい場合があります。
 ```
 
 .. column::
@@ -44,9 +44,9 @@ async def bar(request):
 .. column::
 
 ```
-### The solution
+### 解決策
 
-Class-based views are simply classes that implement response behavior to requests. They provide a way to compartmentalize handling of different HTTP request types at the same endpoint.
+クラスベースのビューは、要求に対する応答動作を完結に実装するクラスです。これらは、同じエンドポイントで異なるHTTPリクエストタイプの処理を区分する方法を提供します。
 ```
 
 .. column::
@@ -69,16 +69,16 @@ app.add_route(FooBar.as_view(), "/foobar")
 ```
 ````
 
-## Defining a view
+## ビューの定義
 
-A class-based view should subclass :class:`sanic.views.HTTPMethodView`. You can then implement class methods with the name of the corresponding HTTP method. If a request is received that has no defined method, a `405: Method not allowed` response will be generated.
+クラスベースのビューは、 :class:`sanic.views.HTTPMethodView` のサブクラスでなければなりません。 その後、対応するHTTPメソッドの名前でクラスメソッドを実装できます。 定義されたメソッドを持たない要求を受信すると、 `405: Method not allowed` 応答が生成されます。
 
 .. column::
 
 ```
-To register a class-based view on an endpoint, the `app.add_route` method is used. The first argument should be the defined class with the method `as_view` invoked, and the second should be the URL endpoint.
+エンドポイントにクラスベースのビューを登録するために、`app.add_route`メソッドが使用できます。最初の引数は、メソッド`as_view`が呼び出された定義済みクラスで、2番目の引数はURLエンドポイントである必要があります。
 
-The available methods are:
+利用可能なメソッドは:
 
 - get
 - post
@@ -101,7 +101,7 @@ class SimpleView(HTTPMethodView):
   def get(self, request):
       return text("I am get method")
 
-  # You can also use async syntax
+  # 非同期構文も利用可能
   async def post(self, request):
       return text("I am post method")
 
@@ -118,12 +118,12 @@ app.add_route(SimpleView.as_view(), "/")
 ```
 ````
 
-## Path parameters
+## pathパラメータ
 
 .. column::
 
 ```
-You can use path parameters exactly as discussed in [the routing section](/guide/basics/routing.md).
+[ルーティングセクション](/guide/basics/routing.md)で説明されているとおりにpathパラメータを使用できます。
 ```
 
 .. column::
@@ -133,27 +133,27 @@ You can use path parameters exactly as discussed in [the routing section](/guide
 class NameView(HTTPMethodView):
 
   def get(self, request, name):
-    return text("Hello {}".format(name))
+    return text("こんにちは、{}さん".format(name))
 
 app.add_route(NameView.as_view(), "/<name>")
 ```
 ````
 
-## Decorators
+## デコレータ
 
-As discussed in [the decorators section](/guide/best-practices/decorators.md), often you will need to add functionality to endpoints with the use of decorators. You have two options with CBV:
+[デコレータのページ](/guide/best-practices/decorators.md)で説明したように、デコレータを使用してエンドポイントに機能を追加する必要があるかもしれません。 CBVによる二つの選択肢があります:
 
-1. Apply to _all_ HTTP methods in the view
-2. Apply individually to HTTP methods in the view
+1. ビュー内の _全ての_ HTTPメソッドに適用する
+2. ビュー内のHTTPメソッドに個別に適用する
 
-Let's see what the options look like:
+これらがどのように動作するか見てみましょう:
 
 .. column::
 
 ```
-### Apply to all methods
+### すべてのメソッドに適用する
 
-If you want to add any decorators to the class, you can set the `decorators` class variable. These will be applied to the class when `as_view` is called.
+クラスにデコレータを追加する場合は、`decorators`クラス変数を設定できます。 これらは、`as_view`が呼び出された時にクラスに適用されます。
 ```
 
 .. column::
@@ -164,10 +164,10 @@ class ViewWithDecorator(HTTPMethodView):
   decorators = [some_decorator_here]
 
   def get(self, request, name):
-    return text("Hello I have a decorator")
+    return text("やあ、僕はデコレータを持ってるよ")
 
   def post(self, request, name):
-    return text("Hello I also have a decorator")
+    return text("やあ、僕もデコレータを持ってるよ")
 
 app.add_route(ViewWithDecorator.as_view(), "/url")
 ```
@@ -176,9 +176,9 @@ app.add_route(ViewWithDecorator.as_view(), "/url")
 .. column::
 
 ```
-### Apply to individual methods
+### 個々のメソッドに適用する
 
-But if you just want to decorate some methods and not all methods, you can as shown here.
+しかし、すべてのメソッドではなく、いくつかのメソッドにデコレータをつけたい場合は、ここに示すように記述できます。
 ```
 
 .. column::
@@ -190,23 +190,23 @@ class ViewWithSomeDecorator(HTTPMethodView):
     @staticmethod
     @some_decorator_here
     def get(request, name):
-        return text("Hello I have a decorator")
+        return text("やあ、僕はデコレータを持ってるよ")
 
     def post(self, request, name):
-        return text("Hello I do not have any decorators")
+        return text("やあ、僕はデコレータを持っていないよ")
 
     @some_decorator_here
     def patch(self, request, name):
-        return text("Hello I have a decorator")
+        return text("やあ、僕もデコレータを持っているよ")
 ```
 ````
 
-## Generating a URL
+## URLの生成
 
 .. column::
 
 ```
-This works just like [generating any other URL](/guide/basics/routing.md#generating-a-url), except that the class name is a part of the endpoint.
+これは、クラス名がエンドポイントの一部であることを除いて、[他のURLの生成](/guide/basics/routing.md#generating-a-url)と同じように機能します。
 ```
 
 .. column::

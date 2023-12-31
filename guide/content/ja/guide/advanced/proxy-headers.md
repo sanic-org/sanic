@@ -371,9 +371,9 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 8
+##### 例8
 
-Secret insulated by malformed field #1
+不正なフィールドによってシークレットが隔離される例 #1
 
 ```sh
 curl localhost:8000/fwd \
@@ -395,7 +395,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "test",
   "scheme": "http",

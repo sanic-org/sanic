@@ -520,7 +520,7 @@ def test_stack_trace_on_not_found(app, static_file_directory, caplog):
     assert counter[("sanic.root", logging.INFO)] == 10
     assert counter[("sanic.root", logging.ERROR)] == 0
     assert counter[("sanic.error", logging.ERROR)] == 0
-    assert counter[("sanic.server", logging.INFO)] == 2
+    assert counter[("sanic.server", logging.INFO)] == 3
 
 
 def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
@@ -539,7 +539,7 @@ def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
     assert counter[("sanic.root", logging.INFO)] == 10
     assert counter[("sanic.root", logging.ERROR)] == 0
     assert counter[("sanic.error", logging.ERROR)] == 0
-    assert counter[("sanic.server", logging.INFO)] == 2
+    assert counter[("sanic.server", logging.INFO)] == 3
     assert response.text == "No file: /static/non_existing_file.file"
 
 
@@ -581,7 +581,10 @@ async def test_resource_type_default_error(app, static_file_directory):
     app.static("/static", static_file_directory)
     app.static("/file", get_file_path(static_file_directory, "test.file"))
 
-    message = r"Duplicate route names detected: test_resource_type_default_error\.static"
+    message = (
+        r"Duplicate route names "
+        r"detected: test_resource_type_default_error\.static"
+    )
     with pytest.raises(ServerError, match=message):
         await app._startup()
 

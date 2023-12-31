@@ -1,6 +1,8 @@
 import re
+
 from textwrap import dedent
 
+from html5tagger import HTML, Builder, E  # type: ignore
 from mistune import HTMLRenderer, create_markdown, escape
 from mistune.directives import RSTDirective, TableOfContents
 from mistune.util import safe_entity
@@ -8,16 +10,14 @@ from pygments import highlight
 from pygments.formatters import html
 from pygments.lexers import get_lexer_by_name
 
-from html5tagger import HTML, Builder, E  # type: ignore
-
 from .code_style import SanicCodeStyle
 from .plugins.attrs import Attributes
 from .plugins.columns import Column
 from .plugins.hook import Hook
+from .plugins.inline_directive import inline_directive
 from .plugins.mermaid import Mermaid
 from .plugins.notification import Notification
 from .plugins.span import span
-from .plugins.inline_directive import inline_directive
 from .plugins.tabs import Tabs
 from .text import slugify
 

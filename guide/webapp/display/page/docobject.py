@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import inspect
 import pkgutil
+
 from collections import defaultdict
 from dataclasses import dataclass, field
 from html import escape
@@ -10,7 +11,6 @@ from html import escape
 from docstring_parser import Docstring, DocstringParam, DocstringRaises
 from docstring_parser import parse as parse_docstring
 from docstring_parser.common import DocstringExample
-
 from html5tagger import HTML, Builder, E  # type: ignore
 
 from ..markdown import render_markdown, slugify
@@ -116,8 +116,11 @@ def organize_docobjects(package_name: str) -> dict[str, str]:
         page_registry[ref].append(module)
         page_content[f"/api/{ref}.md"] += str(builder)
     for ref, objects in page_registry.items():
-        page_content[f"/api/{ref}.md"] = _table_of_contents(objects) + page_content[f"/api/{ref}.md"]
+        page_content[f"/api/{ref}.md"] = (
+            _table_of_contents(objects) + page_content[f"/api/{ref}.md"]
+        )
     return page_content
+
 
 def _table_of_contents(objects: list[str]) -> str:
     builder = Builder(name="Partial")
@@ -126,7 +129,8 @@ def _table_of_contents(objects: list[str]) -> str:
         for obj in objects:
             module, name = obj.rsplit(".", 1)
             builder.a(
-                E.strong(name), E.small(module),
+                E.strong(name),
+                E.small(module),
                 href=f"#{slugify(obj.replace('.', '-'))}",
                 class_="table-of-contents-item",
             )

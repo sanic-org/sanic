@@ -32,7 +32,7 @@ from sanic_routing.route import Route
 from sanic.base.root import BaseSanic
 from sanic.exceptions import SanicException
 from sanic.helpers import Default, _default
-from sanic.models.futures import FutureRoute, FutureStatic
+from sanic.models.futures import FutureRoute, FutureSignal, FutureStatic
 from sanic.models.handler_types import (
     ListenerType,
     MiddlewareType,
@@ -479,7 +479,15 @@ class Blueprint(BaseSanic):
                 continue
             future.condition.update({"__blueprint__": self.name})
             # Force exclusive to be False
-            app._apply_signal(tuple((*future[:-1], False)))
+            app._apply_signal(
+                FutureSignal(
+                    future.handler,
+                    future.event,
+                    future.condition,
+                    False,
+                    future.priority,
+                )
+            )
 
         self.routes += [route for route in routes if isinstance(route, Route)]
         self.websocket_routes += [
@@ -512,33 +520,56 @@ class Blueprint(BaseSanic):
         condition = kwargs.pop("condition", {})
         condition.update({"__blueprint__": self.name})
         kwargs["condition"] = condition
-        await asyncio.gather(
+        return await asyncio.gather(
             *[app.dispatch(*args, **kwargs) for app in self.apps]
         )
 
-    def event(self, event: str, timeout: Optional[Union[int, float]] = None):
+    def event(
+        self,
+        event: str,
+        timeout: Optional[Union[int, float]] = None,
+        *,
+        condition: Optional[Dict[str, Any]] = None,
+    ):
         """Wait for a signal event to be dispatched.
 
         Args:
             event (str): Name of the signal event.
             timeout (Optional[Union[int, float]]): Timeout for the event to be
                 dispatched.
+            condition: If provided, method will only return when the signal
+                is dispatched with the given condition.
 
         Returns:
             Awaitable: Awaitable for the event to be dispatched.
         """
-        events = set()
-        for app in self.apps:
-            signal = app.signal_router.name_index.get(event)
-            if not signal:
-                raise NotFound("Could not find signal %s" % event)
-            events.add(signal.ctx.event)
+        if condition is None:
+            condition = {}
+        condition.update({"__blueprint__": self.name})
 
-        return asyncio.wait(
-            [asyncio.create_task(event.wait()) for event in events],
+        waiters = []
+        for app in self.apps:
+            waiter = app.signal_router.get_waiter(
+                event, condition, exclusive=False
+            )
+            if not waiter:
+                raise NotFound("Could not find signal %s" % event)
+            waiters.append(waiter)
+
+        return self._event(waiters, timeout)
+
+    async def _event(self, waiters, timeout):
+        done, pending = await asyncio.wait(
+            [asyncio.create_task(waiter.wait()) for waiter in waiters],
             return_when=asyncio.FIRST_COMPLETED,
             timeout=timeout,
         )
+        for task in pending:
+            task.cancel()
+        if not done:
+            raise TimeoutError()
+        (finished_task,) = done
+        return finished_task.result()
 
     @staticmethod
     def _extract_value(*values):

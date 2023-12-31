@@ -17,6 +17,7 @@ from asyncio import (
 from asyncio.futures import Future
 from collections import defaultdict, deque
 from contextlib import contextmanager, suppress
+from enum import Enum
 from functools import partial, wraps
 from inspect import isawaitable
 from os import environ
@@ -432,7 +433,11 @@ class Sanic(
     # -------------------------------------------------------------------- #
 
     def register_listener(
-        self, listener: ListenerType[SanicVar], event: str
+        self,
+        listener: ListenerType[SanicVar],
+        event: str,
+        *,
+        priority: int = 0,
     ) -> ListenerType[SanicVar]:
         """Register the listener for a given event.
 
@@ -453,10 +458,14 @@ class Sanic(
             raise BadRequest(f"Invalid event: {event}. Use one of: {valid}")
 
         if "." in _event:
-            self.signal(_event.value)(
+            self.signal(_event.value, priority=priority)(
                 partial(self._listener, listener=listener)
             )
         else:
+            if priority:
+                error_logger.warning(
+                    f"Priority is not supported for {_event.value}"
+                )
             self.listeners[_event.value].append(listener)
 
         return listener
@@ -580,7 +589,9 @@ class Sanic(
         return handler.handler
 
     def _apply_listener(self, listener: FutureListener):
-        return self.register_listener(listener.listener, listener.event)
+        return self.register_listener(
+            listener.listener, listener.event, priority=listener.priority
+        )
 
     def _apply_route(
         self, route: FutureRoute, overwrite: bool = False
@@ -632,7 +643,13 @@ class Sanic(
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
         with self.amend():
-            return self.signal_router.add(*signal)
+            return self.signal_router.add(
+                handler=signal.handler,
+                event=signal.event,
+                condition=signal.condition,
+                exclusive=signal.exclusive,
+                priority=signal.priority,
+            )
 
     @overload
     def dispatch(
@@ -714,7 +731,12 @@ class Sanic(
         )
 
     async def event(
-        self, event: str, timeout: Optional[Union[int, float]] = None
+        self,
+        event: Union[str, Enum],
+        timeout: Optional[Union[int, float]] = None,
+        *,
+        condition: Optional[Dict[str, Any]] = None,
+        exclusive: bool = True,
     ) -> None:
         """Wait for a specific event to be triggered.
 
@@ -737,13 +759,18 @@ class Sanic(
             timeout (Optional[Union[int, float]]): An optional timeout value
                 in seconds. If provided, the wait will be terminated if the
                 timeout is reached. Defaults to `None`, meaning no timeout.
+            condition: If provided, method will only return when the signal
+                is dispatched with the given condition.
+            exclusive: When true (default), the signal can only be dispatched
+                when the condition has been met. When ``False``, the signal can
+                be dispatched either with or without it.
 
         Raises:
             NotFound: If the event is not found and auto-registration of
                 events is not enabled.
 
         Returns:
-            None
+            The context dict of the dispatched signal.
 
         Examples:
             ```python
@@ -759,16 +786,18 @@ class Sanic(
             ```
         """
 
-        signal = self.signal_router.name_index.get(event)
-        if not signal:
-            if self.config.EVENT_AUTOREGISTER:
-                self.signal_router.reset()
-                self.add_signal(None, event)
-                signal = self.signal_router.name_index[event]
-                self.signal_router.finalize()
-            else:
-                raise NotFound("Could not find signal %s" % event)
-        return await wait_for(signal.ctx.event.wait(), timeout=timeout)
+        waiter = self.signal_router.get_waiter(event, condition, exclusive)
+
+        if not waiter and self.config.EVENT_AUTOREGISTER:
+            self.signal_router.reset()
+            self.add_signal(None, event)
+            waiter = self.signal_router.get_waiter(event, condition, exclusive)
+            self.signal_router.finalize()
+
+        if not waiter:
+            raise NotFound(f"Could not find signal {event}")
+
+        return await wait_for(waiter.wait(), timeout=timeout)
 
     def report_exception(
         self, handler: Callable[[Sanic, Exception], Coroutine[Any, Any, None]]
@@ -1053,6 +1082,9 @@ class Sanic(
                     scheme = netloc[:8].split(":", 1)[0]
                 else:
                     scheme = "http"
+                # Replace http/https with ws/wss for WebSocket handlers
+                if route.extra.websocket:
+                    scheme = scheme.replace("http", "ws")
 
             if "://" in netloc[:8]:
                 netloc = netloc.split("://", 1)[-1]
@@ -2383,6 +2415,20 @@ class Sanic(
         if hasattr(self, "multiplexer"):
             self.multiplexer.ack()
 
+    def set_serving(self, serving: bool) -> None:
+        """Set the serving state of the application.
+
+        This method is used to set the serving state of the application.
+        It is used internally by Sanic and should not typically be called
+        manually.
+
+        Args:
+            serving (bool): Whether the application is serving.
+        """
+        self.state.is_running = serving
+        if hasattr(self, "multiplexer"):
+            self.multiplexer.set_serving(serving)
+
     async def _server_event(
         self,
         concern: str,
@@ -2464,7 +2510,10 @@ class Sanic(
         """
         if environ.get("SANIC_WORKER_PROCESS") or not self._inspector:
             raise SanicException(
-                "Can only access the inspector from the main process"
+                "Can only access the inspector from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._inspector
 
@@ -2499,6 +2548,9 @@ class Sanic(
 
         if environ.get("SANIC_WORKER_PROCESS") or not self._manager:
             raise SanicException(
-                "Can only access the manager from the main process"
+                "Can only access the manager from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._manager

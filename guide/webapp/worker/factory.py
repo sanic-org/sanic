@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from sanic import Request, Sanic, html, redirect
 from webapp.display.layouts.models import MenuItem
 from webapp.display.page import Page, PageRenderer
 from webapp.endpoint.view import bp
@@ -7,7 +8,6 @@ from webapp.worker.config import load_config, load_menu
 from webapp.worker.reload import setup_livereload
 from webapp.worker.style import setup_style
 
-from sanic import Request, Sanic, html, redirect
 
 KNOWN_REDIRECTS = {
     "guide/deployment/configuration.html": "guide/running/configuration.html",
@@ -16,6 +16,9 @@ KNOWN_REDIRECTS = {
     "guide/deployment/manager.html": "guide/running/manager.html",
     "guide/deployment/app-loader.html": "guide/running/app-loader.html",
     "guide/deployment/inspector.html": "guide/running/inspector.html",
+    "org/policies.html": "organization/policies.html",
+    "org/scope.html": "organization/scope.html",
+    "org/feature_requests.html": "",
 }
 
 
@@ -51,7 +54,7 @@ def create_app(root: Path) -> Sanic:
 
     app.static("/assets/", app.config.PUBLIC_DIR / "assets")
 
-    @app.before_server_start
+    @app.before_server_start(priority=1)
     async def setup(app: Sanic):
         app.ext.dependency(PageRenderer(base_title="Sanic User Guide"))
         page_order = _compile_sidebar_order(app.config.SIDEBAR)

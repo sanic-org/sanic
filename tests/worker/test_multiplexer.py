@@ -13,6 +13,10 @@ from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.state import WorkerState
 
 
+def noop(*args, **kwargs):
+    pass
+
+
 @pytest.fixture
 def monitor_publisher():
     return Mock()
@@ -101,6 +105,13 @@ def test_terminate(monitor_publisher: Mock, m: WorkerMultiplexer):
 def test_scale(monitor_publisher: Mock, m: WorkerMultiplexer):
     m.scale(99)
     monitor_publisher.send.assert_called_once_with("__SCALE__:99")
+
+
+def test_manage(monitor_publisher: Mock, m: WorkerMultiplexer):
+    m.manage("NEW", noop, auto_start=False, kwargs={"foo": 99})
+    monitor_publisher.send.assert_called_once_with(
+        ("NEW", noop, {"foo": 99}, False, None, False, False, 1)
+    )
 
 
 def test_properties(

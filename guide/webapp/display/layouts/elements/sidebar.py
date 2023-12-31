@@ -1,8 +1,8 @@
+from html5tagger import Builder, E  # type: ignore
+
+from sanic import Request
 from webapp.display.layouts.models import MenuItem
 from webapp.display.text import slugify
-
-from html5tagger import Builder, E  # type: ignore
-from sanic import Request
 
 
 def do_sidebar(builder: Builder, request: Request) -> None:
@@ -26,11 +26,11 @@ def _menu_items(request: Request) -> list[Builder]:
             "built this site w/ Sanic",
             href="/{request.ctx.language}/built-with-sanic.html",
         ),
-        E.li.a(
+        E.li("The ").a(
             "Awesome Sanic",
             href="https://github.com/mekicha/awesome-sanic",
             target="_blank",
-        ),
+        )(" list"),
         E.hr(),
         E.p("Want more? ")
         .a("sanicbook.com", href="https://sanicbook.com", target="_blank")
@@ -41,7 +41,7 @@ def _menu_items(request: Request) -> list[Builder]:
 
 def _sanic_logo(request: Request) -> Builder:
     return E.a(
-        class_="navbar-item sanic-simple-logo",
+        class_="navbar-item sanic-simple-logo my-3",
         href=f"https://sanic.dev/{request.ctx.language}/",
     )(
         E.img(

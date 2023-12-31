@@ -1,14 +1,12 @@
 import sys
 
-from unittest.mock import MagicMock
-
 import pytest
 
 from sanic import Sanic
 
 
 try:
-    import sanic_ext
+    import sanic_ext  # noqa: F401
 
     SANIC_EXT_IN_ENV = True
 except ImportError:
@@ -24,37 +22,37 @@ def stoppable_app(app):
     return app
 
 
-def test_ext_is_loaded(stoppable_app: Sanic, sanic_ext):
+def test_ext_is_loaded(stoppable_app: Sanic, mock_sanic_ext):
     stoppable_app.run(single_process=True)
-    sanic_ext.Extend.assert_called_once_with(stoppable_app)
+    mock_sanic_ext.Extend.assert_called_once_with(stoppable_app)
 
 
-def test_ext_is_not_loaded(stoppable_app: Sanic, sanic_ext):
+def test_ext_is_not_loaded(stoppable_app: Sanic, mock_sanic_ext):
     stoppable_app.config.AUTO_EXTEND = False
     stoppable_app.run(single_process=True)
-    sanic_ext.Extend.assert_not_called()
+    mock_sanic_ext.Extend.assert_not_called()
 
 
-def test_extend_with_args(stoppable_app: Sanic, sanic_ext):
+def test_extend_with_args(stoppable_app: Sanic, mock_sanic_ext):
     stoppable_app.extend(built_in_extensions=False)
     stoppable_app.run(single_process=True)
-    sanic_ext.Extend.assert_called_once_with(
+    mock_sanic_ext.Extend.assert_called_once_with(
         stoppable_app, built_in_extensions=False, config=None, extensions=None
     )
 
 
-def test_access_object_sets_up_extension(app: Sanic, sanic_ext):
+def test_access_object_sets_up_extension(app: Sanic, mock_sanic_ext):
     app.ext
-    sanic_ext.Extend.assert_called_once_with(app)
+    mock_sanic_ext.Extend.assert_called_once_with(app)
 
 
-def test_extend_cannot_be_called_multiple_times(app: Sanic, sanic_ext):
+def test_extend_cannot_be_called_multiple_times(app: Sanic, mock_sanic_ext):
     app.extend()
 
     message = "Cannot extend Sanic after Sanic Extensions has been setup."
     with pytest.raises(RuntimeError, match=message):
         app.extend()
-    sanic_ext.Extend.assert_called_once_with(
+    mock_sanic_ext.Extend.assert_called_once_with(
         app, extensions=None, built_in_extensions=True, config=None
     )
 
@@ -71,7 +69,9 @@ def test_fail_if_not_loaded(app: Sanic):
         app.extend(built_in_extensions=False)
 
 
-def test_can_access_app_ext_while_running(app: Sanic, sanic_ext, ext_instance):
+def test_can_access_app_ext_while_running(
+    app: Sanic, mock_sanic_ext, ext_instance
+):
     class IceCream:
         flavor: str
 

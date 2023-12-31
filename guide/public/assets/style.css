@@ -12805,6 +12805,10 @@ p + p {
   .section {
     padding: 3rem 0rem; } }
 
+@media screen and (min-width: 1216px) {
+  .section {
+    padding: 3rem 0rem; } }
+
 .footer {
   margin-bottom: 4rem; }
   .footer a[target=_blank]::after {
@@ -13099,6 +13103,10 @@ h3 + .code-block {
   50% {
     transform: scaleX(0.25);
     opacity: 0.5; } }
+
+.changelog .ol .li, .changelog .ol .list-item, .changelog .ul .li, .changelog .ul .list-item, .changelog .list .li, .changelog .list .list-item {
+  padding: 0; }
+
 
 @media screen and (min-width: 769px) {
   .hero.is-large .hero-body {

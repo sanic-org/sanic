@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from html5tagger import Builder, Document  # type: ignore
+from html5tagger import Builder, Document, E  # type: ignore
 
 
 class BaseRenderer:
@@ -19,6 +19,7 @@ class BaseRenderer:
             builder = Document(
                 self.title(), lang=language, _urls=urls, _viewport=True
             )
+            builder(*self._head())
             builder.full = True
         else:
             builder = Builder(name="Partial")
@@ -27,3 +28,44 @@ class BaseRenderer:
 
     def title(self) -> str:
         return self.base_title
+
+    def _head(self) -> list[Builder]:
+        return [
+            E.meta(name="theme-color", content="#ff0d68"),
+            E.meta(name="title", content=self.title()),
+            E.meta(
+                name="description",
+                content=(
+                    "Sanic is a Python 3.8+ web server and "
+                    "web framework that's written to go fast."
+                ),
+            ),
+            E.link(rel="icon", href="/favicon.ico", sizes="any"),
+            E.link(rel="icon", href="/favicon-32x32.png", type="image/png"),
+            E.link(rel="icon", href="/favicon-16x16.png", type="image/png"),
+            E.link(
+                rel="apple-touch-icon",
+                sizes="180x180",
+                href="/apple-touch-icon.png",
+            ),
+            E.link(rel="manifest", href="/site.webmanifest"),
+            E.link(
+                rel="android-chrome",
+                sizes="192x192",
+                href="/android-chrome-192x192.png",
+            ),
+            E.link(
+                rel="android-chrome",
+                sizes="512x512",
+                href="/android-chrome-512x512.png",
+            ),
+            E.meta(name="msapplication-config", content="/browserconfig.xml"),
+            E.meta(name="msapplication-TileColor", content="#ffffff"),
+            E.meta(
+                name="msapplication-TileImage", content="/mstile-144x144.png"
+            ),
+            E.meta(name="theme-color", content="#ff0d68"),
+            E.link(
+                rel="mask-icon", href="/safari-pinned-tab.svg", color="#ff0d68"
+            ),
+        ]

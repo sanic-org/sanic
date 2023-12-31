@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Sitemap: https://sanic.dev/sitemap.xml
+Host: https://sanic.dev

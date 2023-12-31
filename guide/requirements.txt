@@ -1,5 +1,5 @@
-sanic>=23.6.*
-sanic-ext>=23.6.*
+sanic>=23.12.*
+sanic-ext>=23.12.*
 msgspec
 python-frontmatter
 pygments

@@ -30,6 +30,7 @@ class PageMeta:
     description: str = ""
     layout: str = "main"
     features: list[dict[str, str]] = field(default_factory=list)
+    content_class: str = ""
 
 
 @dataclass

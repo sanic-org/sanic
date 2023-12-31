@@ -12638,6 +12638,16 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
     top: 18px;
     width: 0%;
     left: 50%; }
+  .burger::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -1rem;
+    left: -0.5rem;
+    width: 3rem;
+    height: 3rem;
+    background: var(--menu-background);
+    z-index: -1; }
 
 .menu {
   background-color: var(--menu-background);
@@ -13074,6 +13084,29 @@ h3 + .code-block {
         .table-of-contents .table-of-contents-item strong {
           display: inline;
           margin: 0 0 0 0.75rem; } }
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: transparent;
+  z-index: 9999; }
+  .loading-bar.is-loading {
+    background-color: #ff0d68;
+    animation: pulsingLoading 1s linear infinite; }
+
+@keyframes pulsingLoading {
+  0%, 100% {
+    transform: scaleX(1);
+    opacity: 1; }
+  50% {
+    transform: scaleX(0.25);
+    opacity: 0.5; } }
+
+.changelog .ol .li, .changelog .ol .list-item, .changelog .ul .li, .changelog .ul .list-item, .changelog .list .li, .changelog .list .list-item {
+  padding: 0; }
+
 @media screen and (min-width: 769px) {
   .hero.is-large .hero-body {
     padding: 18rem 6rem 3rem; } }

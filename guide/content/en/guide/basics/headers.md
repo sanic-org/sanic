@@ -26,14 +26,14 @@ Sanic does attempt to do some normalization on request headers before presenting
         return text(request.token)
     ```
 
-    ```bash
-    $ curl localhost:8000 \
+    ```sh
+    curl localhost:8000 \
         -H "Authorization: Token ABCDEF12345679"
     ABCDEF12345679
     ```
 
-    ```bash
-    $ curl localhost:8000 \
+    ```sh
+    curl localhost:8000 \
         -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
     eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
     ```
@@ -73,8 +73,8 @@ Sanic has special handling for proxy headers. See the [proxy headers](/guide/adv
         )
     ```
 
-    ```bash
-    $ curl localhost:8000/hosts
+    ```sh
+    curl localhost:8000/hosts
     {
       "effective host": "example.com",
       "host header": "localhost:8000",
@@ -106,8 +106,8 @@ Sanic has special handling for proxy headers. See the [proxy headers](/guide/adv
         )
     ```
 
-    ```bash
-    $ curl localhost:9999/headers -H "Foo: one" -H "FOO: two"|jq
+    ```sh
+    curl localhost:9999/headers -H "Foo: one" -H "FOO: two"|jq
     {
       "foo_weakref": "one",
       "foo_get": "one",
@@ -164,8 +164,8 @@ Sanic has special handling for proxy headers. See the [proxy headers](/guide/adv
         return text(request.id)
     ```
 
-    ```bash
-    $ curl localhost:8000 \
+    ```sh
+    curl localhost:8000 \
         -H "X-Request-ID: ABCDEF12345679"
     ABCDEF12345679
     ```
@@ -216,8 +216,8 @@ In most circumstances, you should never need to worry about setting these header
         response.headers["X-Request-ID"] = request.id
     ```
 
-    ```bash
-    $ curl localhost:8000 -i
+    ```sh
+    curl localhost:8000 -i
     HTTP/1.1 200 OK
     X-Request-ID: 805a958e-9906-4e7a-8fe0-cbe83590431b
     content-length: 36

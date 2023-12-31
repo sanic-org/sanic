@@ -16,6 +16,9 @@ KNOWN_REDIRECTS = {
     "guide/deployment/manager.html": "guide/running/manager.html",
     "guide/deployment/app-loader.html": "guide/running/app-loader.html",
     "guide/deployment/inspector.html": "guide/running/inspector.html",
+    "org/policies.html": "organization/policies.html",
+    "org/scope.html": "organization/scope.html",
+    "org/feature_requests.html": "",
 }
 
 

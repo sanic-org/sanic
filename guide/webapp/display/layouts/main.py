@@ -15,22 +15,33 @@ class MainLayout(BaseLayout):
         self, request: Request, full: bool = True
     ) -> Generator[None, None, None]:
         if full:
+            self.builder.div(class_="loading-bar")
             with self.builder.div(class_="is-flex"):
                 self._sidebar(request)
                 with self.builder.main(class_="is-flex-grow-1"):
                     self._navbar(request)
                     with self.builder.div(class_="container", id="content"):
-                        with self._content_wrapper():
+                        with self._content_wrapper(request):
                             yield
                         self._footer(request)
         else:
-            with self._content_wrapper():
+            with self._content_wrapper(request):
                 yield
             self._footer(request)
 
     @contextmanager
-    def _content_wrapper(self) -> Generator[None, None, None]:
-        with self.builder.section(class_="section"):
+    def _content_wrapper(
+        self, request: Request
+    ) -> Generator[None, None, None]:
+        current_page = (
+            request.ctx.current_page
+            if hasattr(request.ctx, "current_page")
+            else None
+        )
+        section_class = "section"
+        if current_page and current_page.meta.content_class:
+            section_class += f" {current_page.meta.content_class}"
+        with self.builder.section(class_=section_class):
             with self.builder.article():
                 yield
 

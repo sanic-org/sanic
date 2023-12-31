@@ -5,7 +5,6 @@ python:
         path: .
         extra_requirements:
             - docs
-   system_packages: true
 
 build:
   os: "ubuntu-22.04"

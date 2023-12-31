@@ -3,6 +3,7 @@ from pathlib import Path
 from sanic import Request, Sanic, html, redirect
 from webapp.display.layouts.models import MenuItem
 from webapp.display.page import Page, PageRenderer
+from webapp.endpoint.sitemap import setup_sitemap
 from webapp.endpoint.view import bp
 from webapp.worker.config import load_config, load_menu
 from webapp.worker.reload import setup_livereload
@@ -50,9 +51,13 @@ def create_app(root: Path) -> Sanic:
 
     setup_livereload(app)
     setup_style(app)
+    setup_sitemap(app)
     app.blueprint(bp)
 
-    app.static("/assets/", app.config.PUBLIC_DIR / "assets")
+    app.static("/assets/", app.config.PUBLIC_DIR / "assets", name="assets")
+
+    for path in (app.config.PUBLIC_DIR / "web").glob("*"):
+        app.static(f"/{path.name}", path, name=path.name)
 
     @app.before_server_start(priority=1)
     async def setup(app: Sanic):

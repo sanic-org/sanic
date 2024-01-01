@@ -1,61 +1,61 @@
 ---
-title: TLS/SSL/HTTPS
+title: TLS/SL/HTTPS
 ---
 
-# TLS/SSL/HTTPS
+# TLS/SL/HTTPS
 
-> How do I run Sanic via HTTPS?
+> 如何通过 HTTPS 运行 Sanic ？
 
-If you do not have TLS certificates yet, [see the end of this page](./tls.md#get-certificates-for-your-domain-names).
+如果您还没有TLS证书，[请查看此页面结尾处](./tls.md#get-certificates-for your domain-names)。
 
-## Single domain and single certificate
+## 单域和单个证书
 
-.. column::
+.. 列:
 
 ```
-Let Sanic automatically load your certificate files, which need to be named `fullchain.pem` and `privkey.pem` in the given folder:
+允许 Sanic 自动加载您的证书文件，这些文件需要在给定的文件夹中名为 `fullchain.pem` 和 `privkey.pem` ：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
-sudo sanic myserver:app -H :: -p 443 \
-  --tls /etc/letsencrypt/live/example.com/
+sudanic myserver:app -H :: -p 443 \
+  --tls /etc/letsenccrypt/live/example.com/
 ```
 ```python
-app.run("::", 443, ssl="/etc/letsencrypt/live/example.com/")
+app.run(":", 443, ssl="/etc/letsenccrypt/live/example.com/")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Or, you can pass cert and key filenames separately as a dictionary:
+或者，您可以作为字典单独传递证书和密钥文件名：此外还有
 
-Additionally, `password` may be added if the key is encrypted, all fields except for the password are passed to `request.conn_info.cert`.
+如果密钥被加密，可以添加`密码`，除密码外，所有字段都会传递到`请求'。 onn_info.cert`.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-ssl = {
+ssl = Power
     "cert": "/path/to/fullchain.pem",
-    "key": "/path/to/privkey.pem",
-    "password": "for encrypted privkey file",   # Optional
+    "key": "/path/to/privkey". em",
+    "密码": "用于加密私钥文件", # Optional
 }
 app.run(host="0.0.0.0", port=8443, ssl=ssl)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Alternatively, [`ssl.SSLContext`](https://docs.python.org/3/library/ssl.html) may be passed, if you need full control over details such as which crypto algorithms are permitted. By default Sanic only allows secure algorithms, which may restrict access from very old devices.
+或者，[`ssl.SSLContext`](https://docs.python.org/3/library/sl.html)可以传递，如果你需要完全控制诸如允许加密算法等细节。 默认情况下，Sanic只允许使用安全算法，这可能限制使用非常旧的设备。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -68,26 +68,26 @@ app.run(host="0.0.0.0", port=8443, ssl=context)
 ```
 ````
 
-## Multiple domains with separate certificates
+## 具有单独证书的多个域
 
-.. column::
+.. 列:
 
 ```
-A list of multiple certificates may be provided, in which case Sanic chooses the one matching the hostname the user is connecting to. This occurs so early in the TLS handshake that Sanic has not sent any packets to the client yet.
+可以提供多个证书列表，在这种情况下，Sanic选择与用户连接的主机名匹配的一个。 这发生在TLS 握手中，以致Sanic尚未向客户端发送任何数据包。
 
-If the client sends no SNI (Server Name Indication), the first certificate on the list will be used even though on the client browser it will likely fail with a TLS error due to name mismatch. To prevent this fallback and to cause immediate disconnection of clients without a known hostname, add `None` as the first entry on the list. `--tls-strict-host` is the equivalent CLI option.
+如果客户端没有发送SNI (服务商名称指示), 列表上的第一个证书将被使用，即使在客户端浏览器上它可能会由于名称不匹配而导致TLS错误。 为了防止这种后退并导致客户端在没有已知主机名的情况下立即断开连接，请在列表中添加"无"作为第一项。 `--tls-strict-host` 是对应的 CLI 选项。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 ssl = ["certs/example.com/", "certs/bigcorp.test/"]
-app.run(host="0.0.0.0", port=8443, ssl=ssl)
+app.run(host="0.0.0 ", port=8443, ssl=ssl)
 ```
 ```sh
 sanic myserver:app
-    --tls certs/example.com/
+    --tls certs/示例。 om/
     --tls certs/bigcorp.test/
     --tls-strict-host
 ```
@@ -96,44 +96,44 @@ sanic myserver:app
 .. tip::
 
 ```
-You may also use `None` in front of a single certificate if you do not wish to reveal your certificate, true hostname or site content to anyone connecting to the IP address instead of the proper DNS name.
+如果您不想透露您的证书，您也可以在单一证书前使用 `None` 。 真实主机名或站点内容到连接到IP地址而不是正确的DNS名称。
 ```
 
-.. column::
+.. 列:
 
 ```
-Dictionaries can be used on the list. This allows also specifying which domains a certificate matches to, although the names present on the certificate itself cannot be controlled from here. If names are not specified, the names from the certificate itself are used.
+字典可以在列表中使用。 这也允许指定证书匹配哪个域，尽管证书本身上的名称不能从这里控制。 如果未指明姓名，则使用证书本身的名称。
 
-To only allow connections to the main domain **example.com** and only to subdomains of **bigcorp.test**:
+只允许连接到主域**example.com** 并且只允许连接到**bigcorp.test**的子域：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 ssl = [
-    None,  # No fallback if names do not match!
-    {
-        "cert": "certs/example.com/fullchain.pem",
-        "key": "certs/example.com/privkey.pem",
-        "names": ["example.com", "*.bigcorp.test"],
+    None, # 如果名称不匹配，则无回退！
+    Power
+        "cert": "certs/example"。 om/fullchain.pem,
+        "key": "certs/example"。 om/privkey.pem,
+        "names": ["example.com", "*.bigcorp. est"],
     }
 ]
 app.run(host="0.0.0.0", port=8443, ssl=ssl)
 ```
 ````
 
-## Accessing TLS information in handlers via `request.conn_info` fields
+## 通过 `request.conn_info` 字段访问处理程序中的 TLS 信息
 
-- `.ssl` - is the connection secure (bool)
-- `.cert` - certificate info and dict fields of the currently active cert (dict)
-- `.server_name` - the SNI sent by the client (str, may be empty)
+- `.ssl` - 连接安全 (布尔)
+- `.cert` - 当前活动证书的 cert 信息和 dict 字段
+- `.server_name` - 客户端发送的SNI (str, 可能为空)
 
-Do note that all `conn_info` fields are per connection, where there may be many requests over time. If a proxy is used in front of your server, these requests on the same pipe may even come from different users.
+请注意，所有的`conn_info`字段都是在连接上，在连接中可能会有许多请求。 如果代理人在您的服务器面前使用，那么这些请求可能来自不同的用户。
 
-## Redirect HTTP to HTTPS, with certificate requests still over HTTP
+## 将 HTTP 重定向到 HTTPS，证书请求仍然在 HTTP 上
 
-In addition to your normal server(s) running HTTPS, run another server for redirection, `http_redir.py`:
+除了运行HTTPS的正常服务器之外，运行另一个服务器来重定向，`http_redir.py`：
 
 ```python
 from sanic import Sanic, exceptions, response
@@ -151,49 +151,49 @@ def redirect_everything_else(request, exception):
     return response.text("Bad Request. Please use HTTPS!", status=400)
 ```
 
-It is best to setup this as a systemd unit separate of your HTTPS servers. You may need to run HTTP while initially requesting your certificates, while you cannot run the HTTPS server yet. Start for IPv4 and IPv6:
+最好是将此设置为一个系统单元，从您的 HTTPS 服务器中分离出来。 您可能需要在最初请求您的证书时运行 HTTP，同时您还不能运行 HTTPS 服务器。 IPv4和IPv6开始：
 
 ```
 sanic http_redir:app -H 0.0.0.0 -p 80
 sanic http_redir:app -H :: -p 80
 ```
 
-Alternatively, it is possible to run the HTTP redirect application from the main application:
+或者，可以从主应用程序运行HTTP重定向应用程序：
 
 ```python
-# app == Your main application
-# redirect == Your http_redir application
-@app.before_server_start
+# 应用 == 您的主要应用程序
+# 重定向 == 您的 http_redir应用程序
+@app。 efor_server_start
 async def start(app, _):
-    app.ctx.redirect = await redirect.create_server(
+    app.ctx.redirect = 等待重定向. reate_server(
         port=80, return_asyncio_server=True
     )
-    app.add_task(runner(redirect, app.ctx.redirect))
+    app.add_task(runner(redirect, app.
 
 @app.before_server_stop
 async def stop(app, _):
-    await app.ctx.redirect.close()
+    等待应用。 tx.redirect.close()
 
 async def runner(app, app_server):
-    app.state.is_running = True
-    try:
-        app.signalize()
+    app.state。 s_runing = True
+    尝试：
+        app。 ignalize()
         app.finalize()
-        app.state.is_started = True
-        await app_server.serve_forever()
-    finally:
-        app.state.is_running = False
-        app.state.is_stopping = True
+        app tate.is_started = True
+        等待app_server。 erve_forumver()
+    最后：
+        app。 tate.is_runction = False
+        app.state.is_start = True
 ```
 
-## Get certificates for your domain names
+## 获取域名证书
 
-You can get free certificates from [Let's Encrypt](https://letsencrypt.org/). Install [certbot](https://certbot.eff.org/) via your package manager, and request a certificate:
+您可以从[我们的加密](https://letsencrypt.org/)获得免费证书。 通过您的软件包管理器安装 [certbot](https://certbot.eff.org/) 并请求证书：
 
 ```sh
-sudo certbot certonly --key-type ecdsa --preferred-chain "ISRG Root X1" -d example.com -d www.example.com
+sudo certbot certonly --key-type ecdsa --opeded-chain "ISRG Root X1" -d example.com -d www.example.com
 ```
 
-Multiple domain names may be added by further `-d` arguments, all stored into a single certificate which gets saved to `/etc/letsencrypt/live/example.com/` as per **the first domain** that you list here.
+多个域名可以通过进一步的 "-d" 参数添加，所有的域名都存储到单个证书中，并保存到 "/etc/letsencrypt/live/example。 按照你在这里列出的首个域\*\* 的 om/\`。
 
-The key type and preferred chain options are necessary for getting a minimal size certificate file, essential for making your server run as _fast_ as possible. The chain will still contain one RSA certificate until when Let's Encrypt gets their new EC chain trusted in all major browsers.
+关键类型和首选链选项是获取最小大小证书文件所必需的， 使您的服务器尽可能以 _快速_ 运行非常重要。 该链仍将包含一个RSA证书，直到让我们加密他们的新的EC 链在所有主要浏览器中得到信任。

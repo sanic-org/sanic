@@ -1,31 +1,31 @@
 # Versioning
 
-It is standard practice in API building to add versions to your endpoints. This allows you to easily differentiate incompatible endpoints when you try and change your API down the road in a breaking manner.
+エンドポイントにバージョンを追加するためのAPI構築の標準的な方法です。 これにより、互換性のないエンドポイントを簡単に区別することができます。
 
-Adding a version will add a `/v{version}` url prefix to your endpoints.
+バージョンを追加すると、`/v{version}`のURLプレフィックスがエンドポイントに追加されます。
 
-The version can be a `int`, `float`, or `str`. Acceptable values:
+バージョンは `int` 、`float` 、または `str` です。 許容可能な値:
 
 - `1`, `2`, `3`
 - `1.1`, `2.25`, `3.0`
-- `"1"`, `"v1"`, `"v1.1"`
+- `"1"`、`"v1"`、`"v1.1"`
 
-## Per route
+## ルートごと
 
-.. column::
+.. 列::
 
 ```
-You can pass a version number to the routes directly.
+バージョン番号をルートに直接渡すことができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 # /v1/text
 @app.route("/text", version=1)
 def handle_request(request):
-    return response.text("Hello world! Version 1")
+    return response. ext("Hello world! Version 1")
 
 # /v2/text
 @app.route("/text", version=2)
@@ -34,15 +34,15 @@ def handle_request(request):
 ```
 ````
 
-## Per Blueprint
+## 設計図ごと
 
-.. column::
+.. 列::
 
 ```
-You can also pass a version number to the blueprint, which will apply to all routes in that blueprint.
+また、バージョン番号を blueprint に渡すこともできます。blueprint 内のすべてのルートに適用されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -51,13 +51,13 @@ bp = Blueprint("test", url_prefix="/foo", version=1)
 # /v1/foo/html
 @bp.route("/html")
 def handle_request(request):
-    return response.html("<p>Hello world!</p>")
+    return response.html(" "<p>Hello world!</p>")
 ```
 ````
 
-## Per Blueprint Group
+## ブループリントグループごと
 
-.. column::
+.. 列::
 
 ```
 In order to simplify the management of the versioned blueprints, you can provide a version number in the blueprint
@@ -75,7 +75,7 @@ If we find a more pointed versioning specification, we will pick that over the m
 provided under the Blueprint or Blueprint Group
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -115,29 +115,29 @@ async def handle_endpoint_2_bp2(request):
 ```
 ````
 
-## Version prefix
+## バージョン接頭辞：
 
-As seen above, the `version` that is applied to a route is **always** the first segment in the generated URI path. Therefore, to make it possible to add path segments before the version, every place that a `version` argument is passed, you can also pass `version_prefix`.
+上記のように、ルートに適用される`version`は、生成されたURIパスの最初のセグメントである**常に**です。 したがって、バージョンの前にパスセグメントを追加するために、 `version` 引数が渡されるすべての場所を渡すことができます。`version_prefix` も渡すことができます。
 
-The `version_prefix` argument can be defined in:
+引数 `version_prefix` は以下のように定義できます：
 
-- `app.route` and `bp.route` decorators (and all the convenience decorators also)
-- `Blueprint` instantiation
-- `Blueprint.group` constructor
-- `BlueprintGroup` instantiation
-- `app.blueprint` registration
+- `app.route` と `bp.route` デコレーター （そしてすべてのコンビニエンスデコレーターも）
+- `Blueprint` インスタンス
+- `Blueprint.group` コンストラクター
+- `BlueprintGroup` インスタンス
+- `app.blueprint` 登録
 
-If there are definitions in multiple places, a more specific definition overrides a more general. This list provides that hierarchy.
+複数の場所に定義がある場合、より具体的な定義はより一般的に優先されます。 このリストはその階層を提供します。
 
-The default value of `version_prefix` is `/v`.
+`version_prefix` のデフォルト値は `/v` です。
 
-.. column::
+.. 列::
 
 ```
-An often requested feature is to be able to mount versioned routes on `/api`. This can easily be accomplished with `version_prefix`.
+`/api` にバージョン管理されたルートをマウントできる機能がよくあります。これは `version_prefix` で簡単に実現できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -146,13 +146,13 @@ app.route("/my/path", version=1, version_prefix="/api/v")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Perhaps a more compelling usage is to load all `/api` routes into a single `BlueprintGroup`.
+おそらく、`/api` ルートを単一の `BlueprintGroup` にロードすることでしょう。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -170,20 +170,20 @@ app.blueprint(api)
 ```
 ````
 
-We can therefore learn that a route's URI is:
+そのため、ルートのURIは以下のようになります。
 
 ```
-version_prefix + version + url_prefix + URI definition
+version_prefix + version + url_prefix + URI 定義
 ```
 
 .. tip::
 
 ````
-Just like with `url_prefix`, it is possible to define path parameters inside a `version_prefix`. It is perfectly legitimate to do this. Just remember that every route will have that parameter injected into the handler.
+`url_prefix` と同じように、 `version_prefix` 内でパスパラメータを定義することができます。 すべてのルートがハンドラにそのパラメータを注入することを覚えておいてください。
 
 ```python
 version_prefix="/<foo:str>/v"
 ```
 ````
 
-_Added in v21.6_
+_V21.6_に追加されました

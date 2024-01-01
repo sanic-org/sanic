@@ -1,22 +1,22 @@
 ---
-title: Sanic Extensions - Basic OAS
+title: 无声扩展 - 基本OAS
 ---
 
-# Basics
+# 基础知识
 
-.. note::
-
-```
-The OpenAPI implementation in Sanic Extensions is based upon the OAS3 implementation from [`sanic-openapi`](https://github.com/sanic-org/sanic-openapi). In fact, Sanic Extensions is in a large way the successor to that project, which entered maintenance mode upon the release of Sanic Extensions. If you were previously using OAS3 with `sanic-openapi` you should have an easy path to upgrading to Sanic Extensions. Unfortunately, this project does *NOT* support the OAS2 specification.
-```
-
-.. column::
+.. 注：
 
 ```
-Out of the box, Sanic Extensions provides automatically generated API documentation using the [v3.0 OpenAPI specification](https://swagger.io/specification/). There is nothing special that you need to do
+在 Sanic 扩展中实现OpenAPI 是基于从 [`sanic-openapi` ](https://github.com/sanic-org/sanic-openapi )实现的 OAS3 实现。 事实上，Sanic扩展在很大程度上是该项目的继承者，该项目在释放Sanic扩展后进入了维护模式。 如果你先前使用 `sanic-openapi` 的 OAS3 ，你应该有一个简单的路径升级到 Sanic Extensions. 不幸的是，该项目支持 OAS2 的规格。
 ```
 
-.. column::
+.. 列:
+
+```
+在方框中，Sanic 扩展使用[v3.0 OpenAPI 规范](https://swagger.io/specification/)自动生成的 API 文档。您不需要做任何特殊操作
+```
+
+.. 列:
 
 ````
 ```python
@@ -24,45 +24,45 @@ from sanic import Sanic
 
 app = Sanic("MyApp")
 
-# Add all of your views
+# 添加您所有的观点
 ```
 ````
 
-After doing this, you will now have beautiful documentation already generated for you based upon your existing application:
+在这么做之后，您现在将根据您现有的应用程序为您生成美丽的文档：
 
 - [http://localhost:8000/docs](http://localhost:8000/docs)
 - [http://localhost:8000/docs/redoc](http://localhost:8000/docs/redoc)
 - [http://localhost:8000/docs/swagger](http://localhost:8000/docs/swagger)
 
-Checkout the [section on configuration](../configuration.md) to learn about changing the routes for the docs. You can also turn off one of the two UIs, and customize which UI will be available on the `/docs` route.
+签出[配置部分](../configuration.md) 以了解如何更改文档的路由。 您也可以关闭两个界面中的一个，并自定义界面，在`/docs`路由上可用。
 
-.. column::
-
-```
-Using [Redoc](https://github.com/Redocly/redoc)
-
-![Redoc](/assets/images/sanic-ext-redoc.png)
-```
-
-.. column::
+.. 列:
 
 ```
-or [Swagger UI](https://github.com/swagger-api/swagger-ui)
+使用 [Redoc](https://github.com/Redocly/Redoc)
+
+！[Redoc](/assets/images/sanic-ext-redoc.png)
+```
+
+.. 列:
+
+```
+或 [Swagger UI](https://github.com/swagger-api/swagger-ui)
 
 ![Swagger UI](/assets/images/sanic-ext-swagger.png)
 ```
 
-## Changing specification metadata
+## 更改规范元数据
 
-.. column::
+.. 列:
 
 ```
-If you want to change any of the metada, you should use the `describe` method.
+如果你想要更改任何元数据, 你应该使用 "描述" 方法。
 
-In this example `dedent` is being used with the `description` argument to make multi-line strings a little cleaner. This is not necessary, you can pass any string value here.
+在这个示例中使用 `edent` 和 `description` 参数来使多行字符串变得更加清洁。 这是不必要的，您可以在此传递任何字符串值。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python

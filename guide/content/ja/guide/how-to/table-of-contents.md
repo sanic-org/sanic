@@ -1,17 +1,17 @@
 ---
-title: Table of Contents
+title: 目次
 ---
 
-# Table of Contents
+# 目次
 
-We have compiled fully working examples to answer common questions and user cases. For the most part, the examples are as minimal as possible, but should be complete and runnable solutions.
+一般的な質問やユーザーケースに答えるための完全な作業例をまとめました。 ほとんどの部分では、例は可能な限り最小限ですが、完全で実行可能なソリューションである必要があります。
 
-| Page                                        | How do I ...                                                        |
-| :------------------------------------------ | :------------------------------------------------------------------ |
-| [Application mounting](./mounting.md)       | ... mount my application at some path above the root?               |
-| [Authentication](./authentication.md)       | ... control authentication and authorization?                       |
-| [Autodiscovery](./autodiscovery.md)         | ... autodiscover the components I am using to build my application? |
-| [CORS](./cors.md)                           | ... configure my application for CORS?                              |
-| [ORM](./orm)                                | ... use an ORM with Sanic?                                          |
-| ["Static" Redirects](./static-redirects.md) | ... configure static redirects                                      |
-| [TLS/SSL/HTTPS](./tls.md)                   | ... run Sanic via HTTPS?<br> ... redirect HTTP to HTTPS?            |
+| ページ                                                 | どうすればいいですか...                                           |
+| :-------------------------------------------------- | :------------------------------------------------------ |
+| format@@0(./mounting.md)         | ... アプリケーションをルートの上にあるパスにマウントしますか?                       |
+| [Authentication](./authentication.md)               | ... 認証と承認を制御する?                                         |
+| [Autodiscovery](./autodiscovery.md)                 | ... アプリケーションの構築に使用しているコンポーネントを自動的に発見しますか?               |
+| [CORS](./cors.md)                                   | ... CORS のアプリケーションを設定しますか？                              |
+| [ORM](./orm)                                        | ... SanicとORMを使用しますか?                                   |
+| format@@0(./static-redirects.md) | ... 静的リダイレクトの設定                                         |
+| [TLS/SSL/HTTPS](./tls.md)                           | ... HTTPS経由でSanicを実行しますか？<br>... HTTPをHTTPSにリダイレクトしますか? |

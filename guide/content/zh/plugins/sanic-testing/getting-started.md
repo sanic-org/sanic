@@ -1,65 +1,65 @@
 ---
-title: Sanic Testing - Getting Started
+title: Sanic 测试-入门开始
 ---
 
-# Getting Started
+# 正在开始
 
-Sanic Testing is the _official_ testing client for Sanic. Its primary use is to power the tests of the Sanic project itself. However, it is also meant as an easy-to-use client for getting your API tests up and running quickly.
+Sanic Testing 是 _official_ 测试Sanic 客户。 它的主要用途是为萨尼克项目本身的测试提供动力。 然而，它也是一个易于使用的客户端，可以让您的 API 测试升级并快速运行。
 
-## Minimum requirements
+## 最低要求
 
 - **Python**: 3.7+
 - **Sanic**: 21.3+
 
-Versions of Sanic older than 21.3 have this module integrated into Sanic itself as `sanic.testing`.
+年龄在21岁以上的Sanic版本将此模块并入Sanic本身，作为“sanic.testing”。
 
-## Install
+## 安装
 
-Sanic Testing can be installed from PyPI:
+可从 PyPI 安装Sanic 测试：
 
 ```
-pip install sanic-testing
+pip 安装卫生测试
 ```
 
-## Basic Usage
+## 基本用法
 
-As long as the `sanic-testing` package is in the environment, there is nothing you need to do to start using it.
+只要`sanic-testing`软件包处于环境中，你就不需要开始使用它。
 
-### Writing a sync test
+### 写入同步测试
 
-In order to use the test client, you just need to access the property `test_client` on your application instance:
+为了使用测试客户端，您只需要在您的应用程序实例中访问属性 'test_client' ：
 
 ```python
-import pytest
-from sanic import Sanic, response
+从 sanic import Sanic, 导入 pytest
+，响应
 
-@pytest.fixture
+@pytest。 ixture
 def app():
     sanic_app = Sanic("TestSanic")
 
-    @sanic_app.get("/")
+    @sanic_app. et("/")
     def basic(request):
-        return response.text("foo")
+        return response. ext("foo")
 
     return sanic_app
 
 def test_basic_test_client(app):
-    request, response = app.test_client.get("/")
+    request, response = app.test_client. et("/")
 
-    assert request.method.lower() == "get"
-    assert response.body == b"foo"
-    assert response.status == 200
+    passage request.method.lower() == "get"
+    signing response。 did == b"foo"
+    passage response.status == 200
 ```
 
-### Writing an async test
+### 写入异步测试
 
-In order to use the async test client in `pytest`, you should install the `pytest-asyncio` plugin.
+为了使用 pytest`中的 async 测试客户端，您应该安装`pytest-asyncio\` 插件。
 
 ```
-pip install pytest-asyncio
+pip install pest-asyncio
 ```
 
-You can then create an async test and use the ASGI client:
+然后您可以创建异步测试并使用 ASGI 客户端：
 
 ```python
 import pytest

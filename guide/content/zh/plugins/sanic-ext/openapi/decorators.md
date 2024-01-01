@@ -1,14 +1,14 @@
 ---
-title: Sanic Extensions - OAS Decorators
+title: 无声扩展 - 美洲组织装饰师
 ---
 
-# Decorators
+# 装饰符
 
-The primary mechanism for adding content to your schema is by decorating your endpoints. If you have
-used `sanic-openapi` in the past, this should be familiar to you. The decorators and their arguments match closely
-the [OAS v3.0 specification](https://swagger.io/specification/).
+将内容添加到您的方案的主要机制是通过装饰您的终点。 If you have
+used `sanic-openapi` in the past, this should be familiar to you. 装饰者及其参数与[OAS v3.0 规格](https://swagger.io/specialization/)密切匹配
+。
 
-.. column::
+.. 列:
 
 ```
 All of the examples show will wrap around a route definition. When you are creating these, you should make sure that
@@ -16,29 +16,29 @@ your Sanic route decorator (`@app.route`, `@app.get`, etc) is the outermost deco
 put that first and then one or more of the below decorators after.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_ext import openapi
+来自sanic_ext importing openapi
 
 @app.get("/path/to/<something>")
-@openapi.summary("This is a summary")
-@openapi.description("This is a description")
-async def handler(request, something: str):
+@openapi.summary("这是一个摘要")
+@openapi。 escription("这是一个描述")
+async def 处理器(请求, 内容: str):
     ...
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You will also see a lot of the below examples reference a model object. For the sake of simplicity, the examples will
-use `UserProfile` that will look like this. The point is that it can be any well-typed class. You could easily imagine
-this being a `dataclass` or some other kind of model object.
+您还将看到许多下面的示例引用模型对象。 为了简洁起见，示例将为
+使用 'UserProfile` 。 问题是，它可以是任何类型良好的类。 您可以轻松地想象一下
+这是一个 `dataclass` 或某种其他类型的模型对象。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -49,74 +49,74 @@ class UserProfile:
 ```
 ````
 
-## Definition decorator
+## 定义装饰符
 
 ### `@openapi.definition`
 
-The `@openapi.definition` decorator allows you to define all parts of an operations on a path at once. It is an omnibums
-decorator in that it has the same capabilities to create operation definitions as the rest of the decorators. Using
-multiple field-specific decorators or a single decorator is a style choice for you the developer.
+`@openapi.definition`装饰器允许您同时在路径上定义操作的所有部分。 它是一个
+装饰器，它具有与其他装饰者相同的创建操作定义的能力。 使用
+多个特定字段的装饰符或单个装饰符是你开发者的样式选择。
 
-The fields are purposely permissive in accepting multiple types to make it easiest for you to define your operation.
+字段有意允许接受多种类型，使您最容易定义您的操作。
 
-**Arguments**
+**参数**
 
-| Field         | Type                                                                                                                                                                                                             |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `body`        | **dict, RequestBody, _YourModel_**                                                                                                                                                                               |
-| `deprecated`  | **bool**                                                                                                                                                                                                         |
-| `description` | **str**                                                                                                                                                                                                          |
-| `document`    | **str, ExternalDocumentation**                                                                                                                                                                                   |
-| `exclude`     | **bool**                                                                                                                                                                                                         |
-| `operation`   | **str**                                                                                                                                                                                                          |
-| `parameter`   | **str, dict, Parameter, [str], [dict], [Parameter]** |
-| `response`    | **dict, Response, _YourModel_, [dict], [Response]**                                                      |
-| `summary`     | **str**                                                                                                                                                                                                          |
-| `tag`         | **str, Tag, [str], [Tag]**                                                                               |
-| `secured`     | **Dict[str, Any]**                                                                                                                                           |
+| 字段          | 类型                                                                                                                                                                                                        |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `body`      | **dict, RequestBody, _YourModel_**                                                                                                                                                                        |
+| `已弃用`       | **布尔**                                                                                                                                                                                                    |
+| `描述`        | **str**                                                                                                                                                                                                   |
+| `文档`        | **str, ExternalDocumentation**                                                                                                                                                                            |
+| `exclude`   | **布尔**                                                                                                                                                                                                    |
+| `operation` | **str**                                                                                                                                                                                                   |
+| `参数`        | **str, dict, 参数, [str], [dict], [Parameter]** |
+| `response`  | **dict, Response, _YourModel_, [dict], [Response]**                                               |
+| `summary`   | **str**                                                                                                                                                                                                   |
+| `tag`       | **str, Tag, [str], [Tag]**                                                                        |
+| `securd`    | **Dict[str, Any]**                                                                                                                                    |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
 @openapi.definition(
     body=RequestBody(UserProfile, required=True),
-    summary="User profile update",
+    summary="User profile",
     tag="one",
-    response=[Success, Response(Failure, status=400)],
+    response=[Success, ResponseFailure, status=400)],
 )
 ```
 ````
 
-.. column::
+.. 列:
 
-_See below examples for more examples. Any of the values for the below decorators can be used in the corresponding
-keyword argument._
+- 更多例子见下文。 以下装饰符的任何值都可以在对应的
+  关键字参数中使用。\*
 
-## Field-specific decorators
+## 场地特定装饰
 
-All the following decorators are based on `@openapi`
+以下所有装饰符都基于 `@openapi`
 
-### body
+### 正文内容
 
-**Arguments**
+**参数**
 
-| Field       | Type                               |
-| ----------- | ---------------------------------- |
-| **content** | **_YourModel_, dict, RequestBody** |
+| 字段     | 类型                                 |
+| ------ | ---------------------------------- |
+| **内容** | **_YourModel_, dict, RequestBody** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
 @openapi.body(UserProfile)
 ```
 
-```python
+``python
 @openapi.body({"application/json": UserProfile})
 ```
 
@@ -125,7 +125,7 @@ All the following decorators are based on `@openapi`
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -141,71 +141,71 @@ All the following decorators are based on `@openapi`
 ```
 ````
 
-### deprecated
+### 已弃用
 
-**Arguments**
+**参数**
 
-_None_
+_无_
 
-**Examples**
+**示例**
 
-.. column::
-
-````
-```python
-@openapi.deprecated()
-```
-````
-
-.. column::
+.. 列:
 
 ````
 ```python
-@openapi.deprecated
+@openapi.过时()
 ```
 ````
 
-### description
+.. 列:
 
-**Arguments**
+````
+```python
+@openapi.废弃的
+```
+````
 
-| Field  | Type    |
+### 描述
+
+**参数**
+
+| 字段     | 类型      |
 | ------ | ------- |
 | `text` | **str** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
 @openapi.description(
-    """This is a **description**.
+    """这是一个**描述** 。
 
-## You can use `markdown`
+## 你可以使用 "markdown"
 
-- And
+- 和
 - make
-- lists.
+- 列表。
 """
 )
 ```
 ````
 
-.. column::
+.. 列:
 
-### document
+### 文档
 
-**Arguments**
+**参数**
 
-| Field         | Type    |
-| ------------- | ------- |
-| `url`         | **str** |
-| `description` | **str** |
+| 字段    | 类型      |
+| ----- | ------- |
+| `url` | **str** |
+| `描述`  | **str** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -213,7 +213,7 @@ _None_
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -221,20 +221,20 @@ _None_
 ```
 ````
 
-### exclude
+### 不包含
 
-Can be used on route definitions like all of the other decorators, or can be called on a Blueprint
+可以像所有其他装饰器一样用于路由定义，或者可以在蓝图上调用
 
-**Arguments**
+**参数**
 
-| Field  | Type          | Default  |
-| ------ | ------------- | -------- |
-| `flag` | **bool**      | **True** |
-| `bp`   | **Blueprint** |          |
+| 字段     | 类型     | 默认设置     |
+| ------ | ------ | -------- |
+| `flag` | **布尔** | **True** |
+| `bp`   | **蓝图** |          |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -242,27 +242,27 @@ Can be used on route definitions like all of the other decorators, or can be cal
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
-openapi.exclude(bp=some_blueprint)
+openapi.exclude(bp=some_bluprint)
 ```
 ````
 
-### operation
+### 操作
 
-Sets the operation ID.
+设置操作 ID。
 
-**Arguments**
+**参数**
 
-| Field  | Type    |
+| 字段     | 类型      |
 | ------ | ------- |
 | `name` | **str** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -270,58 +270,58 @@ Sets the operation ID.
 ```
 ````
 
-.. column::
+.. 列:
 
-**Arguments**
+**参数**
 
-| Field      | Type                                      | Default     |
-| ---------- | ----------------------------------------- | ----------- |
-| `name`     | **str**                                   |             |
-| `schema`   | _**type**_                                | **str**     |
-| `location` | **"query", "header", "path" or "cookie"** | **"query"** |
+| 字段         | 类型                                    | 默认设置     |
+| ---------- | ------------------------------------- | -------- |
+| `name`     | **str**                               |          |
+| `schema`   | _**type**_                            | **str**  |
+| `location` | **"查询", "header", "path" 或 "cookie"** | **"查询"** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
 @openapi.parameter("thing")
 ```
 
-```python
-@openapi.parameter(parameter=Parameter("foobar", deprecated=True))
+``python
+@openapi.parameter(parameter=Parameter("foobar", 过时=True))
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
 @openapi.parameter("Authorization", str, "header")
 ```
 
-```python
+``python
 @openapi.parameter("thing", required=True, allowEmptyValue=False)
 ```
 ````
 
-### response
+### 应答
 
-**Arguments**
+**参数**
 
-If using a `Response` object, you should not pass any other arguments.
+如果使用 "Response" 对象，您不应传递任何其他参数。
 
-| Field         | Type                          |
-| ------------- | ----------------------------- |
-| `status`      | **int**                       |
-| `content`     | **_type_, _YourModel_, dict** |
-| `description` | **str**                       |
-| `response`    | **Response**                  |
+| 字段         | 类型                          |
+| ---------- | --------------------------- |
+| `status`   | **int**                     |
+| `content`  | **_类型_, _YourModel_, dict** |
+| `描述`       | **str**                     |
+| `response` | **答复**                      |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -349,55 +349,55 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
-@openapi.response(200, UserProfile, "...")
+@openapi.response200, UserProfile, "...")
 ```
 
 ```python
-@openapi.response(
+@openapi。 esponse(
     200,
-    {
+    然后才能
         "application/json": UserProfile,
     },
-    "Description...",
+    "描述. .",
 )
 ```
 ````
 
 ### summary
 
-**Arguments**
+**参数**
 
-| Field  | Type    |
+| 字段     | 类型      |
 | ------ | ------- |
 | `text` | **str** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
-@openapi.summary("This is an endpoint")
-```
+@openapi.summary("这是一个终点")
+
 ````
 
-.. column::
+.. 列:
 
-### tag
+### 标签
 
-**Arguments**
+**参数**
 
-| Field   | Type         |
+| 字段      | 类型           |
 | ------- | ------------ |
 | `*args` | **str, Tag** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -405,7 +405,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -413,17 +413,17 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-### secured
+### 安全的
 
-**Arguments**
+**参数**
 
-| Field             | Type                                                                        |
+| 字段                | 类型                                                                          |
 | ----------------- | --------------------------------------------------------------------------- |
 | `*args, **kwargs` | **str, Dict[str, Any]** |
 
-**Examples**
+**示例**
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -431,9 +431,9 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列:
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -441,7 +441,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -449,7 +449,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -457,7 +457,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -465,20 +465,20 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-Do not forget to use `add_security_scheme`. See [security](./security.md) for more details.
+不要忘记使用 add_security_scheme\` 。 更多详细信息请访问 [security](./security.md)。
 \`\`
 
-## Integration with Pydantic
+## 与 Pydantic集成
 
-Pydantic models have the ability to [generate OpenAPI schema](https://pydantic-docs.helpmanual.io/usage/schema/).
+Pydantic模型有能力[生成 OpenAPI 方案](https://pydantic-docs.helpmanual.io/usage/schema/)。
 
-.. column::
+.. 列:
 
 ```
-To take advantage of Pydantic model schema generation, pass the output in place of the schema.
+为了利用Pydantic模型架构生成，将输出转换为架构。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -511,10 +511,10 @@ async def get(request):
 ```
 ````
 
-.. note::
+.. 注：
 
 ```
-It is important to set that `ref_template`. By default Pydantic will select a template that is not standard OAS. This will cause the schema to not be found when generating the final document.
+设置`ref_template`非常重要。默认情况下，Pydantic将选择一个非标准的 OAS模板。 这将导致在生成最后文档时找不到样式。
 ```
 
-_Added in v22.9_
+_添加于 v22.9_

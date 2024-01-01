@@ -1,18 +1,18 @@
 ---
-title: Sanic Extensions - Convenience
+title: サニックエクステンション - Convenience
 ---
 
-# Convenience
+# 便利さ
 
-## Fixed serializer
+## 固定シリアライザー
 
-.. column::
+.. 列::
 
 ```
-Often when developing an application, there will be certain routes that always return the same sort of response. When this is the case, you can predefine the return serializer and on the endpoint, and then all that needs to be returned is the content.
+多くの場合、アプリケーションを開発する場合、常に同じ種類のレスポンスを返す特定のルートがあります。 この場合、返品シリアライザとエンドポイントを事前に定義できます。 返されるべきものは内容だけです
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -27,13 +27,13 @@ async def hello_world(request, name: str):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-The `serializer` decorator also can add status codes.
+`serializer`デコレータはステータスコードを追加することもできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -46,15 +46,15 @@ async def create_something(request):
 ```
 ````
 
-## Custom serializer
+## カスタムシリアライザー
 
-.. column::
+.. 列::
 
 ```
-Using the `@serializer` decorator, you can also pass your own custom functions as long as they also return a valid type (`HTTPResonse`).
+`@serializer`デコレータを使用して、有効な型(`HTTPResonse`)を返す限り、独自のカスタム関数を渡すこともできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -75,19 +75,19 @@ async def do_action(request, action: str):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Now, returning just a string should return a nice serialized output.
+今度は、文字列だけを返すと、素敵なシリアル化された出力が返されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 $ curl localhost:8000/eat_cookies -X POST
 {
-  "request_id": "ef81c45b-235c-46dd-9dbd-b550f8fa77f9",
+  "request_id": "ef81c45b-235c-46d-9dbd-b550f8fa77f9",
   "action": "eat_cookies",
   "message": "This is a message"
 }
@@ -95,31 +95,31 @@ $ curl localhost:8000/eat_cookies -X POST
 ```
 ````
 
-## Request counter
+## カウンターを要求する
 
-.. column::
+.. 列::
 
 ```
-Sanic Extensions comes with a subclass of `Request` that can be setup to automatically keep track of the number of requests processed per worker process. To enable this, you should pass the `CountedRequest` class to your application contructor.
+Sanic Extensionsには`Request`のサブクラスが付属しており、ワーカープロセスごとに処理されたリクエストの数を自動的に追跡できるように設定できます。 これを有効にするには、アプリケーションコントラクターに `CounttedRequest` クラスを渡す必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 from sanic_ext import CountedRequest
 
-app = Sanic(..., request_class=CountedRequest)
+app = Sanic(..., request_class=CounttedRequest)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You will now have access to the number of requests served during the lifetime of the worker process.
+ワーカープロセスの生涯中に提供されるリクエスト数にアクセスできるようになります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -129,6 +129,6 @@ async def handler(request: CountedRequest):
 ```
 ````
 
-If possible, the request count will also be added to the [worker state](../../guide/deployment/manager.md#worker-state).
+可能であれば、リクエスト数は [worker state](../../guide/deployment/manager.md#worker-state) にも追加されます。
 
 ![](https://user-images.githubusercontent.com/166269/190922460-43bd2cfc-f81a-443b-b84f-07b6ce475cbf.png)

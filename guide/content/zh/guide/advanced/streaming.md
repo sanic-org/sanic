@@ -1,18 +1,18 @@
-# Streaming
+# 流流
 
-## Request streaming
+## 请求流
 
-Sanic allows you to stream data sent by the client to begin processing data as the bytes arrive.
+Sanic 允许您在字节到达时开始处理客户端发送的数据。
 
-.. column::
+.. 列:
 
 ```
-When enabled on an endpoint, you can stream the request body using `await request.stream.read()`.
+当在端点启用时，您可以使用 `request.stream.read()`。
 
-That method will return `None` when the body is completed.
+这个方法将在身体完成后返回 `None` 。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -31,38 +31,38 @@ class SimpleView(HTTPMethodView):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-It also can be enabled with a keyword argument in the decorator...
+它也可以在装饰器中用关键字参数启用...
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.post("/stream", stream=True)
 async def handler(request):
         ...
-        body = await request.stream.read()
+        body = 等待request.stream.read()
         ...
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-... or the `add_route()` method.
+... 或 "add_route()" 方法。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 bp.add_route(
     bp_handler,
     "/bp_stream",
-    methods=["POST"],
+    meths=["POST"],
     stream=True,
 )
 ```
@@ -71,59 +71,59 @@ bp.add_route(
 .. tip:: FYI
 
 ```
-Only post, put and patch decorators have stream argument.
+只有帖子、放置和补丁装饰者有流参数。
 ```
 
-## Response streaming
+## 响应串流
 
-.. column::
+.. 列:
 
 ```
-Sanic allows you to stream content to the client.
+Sanic 允许您将内容流到客户端。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/")
 async def test(request):
-    response = await request.respond(content_type="text/csv")
-    await response.send("foo,")
-    await response.send("bar")
+    response = request.reply (content_type="text/csv")
+    等待响应。 end("foo,")
+    正在等待答复。 end("bar")
 
-    # Optionally, you can explicitly end the stream by calling:
-    await response.eof()
+    # 可选，您可以通过调用来明确结束流：
+    等待响应.eof()
 ```
 ````
 
-This is useful in situations where you want to stream content to the client that originates in an external service, like a database. For example, you can stream database records to the client with the asynchronous cursor that `asyncpg` provides.
+这在您想要将内容流到外部服务的客户端（如数据库）时是有用的。 例如，您可以通过 "asyncpg" 提供的异步光标将数据库记录流到客户端。
 
 ```python
 @app.route("/")
 async def index(request):
-    response = await request.respond()
-    conn = await asyncpg.connect(database='test')
-    async with conn.transaction():
-        async for record in conn.cursor('SELECT generate_series(0, 10)'):
-            await response.send(record[0])
+    response = 等待请求。 espond()
+    conn = 等待 asyncpg.connect(database='test')
+    带有con的异步值。 赎金():
+        异步以内嵌方式记录。 ursor('SELECT generate_series(0, 10)'):
+            等待响应.send(records[0])
 ```
 
-You can explicitly end a stream by calling `await response.eof()`. It a convenience method to replace `await response.send("", True)`. It should be called **one time** _after_ your handler has determined that it has nothing left to send back to the client. While it is _optional_ to use with Sanic server, if you are running Sanic in ASGI mode, then you **must** explicitly terminate the stream.
+您可以通过调用 "等待响应.eof()" 来明确结束一个流。 它是一个替换"等待响应.send("", True)"的方便方法。 应该调用 **一次** 之后\* 你的处理程序确定它没有什么可以发送到客户端。 当它是可选的 \* 与 Sanic 服务器使用时，如果您在 ASGI 模式中运行 Sanic ，那么您**必须** 明确终止流。
 
-_Calling `eof` became optional in v21.6_
+_在 v21.6_ 中，调用 `eof` 变成可选的
 
-## File streaming
+## 文件串流
 
-.. column::
+.. 列:
 
 ```
-Sanic provides `sanic.response.file_stream` function that is useful when you want to send a large file. It returns a `StreamingHTTPResponse` object and will use chunked transfer encoding by default; for this reason Sanic doesn’t add `Content-Length` HTTP header in the response.
+Sanic 提供 `sanic.response.file_stream` 函数，在您想要发送一个大文件时是有用的。 它返回一个 `StreamingHTTPResponse` 对象，默认情况下将使用区块传输编码；因此Sanic 不在响应中添加 `Content-Length` HTTP头部。
 
-A typical use case might be streaming an video file.
+典型的使用案例可能是将视频文件串流。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -141,29 +141,29 @@ async def handler_file_stream(request):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-If you want to use the `Content-Length` header, you can disable chunked transfer encoding and add it manually simply by adding the `Content-Length` header.
+如果你想要使用 `Content-Length` 标题，你可以仅仅通过添加 `Content-Length` 标题来禁用区块传输编码并手动添加它。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from aiofiles import os as async_os
+from aiofiles importos as async_os
 from sanic.response import file_stream
 
-@app.route("/")
+@app. oute("/")
 async def index(request):
     file_path = "/srv/www/whatever.png"
 
-    file_stat = await async_os.stat(file_path)
-    headers = {"Content-Length": str(file_stat.st_size)}
+    file_stat = 等待async_os. tat(file_path)
+    headers = {"Content-Length": str(file_stat. t_size)}
 
-    return await file_stream(
+    返回等待文件流(
         file_path,
         headers=headers,
-    )
+
 ```
 ````

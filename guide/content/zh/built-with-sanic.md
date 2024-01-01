@@ -1,67 +1,67 @@
 ---
-title: Full Speed Ahead - How We Built This Site with Sanic
-layout: main
+title: 全速前进-我们如何用Sanic 构建这个站点
+layout: 主要的
 ---
 
 .. attrs::
 :class: title
 
 ```
-Full Speed Ahead:
+前方全速：
 ```
 
 .. attrs::
 :class: subtitle
 
 ```
-How We Built This Site with Sanic
+我们如何用Sanic构建这个站点
 ```
 
-Welcome to our little corner of the Internet where we proudly say, "Yes, we built this with Sanic!" This isn't just a website; it's our playground, our test lab, our battlefield, and, well, our home.
+欢迎来到我们的互联网的小角落，我们自豪地说，“是的，我们用Sanic建造了这个！” 这不仅仅是一个网站；它是我们的游戏场、我们的测试实验室、我们的战场以及我们的家中。
 
-![](/assets/images/built-with-sanic.png)
+![](/assets/images/build-sanic.png)
 
-### The Story: "We Drink Our Own Champagne"
+### 故事：“我们喝我们自己的冠军”
 
-We believe in Sanic so much that we decided to put it to the ultimate test—running our own website. It's like a chef eating at their own restaurant, only with less risk of food poisoning.
+我们非常相信萨尼克语，我们决定对它进行最终测试——运行我们自己的网站。 它就像在他们自己的餐馆吃奶酪，只有在食物中毒的风险较低的情况下才能吃饭。
 
-Why? Because building a website or web application is hard. There are countless moving parts, a plethora of challenges, and the ever-present need for speed and reliability. We want to show you just one of the many ways you _could_ do it.
+为什么？ 因为建立网站或网页应用程序是硬性的。 现在有无数令人感动的部分，挑战太多，始终需要速度和可靠性。 我们只想向你展示你的很多方法之一。
 
-In this high-stakes digital kitchen, Sanic is our secret ingredient. By deploying our own website on Sanic, we're not just showcasing its capabilities; we're stress-testing them in the real world. This is our chance to walk the walk, proving that Sanic isn't just good on paper—it's a robust, high-performance framework that can handle everything from the smallest blog to the busiest e-commerce site.
+在这个高风险的数字厨房中，萨尼克是我们的秘密成分。 通过在Sanic上部署我们自己的网站，我们不只是展示自己的能力；我们正在现实世界中对它们进行压力测试。 这是我们走路的机会，证明萨尼克在纸面上不是好事——这是一种强有力的， 从最小的博客到最繁忙的电子商务站点都能够处理所有的问题，这种框架可以是高性能的框架。
 
-So, here we are, sipping our own champagne, confident in the knowledge that if Sanic can run our site, it can power yours too. Cheers to coding at the speed of thought! 🥂
+因此，我们在这里打着我们自己的旗手，相信我们知道如果萨尼克能够管理我们的场地，它也能够为你提供电力。 喜欢按思考的速度编程！ 🥂
 
-### The Setup: Digital Ocean, Ahoy!
+### 设置：数字大洋，奥霍！
 
-We launched our site on Digital Ocean's App Platform because we love high-performance cloud sailing. Think of it as having a Ferrari in the cloud—fast, sleek, but way easier to handle.
+我们启动了我们在数字大洋应用平台上的网站，因为我们喜欢高性能的云端航行。 认为它在云端有一个Ferrari-快速、睡觉，但更容易处理。
 
-Why go for simplicity? With a lean team and no DevOps gurus, we needed a no-fuss, straightforward solution. Digital Ocean gives us that smooth sailing platform-as-a-service (PaaS) experience. It’s perfect for our needs: easy setup, automatic deployments, and the kind of reliability that lets you sleep soundly.
+为什么要简化？ 有了一个精干的团队，没有德沃普斯大家，我们需要一种不引信、直截了当的解决办法。 数字海洋为我们提供了顺利航行平台作为服务的经验。 它对满足我们的需要是完美的：轻松设置、自动部署以及让你睡觉的可靠性。
 
-Our choice reflects our ethos: focus on your strengths and let the platform do the heavy lifting. For us, it means creating amazing web experiences with Sanic, supported by a deployment solution that's simple yet powerful. ⛵
+我们的选择反映了我们的精神：注重你的优势，让平台进行繁重的提升。 对我们来说，这意味着用萨尼克创造惊人的网络经验，辅之以一个简单但强有力的部署解决办法。 ⛵
 
-### The Code: GitHub's Where It's At
+### 代码: GitHub的位置
 
-All our code is out in the open, basking in the glory of public scrutiny on GitHub. Why hide the magic? It's right there, in full view, at [our GitHub repository](https://github.com/sanic-org/sanic/tree/main/guide). Go ahead, take a peek, fork it, play with it, break it (and then kindly fix it).
+我们的所有代码都在开放式中，将公众审查的光荣放在GitHub 上。 为什么隐藏魔法？ 它正好在这里，全文看到[我们的GitHub 仓库](https://github.com/sanic-org/sanic/tree/main/guide)。 继续前进，拿起宠物，派生它，用它玩游戏，打断它(然后修复它)。
 
-Open-source isn't just a buzzword for us; it's our ethos. It's about building something bigger than ourselves, together. Our code is a testament to collaborative innovation, a playground for development, and a real-life example of Sanic in action.
+开放源码不仅仅是我们的蜂窝；这是我们的灵魂。 这是为了共同建立比我们更大的东西。 我们的守则证明了合作创新，是发展的游乐场，也是实际行动中的“圣经”的例子。
 
-Every line of code, every commit, reflects our journey with Sanic, showcasing how we leverage its speed and scalability. Your contributions, whether fixing a bug, suggesting a feature, or enhancing documentation, are what propel this project forward.
+每一行代码，每项承诺都反映出我们用Sanic的旅程，展示我们如何利用其速度和可扩展性。 您的贡献，不管是修复bug，建议一个功能，还是改进文档，都是推动这个项目前进的因素。
 
-So, dive in, contribute your genius, and let's keep shaping the future of web development with Sanic. Together, we're not just coding – we're creating a community-driven powerhouse. 🚀
+所以，潜入，贡献你的基因，让我们继续以萨尼语塑造网络发展的未来。 我们一起不仅仅是编码——我们正在创建一个社区驱动的电台。 🚀
 
-### The Invitation: Write, Code, Break, Fix!
+### 邀请：写入，代码，Break，Fix！
 
-- **Documentarians**: Love making complex stuff sound easy? Our docs are your canvas. Paint away in words! 🎨
+- **Documentarians**：喜欢制作复杂的物品很容易？ 我们的文档是你的画布。 用文字涂掉！ 🎨
 
-- **Code Ninjas**: Find bugs? Squash 'em. Got ideas? Code 'em. Make pull requests rain! 🥷
+- **Code Ninjas**: 查找bug? Squash 'em. 有主意？ Code 'em. 让拉取请求降雨！ 🥷
 
-- **Bug Hunters**: If you find bugs, don't just stare. Let us know. We love a good bug hunt. 🐛
+- **Bug Hunters**：如果你发现了缺陷，不只是污点。 让我们知道吧。 我们很喜欢寻找一个很好的漏洞。 🐛
 
-### The Bottom Line
+### 底线
 
-We built this site with Sanic to show off what it can do. It's fast, it's fun, and it's what we use. So, if things load swiftly, pat us on the back. If they don't, well, uh... we blame cosmic rays?
+我们用萨尼克建造这个网站来显示它可以做些什么。 它很快，很有趣，是我们使用的。 因此，如果事物迅速负荷，就把我们推倒在后面。 如果他们不是，好吧... 我们指责宇宙射线吗？
 
-Join us in making Sanic not just good, but "I-can't-believe-it's-not-butter" good!
+加入我们不仅是好的，而且是好的！
 
-Cheers,
-The Sanic Team (who occasionally wear capes)
+欢呼，
+Sanic 团队(有时戴帽子)

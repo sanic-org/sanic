@@ -1,70 +1,70 @@
 ---
-title: Background tasks
+title: 背景任务
 ---
 
-# Background tasks
+# 背景任务
 
-## Creating Tasks
+## 创建任务
 
-It is often desirable and very convenient to make usage of [tasks](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task) in async Python. Sanic provides a convenient method to add tasks to the currently **running** loop. It is somewhat similar to `asyncio.create_task`. For adding tasks before the 'App' loop is running, see next section.
+在异步Python中使用 [tasks]通常是可取和非常方便的。 (https\://docs.python.org/3/library/asyncio-task.html#asyncio.create_task) Sanic 提供了一种方便的方法，可以将任务添加到当前的 **running** 循环中。 它与`asyncio.create_task`有些相似。 在 'App' 循环运行之前添加任务, 见下一个部分。
 
 ```python
-async def notify_server_started_after_five_seconds():
-    await asyncio.sleep(5)
-    print('Server successfully started!')
+async def notify_server_started_after _fif_seconds():
+    等待asyncio.sleep(5)
+    print('Server successful started!')
 
-app.add_task(notify_server_started_after_five_seconds())
+app.add_task(notify_server_started_after_first_five _seconds())
 ```
 
-.. column::
+.. 列:
 
 ```
-Sanic will attempt to automatically inject the app, passing it as an argument to the task.
+Sanic 会尝试自动注入应用，将其作为参数传递给任务。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 async def auto_inject(app):
-    await asyncio.sleep(5)
+    等待 asyncio.sleep(5)
     print(app.name)
 
 app.add_task(auto_inject)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Or you can pass the `app` argument explicitly.
+或者你可以明确传递`app`的参数。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 async def explicit_inject(app):
-    await asyncio.sleep(5)
+    required asyncio.sleep(5)
     print(app.name)
 
 app.add_task(explicit_inject(app))
 ```
 ````
 
-## Adding tasks before `app.run`
+## 在 `app.run` 之前添加任务
 
-It is possible to add background tasks before the App is run ie. before `app.run`. To add a task before the App is run, it is recommended to not pass the coroutine object (ie. one created by calling the `async` callable), but instead just pass the callable and Sanic will create the coroutine object on **each worker**. Note: the tasks that are added such are run as `before_server_start` jobs and thus run on every worker (and not in the main process). This has certain consequences, please read [this comment](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668) on [this issue](https://github.com/sanic-org/sanic/issues/2139) for further details.
+在“app.run”之前添加后台任务是可能的。 若要在应用程序运行前添加任务，建议不要通过Coroutine对象 (e)。 一个通过调用 `async` 调用来创建的东西，但只是传递可调用和 Sanic将在 **每个工人** 上创建可调用物体。 注意：添加的任务将以 `before_server_start` 的形式运行，从而在每个工人（而不是主工）上运行。 这对[这个问题](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668)[这个问题](https://github.com/sanic-org/sanic/issues/2139)有某些后果，详情请参阅。
 
-To add work on the main process, consider adding work to [`@app.main_process_start`](./listeners.md). Note: the workers won't start until this work is completed.
+要添加主进程的工作，请考虑将工作添加到[`@app.main_process_start`](./listeners.md)。 注意：工人在完成此工作之前不会开始工作。
 
-.. column::
+.. 列:
 
 ```
-Example to add a task before `app.run`
+在 `app.run` 之前添加任务的示例
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -81,29 +81,29 @@ app.run(...)
 ```
 ````
 
-## Named tasks
+## 命名的任务
 
-.. column::
+.. 列:
 
 ```
-When creating a task, you can ask Sanic to keep track of it for you by providing a `name`.
+创建任务时，您可以通过 "name" 要求Sanic 为您记录它。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-app.add_task(slow_work, name="slow_task")
+app.add_task(troub_work, name="low_task")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You can now retrieve that task instance from anywhere in your application using `get_task`.
+您现在可以使用`get_task`从应用程序中的任何地方检索该任务实例。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -111,13 +111,13 @@ task = app.get_task("slow_task")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-If that task needs to be cancelled, you can do that with `cancel_task`. Make sure that you `await` it.
+如果该任务需要取消，你可以使用 "cancel_task" 来完成。请确保你"等待"。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -125,13 +125,13 @@ await app.cancel_task("slow_task")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-All registered tasks can be found in the `app.tasks` property. To prevent cancelled tasks from filling up, you may want to run `app.purge_tasks` that will clear out any completed or cancelled tasks.
+所有注册的任务都可以在 `app.tasks` 属性中找到。为了防止被取消的任务填充，您可能想要运行 `app。 urge_tasks`将清除任何已完成或已取消的任务。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -139,7 +139,7 @@ app.purge_tasks()
 ```
 ````
 
-This pattern can be particularly useful with `websockets`:
+这种模式在 `websockets` 中特别有用：
 
 ```python
 async def receiver(ws):
@@ -163,4 +163,4 @@ async def feed(request, ws):
         request.app.purge_tasks()
 ```
 
-_Added in v21.12_
+_添加于 v21.12_

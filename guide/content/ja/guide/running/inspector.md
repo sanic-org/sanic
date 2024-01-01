@@ -1,26 +1,26 @@
 # Inspector
 
-The Sanic Inspector is a feature of Sanic Server. It is _only_ available when running Sanic with the built-in [worker manager](./manager.md).
+Sanic Inspector は、Sanic Server の機能です。 Sanic を組み込みの format@@0(./manager.md) で実行している場合は _のみ_ 利用できます。
 
-It is an HTTP application that _optionally_ runs in the background of your application to allow you to interact with the running instance of your application.
+これは、アプリケーションの実行中のインスタンスと対話できるように、アプリケーションのバックグラウンドで_オプション_で動作するHTTPアプリケーションです。
 
 .. tip:: INFO
 
 ```
-The Inspector was introduced in limited capacity in v22.9, but the documentation on this page assumes you are using v22.12 or higher.
+インスペクターは v22.9 で限定的な容量で導入されましたが、このページのドキュメントでは、v22.12 以上を使用していることを前提としています。
 ```
 
-## Getting Started
+## はじめに
 
-The inspector is disabled by default. To enable it, you have two options.
+インスペクターはデフォルトで無効になっています。 それを有効にするには、2つのオプションがあります。
 
-.. column::
+.. 列::
 
 ```
-Set a flag when creating your application instance.
+アプリケーションインスタンスを作成するときにフラグを設定します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -28,13 +28,13 @@ app = Sanic("TestApp", inspector=True)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Or, set a configuration value.
+または、設定値を設定します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -43,26 +43,26 @@ app.config.INSPECTOR = True
 ```
 ````
 
-.. warning::
+.. 警告::
 
 ```
-If you are using the configuration value, it *must* be done early and before the main worker process starts. This means that it should either be an environment variable, or it should be set shortly after creating the application instance as shown above.
+設定値を使用している場合は、メインワーカープロセスが開始される前に *必ず* 設定を行わなければなりません。 これは、環境変数であるか、上記のようにアプリケーションインスタンスを作成した直後に設定する必要があることを意味します。
 ```
 
-## Using the Inspector
+## インスペクターの使用
 
-Once the inspector is running, you will have access to it via the CLI or by directly accessing its web API via HTTP.
+インスペクターが実行されると、CLI 経由または直接 Web API に HTTP 経由でアクセスできるようになります。
 
-.. column::
+.. 列::
 
 ````
-**Via CLI**
+**CLI**
 ```sh
 sanic inspect
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 **Via HTTP**
@@ -74,31 +74,31 @@ curl http://localhost:6457
 .. note::
 
 ```
-Remember, the Inspector is not running on your Sanic application. It is a seperate process, with a seperate application, and exposed on a seperate socket.
+覚えておいてください、インスペクターはSanicアプリケーション上で実行されていません。それは分離されたアプリケーションであり、分離されたソケット上で公開されています。
 ```
 
-## Built-in Commands
+## 内蔵コマンド
 
-The Inspector comes with the following built-in commands.
+インスペクターには、次の組み込みコマンドが付属しています。
 
-| CLI Command        | HTTP Action                        | Description                                                              |
-| ------------------ | ---------------------------------- | ------------------------------------------------------------------------ |
-| `inspect`          | `GET /`                            | Display basic details about the running application.                     |
-| `inspect reload`   | `POST /reload`                     | Trigger a reload of all server workers.                                  |
-| `inspect shutdown` | `POST /shutdown`                   | Trigger a shutdown of all processes.                                     |
-| `inspect scale N`  | `POST /scale`<br>`{"replicas": N}` | Scale the number of workers. Where `N` is the target number of replicas. |
+| CLIコマンド            | HTTP アクション                     | 説明                            |
+| ------------------ | ------------------------------ | ----------------------------- |
+| `inspect`          | `GET /`                        | 実行中のアプリケーションに関する基本的な詳細を表示します。 |
+| `inspect reload`   | `POST /reload`                 | すべてのサーバワーカーのリロードをトリガーします。     |
+| `inspect shutdown` | `POST /shutdown`               | すべてのプロセスをシャットダウンします。          |
+| `inspect scale N`  | `POST /scale`<br>`{"レプリカ": N}` | ワーカーの数を調整します。 `N`がレプリカの対象数です。 |
 
-## Custom Commands
+## カスタムコマンド
 
-The Inspector is easily extendable to add custom commands (and endpoints).
+インスペクターは簡単に拡張でき、カスタムコマンド(およびエンドポイント)を追加できます。
 
-.. column::
+.. 列::
 
 ```
-Subclass the `Inspector` class and create arbitrary methods. As long as the method name is not preceded by an underscore (`_`), then the name of the method will be a new subcommand on the inspector.
+`Inspector` クラスをサブクラス化し、任意のメソッドを作成します。 メソッド名の前にアンダースコア(`_`)がない限り、 そして、このメソッドの名前は、インスペクタの新しいサブコマンドになります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -114,23 +114,23 @@ app = Sanic("TestApp", inspector_class=MyInspector, inspector=True)
 ```
 ````
 
-This will expose custom methods in the general pattern:
+これは一般的なパターンでカスタムメソッドを公開します。
 
-- CLI: `sanic inspect <method_name>`
+- CLI: `健全な検査 <method_name>`
 - HTTP: `POST /<method_name>`
 
-It is important to note that the arguments that the new method accepts are derived from how you intend to use the command. For example, the above `something` method accepts all positional and keyword based parameters.
+新しいメソッドが受け取る引数は、コマンドの使用方法に基づいていることに注意することが重要です。 例えば、上記の `something` メソッドは、すべての位置とキーワードベースのパラメータを受け取ります。
 
-.. column::
+.. 列::
 
 ```
-In the CLI, the positional and keyword parameters are passed as either positional or keyword arguments to your method. All values will be a `str` with the following exceptions:
+CLIでは、位置パラメータとキーワードパラメータが、メソッドに位置引数またはキーワード引数として渡されます。 すべての値は次の例外を持つ`str`になります:
 
-- A keyword parameter with no assigned value will be: `True`
-- Unless the parameter is prefixed with `no-`, then it will be: `False`
+- 代入されていないキーワードパラメータは次のようになります: `True`
+- パラメータが`no`で始まる場合を除きます。 次のようになります: `False`
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -143,13 +143,13 @@ In your application log console, you will see:
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-The same can be achieved by hitting the API directly. You can pass arguments to the method by exposing them in a JSON payload. The only thing to note is that the positional arguments should be exposed as `{"args": [...]}`.
+APIを直接押すことでも同様です。JSONペイロードで公開することでメソッドに引数を渡すことができます。 唯一の注意点は、位置引数は `{"args": [...] }` として公開されるべきであるということです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -163,25 +163,25 @@ In your application log console, you will see:
 ```
 ````
 
-## Using in production
+## プロダクションでの使用
 
-.. danger::
-
-```
-Before exposing the Inspector on a product, please consider all of the options in this section carefully.
-```
-
-When running Inspector on a remote production instance, you can protect the endpoints by requiring TLS encryption, and requiring API key authentication.
-
-### TLS encryption
-
-.. column::
+.. 危険::
 
 ```
-To the Inspector HTTP instance over TLS, pass the paths to your certificate and key.
+製品のインスペクターを公開する前に、このセクションのすべてのオプションを注意深く検討してください。
 ```
 
-.. column::
+リモート本番インスタンスでインスペクターを実行する場合、TLS 暗号化を要求し、API キー認証を必要とすることでエンドポイントを保護できます。
+
+### TLS 暗号化
+
+.. 列::
+
+```
+TLS を介してインスペクタの HTTP インスタンスには、証明書と鍵へのパスを渡します。
+```
+
+.. 列::
 
 ````
 ```python
@@ -190,13 +190,13 @@ app.config.INSPECTOR_TLS_KEY = "/path/to/key.pem"
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-This will require use of the `--secure` flag, or `https://`.
+`--secure` フラグまたは `https://` を使用する必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -207,15 +207,15 @@ curl https://<somewhere>:6457
 ```
 ````
 
-### API Key Authentication
+### API キー認証
 
-.. column::
+.. 列::
 
 ```
-You can secure the API with bearer token authentication.
+Bearer token authenticationでAPIをセキュリティ保護できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -223,23 +223,23 @@ app.config.INSPECTOR_API_KEY = "Super-Secret-200"
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-This will require the `--api-key` parameter, or bearer token authorization header.
+これには`--api-key` パラメータまたはベアラートトークン認証ヘッダが必要です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
 sanic inspect --api-key=Super-Secret-200
 ```
 ```sh
-curl http://localhost:6457  -H "Authorization: Bearer Super-Secret-200"
+curl http://localhost:6457 -H "Authorization: Bearer Super-Secret-200"
 ```
 ````
 
-## Configuration
+## 設定
 
-See [configuration](./configuration.md)
+[configuration](./configuration.md) を参照してください。

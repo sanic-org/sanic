@@ -3,7 +3,6 @@ name: Publish release
 on:
   release:
     types: [created]
-  workflow_dispatch:
 
 env:
   IS_TEST: false
@@ -70,7 +69,7 @@ jobs:
           tags="${tag_year}.${tag_month}"
 
           if [[ "${tag_month}" == "12" ]]; then
-            tags+=",LTS"
+            tags+=",lts"
             echo "::notice::Tag ${tag} is LTS version"
           else
             echo "::notice::Tag ${tag} is not LTS version"
@@ -123,7 +122,7 @@ jobs:
     name: Publish Docker / Python ${{ matrix.python-version }}
     needs: [generate_info, publish_package]
     runs-on: ubuntu-latest
-    if: ${{ needs.generate_info.IS_TEST == 'false' }}
+    if: ${{ needs.generate_info.outputs.is-test == 'false' }}
     strategy:
       fail-fast: true
       matrix:

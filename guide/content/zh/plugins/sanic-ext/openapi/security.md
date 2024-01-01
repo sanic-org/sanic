@@ -1,56 +1,56 @@
 ---
-title: Sanic Extensions - OAS Security Schemes
+title: 无声扩展——美洲国家组织的安全计划
 ---
 
-# Security Schemes
+# 安全方案
 
-To document authentication schemes, there are two steps.
+要记载认证计划，有两个步骤。
 
-_Security is only available starting in v21.12.2_
+_Security 仅在 v21.12.2_ 开始
 
-## Document the scheme
+## 记录方案
 
-.. column::
+.. 列:
 
 ````
-The first thing that you need to do is define one or more security schemes. The basic pattern will be to define it as:
+您需要做的第一件事是定义一个或多个安全方案。 基本模式将定义为：
 
-```python
+``python
 add_security_scheme("<NAME>", "<TYPE>")
 ```
 
-The `type` should correspond to one of the allowed security schemes: `"apiKey"`, `"http"`, `"oauth2"`, `"openIdConnect"`. You can then pass appropriate keyword arguments as allowed by the specification.
+`type` 应该对应于允许的安全方案之一：`"apiKey", `"http", `oauth2", `"openIdConnect"。 然后您可以通过指定允许的适当关键字参数。
 
-You should consult the [OpenAPI Specification](https://swagger.io/specification/) for details on what values are appropriate.
+您应该咨询[OpenAPI Specification](https://swagger.io/specification/) 了解什么值是合适的。
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.ext.openapi.add_security_scheme("api_key", "apiKey")
-app.ext.openapi.add_security_scheme(
+app.ext.openapi。 dd_security_scheme(
     "token",
     "http",
     scheme="bearer",
-    bearer_format="JWT",
+    bearer_form="JWT",
 )
-app.ext.openapi.add_security_scheme("token2", "http")
-app.ext.openapi.add_security_scheme(
-    "oldschool",
+应用。 xt.openapi.add_security_scheme("token2", "http")
+app.ext.openapi。 dd_security_scheme(
+    "老学校",
     "http",
     scheme="basic",
 )
-app.ext.openapi.add_security_scheme(
+app.ext.openapi。 dd_security_scheme(
     "oa2",
     "oauth2",
-    flows={
-        "implicit": {
-            "authorizationUrl": "http://example.com/auth",
-            "scopes": {
+    flows=own
+        "implicit": 哇，
+            "authorizationUrl": "http://example"。 om/auth”，
+            "scopes": Power
                 "on:two": "something",
-                "three:four": "something else",
-                "threefour": "something else...",
+                "the:four ": "some other",
+                "三": "其他东西. .",
             },
         }
     },
@@ -58,15 +58,15 @@ app.ext.openapi.add_security_scheme(
 ```
 ````
 
-## Document the endpoints
+## 记录终点
 
-.. column::
+.. 列:
 
 ```
-There are two options, document _all_ endpoints.
+有两个选项，文件 _all_endpoint。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -75,34 +75,34 @@ app.ext.openapi.secured("token")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Or, document only specific routes.
+或者只文档特定的路由。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.route("/one")
+@app。 oute("/one")
 async def handler1(request):
     """
     openapi:
-    ---
+    -
     security:
         - foo: []
-    """
+    ""”
 
-@app.route("/two")
+@app. oute("/tw")
 @openapi.secured("foo")
-@openapi.secured({"bar": []})
+@openapi。 普遍({"bar"：[]})
 @openapi.secured(baz=[])
-async def handler2(request):
+async def 处理器2(请求)：
     ...
 
-@app.route("/three")
-@openapi.definition(secured="foo")
+@app.route("/the")
+@openapi。 finition(secured="foo")
 @openapi.definition(secured={"bar": []})
 async def handler3(request):
     ...

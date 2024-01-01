@@ -1,47 +1,47 @@
 ---
-title: Sanic Extensions - Dependency Injection
+title: Sanic Extensions - 依存性インジェクション
 ---
 
-# Dependency Injection
+# 依存性インジェクション
 
-Dependency injection is a method to add arguments to a route handler based upon the defined function signature. Specifically, it looks at the **type annotations** of the arguments in the handler. This can be useful in a number of cases like:
+依存性インジェクションは、定義された関数署名に基づいてルートハンドラに引数を追加するメソッドです。 具体的には、ハンドラの引数の**型注釈**を見てみます。 これは以下のような場合に便利です。
 
-- Fetching an object based upon request headers (like the current session user)
-- Recasting certain objects into a specific type
-- Using the request object to prefetch data
-- Auto inject services
+- (現在のセッションユーザのような) リクエストヘッダに基づいてオブジェクトを取得しています
+- 特定のオブジェクトを特定の型に再作成する
+- リクエストオブジェクトを使用してデータを先読みする
+- 自動注入サービス
 
-The `Extend` instance has two basic methods on it used for dependency injection: a lower level `add_dependency`, and a higher level `dependency`.
+`Extend` インスタンスには、依存注入に使用される2つの基本的なメソッドがあります。下位レベルの `add_dependency` と上位レベルの `dependency` です。
 
-**Lower level**: `app.ext.add_dependency(...)`
+**低レベル**: `app.ext.add_dependency(...)`
 
-- `type: Type,`: some unique class that will be the type of the object
-- `constructor: Optional[Callable[..., Any]],` (OPTIONAL): a function that will return that type
+- `type: Type,`: オブジェクトの型になるいくつかの一意のクラス。
+- `constructor: Optional[Callable[..., Any]],` (OPTIONAL): その型を返す関数。
 
-**Higher level**: `app.ext.dependency(...)`
+**より高いレベル**: `app.ext.dependency(...)`
 
-- `obj: Any`: any object that you would like injected
-- `name: Optional[str]`: some name that could alternately be used as a reference
+- `obj: Any`: 注入したいすべてのオブジェクト
+- `name: Optional[str]`: 参照として交互に使用できるいくつかの名前
 
-Let's explore some use cases here.
+ここでいくつかのユースケースを見てみましょう。
 
-.. warning::
-
-```
-If you used dependency injection prior to v21.12, the lower level API method was called `injection`. It has since been renamed to `add_dependency` and starting in v21.12 `injection` is an alias for `add_dependency`. The `injection` method has been deprecated for removal in v22.6.
-```
-
-## Basic implementation
-
-The simplest use case would be simply to recast a value.
-
-.. column::
+.. 警告::
 
 ```
-This could be useful if you have a model that you want to generate based upon the matched path parameters.
+v21.12 より前に依存性インジェクションを使用した場合、下位レベルの API メソッドは `injection` と呼ばれました。 それ以降、`add_dependency`に名前が変更され、v21で始まります。 2 `injection`は`add_dependency`のエイリアスです。`injection`メソッドはv22.6の削除のために非推奨となりました。
 ```
 
-.. column::
+## 基本的な実装
+
+最も単純なユースケースは、単に値を再キャストすることです。
+
+.. 列::
+
+```
+これは、マッチしたパスパラメータに基づいて生成するモデルがある場合に便利です。
+```
+
+.. 列::
 
 ````
 ```python
@@ -65,13 +65,13 @@ You chose Chocolate (Yum!)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-This works by passing a keyword argument to the constructor of the `type` argument. The previous example is equivalent to this.
+これは、`type`引数のコンストラクタにキーワード引数を渡すことで動作します。前の例はこれと同じです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -79,17 +79,17 @@ flavor = IceCream(flavor="chocolate")
 ```
 ````
 
-## Additional constructors
+## 追加のコンストラクター
 
-.. column::
+.. 列::
 
 ```
-Sometimes you may need to also pass a constructor. This could be a function, or perhaps even a classmethod that acts as a constructor. In this example, we are creating an injection that will call `Person.create` first.
+コンストラクタを渡す必要がある場合もあります。これは関数や、コンストラクタとして動作するclassメソッドであってもよいでしょう。 この例では、`Person を呼び出す注入を作成しています。 最初に「やり直す」。
 
-Also important to note on this example, we are actually injecting **two (2)** objects! It of course does not need to be this way, but we will inject objects based upon the function signature.
+この例でも重要なことは、実際に **two (2)** オブジェクトを注入していることです! もちろん、このようにする必要はありませんが、関数署名に基づいてオブジェクトを注入します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -125,23 +125,23 @@ Person(person_id=PersonID(person_id=123), name='noname', age=111)
 ```
 ````
 
-When a `constructor` is passed to `ext.add_dependency` (like in this example) that will be called. If not, then the object will be created by calling the `type`. A couple of important things to note about passing a `constructor`:
+`constructor` が ext.add_dependency`(この例のように) に渡されたときに呼び出されます。 そうでない場合は、`type`を呼び出してオブジェクトを作成します。`constructor\`を渡すことについて、いくつかの重要なことに注意してください。
 
-1. A positional `request: Request` argument is _usually_ expected. See the `Person.create` method above as an example using a `request` and [arbitrary constructors](#arbitrary-constructors) for how to use a callable that does not require a `request`.
-2. All matched path parameters are injected as keyword arguments.
-3. Dependencies can be chained and nested. Notice how in the previous example the `Person` dataclass has a `PersonID`? That means that `PersonID` will be called first, and that value is added to the keyword arguments when calling `Person.create`.
+1. 位置`request: Request`引数は通常、期待されています。 `Person を見なさい。 上記の reate` メソッドは、`request` と format@@0(#arbitrary-constructors) を使用して、`request` を必要としない呼び出し元を使用する方法を例としています。
+2. マッチしたパスパラメータはすべてキーワード引数として注入されます。
+3. 依存関係はチェーンとネストが可能です。 前の例では、 `Person` dataclass が `PersonID` になっていることに注意してください。 つまり、 `PersonID` が最初に呼び出され、 `Person.create` を呼び出すときにその値がキーワード引数に追加されます。
 
-## Arbitrary constructors
+## 任意のコンストラクター
 
-.. column::
+.. 列::
 
 ```
-Sometimes you may want to construct your injectable _without_ the `Request` object. This is useful if you have arbitrary classes or functions that create your objects. If the callable does have any required arguments, then they should themselves be injectable objects.
+時々、注入可能な _without_ を `Request` オブジェクトにしたいと思うかもしれません。 これは、オブジェクトを作成する任意のクラスや関数がある場合に便利です。 callable が必要な引数を持っている場合は、それ自体が注入可能なオブジェクトである必要があります。
 
-This is very useful if you have services or other types of objects that should only exist for the lifetime of a single request. For example, you might use this pattern to pull a single connection from your database pool.
+これは、単一のリクエストの寿命のためにのみ存在すべきサービスやその他のタイプのオブジェクトがある場合に非常に便利です。 たとえば、このパターンを使用して、データベース プールから単一の接続をプルすることができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -161,11 +161,11 @@ async def handler(request: Request, beta: Beta):
 ```
 ````
 
-_Added in v22.9_
+_v22.9_に追加されました
 
-## Objects from the `Request`
+## `Request`からのオブジェクト
 
-.. column::
+.. 列::
 
 ````
 Sometimes you may want to extract details from the request and preprocess them. You could, for example, cast the request JSON to a Python object, and then add some additional logic based upon DB queries.
@@ -187,7 +187,7 @@ Sometimes you may want to extract details from the request and preprocess them. 
     In this example, we are using the `Request` object in the `compile_profile` constructor to run a fake DB query to generate and return a `UserProfile` object.
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -243,19 +243,19 @@ $ curl localhost:8000/profile -X PATCH -d '{"name": "Alice", "birthday": "2000-0
 ```
 ````
 
-## Injecting services
+## 注入サービス
 
-It is a common pattern to create things like database connection pools and store them on the `app.ctx` object. This makes them available throughout your application, which is certainly a convenience. One downside, however, is that you no longer have a typed object to work with. You can use dependency injections to fix this. First we will show the concept using the lower level `add_dependency` like we have been using in the previous examples. But, there is a better way using the higher level `dependency` method.
+データベース接続プールのようなものを作成し、 `app.ctx` オブジェクトに保存するのは一般的なパターンです。 これにより、アプリケーション全体で利用可能になります。これは確かに便利です。 しかし欠点の一つは、もはや一緒に作業する型付けされたオブジェクトを持っていないことです。 依存性注入を使用してこれを修正できます。 最初に、先ほどの例で使ったように、下位レベルの `add_dependency` を使ってコンセプトを示します。 しかし、より高いレベルの `dependency` メソッドを使うより良い方法があります。
 
-### The lower level API using `add_dependency`
+### `add_dependency`を使用する下位レベルのAPI。
 
-.. column::
+.. 列::
 
 ```
-This works very similar to the [last example](#objects-from-the-request) where the goal is the extract something from the `Request` object. In this example, a database object was created on the `app.ctx` instance, and is being returned in the dependency injection constructor.
+これは format@@0(#objects-from-the-request) に非常によく似ています。目的は `Request` オブジェクトから何かを抽出することです。 この例では、データベースオブジェクトが `app.ctx` インスタンス上に作成され、依存性インジェクションコンストラクタで返されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -284,17 +284,17 @@ result
 ```
 ````
 
-### The higher level API using `dependency`
+### `dependency`を使用するより高いレベルのAPI。
 
-.. column::
+.. 列::
 
 ```
-Since we have an actual *object* that is available when adding the dependency injection, we can use the higher level `dependency` method. This will make the pattern much easier to write.
+依存性注入を追加するときに利用できる実際の *object* があるので、より高いレベルの `dependency` メソッドを使用できます。 これにより、パターンが書けるようになります。
 
-This method should always be used when you want to inject something that exists throughout the lifetime of the application instance and is not request specific. It is very useful for services, third party clients, and connection pools since they are not request specific.
+アプリケーションインスタンスの寿命を通じて存在し、特定の要求ではない何かを注入する場合は、このメソッドを常に使用する必要があります。 特定の要求ではないため、サービス、サードパーティクライアント、および接続プールに非常に便利です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -318,17 +318,17 @@ result
 ```
 ````
 
-## Generic types
+## 一般的なタイプ
 
-Be carefule when using a [generic type](https://docs.python.org/3/library/typing.html#typing.Generic). The way that Sanic's dependency injection works is by matching the entire type definition. Therefore, `Foo` is not the same as `Foo[str]`. This can be particularly tricky when trying to use the [higher-level `dependency` method](#the-higher-level-api-using-dependency) since the type is inferred.
+format@@0(https\://docs.python.org/3/library/typing.html#typing.Generic)を使用するときは、気をつけてください。 Sanicの依存性注入が機能する方法は、型の定義全体に一致することです。 したがって、`Foo` は `Foo[str] ` と同じではありません。 型が推測されるので、format@@0(#the-higher-level-api-using-dependency) を使用しようとすると、これは特に難しいことがあります。
 
-.. column::
+.. 列::
 
 ```
-For example, this will **NOT** work as expected since there is no definition for `Test[str]`.
+例えば、`Test[str] `の定義がないため、これは **期待通りに動作しません** 。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -349,13 +349,13 @@ def test(request, test: Test[str]):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-To get this example to work, you will need to add an explicit definition for the type you intend to be injected.
+この例を動作させるには、注入するタイプの明示的な定義を追加する必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -377,15 +377,15 @@ def test(request, test: Test[str]):
 ```
 ````
 
-## Configuration
+## 設定
 
-.. column::
+.. 列::
 
 ```
-By default, dependencies will be injected after the `http.routing.after` [signal](../../guide/advanced/signals.md#built-in-signals). Starting in v22.9, you can change this to the `http.handler.before` signal.
+デフォルトでは、依存関係は `http.routing.after` [signal](../../guide/advanced/signals.md#built-in-signals) の後に注入されます。v22.9 以降は、`http.handler.before` 信号に変更できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -393,4 +393,4 @@ app.config.INJECTION_SIGNAL = "http.handler.before"
 ```
 ````
 
-_Added in v22.9_
+_v22.9_に追加されました

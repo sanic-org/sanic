@@ -1,27 +1,27 @@
-# Listeners
+# リスナー
 
-Sanic provides you with eight (8) opportunities to inject an operation into the life cycle of your application server. This does not include the [signals](../advanced/signals.md), which allow further injection customization.
+Sanicは、アプリケーションサーバーのライフサイクルにオペレーションを注入する8つの(8)機会を提供します。 これには [signals](../advanced/signals.md) は含まれません。
 
-There are two (2) that run **only** on your main Sanic process (ie, once per call to `sanic server.app`.)
+メインの Sanic プロセスで **のみ** を実行する (2) が2つあります (例: `sanic server.app` を呼び出すごとに1回です)。
 
 - `main_process_start`
 - `main_process_stop`
 
-There are also two (2) that run **only** in a reloader process if auto-reload has been turned on.
+自動リロードがオンになっている場合、リローダープロセスで **のみ** 動作する (2) もあります。
 
 - `reload_process_start`
 - `reload_process_stop`
 
-_Added `reload_process_start` and `reload_process_stop` in v22.3_
+_v22.3_ に `reload_process_start` と `reload_process_stop` を追加しました
 
-There are four (4) that enable you to execute startup/teardown code as your server starts or closes.
+サーバーが起動または終了すると、起動/分解コードを実行することができる4つの(4)があります。
 
 - `before_server_start`
 - `after_server_start`
 - `before_server_stop`
 - `after_server_stop`
 
-The life cycle of a worker process looks like this:
+ワーカープロセスのライフサイクルは次のようになります。
 
 .. mermaid::
 
@@ -70,7 +70,7 @@ end
 Note over Process: exit
 ```
 
-The reloader process live outside of this worker process inside of a process that is responsible for starting and stopping the Sanic processes. Consider the following example:
+Sanicプロセスの開始と停止を担当するプロセスの中で、このワーカープロセスの外で再ローダープロセスが稼働しています。 次の例を考えてみましょう:
 
 ```python
 @app.reload_process_start
@@ -86,19 +86,19 @@ async def before_start(*_):
 	print(">>>>>> before_start <<<<<<")
 ```
 
-If this application were run with auto-reload turned on, the `reload_start` function would be called once when the reloader process starts. The `main_start` function would also be called once when the main process starts. **HOWEVER**, the `before_start` function would be called once for each worker process that is started, and subsequently every time that a file is saved and the worker is restarted.
+このアプリケーションが自動再読み込みをオンにして実行された場合、`reload_start` 関数は、リローダーのプロセスが開始されたときに呼び出されます。 メインプロセスが開始されると、 `main_start` 関数も呼び出されます。 **HOWEVER**、`before_start` 関数は、開始されるワーカープロセスごとに1回呼び出されます。 その後、ファイルが保存されワーカーが再起動されるたびに実行されます。
 
-## Attaching a listener
+## リスナーをアタッチする
 
-.. column::
+.. 列::
 
 ```
-The process to setup a function as a listener is similar to declaring a route.
+リスナーとして関数をセットアップするプロセスは、route (ルート)を宣言するプロセスと似ています。
 
-The currently running `Sanic()` instance is injected into the listener.
+現在実行されている `Sanic()` インスタンスはリスナーに挿入されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -109,13 +109,13 @@ app.register_listener(setup_db, "before_server_start")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-The `Sanic` app instance also has a convenience decorator.
+`Sanic`アプリインスタンスには、利便性のデコレータもあります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -125,13 +125,13 @@ async def setup_db(app):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Prior to v22.3, both the application instance and the current event loop were injected into the function. However, only the application instance is injected by default. If your function signature will accept both, then both the application and the loop will be injected as shown here.
+v22.3 より前には、アプリケーションインスタンスとカレントイベントループの両方が関数に注入されました。 ただし、デフォルトではアプリケーションインスタンスのみが注入されます。 関数署名が両方を受け入れる場合は、ここで示すようにアプリケーションとループの両方が注入されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -141,13 +141,13 @@ async def setup_db(app, loop):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can shorten the decorator even further. This is helpful if you have an IDE with autocomplete.
+デコレータをさらに短くすることができます。オートコンプリート付きの IDE がある場合に便利です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -157,22 +157,22 @@ async def setup_db(app):
 ```
 ````
 
-## Order of execution
+## 実行の順序
 
-Listeners are executed in the order they are declared during startup, and reverse order of declaration during teardown
+リスナーは起動時に宣言された順に実行され、分解中に宣言された順に逆順になります。
 
-|                       | Phase           | Order         |
-| --------------------- | --------------- | ------------- |
-| `main_process_start`  | main startup    | regular 🙂 ⬇️ |
-| `before_server_start` | worker startup  | regular 🙂 ⬇️ |
-| `after_server_start`  | worker startup  | regular 🙂 ⬇️ |
-| `before_server_stop`  | worker shutdown | 🙃 ⬆️ reverse |
-| `after_server_stop`   | worker shutdown | 🙃 ⬆️ reverse |
-| `main_process_stop`   | main shutdown   | 🙃 ⬆️ reverse |
+|                       | 段階      | ご注文           |
+| --------------------- | ------- | ------------- |
+| `main_process_start`  | メインの起動  | regular 🙂 ⬇️ |
+| `before_server_start` | ワーカーの起動 | regular 🙂 ⬇️ |
+| `after_server_start`  | ワーカーの起動 | regular 🙂 ⬇️ |
+| `before_server_stop`  | ワーカーの停止 | 🙃 ⬆️         |
+| `after_server_stop`   | ワーカーの停止 | 🙃 ⬆️         |
+| `main_process_stop`   | メインシャット | 🙃 ⬆️         |
 
-Given the following setup, we should expect to see this in the console if we run two workers.
+次の設定を考えると、2つのworker を実行した場合、コンソールでこれを確認する必要があります。
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -210,7 +210,7 @@ async def listener_8(app, loop):
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -251,27 +251,27 @@ In the above example, notice how there are three processes running:
 .. tip:: FYI
 
 ```
-The practical result of this is that if the first listener in `before_server_start` handler setups a database connection, listeners that are registered after it can rely upon that connection being alive both when they are started and stopped.
+実際の結果は、 `before_server_start` ハンドラの最初のリスナーがデータベース接続を設定する場合です。 その後登録されたリスナーはその接続が生きていることに頼ることができます 開始時と停止時の両方。
 ```
 
-### Priority
+### 優先度
 
 .. new:: v23.12
 
 ```
-In v23.12, the `priority` keyword argument was added to listeners. This allows for fine-tuning the order of execution of listeners. The default priority is `0`. Listeners with a higher priority will be executed first. Listeners with the same priority will be executed in the order they were registered. Furthermore, listeners attached to the `app` instance will be executed before listeners attached to a `Blueprint` instance.
+v23.12 では `priority` キーワード引数がリスナーに追加されました。これによりリスナーの実行順序を微調整できます。 デフォルトの優先度は `0` です。優先度が高いリスナーは最初に実行されます。 同じ優先度を持つリスナーは、登録された順に実行されます。 さらに、 `app` インスタンスにアタッチされたリスナーは、 `Blueprint` インスタンスにアタッチされたリスナーの前に実行されます。
 ```
 
-Overall the rules for deciding the order of execution are as follows:
+全体的に実行の順序を決定するためのルールは次のとおりです。
 
-1. Priority in descending order
-2. Application listeners before Blueprint listeners
-3. Registration order
+1. 降順の優先度
+2. Blueprint リスナーより前のアプリのリスナー
+3. 登録注文
 
-.. column::
+.. 列::
 
 ````
-As an example, consider the following, which will print:
+一例として、以下のようなものを考えてみましょう。 これは
 
 ```bash
 third
@@ -279,12 +279,12 @@ bp_third
 second
 bp_second
 first
-fourth
+fth
 bp_first
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -320,11 +320,11 @@ app.blueprint(bp)
 ```
 ````
 
-## ASGI Mode
+## ASGI モード
 
-If you are running your application with an ASGI server, then make note of the following changes:
+ASGI サーバーでアプリケーションを実行している場合は、次の変更を確認してください。
 
-- `reload_process_start` and `reload_process_stop` will be **ignored**
-- `main_process_start` and `main_process_stop` will be **ignored**
-- `before_server_start` will run as early as it can, and will be before `after_server_start`, but technically, the server is already running at that point
-- `after_server_stop` will run as late as it can, and will be after `before_server_stop`, but technically, the server is still running at that point
+- `reload_process_start` と `reload_process_stop` は **無視されます**
+- `main_process_start` と `main_process_stop` は **無視されます**
+- `before_server_start` はできるだけ早く実行され、`after_server_start` の前に実行されますが、技術的にはその時点で既に実行されています
+- `after_server_stop` はできるだけ遅く実行され、`before_server_stop` の後になりますが、技術的には、サーバーはその時点で動作しています。

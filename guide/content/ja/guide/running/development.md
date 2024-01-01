@@ -1,12 +1,12 @@
-# Development
+# 開発
 
-The first thing that should be mentioned is that the webserver that is integrated into Sanic is **not** just a development server.
+最初に言及すべきことは、Sanicに統合されているWebサーバーは開発サーバーだけではないということです。
 
-It is production ready out-of-the-box, _unless you enable in debug mode_.
+_デバッグモード_で有効にしない限り、プロダクションはすぐにすぐに準備ができています。
 
-## Debug mode
+## デバッグモード
 
-By setting the debug mode, Sanic will be more verbose in its output and will disable several run-time optimizations.
+デバッグモードを設定すると、Sanicは出力をより冗長にし、複数のランタイム最適化を無効にします。
 
 ```python
 # server.py
@@ -21,48 +21,48 @@ async def hello_world(request):
 ```
 
 ```sh
-sanic server:app --host=0.0.0.0 --port=1234 --debug
+sanic server:app --host=0.0.0 --port=1234 --debug
 ```
 
-.. danger::
+.. 危険::
 
 ```
-Sanic's debug mode will slow down the server's performance, and is **NOT** intended for production environments.
+Sanicのデバッグモードはサーバーのパフォーマンスを低下させ、本番環境向けではありません。
 
-**DO NOT** enable debug mode in production.
+**本番環境でデバッグモードを有効にしないでください** 。
 ```
 
-## Automatic Reloader
+## 自動リローダー
 
-.. column::
+.. 列::
 
 ```
-Sanic offers a way to enable or disable the Automatic Reloader. The easiest way to enable it is using the CLI's `--reload` argument to activate the Automatic Reloader. Every time a Python file is changed, the reloader will restart your application automatically. This is very convenient while developing.
+Sanicは自動リロードを有効または無効にする方法を提供します。 それを有効にする最も簡単な方法は、CLIの`--reload`引数を使用して自動リロードを有効にすることです。 Pythonファイルが変更されるたびに、リローダーはアプリケーションを自動的に再起動します。 これは開発中に非常に便利です。
 
-.. note:: 
+.. Note:: 
 
-    The reloader is only available when using Sanic's [worker manager](./manager.md). If you have disabled it using `--single-process` then the reloader will not be available to you.
+    このリローダーはSanicの[worker manager]()を使用している場合にのみ利用できます。 `--single-process` を使用して無効にした場合、再ローダーは利用できません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
 sanic path.to:app --reload
 ```
-You can also use the shorthand property
+簡体字プロパティ
 ```sh
 sanic path.to:app -r
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-If you have additional directories that you would like to automatically reload on file save (for example, a directory of HTML templates), you can add that using `--reload-dir`.
+ファイル保存時に自動的にリロードしたい追加のディレクトリがある場合(例: HTML テンプレートのディレクトリ) `--reload-dir` を使用して追加できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -74,21 +74,21 @@ sanic path.to:app -r -R /path/to/one -R /path/to/two
 ```
 ````
 
-## Development REPL
+## 開発REPL
 
 .. new:: v23.12
 
 ```
-The Sanic CLI comes with a REPL (aka "read-eval-print loop") that can be used to interact with your application. This is useful for debugging and testing. A REPL is the interactive shell that you get when you run `python` without any arguments.
+Sanic CLI には、アプリケーションとやり取りするために使用できる REPL (別名「read-eval-print loop」)が付属しています。 これはデバッグとテストに役立ちます。REPL は引数なしで `python` を実行するときに得られる対話型シェルです。
 ```
 
-.. column::
+.. 列::
 
 ```
-You can start the REPL by passing the `--repl` argument to the Sanic CLI.
+Sanic CLI に `--repl` 引数を渡すことで、REPL を開始できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -96,13 +96,13 @@ sanic path.to.server:app --repl
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Or, perhaps more conveniently, when you run `--dev`, Sanic will automatically start the REPL for you. However, in this case you might be prompted to hit the "ENTER" key before actually starting the REPL.
+もしくは、 `--dev`を実行すると、Sanicは自動的にREPLを開始します。 ただし、この場合、REPLを実際に開始する前に「ENTER」キーを押すように求められる場合があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -112,22 +112,22 @@ sanic path.to.server:app --dev
 
 ![](/assets/images/repl.png)
 
-As seen in the screenshot above, the REPL will automatically add a few variables to the global namespace. These are:
+上のスクリーンショットで見られるように、REPL は自動的にいくつかの変数をグローバル名前空間に追加します。 これらは次のとおりです。
 
-- `app` - The Sanic application instance. This is the same instance that is passed to the `sanic` CLI.
-- `sanic` - The `sanic` module. This is the same module that is imported when you run `import sanic`.
-- `do` - A function that will create a mock `Request` object and pass it to your application. This is useful for testing your application from the REPL.
-- `client` - An instance of `httpx.Client` that is configured to make requests to your application. This is useful for testing your application from the REPL. **Note:** This is only available if `httpx` is installed in your environment.
+- `app` - Sanic applicationインスタンス。 これは、`sanic` CLI に渡されるのと同じインスタンスです。
+- `sanic` - `sanic`モジュール。 `import sanic` を実行したときにインポートされたモジュールと同じです。
+- `do` - モック`Request`オブジェクトを作成し、アプリケーションに渡す関数。 これは、REPLからアプリケーションをテストする場合に便利です。
+- `client` - アプリケーションへのリクエストを行うように設定された `httpx.Client` のインスタンス。 これは、REPLからアプリケーションをテストする場合に便利です。 **注意:** これはあなたの環境で `httpx` がインストールされている場合にのみ利用できます。
 
-### Async/Await support
+### Async/Await サポート
 
-.. column::
+.. 列::
 
 ```
-The REPL supports `async`/`await` syntax. This means that you can use `await` in the REPL to wait for asynchronous operations to complete. This is useful for testing asynchronous code.
+REPL は `async`/`await` 構文をサポートしています。つまり、REPL で `await` を使用して非同期操作が完了するまで待つことができます。 これは非同期コードのテストに便利です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -136,23 +136,23 @@ The REPL supports `async`/`await` syntax. This means that you can use `await` in
 ```
 ````
 
-### The `app` variable
+### 変数 `app`
 
-You need to keep in mind that the `app` variable is your app instance as it existed when the REPL was started. It is the instance that is loaded when running the CLI command. This means that any changes that are made to your source code and subsequently reloaded in the workers will not be reflected in the `app` variable. If you want to interact with the reloaded app instance, you will need to restart the REPL.
+`app` 変数は、REPL が起動されたときに存在するため、アプリのインスタンスであることに注意してください。 これは、CLI コマンドを実行するときにロードされるインスタンスです。 つまり、ソースコードに加えられ、ワーカーにリロードされた変更は、 `app` 変数には反映されません。 リロードされたアプリケーション・インスタンスとやり取りしたい場合は、REPLを再起動する必要があります。
 
-However, it is also very useful to have access to the original app instance in the REPL for adhoc testing and debugging.
+しかし、アドホックのテストとデバッグのためにREPLの元のアプリケーション・インスタンスにアクセスできることも非常に便利です。
 
-### The `client` variable
+### `client` 変数
 
-When [httpx](https://www.python-httpx.org/) is installed in your environment, the `client` variable will be available in the REPL. This is an instance of `httpx.Client` that is configured to make requests to your running application.
+[httpx](https://www.python-httpx.org/) があなたの環境にインストールされている場合、`client` 変数はREPLで利用可能になります。 これは実行中のアプリケーションへのリクエストを行うように設定された `httpx.Client` のインスタンスです。
 
-.. column::
+.. 列::
 
 ```
-To use it, simply call one of the HTTP methods on the client. See the [httpx documentation](https://www.python-httpx.org/api/#client) for more information.
+これを使用するには、クライアントの HTTP メソッドのいずれかを呼び出してください。詳細については、[httpx documentation](https://www.python-httpx.org/api/#client) を参照してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -161,50 +161,50 @@ To use it, simply call one of the HTTP methods on the client. See the [httpx doc
 ```
 ````
 
-### The `do` function
+### `do` 関数
 
-As discussed above, the `app` instance exists as it did at the time the REPL was started, and as was modified inside the REPL. Any changes to the instance that cause a server to be reloaded will not be reflected in the `app` variable. This is where the `do` function comes in.
+上で説明したように、REPLが開始された時と同様に、`app` インスタンスが存在し、REPL内で変更されました。 サーバーを再ロードさせるインスタンスへの変更は、 `app` 変数には反映されません。 `do`関数が入ってくるところです。
 
-Let's say that you have modified your application inside the REPL to add a new route:
+新しいルートを追加するために REPL 内のアプリケーションを変更したとします。
 
 ```python
 >>> @app.get("/new-route")
 ... async def new_route(request):
-...     return sanic.json({"hello": "world"})
+... return sanic.json({"hello": "world"})
 ...
->>>
+ >>format@@4
 ```
 
-You can use the `do` function to mock out a request, and pass it to the application as if it were a real HTTP request. This will allow you to test your new route without having to restart the REPL.
+`do` 関数を使ってリクエストをモックし、アプリケーションに実際の HTTP リクエストのように渡すことができます。 これにより、REPLを再起動せずに新しいルートをテストすることができます。
 
 ```python
 >>> await do("/new-route")
 Result(request=<Request: GET /new-route>, response=<JSONResponse: 200 application/json>)
 ```
 
-The `do` function returns a `Result` object that contains the `Request` and `Response` objects that were returned by your application. It is a `NamedTuple`, so you can access the values by name:
+`do` 関数は、アプリケーションから返された `Request` と `Response` オブジェクトを含む `Result` オブジェクトを返します。 `NamedTuple`ですので、名前で値にアクセスできます:
 
 ```python
 >>> result = await do("/new-route")
 >>> result.request
 <Request: GET /new-route>
->>> result.response
+>>response
 <JSONResponse: 200 application/json>
 ```
 
-Or, by destructuring the tuple:
+または、タプルを分割することによって:
 
 ```python
->>> request, response = await do("/new-route")
->>> request
+>>> リクエスト、応答 = await do("//new-route")
+>>> リクエスト
 <Request: GET /new-route>
->>> response
+>>応答
 <JSONResponse: 200 application/json>
 ```
 
-### When to use `do` vs `client`?
+### `do` vs `client` はいつ使えばいいですか？
 
-.. column::
+.. 列::
 
 ```
 **Use `do` when ...**
@@ -214,7 +214,7 @@ Or, by destructuring the tuple:
 - You make a change to your application inside the REPL
 ```
 
-.. column::
+.. 列::
 
 ```
 **Use `client` when ...**
@@ -224,45 +224,45 @@ Or, by destructuring the tuple:
 - You want to send an actual HTTP request to your application
 ```
 
-_Added in v23.12_
+_v23.12_ に追加されました
 
-## Complete development mode
+## 開発モードを完了
 
-.. column::
+.. 列::
 
 ```
-If you would like to be in debug mode **and** have the Automatic Reloader running, you can pass `dev=True`. This is equivalent to **debug + auto reload**.
+デバッグモードにしたい場合は、自動リロードを実行している**と**、`dev=True`を渡すことができます。 これは**debug + auto reload**と同等です。
 
-*Added in v22.3*
+*v22.3*に追加されました
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
 sanic path.to:app --dev
 ```
-You can also use the shorthand property
+簡体字プロパティ
 ```sh
 sanic path.to:app -d
-```
+ ``` も使用できます。
 ````
 
 .. new:: v23.12
 
 ```
-Added to the `--dev` flag in v23.12 is the ability to start a REPL. See the [Development REPL](./development.md#development-repl) section for more information.
+`--dev` フラグに v23.12 を追加すると、REPLを開始することができます。format@@0()を参照してください。 詳細は development.md#development-repl) セクションを参照してください。
 
-As of v23.12, the `--dev` flag is roughly equivalent to `--debug --reload --repl`. Using `--dev` will require you to expressly begin the REPL by hitting "ENTER", while passing the `--repl` flag explicitly starts it.
+V23 の時点。 2, `--dev` フラグは `--debug --reload --repl` とほぼ同じです。 `--dev` を使用すると、明示的に `--repl` フラグを渡すと、REPL を開始する必要があります。
 ```
 
-.. column::
+.. 列::
 
 ```
-If you would like to disable the REPL while using the `--dev` flag, you can pass `--no-repl`.
+`--dev`フラグを使用してREPLを無効にしたい場合は、`--no-repl`を渡すことができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -270,19 +270,19 @@ sanic path.to:app --dev --no-repl
 ```
 ````
 
-## Automatic TLS certificate
+## 自動 TLS 証明書
 
-When running in `DEBUG` mode, you can ask Sanic to handle setting up localhost temporary TLS certificates. This is helpful if you want to access your local development environment with `https://`.
+`DEBUG`モードで実行している場合、Sanicに、localhostの一時的なTLS証明書の設定を処理するよう依頼できます。 これは、`https://`でローカル開発環境にアクセスしたい場合に役立ちます。
 
-This functionality is provided by either [mkcert](https://github.com/FiloSottile/mkcert) or [trustme](https://github.com/python-trio/trustme). Both are good choices, but there are some differences. `trustme` is a Python library and can be installed into your environment with `pip`. This makes for easy envrionment handling, but it is not compatible when running a HTTP/3 server. `mkcert` might be a more involved installation process, but can install a local CA and make it easier to use.
+この機能は [mkcert](https://github.com/FiloSottile/mkcert) または [trustme](https://github.com/python-trio/trustme) のいずれかで提供されています。 どちらも良い選択ですが、いくつかの違いがあります。 `trustme`はPythonライブラリで、`pip`を使って環境にインストールできます。 これにより、envrionment の処理が簡単になりますが、HTTP/3 サーバーの実行時は互換性がありません。 `mkcert` はインストールプロセスにより複雑なものかもしれませんが、ローカルの CA をインストールして使いやすくすることができます。
 
-.. column::
+.. 列::
 
 ```
-You can choose which platform to use by setting `config.LOCAL_CERT_CREATOR`. When set to `"auto"`, it will select either option, preferring `mkcert` if possible.
+`config.LOCAL_CERT_CREATOR` を設定することで、使用するプラットフォームを選択できます。`"auto"`に設定すると、可能な場合は `mkcert` を優先して、どちらかのオプションを選択します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -292,13 +292,13 @@ app.config.LOCAL_CERT_CREATOR = "trustme"
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Automatic TLS can be enabled at Sanic server run time:
+Sanic サーバーの実行時間で自動的な TLS を有効にできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -306,10 +306,10 @@ sanic path.to.server:app --auto-tls --debug
 ```
 ````
 
-.. warning::
+.. 警告::
 
 ```
-Localhost TLS certificates (like those generated by both `mkcert` and `trustme`) are **NOT** suitable for production environments. If you are not familiar with how to obtain a *real* TLS certificate, checkout the [How to...](../how-to/tls.md) section.
+ローカルホストの TLS 証明書 (`mkcert` と `trustme` の両方によって生成された証明書) は、本番環境には適していません。 *real* TLS 証明書の取得方法がわからない場合は、[How to...](../how-to/tls.md) セクションをチェックしてください。
 ```
 
-_Added in v22.6_
+_v22.6_に追加されました

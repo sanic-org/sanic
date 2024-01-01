@@ -1,257 +1,257 @@
-# Sanic Community Organization Policy E-manual (SCOPE)
+# Sanic Community Organization ポリシー E-manual (SCOPE)
 
 .. attrs::
-:class: is-size-7
+:class: is size-7
 
 ```
-_December 2019, version 1_
+_2019年12月バージョン1_
 ```
 
-## Goals
+## 目標
 
-To create a sustainable, community-driven organization around the Sanic projects that promote: (1) stability and predictability, (2) quick iteration and enhancement cycles, (3) engagement from outside contributors, (4) overall reliable software, and (5) a safe, rewarding environment for the community members.
+Sanicプロジェクトで促進される持続可能でコミュニティ主導の組織を作るために、(1)安定性と予測可能性、(2)反復性とエンハンスメントサイクルを促進する。 (3)外部からの関与、(4)全体的な信頼性の高いソフトウェア、(5)コミュニティメンバーにとって安全でやりがいのある環境。
 
-## Overview
+## 概要
 
-This Policy is the governance model for the Sanic Community Organization (“SCO”). The SCO is a meritocratic, consensus-based community organization responsible for all projects adopted by it. Anyone with an interest in one of the projects can join the community, contribute to the community or projects, and participate in the decision making process. This document describes how that participation takes place and how to set about earning merit within the project community.
+本ポリシーは、Sanic Community Organization (以下「SCO」)のガバナンスモデルです。 SCOは、それによって採択されたすべてのプロジェクトに対して責任を負う、合意に基づくメリットがあるコミュニティ組織です。 プロジェクトのいずれかに興味がある人は誰でもコミュニティに参加できます。 コミュニティやプロジェクトに貢献し、意思決定プロセスに参加する。 このドキュメントでは、その参加がどのように行われ、プロジェクトコミュニティ内でどのようにメリットを得るかについて説明します。
 
-## Structure
+## 構成
 
-The SCO has multiple **projects**. Each project is represented by a single GitHub repository under the Sanic community umbrella. These projects are used by **users**, developed by **contributors**, governed by **core developers**, released by **release managers**, and ultimately overseen by a **steering council**. If this sounds similar to the Python project and PEP 8016 that is because it is intentionally designed that way.
+SCOには複数の**プロジェクト**があります。 各プロジェクトは、Sanic community の傘下にある GitHub リポジトリによって表されます。 これらのプロジェクトは**ユーザー**によって開発された**貢献者**によって**解放マネージャー**によってリリースされ、**ステアリング評議会**によって最終的に監督される**コア開発者**によって管理されています。 これが Python プロジェクトや PEP 8016 に似ている場合は、意図的にそのように設計されているためです。
 
-## Roles and responsibilities
+## 役割と責任
 
-### Users
+### ユーザー
 
-Users are community members who have a need for the projects. They are the developers and personnel that download and install the packages. Users are the **most important** members of the community and without them the projects would have no purpose. Anyone can be a user and the licenses adopted by the projects shall be appropriate open source licenses.
+ユーザーはプロジェクトを必要とするコミュニティメンバーです。 彼らは、パッケージをダウンロードしてインストールする開発者や人員です。 ユーザーはコミュニティの**最も重要な**メンバーであり、それがなければプロジェクトは何の目的もありません。 誰でも利用者であり、プロジェクトによって採用されたライセンスは、適切なオープンソースライセンスでなければなりません。
 
-_The SCO asks its users to participate in the project and community as much as possible._
+_SCOはできるだけ多くのプロジェクトとコミュニティに参加するようユーザーに要求します。_
 
-User contributions enable the project team to ensure that they are satisfying the needs of those users. Common user contributions include (but are not limited to):
+ユーザー貢献により、プロジェクトチームはそれらのユーザーのニーズを確実に満たすことができます。 一般的なユーザーの貢献には以下のものが含まれます(これらに限定されません)。
 
-- evangelizing about the project (e.g. a link on a website and word-of-mouth awareness raising)
-- informing developers of strengths and weaknesses from a new user perspective
-- providing moral support (a ‘thank you’ goes a long way)
-- providing financial support (the software is open source, but its developers need to eat)
+- プロジェクトについての伝道（例：ウェブサイトのリンクや口コミ啓発など）
+- 新しいユーザーの視点から強みと弱みを開発者に伝えることです
+- 道徳的サポートを提供する（「ありがとう」は長い道のりを行く）
+- 資金援助を提供する(ソフトウェアはオープンソースですが、開発者は食べる必要があります)
 
-Users who continue to engage with the SCO, its projects, and its community will often become more and more involved. Such users may find themselves becoming contributors, as described in the next section.
+SCO、そのプロジェクト、およびそのコミュニティに引き続き関与し続けるユーザーは、多くの場合、ますます関与するようになります。 次のセクションで説明されているように、そのようなユーザーは自分自身が貢献者になる可能性があります。
 
-### Contributors
+### 貢献者
 
-Contributors are community members who contribute in concrete ways to one or more of the projects. Anyone can become a contributor and contributions can take many forms. Contributions and requirements are governed by each project separately by a contribution policy.
+貢献者は、プロジェクトの1つ以上の方法で具体的に貢献するコミュニティメンバーです。 誰でも貢献者になることができ、貢献は多くの形式をとることができます。 貢献と要件は、それぞれのプロジェクトで個別に貢献ポリシーによって管理されます。
 
-There is **no expectation** of commitment to the project, **no specific skill requirements** and **no selection process**.
+**プロジェクトへのコミットメントの期待はありません**特定のスキル要件はありません**と**選択プロセスはありません\*\*。
 
-In addition to their actions as users, contributors may also find themselves doing one or more of the following:
+ユーザーとしての行動に加えて、貢献者は自分自身が次のいずれかまたは複数を実行していることがあります:
 
-- supporting new users (existing users are often the best people to support new users)
-- reporting bugs
-- identifying requirements
-- providing graphics and web design
-- Programming
-- example use cases
-- assisting with project infrastructure
-- writing documentation
-- fixing bugs
-- adding features
-- providing constructive opinions and engaging in community discourse
+- 新規ユーザーのサポート (既存のユーザーは新規ユーザーをサポートするのに最適なユーザーです)
+- バグの報告
+- 要件を特定する
+- グラフィックやウェブデザインを提供し
+- プログラミング
+- ユースケースの例
+- プロジェクトのインフラ整備の支援
+- ドキュメントの書き込み
+- バグの修正
+- 機能の追加
+- 建設的な意見を述べコミュニティの議論に従事し
 
-Contributors engage with the projects through GitHub and the Community Forums. They submit changes to the projects itself via pull requests, which will be considered for inclusion in the project by the community at large. The Community Forums are the most appropriate place to ask for help when making that first contribution.
+貢献者はGitHubとコミュニティフォーラムを通じてプロジェクトに取り組んでいます。 彼らはプルリクエストを介してプロジェクト自体に変更を提出します。これは、一般的にコミュニティによってプロジェクトに含められると考えられます。 コミュニティフォーラムは、最初の貢献をする際に助けを求めるのに最適な場所です。
 
-Indeed one of the most important roles of a contributor may be to **simply engage in the community conversation**. Most decisions about the direction of a project are made by consensus. This is discussed in more detail below. In general, however, it is helpful for the health and direction of the projects for the contributors to **speak freely** (within the confines of the code of conduct) and **express their opinions and experiences** to help drive the consensus building.
+実際、貢献者の最も重要な役割の一つは、**単にコミュニティの会話に参加する**ことです。 プロジェクトの方向性に関するほとんどの決定は、コンセンサスによって行われます。 これについては、後述します。 しかし、一般的には、 貢献者が**自由に話す**(行動規範の範囲内で)プロジェクトの健康と方向性に役立ち、**意見や経験を表明**してコンセンサスの構築を促進します。
 
-As contributors gain experience and familiarity with a project, their profile within, and commitment to, the community will increase. At some stage, they may find themselves being nominated for a core developer team.
+貢献者がプロジェクトの経験と慣れ親しみを得るにつれて、彼らの内側のプロファイルとコミュニティへのコミットメントが増加します。 ある段階では、コア開発チームにノミネートされることがあります。
 
-### Core Developer
+### コア開発者
 
-Each project under the SCO umbrella has its own team of core developers. They are the people in charge of that project.
+SCO傘下の各プロジェクトには、コア開発者のチームがあります。 彼らはそのプロジェクトを担当している人々です。
 
-_What is a core developer?_
+_コア開発者とは何ですか？_
 
-Core developers are community members who have shown that they are committed to the continued development of the project through ongoing engagement with the community. Being a core developer allows contributors to more easily carry on with their project related activities by giving them direct access to the project’s resources. They can make changes directly to the project repository without having to submit changes via pull requests from a fork.
+コア開発者は、コミュニティとの継続的な関わりを通じてプロジェクトの継続的な開発に取り組んでいることを示したコミュニティメンバーです。 コア開発者であることは、プロジェクトのリソースに直接アクセスできるようにすることで、貢献者がプロジェクト関連のアクティビティをより簡単に継続できるようにします。 フォークからのプルリクエストを介して変更を送信することなく、プロジェクトリポジトリに直接変更を加えることができます。
 
-This does not mean that a core developer is free to do what they want. In fact, core developers have no more direct authority over the final release of a package than do contributors. While this honor does indicate a valued member of the community who has demonstrated a healthy respect for the project’s aims and objectives, their work continues to be reviewed by the community before acceptance in an official release.
+これは、コア開発者が自分の望むことを自由に行うことを意味するものではありません。 実際、コア開発者はパッケージの最終リリースに対して、貢献者より直接的な権限を持っていません。 この名誉は、プロジェクトの目的と目的に対して健全な敬意を示しているコミュニティの重要なメンバーを示しています。 彼らの仕事は公表前にコミュニティによって見直され続けています
 
-_What can a core developer do on a project?_
+_コア開発者はプロジェクトで何ができますか？_
 
-Each project might define this role slightly differently. However, the general usage of this designation is that an individual has risen to a level of trust within the community such that they now are given some control. This comes in the form of push rights to non-protected branches, and the ability to have a voice in the approval of pull requests.
+各プロジェクトは、この役割を若干異なって定義することができます。 ただし、 一般的に使用されているのは、個人がコミュニティ内で信頼されるようになったということです 彼らは今何らかの制御を与えられるようになったのです これは、保護されていないブランチに対するプッシュ権限、およびプルリクエストの承認で声を持つ能力の形で来ます。
 
-The projects employ various communication mechanisms to ensure that all contributions are reviewed by the community as a whole. This includes tools provided by GitHub, as well as the Community Forums. By the time a contributor is invited to become a core developer, they should be familiar with the various tools and workflows as a user and then as a contributor.
+プロジェクトは様々なコミュニケーションメカニズムを採用し、すべての貢献がコミュニティ全体によって見直されるようにしています。 これには、コミュニティフォーラムだけでなく、GitHubが提供するツールも含まれます。 貢献者がコア開発者になるために招待されるまでに。 ユーザーとしてそして貢献者として 様々なツールやワークフローに精通しているべきです
 
-_How to become a core developer?_
+_コア開発者になるには？_
 
-Anyone can become a core developer; there are no special requirements, other than to have shown a willingness and ability to positively participate in the project as a team player.
+誰でもコア開発者になることができます。 特別な要件はありませんチームプレーヤーとして プロジェクトに積極的に参加する意欲と能力を示す以外は
 
-Typically, a potential core developer will need to show that they have an understanding of the project, its objectives and its strategy. They will also have provided valuable contributions to the project over a period of time. However, there is **no technical or other skill** requirement for eligibility.
+通常、潜在的なコア開発者は、プロジェクト、その目的、およびその戦略について理解していることを示す必要があります。 彼らはまた、期間の間にプロジェクトに貴重な貢献を提供します。 ただし、資格については、**技術的またはその他のスキル**の要件はありません。
 
-New core developers can be **nominated by any existing core developer** at any time. At least twice a year (April and October) there will be a ballot process run by the Steering Council. Voting should be done by secret ballot. Each existing core developer for that project receives a number of votes equivalent to the number of nominees on the ballot. For example, if there are four nominees, then each existing core developer has four votes. The core developer may cast those votes however they choose, but may not vote for a single nominee more than once. A nominee must receive two-thirds approval from the number of cast ballots (not the number of eligible ballots). Once accepted by the core developers, it is the responsibility of the Steering Council to approve and finalize the nomination. The Steering Council does not have the right to determine whether a nominee is meritorious enough to receive the core developer title. However, they do retain the right to override a vote in cases where the health of the community would so require.
+新しいコア開発者はいつでも**既存のコア開発者**にノミネートされることができます。 少なくとも年に2回(4月と10月)は、運営協議会によって実施される投票プロセスがあります。 投票は秘密の投票によって行われるべきです。 そのプロジェクトの各コア開発者は、投票で候補者の数に相当する数の票を受け取ります。 例えば、4人のノミネート者がいる場合、各既存のコア開発者には4つの投票があります。 コア開発者は、しかし、それらの投票をキャストすることができますが、複数回のノミネートに投票することはできません。 候補者は、キャスト投票数(適格投票数ではない)から3分の2の承認を得なければなりません。 コア開発者によって受け入れられると、それは指名を承認し、最終的に決定するためのステアリング評議会の責任です。 The Steering Council は、ノミネート者がコア開発者のタイトルを受け取るのに十分な功績があるかどうかを判断する権利を持っていません。 しかしながら、コミュニティの健全性が必要とされる場合には、投票を無効にする権利は保持されます。
 
-Once the vote has been held, the aggregated voting results are published on the Community Forums. The nominee is entitled to request an explanation of any override against them. A nominee that fails to be admitted as a core developer may be nominated again in the future.
+投票が行われると、集計された投票結果がコミュニティフォーラムに掲載されます。 ノミネート候補者は、それらに対するオーバーライドの説明を要求する権利があります。 コア開発者として認められていない候補者は、今後再度ノミネートされる可能性があります。
 
-It is important to recognize that being a core developer is a privilege, not a right. That privilege must be earned and once earned it can be removed by the Steering Council (see next section) in extreme circumstances. However, under normal circumstances the core developer title exists for as long as the individual wishes to continue engaging with the project and community.
+コア開発者であることは、権利ではなく特権であることを認識することが重要です。 その特権は獲得されなければならず、一度獲得されると極端な状況で運営評議会(次のセクションを参照)によって削除することができます。 しかし、通常の状況では、個々の人がプロジェクトやコミュニティと引き続き関わりたいと思っている限り、開発者のタイトルは存在します。
 
-A committer who shows an above-average level of contribution to the project, particularly with respect to its strategic direction and long-term health, may be nominated to become a member of the Steering Council, or a Release Manager. This role is described below.
+プロジェクトへの平均以上の貢献度を示すコミッター, 特にその戦略的な方向性と長期的な健康に関して. ステアリング評議会またはリリースマネージャのメンバーになるために指名することができます。 この役割については、以下で説明します。
 
-_What are the rights and responsibilities of core developers?_
+_コア開発者の権利と責任は何ですか？_
 
-As discussed, the majority of decisions to be made are by consensus building. In certain circumstances where an issue has become more contentious, or a major decision needs to be made, the Release Manager or Steering Council may decide (or be required) to implement the RFC process, which is outlined in more detail below.
+議論されたように、すべき決定の大部分はコンセンサスの構築によって行われる。 問題がより論争的になった、または主要な決定がなされる必要がある特定の状況で。 Release Manager または Steering Council は、下記より詳細に概説されている RFC プロセスを実装するために決定(または要求される)することができます。
 
-It is also incumbent upon core developers to have a voice in the governance of the community. All core developers for all of the projects have the ability to be nominated to be on the Steering Council and vote in their elections.
+また、コミュニティのガバナンスにおいて発言権を持つことは、コア開発者にも課せられています。 すべてのプロジェクトのコア開発者は、運営評議会に推薦され、選挙に投票する能力を持っています。
 
-This Policy (the “SCOPE”) may only be changed under the authority of two-thirds of active core developers, except that in the first six (6) months after adoption, the core developers reserve the right to make changes under the authority of a simple majority of active core developers.
+このポリシー（以下「SCOPE」）は、アクティブなコア開発者の3分の2の権限の下でのみ変更することができます。 養子縁組終了後最初の6ヶ月で コア開発者は単なる大多数のアクティブ開発者の権限の下で 変更を加える権利を保有しています
 
-_What if a core developer becomes inactive?_
+_コア開発者が非アクティブになったらどうしますか？_
 
-It is hoped that all core developers participate and remain active on a regular basis in their projects. However, it is also understood that such commitments may not be realistic or possible from time to time.
+すべてのコア開発者がプロジェクトに参加し、定期的に活動を続けることが期待されています。 しかし、そのようなコミットメントは時々現実的ではないかもしれない、あるいは可能ではないかもしれないことも理解されています。
 
-Therefore, the Steering Council has the duty to encourage participation and the responsibility to place core developers into an inactive status if they are no longer willing or capable to participate. The main purpose of this is **not to punish** a person for behavior, but to help the development process to continue for those that do remain active.
+そのため、 運営評議会は、参加を奨励する義務があり、コア開発者がもはや参加する意思がない、または参加できる能力がない場合は、非アクティブな状態に置く責任があります。 この主な目的は、**行動のために人を罰しない**ことです。 開発プロセスが続けられるようにするためです
 
-To this end, a core developer that becomes “inactive” shall not have commit rights to a repository, and shall not participate in any votes. To be eligible to vote in an election, a core developer **must have been active** at the time of the previous scheduled project release.
+この目的のために、「非アクティブ」になるコア開発者は、リポジトリに対する権利をコミットせず、いかなる投票にも参加してはなりません。 選挙に投票する資格を得るためには、前の予定されたプロジェクトリリース時にコア開発者**がアクティブでなければなりません**。
 
-Inactive members may ask the Steering Council to reinstate their status at any time, and upon such request the Steering Council shall make the core developer active again.
+活動していないメンバーは、運営評議会にいつでも地位を復活させるよう要請することができます。 そして、そのような要請に応じて、運営評議会は、コア開発者を再び活性化させるものとする。
 
-Individuals that know they will be unable to maintain their active status for a period are asked to be in communication with the Steering Council and declare themselves inactive if necessary.
+一定期間アクティブな地位を維持することができないことを知っている個人は、運営評議会と連絡を取り、必要に応じて非アクティブであると宣言するよう求められます。
 
-An “active” core developer is an individual that has participated in a meaningful way during the previous six months. Any further definition is within the discretion of the Steering Council.
+「アクティブ」なコア開発者は、過去6ヶ月間に有意義な方法で参加した個人です。 これ以上の定義は、運営協議会の裁量の範囲内にあります。
 
-### Release Manager
+### リリースマネージャー
 
-Core developers shall have access only to make commits and merges on non-protected branches. The “master” branch and other protected branches are controlled by the release management team for that project. Release managers shall be elected from the core development team by the core development team, and shall serve for a full release cycle.
+コア開発者は、保護されていないブランチに対してコミットとマージを行うためにのみアクセスできるものとします。 「master」ブランチと他の保護されたブランチは、そのプロジェクトのリリース管理チームによって管理されます。 リリースマネージャーは、コア開発チームによってコア開発チームから選出され、完全なリリースサイクルのために役立つものとします。
 
-Each core developer team may decide how many release managers to have for each release cycle. It is highly encouraged that there be at least two release managers for a release cycle to help divide the responsibilities and not force too much effort upon a single person. However, there also should not be so many managers that their efforts are impeded.
+各コア開発チームは、各リリースサイクルに必要なリリースマネージャーの数を決定できます。 少なくとも2人のリリースマネージャーがリリースサイクルで責任を分担し、一人の人にあまり努力を強いられないようにすることを強くお勧めします。 しかし、彼らの努力が妨げられるほど多くの管理者がいるべきではありません。
 
-The main responsibilities of the release management team include:
+リリース管理チームの主な責任は次のとおりです。
 
-- push the development cycle forward by monitoring and facilitating technical discussions
-- establish a release calendar and perform actions required to release packages
-- approve pull requests to the master branch and other protected branches
-- merge pull requests to the master branch and other protected branches
+- 技術的な議論を監視し促進することで開発サイクルを前進させ
+- リリースカレンダーを確立し、パッケージをリリースするために必要なアクションを実行します
+- マスターブランチや他の保護されたブランチへのプルリクエストを承認する
+- マスターブランチと他の保護されたブランチにプルリクエストをマージする
 
-The release managers **do not have the authority to veto or withhold a merge** of a pull request that otherwise meets contribution criteria and has been accepted by the community. It is not their responsibility to decide what should be developed, but rather that the decisions of the community are carried out and that the project is being moved forward.
+リリースマネージャーは、プルリクエストのマージを拒否または保留する権限がありません。これらは、コントリビューション基準を満たしており、コミュニティによって受け入れられています。 何を開発すべきかを決めるのは彼らの責任ではありません。 共同体の決定が下されプロジェクトが進められているのです
 
-From time to time, a decision may need to be made that cannot be achieved through consensus. In that case, the release managers have the authority to call upon the removal of the decision to the RFC process. This should not occur regularly (unless required as discussed below), and its use should be discouraged in favor of the more communal consensus building strategy.
+時折、合意によっては達成できない決定が必要な場合があります。 その場合、リリース マネージャは、RFC プロセスへの決定の削除を要求する権限を持っています。 これは定期的に発生するべきではありません(以下で説明するように必要な場合を除きます)。そして、その使用は、より共同的なコンセンサスの構築戦略に賛成することをお勧めしません。
 
-Since not all projects have the same requirements, the specifics governing release managers on a project shall be set forth in an Appendix to this Policy, or in the project’s contribution guidelines.
+すべてのプロジェクトが同じ要件を持っているわけではないので、 プロジェクトのリリースマネージャーに関する詳細は、本ポリシーの付録またはプロジェクトのコントリビューションガイドラインに記載されています。
 
-If necessary, the Steering Council has the right to remove a release manager that is derelict in their duties, or for other good cause.
+必要に応じて、ステアリング評議会には、職務を放棄する、または他の正当な理由のために、リリースマネージャーを削除する権利があります。
 
-### Steering Council
+### 運営評議会format@@0
 
-The Steering Council is the governing body consisting of those individuals identified as the “project owner” and having control of the resources and assets of the SCO. Their ultimate goal is to ensure the smooth operation of the projects by removing impediments, and assisting the members as needed. It is expected that they will be regular voices in the community.
+運営協議会は、「プロジェクト所有者」として特定され、SCOのリソースと資産を管理する個人からなる統治機関です。 彼らの最終的な目標は、障害を取り除き、必要に応じてメンバーを支援することにより、プロジェクトの円滑な運営を確保することです。 彼らはコミュニティの定期的な声になることが期待されています。
 
-_What can the Steering Council do?_
+_運営評議会に何ができるか？_
 
-The members of the Steering Council **do not individually have any more authority than any other core developer**, and shall not have any additional rights to make decisions, commits, merges, or the like on a project.
+運営評議会のメンバーは、**他のどのコア開発者よりも権限を持っていません**。 プロジェクトの決定、約束、合併などを行う追加の権利は一切ありません
 
-However, as a body, the Steering Council has the following capacity:
+ただし、本体として、運営審議会には以下のような能力があります。
 
-- accept, remand, and reject all RFCs
-- enforce the community code of conduct
-- administer community assets such as repositories, servers, forums, integration services, and the like (or, to delegate such authority to someone else)
-- place core developers into inactive status where appropriate take any other enforcement measures afforded to it in this Policy, including, in extreme cases, removing core developers
-- adopt or remove projects from the community umbrella
+- すべての RFC を受け入れ、再配布、および拒否する
+- コミュニティの行動規範を施行し
+- リポジトリ、サーバー、フォーラム、統合サービスなどのコミュニティ・アセットを管理する (または、そのような権限を他の誰かに委任する)
+- コア開発者を非アクティブな状態に配置します。このポリシーで与えられたその他の執行措置を適切に取ります。 極端な場合にはコア開発者を排除し
+- コミュニティの傘下からプロジェクトを採用したり削除したりします
 
-It is highly encouraged that the Steering Council delegate its authority as much as possible, and where appropriate, to other willing community members.
+運営評議会は、可能な限りその権限を、適切な場合には他の意欲的なコミュニティメンバーに委任することが強く奨励される。
 
-The Steering Council **does not have the authority** to change this Policy.
+運営評議会は、このポリシーを変更する権限を持っていません\*\*。
 
-_How many members are on the Steering Council?_
+_運営協議会のメンバーは何人いますか？_
 
-Four.
+4
 
-While it seems like a committee with four votes may potentially end in a deadlock with no way to break a majority vote, the Steering Council is discouraged from voting as much as possible. Instead, it should try to work by consensus, and requires three consenting votes when it is necessary to vote on a matter.
+4票の委員会のように思われますが、多数決を破る方法がなく、潜在的に行き詰まり状態に終わる可能性があります。 運営評議会は、できるだけ多くの投票から落胆しています。 代わりにコンセンサスによって動作しようとする必要があります, それは問題に投票する必要がある場合は、3つの同意票を必要とします.
 
-_How long do members serve on the Steering Council?_
+_運営協議会のメンバーはどれくらいですか？_
 
-A single term shall be for two calendar years starting in January. Terms shall be staggered so that each year there are two members continuing from the previous year’s council.
+単期は1月から2暦年間とする。 利用規約は、毎年、前年の評議会から継続している2人のメンバーがあるようにずれるものとします。
 
-Therefore, the inaugural vote shall have two positions available for a two year term, and two positions available for a one year term.
+そのため、就任票は2年の任期に2つの役職と1年の任期に2つの役職を設けなければならない。
 
-There are no limits to the number of terms that can be served, and it is possible for an individual to serve consecutive terms.
+提供できる用語の数に制限はなく、個人が連続した用語を提供することができます。
 
-_Who runs the Steering Council?_
+_ステアリング評議会を運営するのは誰ですか？_
 
-After the Steering Council is elected, the group shall collectively decide upon one person to act as the Chair. The Chair does not have any additional rights or authority over any other member of the Steering Council.
+運営評議会が選出された後、グループは、議長として行動する一人を共同で決定しなければならない。 議長は、運営協議会の他のメンバーよりも任意の追加の権利や権限を持っていません。
 
-The role of the Chair is merely as a coordinator and facilitator. The Chair is expected to ensure that all governance processes are adhered to. The position is more administrative and clerical, and is expected that the Chair sets agendas and coordinates discussion of the group.
+議長の役割は、単にコーディネーターであり、ファシリテーターとしての役割です。 議長は、すべてのガバナンスプロセスが遵守されることを確実にすることが期待されます。 位置は、より行政的で明白であり、議題を設定し、グループの議論を調整することが期待されています。
 
-_How are council members elected?_
+_諮問委員はどうやって選ばれますか？_
 
-Once a year, **all eligible core developers** for each of the projects shall have the right to elect members to the Steering Council.
+年に一度、プロジェクトごとに**すべての適格なコア開発者**は、Steering Councilのメンバーを選出する権利を有します。
 
-Nominations shall be open from September 1 and shall close on September 30. After that, voting shall begin on October 1 and shall close on October 31. Every core developer active on the date of the June release of the Sanic Framework for that year shall be eligible to receive one vote per vacant seat on the Steering Council. For the sake of clarity, to be eligible to vote, a core developer **does not** need to be a core developer on Sanic Framework, but rather just have been active within their respective project on that date.
+推薦は9月1日から開始し、9月30日に終了するものとします。 その後、10月1日に投票を開始し、10月31日に終了します。 その年のサニック・フレームワークの6月リリースの日にアクティブなすべてのコア開発者は、ステアリング・カウンシルの空席あたり1票を受け取る資格があります。 明確にするために、投票の資格を得るために、コア開発者はSanic Frameworkのコア開発者である必要はありません\*\*。 それぞれのプロジェクトの中で活動しているのです
 
-The top recipients of votes shall be declared the winners. If there is any tie, it is highly encouraged that the tied nominees themselves resolve the dispute before a decision is made at random.
+投票の上位者は、勝者として宣言されるものとします。 提携がある場合は、結ばれた候補者自身が決定がランダムにされる前に紛争を解決することが強く奨励されます。
 
-In regards to the inaugural vote of the Steering Council, the top two vote-recipients shall serve for two years, and the next two vote-recipients shall assume the one-year seats.
+運営評議会の議決については、上位2名が2年間務める。 次の2人の有権者が1年議席に就くことになります
 
-To be an eligible candidate for the Steering Council, the individual must have been a core developer in active status on at least one project for the previous twelve months.
+運営評議会の適格な候補者になるには 個人は過去12ヶ月間少なくとも1つのプロジェクトの現役の 中心的な開発者である必要があります
 
-_What if there is a vacancy?_
+_空きがある場合はどうしますか_
 
-If a vacancy on the Steering Council exists during a term, then the next highest vote-recipient in the previous election shall be offered to complete the remainder of the term. If one cannot be found this way, the Steering Council may decide the most appropriate course of action to fill the seat (whether by appointment, vote, or other means).
+運営審議会に欠員がある場合。 次の最高の投票受領者は任期の残りを完了するために提出されなければならない この方法で見つけることができない場合 運営評議会は、議席を埋めるための最も適切な行動の方法を決定することができます(任命、投票、または他の意味によってかどうか)。
 
-If a member of the Steering Council becomes inactive, then that individual shall be removed from the Steering Council immediately and the seat shall become vacant.
+運営協議会のメンバーが非アクティブになった場合 その後、その個人は直ちに運営委員会から解任され、議席は空席となります。
 
-In extreme cases, the body of all core developers has the right to bring a vote to remove a member of the Steering Council for cause by a two-thirds majority of all eligible voting core developers.
+極端な場合 すべてのコア開発者の本体は、適格な投票コア開発者の3分の2が運営評議会のメンバーを削除する投票権を持っています。
 
-_How shall the Steering Council conduct its business?_
+_運営評議会はどのように事業を行うか？_
 
-As much as possible, the Steering Council shall conduct its business and discussions in the open. Any member of the community should be allowed to enter the conversation with them. However, at times it may be necessary or appropriate for discussions to be held privately. Selecting the proper venue for conversations is part of the administrative duties of the Chair.
+可能な限り、運営評議会は、事業と議論を公然と行う。 コミュニティのメンバーは、彼らとの会話に参加することを許可する必要があります。 ただし、個人的に議論を行う場合には、必要または適切な場合があります。 会話のための適切な会場を選択することは議長の行政業務の一部です。
 
-While the specifics of how to operate are beyond the scope of the Policy, it is encouraged that the Steering Council attempt to meet at least one time per quarter in a “real-time” discussion. This could be achieved via video conferencing, live chatting, or other appropriate means.
+操作方法の詳細はポリシーの範囲を超えています。 運営評議会は、「リアルタイム」の議論で四半期に少なくとも1回は会うことを奨励されます。 これは、ビデオ会議、ライブチャット、または他の適切な手段によって達成することができます。
 
-## Support
+## サポート
 
-All participants in the community are encouraged to provide support for users within the project management infrastructure. This support is provided as a way of growing the community. Those seeking support should recognize that all support activity within the project is voluntary and is therefore provided as and when time allows. A user requiring guaranteed response times or results should therefore seek to purchase a support contract from a community member. However, for those willing to engage with the project on its own terms, and willing to help support other users, the community support channels are ideal.
+コミュニティのすべての参加者は、プロジェクト管理インフラストラクチャ内のユーザーにサポートを提供することをお勧めします。 このサポートは、コミュニティを成長させる方法として提供されています。 支援を求める人は、プロジェクト内のすべての支援活動が自発的であることを認識し、したがって、時間が許す限り提供されます。 したがって、保証された回答時間または結果を必要とするユーザーは、コミュニティメンバーからサポート契約を購入するよう求める必要があります。 しかし、それ自身の条件でプロジェクトに取り組むことをいとわない人のために。 他のユーザーを支援してくれるのは理想的です
 
-## Decision making process
+## 意思決定プロセス
 
-Decisions about the future of the projects are made through discussion with all members of the community, from the newest user to the most experienced member. Everyone has a voice.
+プロジェクトの将来についての決定は、コミュニティのすべてのメンバーとの議論を通じて行われます。 最新のユーザーから最も経験豊富なメンバーまで 誰もが声を持っている。
 
-All non-sensitive project management discussion takes place on the community forums, or other designated channels. Occasionally, sensitive discussions may occur in private.
+機密性のないプロジェクト管理に関する議論は、コミュニティフォーラムやその他の指定されたチャンネルで行われます。 時折、機密性の高い議論がプライベートに行われることがあります。
 
-In order to ensure that the project is not bogged down by endless discussion and continual voting, the project operates a policy of **lazy consensus**. This allows the majority of decisions to be made without resorting to a formal vote. For any **major decision** (as defined below), there is a separate Request for Comment (RFC) process.
+プロジェクトが終わりのない議論と継続的な投票によって妨げられないようにするために、プロジェクトは**怠惰な合意**のポリシーを運営しています。 これにより、正式な投票に頼らずに大多数の決定を行うことができます。 **大きな判断** (以下に定義します) については、別途コメントリクエスト(RFC) プロセスがあります。
 
-### Technical decisions
+### 技術的な決定
 
-Pull requests and technical decisions should generally fall into the following categories.
+プルリクエストと技術的な決定は、通常、以下のカテゴリーに分類されます。
 
-- **Routine**: Documentation fixes, code changes that are for cleanup or additional testing. No functionality changes.
-- **Minor**: Changes to the code base that either fix a bug, or introduce a trivial feature. No breaking changes.
-- **Major**: Any change to the code base that breaks or deprecates existing API, alters operation in a non-trivial manner, or adds a significant feature.
+- **ルーチン**: ドキュメント修正、クリーンアップや追加テストのためのコード変更。 機能の変更はありません。
+- **Minor**: バグを修正したり、些細な機能を導入したりするコードベースへの変更。 改行の変更はありません。
+- **Major**: 既存のAPIを壊したり廃止したりするコードベースに変更を加えたり、些細な方法で操作を変更したり、重要な機能を追加したりします。
 
-It is generally the responsibility of the release managers to make sure that changes to the repositories receive the proper authorization before merge.
+リポジトリへの変更がマージの前に適切な承認を受け取ることを確認するのは、通常、リリースマネージャの責任です。
 
-The release managers retain the authority to individually review and accept routine decisions that meet standards for code quality without additional input.
+リリースマネージャーは、追加の入力なしにコード品質の基準を満たすルーチンの決定を個別にレビューし、受け入れる権限を保持します。
 
-### Lazy consensus
+### 怠惰な<unk>
 
-Decision making (whether by the community or Steering Council) typically involves the following steps:
+意思決定(コミュニティまたは運営評議会によって)には通常、次のステップが含まれます。
 
-- proposal
-- discussion
-- vote (if consensus is not reached through discussion)
-- decision
+- 提案
+- ディスカッション
+- 投票（議論を通じて合意に達していない場合）
+- 決定
 
-Any community member can make a proposal for consideration by the community. In order to initiate a discussion about a new idea, they should post a message on the appropriate channel on the Community forums, or submit a pull request implementing the idea on GitHub. This will prompt a review and, if necessary, a discussion of the idea.
+コミュニティメンバーは誰でも、コミュニティによる検討のための提案をすることができます。 新しいアイデアについてのディスカッションを開始するには、コミュニティフォーラムに適切なチャネルにメッセージを投稿する必要があります。 または、GitHub でアイデアを実装するプルリクエストを送信します。 これは、レビューを促し、必要に応じて、アイデアの議論を促します。
 
-The goal of this review and discussion is to gain approval for the contribution. Since most people in the project community have a shared vision, there is often little need for discussion in order to reach consensus.
+このレビューと議論の目的は、貢献の承認を得ることです。 プロジェクトコミュニティのほとんどの人々がビジョンを共有しているので、コンセンサスを得るためには議論の必要性がほとんどないことが多い。
 
-In general, as long as nobody explicitly opposes a proposal or patch, it is recognized as having the support of the community. This is called lazy consensus; that is, those who have not stated their opinion explicitly have implicitly agreed to the implementation of the proposal.
+一般に、提案やパッチに明示的に反対する人がいない限り、それはコミュニティの支援を受けていると認識されています。 これは怠惰な合意と呼ばれます; すなわち, 彼らの意見を述べていない人々は、暗黙のうちに提案の実施に合意しました.
 
-Lazy consensus is a very important concept within the SCO. It is this process that allows a large group of people to efficiently reach consensus, as someone with no objections to a proposal need not spend time stating their position, and others need not spend time reading such messages.
+怠惰なコンセンサスはSCOの中で非常に重要な概念です。 大勢の人々が効率的にコンセンサスに達することを可能にするのはこのプロセスです。 提案に異議なしに自分の立場を述べるのに時間を費やす必要はない 他の人はそのようなメッセージを読む時間を費やす必要はない
 
-For lazy consensus to be effective, it is necessary to allow an appropriate amount of time before assuming that there are no objections to the proposal. This is somewhat dependent upon the circumstances, but it is generally assumed that 72 hours is reasonable. This requirement ensures that everyone is given enough time to read, digest and respond to the proposal. This time period is chosen so as to be as inclusive as possible of all participants, regardless of their location and time commitments. The facilitators of discussion (whether it be the Chair or the Release Managers, where applicable) shall be charged with determining the proper length of time for such consensus to be reached.
+怠惰なコンセンサスのために有効であること。 提案に異議はないと仮定する前に適切な時間が必要です これは状況によりますが、一般的には72時間が合理的であると想定されています。 この要件により、誰もが提案を読み、ダイジェスト、および回答するのに十分な時間を与えられることが保証されます。 この期間は、その場所と時間の約束に関係なく、すべての参加者の可能な限り包括的であるように選択されます。 議論のファシリテーター(議長であろうとリリースマネージャーであろうと)。 (該当する場合) このようなコンセンサスに到達するまでの適切な時間の長さを決定することが義務付けられます。
 
-As discussed above regarding so-called routine decisions, the release managers have the right to make decisions within a shorter period of time. In such cases, lazy consensus shall be implied.
+いわゆるルーチン決定に関する上記のように、リリース管理者は短期間で決定を行う権利を有します。 このような場合には、怠惰なコンセンサスが暗示されなければならない。
 
-### Request for Comment (RFC)
+### コメントのリクエスト (RFC)
 
-The Steering Council shall be in charge of overseeing the RFC process. It shall be a process that remains open to debate to all members of the community, and shall allow for ample time to consider a proposal and for members to respond and engage in meaningful discussion.
+運営評議会は、RFC プロセスの監督を担当します。 それはコミュニティのすべてのメンバーに議論を開いているプロセスである。 提案を検討し、メンバーが有意義な議論を行うための十分な時間を確保しなければならない。
 
-The final decision is vested with the Steering Council. However, it is strongly discouraged that the Steering Council adopt a decision that is contrary to any consensus that may exist in the community. From time to time this may happen if there is a conflict between consensus and the overall project and community goals.
+最終的な決定は、ステアリング評議会によって与えられます。 しかし、運営審議会が、コミュニティ内に存在する可能性のあるコンセンサスに反する決定を採用することは強く落胆しています。 時折、コンセンサスとプロジェクト全体とコミュニティの目標の間に矛盾がある場合、これは起こるかもしれません。
 
-An RFC shall be initiated by submission to the Steering Council in the public manner as set forth by the Steering Council. Debate shall continue and be facilitated by the Steering Council in general, and the Chair specifically.
+RFC は、運営評議会によって規定されているような公的な方法で運営評議会への提出によって開始されるものとします。 議論は、継続し、一般的に運営委員会によって促進されるものとします, そして、具体的に議長.
 
-In circumstances that the Steering Council feels it is appropriate, the RFC process may be waived in favor of lazy consensus.
+運営評議会が適切だと感じる場合には、RFC プロセスは怠惰な合意に賛成して放棄される可能性があります。

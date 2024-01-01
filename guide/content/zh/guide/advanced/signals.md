@@ -1,63 +1,63 @@
-# Signals
+# 信号
 
-Signals provide a way for one part of your application to tell another part that something happened.
+信号为您的应用程序的一部分提供了一种方法来告诉另一个部分发生了一些事情。
 
 ```python
 @app.signal("user.registration.created")
 async def send_registration_email(**context):
-    await send_email(context["email"], template="registration")
+    等待 send_email(context["email"], template="registration")
 
-@app.post("/register")
+@app. ost("/register")
 async def handle_registration(request):
-    await do_registration(request)
-    await request.app.dispatch(
-        "user.registration.created",
+    等待do_registration(request)
+    等待请求。 pp.apparch(
+        "user.registration" 恢复了",
         context={"email": request.json.email}
-    })
+})
 ```
 
-## Adding a signal
+## 添加信号
 
-.. column::
+.. 列:
 
 ```
-The API for adding a signal is very similar to adding a route.
+用于添加信号的 API 与添加路由非常相似。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 async def my_signal_handler():
-    print("something happened")
+    print("发生了什么")
 
-app.add_signal(my_signal_handler, "something.happened.ohmy")
+app.add_signal(my_signal_handler, "something.oced.ohmy")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-But, perhaps a slightly more convenient method is to use the built-in decorators.
+但也许一种略为方便的方法是使用内置装饰器。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.signal("something.happened.ohmy")
-async def my_signal_handler():
-    print("something happened")
+@app.signal("something.semed.ohmy")
+async def my_signal_handler(:
+    print("发生什么")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-If the signal requires conditions, make sure to add them while adding the handler.
+如果信号需要条件，请确保在添加处理器时添加它们。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -76,104 +76,104 @@ async def my_signal_handler2():
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Signals can also be declared on blueprints
+信号也可以在蓝图上声明
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 bp = Blueprint("foo")
 
-@bp.signal("something.happened.ohmy")
+@bp.signal("something.semed.ohmy")
 async def my_signal_handler():
-    print("something happened")
+    print("发生什么")
 ```
 ````
 
-## Built-in signals
+## 内置信号
 
-In addition to creating a new signal, there are a number of built-in signals that are dispatched from Sanic itself. These signals exist to provide developers with more opportunities to add functionality into the request and server lifecycles.
+除了发出新的信号外，还有一些内在信号是从萨尼克本身发出的。 这些信号的存在为开发者提供了更多的机会，可以将功能添加到请求和服务器的周期中。
 
-_Added in v21.9_
+\*添加于 v21.9 \*
 
-.. column::
+.. 列:
 
 ```
-You can attach them just like any other signal to an application or blueprint instance.
+您可以像其他任何信号一样将它们附加到应用程序或蓝图实例。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.signal("http.lifecycle.complete")
 async def my_signal_handler(conn_info):
-    print("Connection has been closed")
+    print("连接已关闭")
 ```
 ````
 
-These signals are the signals that are available, along with the arguments that the handlers take, and the conditions that attach (if any).
+这些信号是现有的信号，以及处理者的论据和附加条件（如有）。
 
-| Event name                 | Arguments                       | Conditions                                                |
-| -------------------------- | ------------------------------- | --------------------------------------------------------- |
-| `http.routing.before`      | request                         |                                                           |
-| `http.routing.after`       | request, route, kwargs, handler |                                                           |
-| `http.handler.before`      | request                         |                                                           |
-| `http.handler.after`       | request                         |                                                           |
-| `http.lifecycle.begin`     | conn_info  |                                                           |
-| `http.lifecycle.read_head` | head                            |                                                           |
-| `http.lifecycle.request`   | request                         |                                                           |
-| `http.lifecycle.handle`    | request                         |                                                           |
-| `http.lifecycle.read_body` | body                            |                                                           |
-| `http.lifecycle.exception` | request, exception              |                                                           |
-| `http.lifecycle.response`  | request, response               |                                                           |
-| `http.lifecycle.send`      | data                            |                                                           |
-| `http.lifecycle.complete`  | conn_info  |                                                           |
-| `http.middleware.before`   | request, response               | `{"attach_to": "request"}` or `{"attach_to": "response"}` |
-| `http.middleware.after`    | request, response               | `{"attach_to": "request"}` or `{"attach_to": "response"}` |
-| `server.exception.report`  | app, exception                  |                                                           |
-| `server.init.before`       | app, loop                       |                                                           |
-| `server.init.after`        | app, loop                       |                                                           |
-| `server.shutdown.before`   | app, loop                       |                                                           |
-| `server.shutdown.after`    | app, loop                       |                                                           |
+| 事件名称                       | 参数                             | 条件                                                                                                  |
+| -------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `http.routing.before`      | 请求                             |                                                                                                     |
+| `http.routing.after `      | 请求, 路由, kwargs, 处理程序           |                                                                                                     |
+| `http.handler.befor`       | 请求                             |                                                                                                     |
+| `http.handler.after `      | 请求                             |                                                                                                     |
+| `http.lifecycle.begin`     | conn_info |                                                                                                     |
+| `http.lifecycle.read_head` | 头部                             |                                                                                                     |
+| `http.lifecycle.request`   | 请求                             |                                                                                                     |
+| `http.lifecycle.handle`    | 请求                             |                                                                                                     |
+| `http.lifecycle.read_body` | 正文内容                           |                                                                                                     |
+| `http.lifecycle.excition`  | 请求异常                           |                                                                                                     |
+| `http.lifecycle.response`  | 请求回复                           |                                                                                                     |
+| `http.lifecycle.send`      | 数据                             |                                                                                                     |
+| `http.lifecycle.complete`  | conn_info |                                                                                                     |
+| `http.midleware.before`    | 请求回复                           | \`{"attach_to": "request"}" 或 "{"attach_to": "response"}" |
+| `http.midleware.after `    | 请求回复                           | \`{"attach_to": "request"}" 或 "{"attach_to": "response"}" |
+| `server.exception.report`  | 应用，异常                          |                                                                                                     |
+| `server.init.before`       | 应用，循环                          |                                                                                                     |
+| `server.init.after `       | 应用，循环                          |                                                                                                     |
+| `server.shutdown.before`   | 应用，循环                          |                                                                                                     |
+| `server.shutdown.after `   | 应用，循环                          |                                                                                                     |
 
-Version 22.9 added `http.handler.before` and `http.handler.after`.
+22.9版本增加了`http.handler.before`和`http.handler.after`。
 
-Version 23.6 added `server.exception.report`.
+版本23.6增加了“server.exception.report”。
 
-.. column::
+.. 列:
 
 ```
-To make using the built-in signals easier, there is an `Enum` object that contains all of the allowed built-ins. With a modern IDE this will help so that you do not need to remember the full list of event names as strings.
+为了更容易使用内置信号，有一个 `Enum` 对象包含所有允许的内嵌。 使用现代IDE，这将有助于您不需要记住事件名称的完整列表作为字符串。
 
-*Added in v21.12*
+*添加于 v21.12*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic.signals import Event
+from sanic.signs import Event
 
-@app.signal(Event.HTTP_LIFECYCLE_COMPLETE)
+@app.signal(Event.HTTP_LIFECYCLE_COMPerTE)
 async def my_signal_handler(conn_info):
-    print("Connection has been closed")
+    print("连接已关闭")
 ```
 ````
 
-## Events
+## 事件
 
-.. column::
+.. 列:
 
 ```
-Signals are based off of an _event_. An event, is simply a string in the following pattern:
+信号来自一个 _event_。事件只是以下模式中的一个字符串：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```
@@ -181,22 +181,22 @@ namespace.reference.action
 ```
 ````
 
-.. tip:: Events must have three parts. If you do not know what to use, try these patterns:
+.. 提示：事件必须有三个部分。 如果您不知道要使用什么，请尝试这些模式：
 
 ```
-- `my_app.something.happened`
-- `sanic.notice.hello`
+- `my_app.something.oced`
+- `sanic.notific.hello`
 ```
 
-### Event parameters
+### 事件参数
 
-.. column::
+.. 列:
 
 ```
-An event can be "dynamic" and declared using the same syntax as [path parameters](../basics/routing.md#path-parameters). This allows matching based upon arbitrary values.
+事件可以是“动态”并声明使用与 [路径参数] (../basics/routing.md#path参数)相同的语法。这允许根据任意值进行匹配。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -204,92 +204,92 @@ An event can be "dynamic" and declared using the same syntax as [path parameters
 async def signal_handler(thing):
     print(f"[signal_handler] {thing=}")
 
-@app.get("/")
-async def trigger(request):
-    await app.dispatch("foo.bar.baz")
-    return response.text("Done.")
+@appp. et("/")
+async def 触发器(请求):
+    等待app.prespatch("foo.bar.baz")
+    return response.text("完成")
 ```
 ````
 
-Checkout [path parameters](../basics/routing.md#path-parameters) for more information on allowed type definitions.
+签出[路径参数](../basics/routing.md#path参数)以获取关于允许类型定义的更多信息。
 
-.. info:: Only the third part of an event (the action) may be dynamic:
+.. 信息：事件的第三部分 (动作) 可能是动态的：
 
 ```
 - `foo.bar.<thing>` 🆗
 - `foo.<bar>.baz` ❌
 ```
 
-### Waiting
+### 等待中
 
-.. column::
+.. 列:
 
 ```
-In addition to executing a signal handler, your application can wait for an event to be triggered.
+除了执行信号处理程序外，您的应用程序可以等待事件触发的时间。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-await app.event("foo.bar.baz")
-```
+等待app.event("foo.bar.baz")
+
 ````
 
-.. column::
+.. 列:
 
 ```
-**IMPORTANT**: waiting is a blocking function. Therefore, you likely will want this to run in a [background task](../basics/tasks.md).
+**IMPORTANT**：等待是一个阻止函数。因此，你很可能想要这个函数在[背景任务](../basics/tasks.md)中运行。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 async def wait_for_event(app):
     while True:
-        print("> waiting")
-        await app.event("foo.bar.baz")
+        print("> 等待")
+        等待应用。 vent("foo.bar. 日")
         print("> event found\n")
 
-@app.after_server_start
-async def after_server_start(app, loop):
+@app. fter_server_start
+async def after _server_start(app, loop):
     app.add_task(wait_for_event(app))
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-If your event was defined with a dynamic path, you can use `*` to catch any action.
+如果你的事件是用动态路径定义的，你可以使用 "*" 来捕捉任何动作。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.signal("foo.bar.<thing>")
+@app.signal("foo.bar.<thing>
 
 ...
 
-await app.event("foo.bar.*")
+等待app.event("foo.bar.*")
 ```
 ````
 
-## Dispatching
+## 正在发送
 
-_In the future, Sanic will dispatch some events automatically to assist developers to hook into life cycle events._
+_今后，Sanic将自动发送一些事件以帮助开发人员将其绑定到生命周期活动中。_
 
-.. column::
+.. 列:
 
 ```
-Dispatching an event will do two things:
+调度一个事件会做两个事情：
 
-1. execute any signal handlers defined on the event, and
-2. resolve anything that is "waiting" for the event to complete.
+1，执行事件定义的任何信号处理和
+2。 解决“等待”事件完成的任何问题。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -297,22 +297,22 @@ Dispatching an event will do two things:
 async def foo_bar(thing):
     print(f"{thing=}")
 
-await app.dispatch("foo.bar.baz")
+等待app.appailch("foo.bar.baz")
 ```
 ```
 thing=baz
 ```
 ````
 
-### Context
+### 二. 背景
 
-.. column::
+.. 列:
 
 ```
-Sometimes you may find the need to pass extra information into the signal handler. In our first example above, we wanted our email registration process to have the email address for the user.
+有时您可能会发现需要将额外信息传递到信号处理器。 在我们上面的第一个例子中，我们希望我们的电子邮件注册过程有用户的电子邮件地址。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -320,8 +320,8 @@ Sometimes you may find the need to pass extra information into the signal handle
 async def send_registration_email(**context):
     print(context)
 
-await app.dispatch(
-    "user.registration.created",
+等待应用。 ispatch(
+    "user.registration" 恢复了",
     context={"hello": "world"}
 )
 ```
@@ -333,68 +333,68 @@ await app.dispatch(
 .. tip:: FYI
 
 ```
-Signals are dispatched in a background task.
+在后台任务中发出信号。
 ```
 
-### Blueprints
+### 蓝图
 
-Dispatching blueprint signals works similar in concept to [middleware](../basics/middleware.md). Anything that is done from the app level, will trickle down to the blueprints. However, dispatching on a blueprint, will only execute the signals that are defined on that blueprint.
+正在发送蓝图信号的概念与 [middleware]相似(../basics/midleware.md)。 从应用层面做的任何事情都会被推到蓝图。 然而，在蓝图上派遣部队只会执行该蓝图上所确定的信号。
 
-.. column::
+.. 列:
 
 ```
-Perhaps an example is easier to explain:
+或许一个例子更容易解释：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 bp = Blueprint("bp")
 
-app_counter = 0
-bp_counter = 0
+app_count = 0
+bp_count = 0
 
-@app.signal("foo.bar.baz")
+@app.signal("foo). ar.baz")
 def app_signal():
-    nonlocal app_counter
-    app_counter += 1
+    non-local app_count
+    app_count += 1
 
-@bp.signal("foo.bar.baz")
+@bp. ignal("foo.bar.baz")
 def bp_signal():
-    nonlocal bp_counter
-    bp_counter += 1
+    non-local bp_count
+    bp_count += 1
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Running `app.dispatch("foo.bar.baz")` will execute both signals.
+正在运行 `app.appotich("foo.bar.baz")` 将执行两个信号。
 ```
 
-.. column::
-
-````
-```python
-await app.dispatch("foo.bar.baz")
-assert app_counter == 1
-assert bp_counter == 1
-```
-````
-
-.. column::
-
-```
-Running `bp.dispatch("foo.bar.baz")` will execute only the blueprint signal.
-```
-
-.. column::
+.. 列:
 
 ````
 ```python
-await bp.dispatch("foo.bar.baz")
-assert app_counter == 1
-assert bp_counter == 2
+正在等待 app.appoquarch("foo.bar.baz")
+确认app_count == 1
+申述bp_count == 1
+```
+````
+
+.. 列:
+
+```
+运行 `bp.apparch("foo.bar.baz")` 只会执行蓝图信号。
+```
+
+.. 列:
+
+````
+```python
+等待bp.apparch("foo.bar.baz")
+conflict app_count == 1
+conflict bp_count == 2
 ```
 ````

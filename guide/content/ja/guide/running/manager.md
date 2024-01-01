@@ -1,36 +1,36 @@
 ---
-title: Worker Manager
+title: ワーカーマネージャー
 ---
 
-# Worker Manager
+# ワーカーマネージャー
 
-The worker manager and its functionality was introduced in version 22.9.
+Worker マネージャーとその機能はバージョン 22.9 で導入されました。
 
-_The details of this section are intended for more advanced usages and **not** necessary to get started._
+_このセクションの詳細は、より高度な使用を目的としています。開始するのに必要なものではありません。_
 
-The purpose of the manager is to create consistency and flexibility between development and production environments. Whether you intend to run a single worker, or multiple workers, whether with, or without auto-reload: the experience will be the same.
+マネージャーの目的は、開発環境と生産環境の間の一貫性と柔軟性を創造することです。 単一のワーカーを実行するか、複数のワーカーを実行するかに関わらず、自動再ロードの有無に関わらず、経験は同じになります。
 
-In general it looks like this:
+一般的には以下のようになります:
 
-![](https://user-images.githubusercontent.com/166269/178677618-3b4089c3-6c6a-4ecc-8d7a-7eba2a7f29b0.png)
+![](https://user-images.githubusercontent.com/166269/17677618-3b4089c3-6c6a-4ecc-8d7a-7eba2a7f29b0.png)
 
-When you run Sanic, the main process instantiates a `WorkerManager`. That manager is in charge of running one or more `WorkerProcess`. There generally are two kinds of processes:
+Sanic を実行すると、メインプロセスは `WorkerManager` をインスタンス化します。 そのマネージャーは1つ以上の `WorkerProcess` の実行を担当しています。 一般的には2種類のプロセスがあります。
 
-- server processes, and
-- non-server processes.
+- サーバープロセスと
+- 非サーバー プロセス
 
-For the sake of ease, the User Guide generally will use the term "worker" or "worker process" to mean a server process, and "Manager" to mean the single worker manager running in your main process.
+ユーザーガイドでは、一般的にサーバープロセスを意味する「ワーカー」または「ワーカープロセス」という用語を使用します。 「マネージャー」とは、メインプロセスで実行されている単一のワーカーマネージャーを意味します。
 
-## How Sanic Server starts processes
+## Sanic Server がプロセスを開始する方法
 
-Sanic will start processes using the [spawn](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods) start method. This means that for every process/worker, the global scope of your application will be run on its own thread. The practical impact of this that _if_ you do not run Sanic with the CLI, you will need to nest the execution code inside a block to make sure it only runs on `__main__`.
+Sanic は [spawn](https://docs.python.org/3/library/multiprocessing.html#context-and-start-methods) を使用してプロセスを開始します。 つまり、プロセス/ワーカーごとに、アプリケーションのグローバルスコープが独自のスレッドで実行されます。 あなたがCLIを使ってSanicを実行しない場合\*この実際的な影響。 `__main__`でのみ実行されるように、ブロックの中に実行コードを入れ子にする必要があります。
 
 ```python
 if __name__ == "__main__":
     app.run()
 ```
 
-If you do not, you are likely to see an error message like this:
+しない場合は、次のようなエラーメッセージが表示される可能性があります。
 
 ```
 sanic.exceptions.ServerError: Sanic server could not start: [Errno 98] Address already in use.
@@ -40,39 +40,39 @@ This may have happened if you are running Sanic in the global scope and not insi
 See more information: https://sanic.dev/en/guide/deployment/manager.html#how-sanic-server-starts-processes
 ```
 
-The likely fix for this problem is nesting your Sanic run call inside of the `__name__ == "__main__"` block. If you continue to receive this message after nesting, or if you see this while using the CLI, then it means the port you are trying to use is not available on your machine and you must select another port.
+この問題を解決するには、`__name__ == "__main__"`ブロックの中に Sanic runを入れ子にする必要があります。 ネストの後にこのメッセージを受信し続ける場合、または CLI の使用中にこのメッセージが表示される場合。 使おうとしているポートはマシン上では利用できない 別のポートを選択しなければならない
 
-### Starting a worker
+### ワーカーを開始
 
-All worker processes _must_ send an acknowledgement when starting. This happens under the hood, and you as a developer do not need to do anything. However, the Manager will exit with a status code `1` if one or more workers do not send that `ack` message, or a worker process throws an exception while trying to start. If no exceptions are encountered, the Manager will wait for up to thirty (30) seconds for the acknowledgement.
+すべてのワーカープロセスは開始時に確認を送信する必要があります。 これはボンネットの下で起こり、開発者としてあなたは何もする必要はありません。 ただし、1人以上のワーカーがメッセージを送信しない場合、マネージャーはステータスコード`1`で終了します。 またはワーカープロセスは、起動中に例外をスローします。 例外が発生しない場合、マネージャーは承認のために最大30秒間待機します。
 
-.. column::
+.. 列::
 
 ```
-In the situation when you know that you will need more time to start, you can monkeypatch the Manager. The threshold does not include anything inside of a listener, and is limited to the execution time of everything in the global scope of your application.
+あなたが開始するために多くの時間が必要になることを知っている状況では、マネージャーをmonkeypatch ことができます。 しきい値はリスナーの中には含まれません。 アプリケーションのグローバルな範囲内のすべての実行時間に制限されます。
 
-If you run into this issue, it may indicate a need to look deeper into what is causing the slow startup.
+この問題に遭遇した場合、起動が遅い原因について詳しく調べる必要がある可能性があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 from sanic.worker.manager import WorkerManager
 
-WorkerManager.THRESHOLD = 100  # Value is in 0.1s
+WorkerManager.THRESHOLD = 100 # Value is in 0.1s
 ```
 ````
 
-See [worker ack](#worker-ack) for more information.
+詳細は format@@0(#worker-ack) を参照してください。
 
-.. column::
+.. 列::
 
 ```
-As stated above, Sanic will use [spawn](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods) to start worker processes. If you would like to change this behavior and are aware of the implications of using different start methods, you can modify as shown here.
+上記のように、Sanic は [spawn](https://docs.python.org/3/library/multiprocessing.html#context-and-start-methods) を使用してワーカープロセスを開始します。 この動作を変更し、異なるstart メソッドを使用することの影響を認識したい場合は、ここに示すように変更できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -84,19 +84,19 @@ Sanic.start_method = "fork"
 
 ### Worker ack
 
-When all of your workers are running in a subprocess a potential problem is created: deadlock. This can occur when the child processes cease to function, but the main process is unaware that this happened. Therefore, Sanic servers will automatically send an `ack` message (short for acknowledge) to the main process after startup.
+すべてのワーカーがサブプロセスで実行されている場合、潜在的な問題が生じます:デッドロック。 これは子プロセスが機能を停止した場合に発生することがありますが、メインプロセスはこれが起こったことを認識していません。 したがって、Sanicサーバーは起動後にメインプロセスに自動的に`ack`メッセージ（確認のための略）を送信します。
 
-In version 22.9, the `ack` timeout was short and limited to `5s`. In version 22.12, the timeout was lengthened to `30s`. If your application is shutting down after thirty seconds then it might be necessary to manually increase this threshhold.
+バージョン22.9では、`ack`のタイムアウトは短く、`5s`に制限されていました。 バージョン 22.12 では、タイムアウトは `30s` に延長されました。 アプリケーションが30秒後にシャットダウンする場合、このしきい値を手動で増やす必要があるかもしれません。
 
-.. column::
+.. 列::
 
 ```
-The value of `WorkerManager.THRESHOLD` is in `0.1s` increments. Therefore, to set it to one minute, you should set the value to `600`.
+`WorkerManager.THRESHOLD` の値は `0.1s` 単位です。したがって1分に設定するには、値を `600` に設定してください。
 
-This value should be set as early as possible in your application, and should ideally happen in the global scope.  Setting it after the main process has started will not work.
+この値は、アプリケーションで可能な限り早期に設定する必要があり、理想的にはグローバルスコープで設定する必要があります。 メインプロセスが開始された後に設定することはできません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -106,19 +106,19 @@ WorkerManager.THRESHOLD = 600
 ```
 ````
 
-### Zero downtime restarts
+### ゼロダウンタイムの再起動
 
-By default, when restarting workers, Sanic will teardown the existing process first before starting a new one.
+デフォルトでは、ワーカーを再起動すると、Sanicは新しいプロセスを開始する前に既存のプロセスを最初に分解します。
 
-If you are intending to use the restart functionality in production then you may be interested in having zero-downtime reloading. This can be accomplished by forcing the reloader to change the order to start a new process, wait for it to [ack](#worker-ack), and then teardown the old process.
+本番環境で再起動機能を使用しようとしている場合は、ゼロダウンタイムのリロードに興味があるかもしれません。 これは、新しいプロセスを開始するために、再ローダーを強制的に変更することによって達成することができます。 [ack](#worker-ack) まで待ってから、古いプロセスを分解します。
 
-.. column::
+.. 列::
 
 ```
-From the multiplexer, use the `zero_downtime` argument
+マルチプレクサから`zero_downtime`引数を使います。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -126,32 +126,32 @@ app.m.restart(zero_downtime=True)
 ```
 ````
 
-_Added in v22.12_
+_v22.12_ に追加されました
 
-## Using shared context between worker processes
+## ワーカープロセス間で共有コンテキストを使用する
 
-Python provides a few methods for [exchanging objects](https://docs.python.org/3/library/multiprocessing.html#exchanging-objects-between-processes), [synchronizing](https://docs.python.org/3/library/multiprocessing.html#synchronization-between-processes), and [sharing state](https://docs.python.org/3/library/multiprocessing.html#sharing-state-between-processes) between processes. This usually involves objects from the `multiprocessing` and `ctypes` modules.
+Python provides a few methods for [exchanging objects](https://docs.python.org/3/library/multiprocessing.html#exchanging-objects-between-processes), [synchronizing](https://docs.python.org/3/library/multiprocessing.html#synchronization-between-processes), and [sharing state](https://docs.python.org/3/library/multiprocessing.html#sharing-state-between-processes) between processes. これには通常、 `multiprocessing` と `ctypes` モジュールのオブジェクトが含まれます。
 
-If you are familiar with these objects and how to work with them, you will be happy to know that Sanic provides an API for sharing these objects between your worker processes. If you are not familiar, you are encouraged to read through the Python documentation linked above and try some of the examples before proceeding with implementing shared context.
+あなたがこれらのオブジェクトとそれらの操作方法に精通しているなら Sanicはこれらのオブジェクトをワーカープロセス間で共有するためのAPIを提供しています。 慣れていない場合は、 上記のリンク先の Python ドキュメントを読んで、共有コンテキストの実装を進める前にいくつかの例を試してみることをお勧めします。
 
-Similar to how [application context](../basics/app.md#application-context) allows an applicaiton to share state across the lifetime of the application with `app.ctx`, shared context provides the same for the special objects mentioned above. This context is available as `app.shared_ctx` and should **ONLY** be used to share objects intended for this purpose.
+format@@0(../basics/app.md#application-context) と同様に、アプリケーションの寿命にわたってアプリケーションが `app と状態を共有することができます。 tx`は、上記の特別なオブジェクトに対して共有コンテキストを提供します。 このコンテキストは `app.shared_ctx` として利用できます。この目的のためにオブジェクトを共有するために **ONLY** を使用します。
 
-The `shared_ctx` will:
+`shared_ctx` は次のようになります:
 
-- _NOT_ share regular objects like `int`, `dict`, or `list`
-- _NOT_ share state between Sanic instances running on different machines
-- _NOT_ share state to non-worker processes
-- **only** share state between server workers managed by the same Manager
+- _NOT_ `int` や `dict` や `list` などの通常のオブジェクトを共有していません
+- _違う_マシン上で実行されているSanicインスタンス間での状態の共有
+- _NOT_ 状態をワーカー以外のプロセスと共有
+- **のみ** 同じマネージャーによって管理されたサーバーワーカー間の状態を共有
 
-Attaching an inappropriate object to `shared_ctx` will likely result in a warning, and not an error. You should be careful to not accidentally add an unsafe object to `shared_ctx` as it may not work as expected. If you are directed here because of one of those warnings, you might have accidentally used an unsafe object in `shared_ctx`.
+`shared_ctx` に不適切なオブジェクトを追加すると警告になり、エラーにならない可能性があります。 `shared_ctx` に誤って安全でないオブジェクトを追加しないように注意してください。 これらの警告が原因でここに指示された場合、`shared_ctx` で安全でないオブジェクトを誤って使用した可能性があります。
 
-.. column::
+.. 列::
 
 ```
-In order to create a shared object you **must** create it in the main process and attach it inside of the `main_process_start` listener.
+共有オブジェクトを作成するには、メインプロセスで作成し、 `main_process_start` リスナーの中に添付する必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -163,38 +163,38 @@ async def main_process_start(app):
 ```
 ````
 
-Trying to attach to the `shared_ctx` object outside of this listener may result in a `RuntimeError`.
+このリスナーの外で `shared_ctx` オブジェクトにアタッチしようとすると、 `RuntimeError` になります。
 
-.. column::
+.. 列::
 
 ```
-After creating the objects in the `main_process_start` listener and attaching to the `shared_ctx`, they will be available in your workers wherever the application instance is available (example: listeners, middleware, request handlers).
+`main_process_start` リスナーでオブジェクトを作成し、`shared_ctx` にアタッチした後 アプリケーションインスタンスが利用可能な場所(例:リスナー、ミドルウェア、リクエストハンドラ)は、ワーカー内で利用可能になります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 from multiprocessing import Queue
 
-@app.get("")
+@app.get(char@@2)
 async def handler(request):
     request.app.shared_ctx.queue.put(1)
     ...
 ```
 ````
 
-## Access to the multiplexer
+## マルチプレクサへのアクセス
 
-The application instance has access to an object that provides access to interacting with the Manager and other worker processes. The object is attached as the `app.multiplexer` property, but it is more easily accessed by its alias: `app.m`.
+アプリケーションインスタンスは、Manager や他のワーカープロセスとの相互作用へのアクセスを提供するオブジェクトへのアクセス権を持っています。 オブジェクトは `app.multiple` プロパティとしてアタッチされますが、`app.m` は別名でアクセスしやすくなります。
 
-.. column::
+.. 列::
 
 ```
-For example, you can get access to the current worker state.
+たとえば、現在のワーカーの状態にアクセスできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -211,13 +211,13 @@ Sanic-Server-0-0
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-The `multiplexer` also has access to terminate the Manager, or restart worker processes
+`multiplace`は、マネージャーを終了するか、ワーカープロセスを再起動するためのアクセス権を持っています
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -235,15 +235,15 @@ app.m.name.restart(all_workers=True)  # Available v22.12+
 ```
 ````
 
-## Worker state
+## ワーカーの状態
 
-.. column::
+.. 列::
 
 ```
-As shown above, the `multiplexer` has access to report upon the state of the current running worker. However, it also contains the state for ALL processes running.
+上に示すように、`multiplace` は現在の実行中のワーカーの状態を報告するためにアクセスできます。 しかし、それはまた、実行されているすべてのプロセスのための状態を含みます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -273,39 +273,39 @@ async def print_state(request: Request):
 ```
 ````
 
-The possible states are:
+可能な状態は次のとおりです。
 
-- `NONE` - The worker has been created, but there is no process yet
-- `IDLE` - The process has been created, but is not running yet
-- `STARTING` - The process is starting
-- `STARTED` - The process has started
-- `ACKED` - The process has started and sent an acknowledgement (usually only for server processes)
-- `JOINED` - The process has exited and joined the main process
-- `TERMINATED` - The process has exited and terminated
-- `RESTARTING` - The process is restarting
-- `FAILED` - The process encountered an exception and is no longer running
-- `COMPLETED` - The process has completed its work and exited successfully
+- `NONE` - 作業者が作成されましたが、プロセスはまだありません。
+- `IDLE` - プロセスは作成されましたが、まだ実行されていません
+- `STARTING` - プロセスが開始されています
+- `STARTED` - プロセスが開始されました
+- `ACKED` - プロセスが開始され、承認を送信しました (通常はサーバーのプロセスのみ)
+- `JOINED` - プロセスが終了し、メインプロセスに参加しました
+- `TERMINATED` - プロセスが終了し、終了しました
+- `RESTARTING` - プロセスが再起動しています
+- `FAILED` - プロセスが例外に遭遇し、実行されなくなりました
+- `COMPLETED` - プロセスが完了し、終了しました
 
-## Built-in non-server processes
+## 組み込みの非サーバー プロセス
 
-As mentioned, the Manager also has the ability to run non-server processes. Sanic comes with two built-in types of non-server processes, and allows for [creating custom processes](#running-custom-processes).
+前述のように、マネージャーは非サーバプロセスを実行することもできます。 Sanicには2種類の非サーバープロセスが組み込まれており、format@@0(#running-custom-processes) を使用できます。
 
-The two built-in processes are
+二つの組み込みプロセスは
 
-- the [auto-reloader](./development.md#automatic-reloader), optionally enabled to watch the file system for changes and trigger a restart
-- [inspector](#inspector), optionally enabled to provide external access to the state of the running instance
+- [auto-reloader](./development.md#automatic-reloader) は、ファイルシステムの変更を監視し、再起動をトリガーするために必要に応じて有効になります
+- [inspector](#inspector) オプションで実行中のインスタンスの状態への外部アクセスを提供することができます
 
 ## Inspector
 
-Sanic has the ability to expose the state and the functionality of the `multiplexer` to the CLI. Currently, this requires the CLI command to be run on the same machine as the running Sanic instance. By default the inspector is disabled.
+Sanicは、CLIに「multiplane」の状態と機能を公開する能力を持っています。 現在、実行中のSanicインスタンスと同じマシン上でCLIコマンドを実行する必要があります。 デフォルトではインスペクターは無効になっています。
 
-.. column::
+.. 列::
 
 ```
-To enable it, set the config value to `True`.
+有効にするには、設定値を `True` に設定します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -313,51 +313,51 @@ app.config.INSPECTOR = True
 ```
 ````
 
-You will now have access to execute any of these CLI commands:
+これで、これらの CLI コマンドのいずれかを実行することができます。
 
 ```
-sanic inspect reload                      Trigger a reload of the server workers
-sanic inspect shutdown                    Shutdown the application and all processes
-sanic inspect scale N                     Scale the number of workers to N
-sanic inspect <custom>                    Run a custom command
+健全な検査 reload サーバワーカーのリロードをトリガーする
+sanic inspect shutdown the application and all processes
+sanic inspect scale N ワーカー数を N
+sanic inspect <custom>                    カスタムコマンドを実行
 ```
 
 ![](https://user-images.githubusercontent.com/166269/190099384-2f2f3fae-22d5-4529-b279-8446f6b5f9bd.png)
 
-.. column::
+.. 列::
 
 ```
-This works by exposing a small HTTP service on your machine. You can control the location using configuration values:
+これは、マシン上の小さなHTTPサービスを公開することで動作します。設定値を使用して場所を制御できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
-app.config.INSPECTOR_HOST =  "localhost"
-app.config.INSPECTOR_PORT =  6457
+app.config.INSPECTOR_HOST = "localhost"
+app.config.INSPECTOR_PORT = 6457
 ```
 ````
 
-[Learn more](./inspector.md) to find out what is possible with the Inspector.
+format@@0(./inspector.md) は、インスペクターで何が可能かを知ることができます。
 
-## Running custom processes
+## カスタムプロセスの実行
 
-To run a managed custom process on Sanic, you must create a callable. If that process is meant to be long-running, then it should handle a shutdown call by a `SIGINT` or `SIGTERM` signal.
+Sanicで管理されたカスタムプロセスを実行するには、呼び出し可能ファイルを作成する必要があります。 そのプロセスが長時間実行されることを意図している場合は、`SIGINT`または`SIGTERM`信号によるシャットダウンコールを処理する必要があります。
 
-.. column::
+.. 列::
 
 ```
-The simplest method for doing that in Python will be to just wrap your loop in `KeyboardInterrupt`.
+Pythonでそれを行う最も簡単な方法は、`KeyboardInterrupt`でループをラップすることです。
 
-If you intend to run another application, like a bot, then it is likely that it already has capability to handle this signal and you likely do not need to do anything.
+ボットのような別のアプリケーションを実行する場合。 この信号を処理する能力を持っている可能性があります おそらく何もする必要はありません
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
-from time import sleep
+from time import slep
 
 def my_process(foo):
     try:
@@ -368,13 +368,13 @@ def my_process(foo):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-That callable must be registered in the `main_process_ready` listener. It is important to note that is is **NOT** the same location that you should register [shared context](#using-shared-context-between-worker-processes) objects.
+その呼び出し可能ファイルは `main_process_ready` リスナーに登録する必要があります。 重要なのは、format@@0(#using-shared-context-between-worker-processes) オブジェクトを登録するのと同じ場所ではないことです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -385,17 +385,17 @@ async def ready(app: Sanic, _):
 ```
 ````
 
-### Transient v. durable processes
+### Transient v.耐久性のあるプロセス
 
-.. column::
+.. 列::
 
 ```
-When you manage a process with the `manage` method, you have the option to make it transient or durable. A transient process will be restarted by the auto-reloader, and a durable process will not.
+`manage` メソッドでプロセスを管理する場合は、プロセスをトランジェントまたは耐久性にするオプションがあります。 一時的なプロセスは、オートリローダーによって再起動され、耐久性のあるプロセスは実行されません。
 
-By default, all processes are durable.
+デフォルトでは、すべてのプロセスは耐久性があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -405,12 +405,12 @@ async def ready(app: Sanic, _):
         "MyProcess",
         my_process,
         {"foo": "bar"},
-        transient=True,
+        transitent=True,
     )
 ```
 ````
 
-### Tracked v. untracked processes
+### 追跡されていないプロセス
 
 .. new:: v23.12
 
@@ -422,13 +422,13 @@ See [worker state](./manager#worker-state) for more information.
 Sometimes it is helpful to run background processes that are not long-running. You run them once until completion and then they exit. Upon completion, they will either be in `FAILED` or `COMPLETED` state.
 ```
 
-.. column::
+.. 列::
 
 ```
-When you are running a non-long-running process, you can opt out of tracking it by setting `tracked=False` in the `manage` method. This means that upon completion of the process it will be removed from the list of tracked processes. You will only be able to check the state of the process while it is running.
+長時間実行されていないプロセスを実行している場合は、`manage`メソッドに`tracked=False`を設定することでトラッキングを解除できます。 これは、プロセスが完了すると、追跡されたプロセスのリストから削除されることを意味します。 実行中のプロセスの状態のみを確認できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -443,23 +443,23 @@ async def ready(app: Sanic, _):
 ```
 ````
 
-_Added in v23.12_
+_v23.12_ に追加されました
 
-### Restartable custom processes
+### 再起動可能なカスタムプロセス
 
 .. new:: v23.12
 
 ```
-A custom process that is transient will **always** be restartable. That means the auto-restart will work as expected. However, what if you want to be able to *manually* restart a process, but not have it be restarted by the auto-reloader?
+トランジェントであるカスタムプロセスは**常に起動可能**になります。つまり、自動再起動は想定どおりに動作します。 ただし、プロセスを手動で再起動できますが、オートリローダーで再起動できない場合はどうなりますか?
 ```
 
-.. column::
+.. 列::
 
 ```
-In this scenario, you can set `restartable=True` in the `manage` method. This will allow you to manually restart the process, but it will not be restarted by the auto-reloader.
+このシナリオでは、`manage`メソッドで`restartable=True`を設定できます。 これにより、手動でプロセスを再起動することができますが、自動再起動では再起動しません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -474,13 +474,13 @@ async def ready(app: Sanic, _):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You could now manually restart that process from the multiplexer.
+マルチプレクサから手動でそのプロセスを再起動できるようになりました。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -491,23 +491,23 @@ async def restart_handler(request: Request):
 ```
 ````
 
-_Added in v23.12_
+_v23.12_ に追加されました
 
-### On the fly process management
+### オンザフライプロセス管理
 
 .. new:: v23.12
 
 ```
-Custom processes are usually added in the `main_process_ready` listener. However, there may be times when you want to add a process after the application has started. For example, you may want to add a process from a request handler. The multiplexer provides a method for doing this.
+カスタムプロセスは通常 `main_process_ready` リスナーに追加されます。 ただし、アプリケーションの開始後にプロセスを追加したい場合があります。 例えば、リクエストハンドラからプロセスを追加することができます。multiplexer はこれを行うためのメソッドを提供します。
 ```
 
-.. column::
+.. 列::
 
 ```
-Once you have a reference to the multiplexer, you can call `manage` to add a process. It works the same as the `manage` method on the Manager.
+マルチプレクサへの参照ができたら、プロセスを追加するために `manage` を呼び出すことができます。 マネージャーの `manage` メソッドと同じ動作をします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -523,17 +523,17 @@ async def start_handler(request: Request):
 ```
 ````
 
-_Added in v23.12_
+_v23.12_ に追加されました
 
-## Single process mode
+## シングルプロセスモード
 
-.. column::
+.. 列::
 
 ```
-If you would like to opt out of running multiple processes, you can run Sanic in a single process only. In this case, the Manager will not run. You will also not have access to any features that require processes (auto-reload, the inspector, etc).
+複数のプロセスの実行をオプトアウトしたい場合は、1つのプロセスでのみSanicを実行できます。 この場合、マネージャーは実行されません。 また、プロセスを必要とする機能(自動リロード、インスペクタなど)にもアクセスできません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -552,31 +552,31 @@ if __name__ == "__main__":
 
 ## Sanic and multiprocessing
 
-Sanic makes heavy use of the [`multiprocessing` module](https://docs.python.org/3/library/multiprocessing.html) to manage the worker processes. You should generally avoid lower level usage of this module (like setting the start method) as it may interfere with the functionality of Sanic.
+Sanic は [`multiprocessing` module](https://docs.python.org/3/library/multiprocessing.html) を使用してワーカープロセスを管理します。 通常、Sanic の機能を妨げる可能性があるため、このモジュールの低レベル使用(start メソッドの設定など)は避けるべきです。
 
-### Start methods in Python
+### Pythonでメソッドを開始
 
-Before explaining what Sanic tries to do, it is important to understand what the `start_method` is and why it is important. Python generally allows for three different methods of starting a process:
+Sanicが何をしようとしているのかを説明する前に、`start_method`とは何か、なぜそれが重要なのかを理解することが重要です。 Python では一般的に、プロセスを開始するための 3 つの異なるメソッドが使用できます。
 
 - `fork`
 - `spawn`
 - `forkserver`
 
-The `fork` and `forkserver` methods are only available on Unix systems, and `spawn` is the only method available on Windows. On Unix systems where you have a choice, `fork` is generally the default system method.
+`fork` と `forkserver` メソッドは Unix システムでのみ使用でき、`spawn` は Windows で利用できる唯一のメソッドです。 選択肢がある Unix システムでは、`fork` は一般的にデフォルトのシステムメソッドです。
 
-You are encouraged to read the [Python documentation](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods) to learn more about the differences between these methods. However, the important thing to know is that `fork` basically copies the entire memory of the parent process into the child process, whereas `spawn` will create a new process and then load the application into that process. This is the reason why you need to nest your Sanic `run` call inside of the `__name__ == "__main__"` block if you are not using the CLI.
+これらのメソッドの違いについては、format@@0(https\://docs.python.org/3/library/multiprocessing.html#context-and-start-methods)を参照してください。 ただし、重要なことは、基本的に親プロセスのメモリ全体を子プロセスにコピーすることです。 `spawn` は新しいプロセスを作成し、そのプロセスにアプリケーションをロードします。 CLIを使っていない場合は、`__name__ == "__main__"`ブロックの中に、Sanic `run` を入れ子にする必要があります。
 
-### Sanic and start methods
+### サニックメソッドと開始方法
 
-By default, Sanic will try and use `spawn` as the start method. This is because it is the only method available on Windows, and it is the safest method on Unix systems.
+デフォルトでは、Sanicはstartメソッドとして`spawn`を使用します。 これは、Windows で利用可能な唯一の方法であり、Unix システムで最も安全な方法であるためです。
 
-.. column::
+.. 列::
 
 ```
-However, if you are running Sanic on a Unix system and you would like to use `fork` instead, you can do so by setting the `start_method` on the `Sanic` class. You will want to do this as early as possible in your application, and ideally in the global scope before you import any other modules.
+もしあなたが Unix システムで Sanic を実行していて、代わりに `fork` を使用したい場合。 `Sanic`クラスに`start_method`を設定することで可能です。 他のモジュールをインポートする前に、アプリケーションで可能な限り早期にこれを行い、グローバルスコープで理想的にこれを行う必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -586,23 +586,23 @@ Sanic.start_method = "fork"
 ```
 ````
 
-### Overcoming a `RuntimeError`
+### `RuntimeError`をクリアする
 
-You might have received a `RuntimeError` that looks like this:
-
-```
-RuntimeError: Start method 'spawn' was requested, but 'fork' was already set.
-```
-
-If so, that means somewhere in your application you are trying to set the start method that conflicts with what Sanic is trying to do. You have a few options to resolve this:
-
-.. column::
+次のような `RuntimeError` を受け取ったかもしれません。
 
 ```
-**OPTION 1:** You can tell Sanic that the start method has been set and to not try and set it again.
+RuntimeError: Startメソッド'spawn'が要求されましたが、'fork'は既に設定されていました。
 ```
 
-.. column::
+そうであれば、アプリケーションのどこかでSanicがやろうとしていることと競合するstartメソッドを設定しようとしていることを意味します。 これを解決するにはいくつかのオプションがあります。
+
+.. 列::
+
+```
+**OPTION 1:** Sanicに、startメソッドが設定されており、再度設定しないようにすることができます。
+```
+
+.. 列::
 
 ````
 ```python
@@ -612,13 +612,13 @@ Sanic.START_METHOD_SET = True
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-**OPTION 2:** You could tell Sanic that you intend to use `fork` and to not try and set it to `spawn`.
+**OPTION 2:** Sanicに、 `fork` を使うつもりで、 `spawn` を使わないように伝えることができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -628,13 +628,13 @@ Sanic.start_method = "fork"
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-**OPTION 3:** You can tell Python to use `spawn` instead of `fork` by setting the `multiprocessing` start method.
+**OPTION 3:** `multiprocessing` start メソッドを設定することで、`fork` の代わりに `spawn` を使用するようにPythonに指示できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -644,7 +644,7 @@ multiprocessing.set_start_method("spawn")
 ```
 ````
 
-In any of these options, you should run this code as early as possible in your application. Depending upon exactly what your specific scenario is, you may need to combine some of the options.
+これらのいずれかのオプションでは、アプリケーションでできるだけ早くこのコードを実行する必要があります。 具体的なシナリオによっては、いくつかのオプションを組み合わせる必要がある場合があります。
 
 .. note::
 

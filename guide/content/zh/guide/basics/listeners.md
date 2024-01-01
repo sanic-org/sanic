@@ -1,76 +1,76 @@
-# Listeners
+# 监听器
 
-Sanic provides you with eight (8) opportunities to inject an operation into the life cycle of your application server. This does not include the [signals](../advanced/signals.md), which allow further injection customization.
+Sanic为您提供了八(8)个机会，将操作注入到您的应用程序服务器的生命周期。 这不包括 [signals](../advanced/signals.md)，它允许进一步的自定义注入。
 
-There are two (2) that run **only** on your main Sanic process (ie, once per call to `sanic server.app`.)
+在你的主要Sanic 进程上\*\*只运行两个(2)(每次通话一次)
 
 - `main_process_start`
 - `main_process_stop`
 
-There are also two (2) that run **only** in a reloader process if auto-reload has been turned on.
+还有两（2）如果自动重新加载已打开，则只在读取过程中运行 \*\*。
 
 - `reload_process_start`
 - `reload_process_stop`
 
-_Added `reload_process_start` and `reload_process_stop` in v22.3_
+\*在 v22.3中添加 `reload_process_start` 和 `reload_process_stop` \*
 
-There are four (4) that enable you to execute startup/teardown code as your server starts or closes.
+有四(4)使您能够在服务器启动或关闭时执行启动/拆解代码。
 
-- `before_server_start`
-- `after_server_start`
+- `befor_server_start`
+- `After _server_start`
 - `before_server_stop`
-- `after_server_stop`
+- `After _server_stop`
 
-The life cycle of a worker process looks like this:
+工序的生命周期看起来就像这样：
 
-.. mermaid::
+.. mermaid:
 
 ```
-sequenceDiagram
+序列图
 autonumber
-participant Process
-participant Worker
-participant Listener
-participant Handler
-Note over Process: sanic server.app
-loop
-    Process->>Listener: @app.main_process_start
-    Listener->>Handler: Invoke event handler
+参与进程
+参与员工
+参与者监听器
+参与者处理器
+进程注释：无声服务器。 pp
+循环
+    进程->列表: @app。 ain_process_start
+    Listener->>>Handler: Invoke event manager
 end
-Process->>Worker: Run workers
-loop Start each worker
-    loop
-        Worker->>Listener: @app.before_server_start
-        Listener->>Handler: Invoke event handler
-    end
+Process->> Workers: Run workers
+roop starting each worker
+    roop
+        Worker->Listener: @app. efore_server_start
+        Listener->>>Handler: Invoke event handler
+
     Note over Worker: Server status: started
-    loop
-        Worker->>Listener: @app.after_server_start
-        Listener->>Handler: Invoke event handler
+    roop
+        Worker->Listener: @app. fter_server_start
+        Listener->>>Handler: Invoke Event Event
     end
-    Note over Worker: Server status: ready
+    Note over Worker: Server status: possible
 end
-Process->>Worker: Graceful shutdown
-loop Stop each worker
-    loop
-        Worker->>Listener: @app.before_server_stop
-        Listener->>Handler: Invoke event handler
+Process->Workers: Graceful shutdown
+roop Stop each worker
+    roop
+        Worker->Listener: @app. efore_server_stop
+        Listener->>>Handler: Invoke event handler
     end
-    Note over Worker: Server status: stopped
-    loop
-        Worker->>Listener: @app.after_server_stop
+    Note over Worker: Server status: 停止
+    循环
+        Worker->Listener: @app. fter_server_stop
         Listener->>Handler: Invoke event handler
-    end
-    Note over Worker: Server status: closed
+    ender
+    Note over Work: Server status: closed
 end
 loop
-    Process->>Listener: @app.main_process_stop
-    Listener->>Handler: Invoke event handler
-end
-Note over Process: exit
+    Process->>Listener: @app. ain_process_stop
+    Listener->>>处理程序：Invoke 事件处理程序
+结尾
+进程注释：退出
 ```
 
-The reloader process live outside of this worker process inside of a process that is responsible for starting and stopping the Sanic processes. Consider the following example:
+读取器进程在这个工人进程之外生活在负责启动和停止萨尼克进程的进程内。 请考虑以下示例：
 
 ```python
 @app.reload_process_start
@@ -86,93 +86,93 @@ async def before_start(*_):
 	print(">>>>>> before_start <<<<<<")
 ```
 
-If this application were run with auto-reload turned on, the `reload_start` function would be called once when the reloader process starts. The `main_start` function would also be called once when the main process starts. **HOWEVER**, the `before_start` function would be called once for each worker process that is started, and subsequently every time that a file is saved and the worker is restarted.
+如果此应用程序运行时启用自动重新加载功能，当读取器进程开始时将调用 "reload_start" 函数。 "main_start" 函数也会在主进程开始时调用。 **HOWEVER**，每次启动的工作流程将调用一次`before_start`函数， 并且随后每次保存一个文件并重启该工作人员。
 
-## Attaching a listener
+## 正在附加侦听器
 
-.. column::
+.. 列:
 
 ```
-The process to setup a function as a listener is similar to declaring a route.
+作为侦听器设置函数的过程类似于声明路由。
 
-The currently running `Sanic()` instance is injected into the listener.
+正在运行的 `Sanic()` 实例被注入到侦听器中。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 async def setup_db(app):
-    app.ctx.db = await db_setup()
+    app.ctx.db = 等待db_setup()
 
-app.register_listener(setup_db, "before_server_start")
+app.register_listener(setup_db, "previ_server_start")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-The `Sanic` app instance also has a convenience decorator.
+“Sanic”应用实例也有一个方便装饰器。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.listener("before_server_start")
+@app.listener("prev_server_start")
 async def setup_db(app):
-    app.ctx.db = await db_setup()
+    app.ctx.db = 等待db_setup()
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Prior to v22.3, both the application instance and the current event loop were injected into the function. However, only the application instance is injected by default. If your function signature will accept both, then both the application and the loop will be injected as shown here.
+在 v22.3 之前，应用程序实例和当前事件循环都被注入到函数中。 然而，默认情况下只注入应用程序实例。 如果您的函数签名同时接受，那么应用程序和循环都会像这里显示的那样被注入。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.listener("before_server_start")
+@app.listener("prev_server_start")
 async def setup_db(app, loop):
-    app.ctx.db = await db_setup()
+    app.ctx.db = 等待db_setup()
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You can shorten the decorator even further. This is helpful if you have an IDE with autocomplete.
+您可以进一步缩短装饰。如果您拥有一个自动完成的 IDE，这将是很有帮助的。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.before_server_start
 async def setup_db(app):
-    app.ctx.db = await db_setup()
+    app.ctx.db = 等待db_setup()
 ```
 ````
 
-## Order of execution
+## 执行顺序
 
-Listeners are executed in the order they are declared during startup, and reverse order of declaration during teardown
+侦听器按启动时的申报顺序执行，并在拆解时反向排序。
 
-|                       | Phase           | Order         |
-| --------------------- | --------------- | ------------- |
-| `main_process_start`  | main startup    | regular 🙂 ⬇️ |
-| `before_server_start` | worker startup  | regular 🙂 ⬇️ |
-| `after_server_start`  | worker startup  | regular 🙂 ⬇️ |
-| `before_server_stop`  | worker shutdown | 🙃 ⬆️ reverse |
-| `after_server_stop`   | worker shutdown | 🙃 ⬆️ reverse |
-| `main_process_stop`   | main shutdown   | 🙃 ⬆️ reverse |
+|                       | 阶段     | 订单                                                                 |
+| --------------------- | ------ | ------------------------------------------------------------------ |
+| `main_process_start`  | 主要启动   | 普通:稍微ly_smiling_face: ⬇️ |
+| `befor_server_start`  | 工作人员启动 | 普通:稍微ly_smiling_face: ⬇️ |
+| `After _server_start` | 工作人员启动 | 普通:稍微ly_smiling_face: ⬇️ |
+| `before_server_stop`  | 工人关机   | 🙃 ⬆️ reverse                                                      |
+| `After _server_stop`  | 工人关机   | 🙃 ⬆️ reverse                                                      |
+| `main_process_stop`   | 主要关机   | 🙃 ⬆️ reverse                                                      |
 
-Given the following setup, we should expect to see this in the console if we run two workers.
+鉴于以下情况，如果我们运行两名工人，我们应该在控制台中看到这一点。
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -180,37 +180,37 @@ Given the following setup, we should expect to see this in the console if we run
 async def listener_1(app, loop):
     print("listener_1")
 
-@app.before_server_start
-async def listener_2(app, loop):
+@appp efor_server_start
+async def listener_2(app, loor):
     print("listener_2")
 
-@app.listener("after_server_start")
-async def listener_3(app, loop):
+@app. istener("after_server_start")
+async def listener_3(app, rol):
     print("listener_3")
 
-@app.after_server_start
-async def listener_4(app, loop):
+@app. fter_server_start
+async def listener_4(app, loor):
     print("listener_4")
 
-@app.listener("before_server_stop")
-async def listener_5(app, loop):
+@app. istener("before_server_stop")
+async def listener_5(app, rol):
     print("listener_5")
 
-@app.before_server_stop
-async def listener_6(app, loop):
+@app. efor_server_stop
+async def listener_6(app, loor):
     print("listener_6")
 
-@app.listener("after_server_stop")
-async def listener_7(app, loop):
+@app. istener("after_server_stop")
+async def listener_7(app, rol):
     print("listener_7")
 
-@app.after_server_stop
-async def listener_8(app, loop):
+@app. fter_server_stop
+async def listener_8(app, loor):
     print("listener_8")
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```bash
@@ -251,24 +251,24 @@ In the above example, notice how there are three processes running:
 .. tip:: FYI
 
 ```
-The practical result of this is that if the first listener in `before_server_start` handler setups a database connection, listeners that are registered after it can rely upon that connection being alive both when they are started and stopped.
+这个结果的实际结果是，如果`pre_server_start`中的第一个监听器设置了数据库连接。 注册后的侦听器可以在启动和停止时依靠该连接存活。
 ```
 
-### Priority
+### 优先权
 
-.. new:: v23.12
+.. 新：v23.12
 
 ```
-In v23.12, the `priority` keyword argument was added to listeners. This allows for fine-tuning the order of execution of listeners. The default priority is `0`. Listeners with a higher priority will be executed first. Listeners with the same priority will be executed in the order they were registered. Furthermore, listeners attached to the `app` instance will be executed before listeners attached to a `Blueprint` instance.
+在 v23.12，监听器中添加了 `priority` 关键字参数。这允许调整监听器的执行顺序。 默认优先级是 `0`。优先级较高的侦听器将先执行。 具有相同优先级的侦听器将按照他们注册的顺序执行。 此外，连接到 `app` 实例的侦听器将在连接到 `Blueprint` 实例的侦听器之前执行。
 ```
 
-Overall the rules for deciding the order of execution are as follows:
+总体上，决定执行顺序的规则如下：
 
-1. Priority in descending order
-2. Application listeners before Blueprint listeners
-3. Registration order
+1. 按降序排序
+2. 蓝图监听器之前的应用程序监听器
+3. 注册订单
 
-.. column::
+.. 列:
 
 ````
 As an example, consider the following, which will print:
@@ -284,7 +284,7 @@ bp_first
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -292,27 +292,27 @@ bp_first
 async def first(app):
     print("first")
 
-@app.listener("before_server_start", priority=2)
+@app。 istener("before_server_start", priority=2)
 async def second(app):
     print("second")
 
-@app.before_server_start(priority=3)
+@app. efor_server_start(priority=3)
 async def third(app):
     print("third")
 
-@bp.before_server_start
+@bp.befor_server_start
 async def bp_first(app):
     print("bp_first")
 
-@bp.listener("before_server_start", priority=2)
+@bp. istener("before_server_start", priority=2)
 async def bp_second(app):
     print("bp_second")
 
-@bp.before_server_start(priority=3)
+@bp. efor_server_start(priority=3)
 async def bp_third(app):
     print("bp_third")
 
-@app.before_server_start
+@app。 efore_server_start
 async def fourth(app):
     print("fourth")
 
@@ -320,11 +320,11 @@ app.blueprint(bp)
 ```
 ````
 
-## ASGI Mode
+## ASGI 模式
 
-If you are running your application with an ASGI server, then make note of the following changes:
+如果您正在使用 ASGI 服务器运行您的应用程序，请注意以下变化：
 
-- `reload_process_start` and `reload_process_stop` will be **ignored**
-- `main_process_start` and `main_process_stop` will be **ignored**
-- `before_server_start` will run as early as it can, and will be before `after_server_start`, but technically, the server is already running at that point
-- `after_server_stop` will run as late as it can, and will be after `before_server_stop`, but technically, the server is still running at that point
+- `reload_process_start` 和 `reload_process_stop` 将被**忽略**
+- `main_process_start` 和 `main_process_stop` 将被**忽略**
+- `befor_server_start` 将尽早运行，并且将在 `After _server_start` 之前运行，但是从技术上讲，服务器已经在那个地点运行。
+- `after _server_stop`将会尽早运行，并且会在 `before_server_stop` 之后运行，但从技术上讲，服务器仍然在那个地点运行

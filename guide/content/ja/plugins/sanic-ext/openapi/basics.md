@@ -1,22 +1,22 @@
 ---
-title: Sanic Extensions - Basic OAS
+title: サニックエクステンション - Basic OAS
 ---
 
-# Basics
+# 基本
 
 .. note::
 
 ```
-The OpenAPI implementation in Sanic Extensions is based upon the OAS3 implementation from [`sanic-openapi`](https://github.com/sanic-org/sanic-openapi). In fact, Sanic Extensions is in a large way the successor to that project, which entered maintenance mode upon the release of Sanic Extensions. If you were previously using OAS3 with `sanic-openapi` you should have an easy path to upgrading to Sanic Extensions. Unfortunately, this project does *NOT* support the OAS2 specification.
+Sanic ExtensionsのOpenAPI実装は、[`sanic-openapi`](https://github.com/sanic-org/sanic-openapi)のOAS3実装に基づいています。 実際、Sanic Extensionsは、Sanic Extensionsのリリース時にメンテナンスモードになったプロジェクトの後継者として大きな意味を持っています。 以前に `sanic-openapi` を使用していた場合は、Sanic Extensionsへのアップグレードの簡単なパスが必要です。 残念ながら、このプロジェクトは OAS2 仕様をサポートしていません。
 ```
 
-.. column::
+.. 列::
 
 ```
-Out of the box, Sanic Extensions provides automatically generated API documentation using the [v3.0 OpenAPI specification](https://swagger.io/specification/). There is nothing special that you need to do
+Sanic Extensionsは、[v3.0 OpenAPI仕様](https://swagger.io/specification/)を使用して自動的に生成されたAPIドキュメントを提供しています。特別なことはありません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -28,15 +28,15 @@ app = Sanic("MyApp")
 ```
 ````
 
-After doing this, you will now have beautiful documentation already generated for you based upon your existing application:
+これを行うと、既存のアプリケーションに基づいてすでに生成された美しいドキュメントが表示されます。
 
 - [http://localhost:8000/docs](http://localhost:8000/docs)
 - [http://localhost:8000/docs/redoc](http://localhost:8000/docs/redoc)
 - [http://localhost:8000/docs/swagger](http://localhost:8000/docs/swagger)
 
-Checkout the [section on configuration](../configuration.md) to learn about changing the routes for the docs. You can also turn off one of the two UIs, and customize which UI will be available on the `/docs` route.
+ドキュメントのルート変更について学ぶには、[section on configuration](../configuration.md) をチェックしてください。 2 つの UI のいずれかをオフにして、`/docs` ルートでどのUIが利用できるかをカスタマイズすることもできます。
 
-.. column::
+.. 列::
 
 ```
 Using [Redoc](https://github.com/Redocly/redoc)
@@ -44,7 +44,7 @@ Using [Redoc](https://github.com/Redocly/redoc)
 ![Redoc](/assets/images/sanic-ext-redoc.png)
 ```
 
-.. column::
+.. 列::
 
 ```
 or [Swagger UI](https://github.com/swagger-api/swagger-ui)
@@ -52,17 +52,17 @@ or [Swagger UI](https://github.com/swagger-api/swagger-ui)
 ![Swagger UI](/assets/images/sanic-ext-swagger.png)
 ```
 
-## Changing specification metadata
+## 仕様メタデータの変更
 
-.. column::
+.. 列::
 
 ```
-If you want to change any of the metada, you should use the `describe` method.
+メタデータを変更したい場合は、 `describe` メソッドを使用してください。
 
-In this example `dedent` is being used with the `description` argument to make multi-line strings a little cleaner. This is not necessary, you can pass any string value here.
+`dedent` の例では、複数行の文字列を少しクリーナーにするために `description` 引数を使用しています。 これは必要ありません。任意の文字列値を渡すことができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

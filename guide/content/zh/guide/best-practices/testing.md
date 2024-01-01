@@ -1,3 +1,3 @@
-# Testing
+# 测试
 
-See [sanic-testing](../../plugins/sanic-testing/getting-started.md)
+见 [sanic-testing](../../plugins/sanic-testing/getting-started.md)

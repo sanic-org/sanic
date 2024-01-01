@@ -4,19 +4,19 @@ title: TLS/SSL/HTTPS
 
 # TLS/SSL/HTTPS
 
-> How do I run Sanic via HTTPS?
+> HTTPS経由でSanicを実行するにはどうすればよいですか?
 
-If you do not have TLS certificates yet, [see the end of this page](./tls.md#get-certificates-for-your-domain-names).
+まだ TLS 証明書を持っていない場合は、format@@0(./tls.md#get-certificates-for-your-domain-names) を参照してください。
 
-## Single domain and single certificate
+## 単一ドメインと単一証明書
 
-.. column::
+.. 列::
 
 ```
-Let Sanic automatically load your certificate files, which need to be named `fullchain.pem` and `privkey.pem` in the given folder:
+Sanicに指定されたフォルダに`fullchain.pem`と`privkey.pem`という名前の証明書ファイルを自動的にロードさせます：
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -28,15 +28,15 @@ app.run("::", 443, ssl="/etc/letsencrypt/live/example.com/")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Or, you can pass cert and key filenames separately as a dictionary:
+または、certとキーファイル名を辞書として個別に渡すこともできます:
 
-Additionally, `password` may be added if the key is encrypted, all fields except for the password are passed to `request.conn_info.cert`.
+キーが暗号化されている場合は、パスワードを除くすべてのフィールドが `request` に追加されます。 on_info.cert`
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -49,13 +49,13 @@ app.run(host="0.0.0.0", port=8443, ssl=ssl)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Alternatively, [`ssl.SSLContext`](https://docs.python.org/3/library/ssl.html) may be passed, if you need full control over details such as which crypto algorithms are permitted. By default Sanic only allows secure algorithms, which may restrict access from very old devices.
+代わりに、[`ssl.SSLContext`](https://docs.python.org/3/library/ssl.html)が渡されます。どの暗号アルゴリズムが許可されているかなど、詳細を完全に制御する必要がある場合。 デフォルトでは、Sanicはセキュアなアルゴリズムのみを許可し、これは非常に古いデバイスからのアクセスを制限する可能性があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -68,17 +68,17 @@ app.run(host="0.0.0.0", port=8443, ssl=context)
 ```
 ````
 
-## Multiple domains with separate certificates
+## 別の証明書を持つ複数のドメイン
 
-.. column::
+.. 列::
 
 ```
-A list of multiple certificates may be provided, in which case Sanic chooses the one matching the hostname the user is connecting to. This occurs so early in the TLS handshake that Sanic has not sent any packets to the client yet.
+複数の証明書のリストを提供することができます。その場合、Sanic はユーザーが接続しているホスト名に一致するものを選択します。 これは TLS ハンドシェイクの早い段階で発生し、Sanic はまだクライアントにパケットを送信していない。
 
-If the client sends no SNI (Server Name Indication), the first certificate on the list will be used even though on the client browser it will likely fail with a TLS error due to name mismatch. To prevent this fallback and to cause immediate disconnection of clients without a known hostname, add `None` as the first entry on the list. `--tls-strict-host` is the equivalent CLI option.
+クライアントがSNI(サーバー名表示)を送信していない場合 リストの最初の証明書は、クライアントブラウザ上で名前が一致しないため、TLS エラーで失敗する可能性がありますが使用されます。 このフォールバックを防ぎ、既知のホスト名なしでクライアントの接続を即座に切断するには、リストの最初のエントリとして `None` を追加します。 `--tls-strict-host` はCLIオプションと同等です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -96,18 +96,18 @@ sanic myserver:app
 .. tip::
 
 ```
-You may also use `None` in front of a single certificate if you do not wish to reveal your certificate, true hostname or site content to anyone connecting to the IP address instead of the proper DNS name.
+証明書を公開したくない場合は、1つの証明書の前に `None` を使用することもできます。 適切なDNS名ではなく、IPアドレスに接続している人への真のホスト名またはサイトコンテンツ。
 ```
 
-.. column::
+.. 列::
 
 ```
-Dictionaries can be used on the list. This allows also specifying which domains a certificate matches to, although the names present on the certificate itself cannot be controlled from here. If names are not specified, the names from the certificate itself are used.
+辞書はリストで使用できます。 これにより、証明書が一致するドメインを指定することができますが、証明書自体に存在する名前は、ここから制御することはできません。 names が指定されていない場合、証明書自体からの名前が使用されます。
 
-To only allow connections to the main domain **example.com** and only to subdomains of **bigcorp.test**:
+メインドメイン **example.com** とサブドメインのみ **bigcorp.test** への接続を許可するには:
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -123,17 +123,17 @@ app.run(host="0.0.0.0", port=8443, ssl=ssl)
 ```
 ````
 
-## Accessing TLS information in handlers via `request.conn_info` fields
+## `request.conn_info` フィールドを介してハンドラ内の TLS 情報にアクセスする
 
-- `.ssl` - is the connection secure (bool)
-- `.cert` - certificate info and dict fields of the currently active cert (dict)
-- `.server_name` - the SNI sent by the client (str, may be empty)
+- `.ssl` - 接続セキュア (bool)
+- `.cert` - 現在アクティブな証明書の情報とdict フィールド (dict)
+- `.server_name` - クライアントによって送信されたSNI（str、空かもしれない）
 
-Do note that all `conn_info` fields are per connection, where there may be many requests over time. If a proxy is used in front of your server, these requests on the same pipe may even come from different users.
+すべての `conn_info` フィールドは接続ごとに存在し、時間の経過とともに多くのリクエストがあることに注意してください。 プロキシがサーバの前で使用されている場合、同じパイプでのこれらのリクエストは異なるユーザからのものでもあります。
 
-## Redirect HTTP to HTTPS, with certificate requests still over HTTP
+## HTTPをHTTPSにリダイレクトし、証明書要求は引き続きHTTP経由で行われます
 
-In addition to your normal server(s) running HTTPS, run another server for redirection, `http_redir.py`:
+HTTPS が実行されている通常のサーバーに加えて、`http_redir.py`をリダイレクトする別のサーバーを実行します。
 
 ```python
 from sanic import Sanic, exceptions, response
@@ -151,14 +151,14 @@ def redirect_everything_else(request, exception):
     return response.text("Bad Request. Please use HTTPS!", status=400)
 ```
 
-It is best to setup this as a systemd unit separate of your HTTPS servers. You may need to run HTTP while initially requesting your certificates, while you cannot run the HTTPS server yet. Start for IPv4 and IPv6:
+HTTPS サーバーとは別の systemd ユニットとしてセットアップするのが最善です。 HTTPSサーバーはまだ実行できませんが、最初に証明書をリクエストする際にHTTPを実行する必要がある場合があります。 IPv4とIPv6の起動:
 
 ```
 sanic http_redir:app -H 0.0.0.0 -p 80
 sanic http_redir:app -H :: -p 80
 ```
 
-Alternatively, it is possible to run the HTTP redirect application from the main application:
+または、メインアプリケーションからHTTPリダイレクトアプリケーションを実行することもできます。
 
 ```python
 # app == Your main application
@@ -186,14 +186,14 @@ async def runner(app, app_server):
         app.state.is_stopping = True
 ```
 
-## Get certificates for your domain names
+## ドメイン名の証明書を取得する
 
-You can get free certificates from [Let's Encrypt](https://letsencrypt.org/). Install [certbot](https://certbot.eff.org/) via your package manager, and request a certificate:
+format@@0(https\://letsencrypt.org/)から無料で証明書を取得できます。 パッケージマネージャーから [certbot](https://certbot.eff.org/) をインストールし、証明書を要求します。
 
 ```sh
 sudo certbot certonly --key-type ecdsa --preferred-chain "ISRG Root X1" -d example.com -d www.example.com
 ```
 
-Multiple domain names may be added by further `-d` arguments, all stored into a single certificate which gets saved to `/etc/letsencrypt/live/example.com/` as per **the first domain** that you list here.
+複数のドメイン名は `-d` 引数によって追加されることができます。すべてが `/etc/letsencrypt/live/example` に保存される単一の証明書に格納されます。 ここにリストされている**最初のドメイン**に従って、om/\`。
 
-The key type and preferred chain options are necessary for getting a minimal size certificate file, essential for making your server run as _fast_ as possible. The chain will still contain one RSA certificate until when Let's Encrypt gets their new EC chain trusted in all major browsers.
+キータイプと優先チェーンオプションは、最小サイズの証明書ファイルを取得するために必要です。 サーバーをできるだけ速く動作させるために不可欠です。 このチェーンには、Let's Encryptがすべての主要なブラウザで新しいECチェーンを信頼するまで、1つのRSA証明書が含まれます。

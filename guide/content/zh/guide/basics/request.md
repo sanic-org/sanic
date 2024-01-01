@@ -1,75 +1,75 @@
-# Request
+# 请求
 
-See API docs: [sanic.request](/api/sanic.request)
+查看 API 文档： [sanic.request](/api/sanic.request)
 
-The :class:`sanic.request.Request` instance contains **a lot** of helpful information available on its parameters. Refer to the [API documentation](https://sanic.readthedocs.io/) for full details.
+The :class:`sanic.request.Request` instance contains **a lot** of helpful information available on its parameters. 详情请参阅[API 文档](https://sanic.readthedocs.io/)。
 
-As we saw in the section on [handlers](./handlers), the first argument in a route handler is usually the :class:`sanic.request.Request` object. Because Sanic is an async framework, the handler will run inside of a [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) and will be scheduled by the event loop. This means that the handler will be executed in an isolated context and the request object will be unique to that handler's task.
+As we saw in the section on [handlers](./handlers), the first argument in a route handler is usually the :class:`sanic.request.Request` object. 因为Sanic 是一个异步框架，处理程序将运行在一个[asyncio.Task\`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)内，并将由事件循环进行安排。 这意味着处理程序将在一个孤立的环境中执行，而请求对象将是该处理程序的唯一任务。
 
-.. column::
+.. 列:
 
 ```
-By convention, the argument is named `request`, but you can name it whatever you want. The name of the argument is not important. Both of the following handlers are valid.
+根据惯例，这个论点叫做`request`，但你可以给它命名你想要的。 参数的名称不重要。以下两个处理程序都是有效的。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.get("/foo")
 async def typical_use_case(request):
-    return text("I said foo!")
+    return text("我说了！")
 ```
 
 ```python
-@app.get("/foo")
+@app. et("/foo")
 async def atypical_use_case(req):
-    return text("I said foo!")
+    return text("我说了！")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Annotating a request object is super simple.
+注释请求对象是超级简单。
     
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic.request import Request
-from sanic.response import text
+来自sanic.request
+from sanic.request import text
 
-@app.get("/typed")
+@app.get("/输入")
 async def typed_handler(request: Request):
-    return text("Done.")
+    return text("完成")
 ```
 ````
 
 .. tip::
 
 ```
-For your convenience, assuming you are using a modern IDE, you should leverage type annotations to help with code completion and documentation. This is especially helpful when using the `request` object as it has **MANY** properties and methods.
+为方便起见，假定您正在使用一个现代的 IDE，您应该利用类型注释来帮助代码完成和文档。 这在使用 "request" 对象时特别有用，因为它有 **MANY** 属性和方法。
     
-To see the full list of available properties and methods, refer to the [API documentation](/api/sanic.request).
+要查看可用属性和方法的完整清单，请参阅[API 文档](/api/sanic.request)。
 ```
 
-## Body
+## 正文内容
 
-The `Request` object allows you to access the content of the request body in a few different ways.
+`Request`对象允许您以几种不同方式访问请求主体的内容。
 
 ### JSON
 
-.. column::
+.. 列:
 
 ```
-**Parameter**: `request.json`  
-**Description**: The parsed JSON object
+**参数**: `request.json`  
+**Description**: 已解析的 JSON 对象
 ```
 
-.. column::
+.. 列:
 
 ````
 ```bash
@@ -82,31 +82,31 @@ $ curl localhost:8000 -d '{"foo": "bar"}'
 ```
 ````
 
-### Raw
+### 原始文件
 
-.. column::
+.. 列:
 
 ```
-**Parameter**: `request.body`  
-**Description**: The raw bytes from the request body
+**参数**: `request.body`  
+**描述**: 请求正文中的原始字节
 ```
 
-.. column::
+.. 列:
 
 ````
 ```bash
-$ curl localhost:8000 -d '{"foo": "bar"}'
-```
+$ curl localhost:8000 -d '{"foo": "bar"}"
+``'
 
 ```python
->>> print(request.body)
-b'{"foo": "bar"}'
+>> print(request.body)
+b'{"foo": "bar"}"
 ```
 ````
 
-### Form
+### 形式
 
-.. column::
+.. 列:
 
 ```
 **Parameter**: `request.form`  
@@ -119,7 +119,7 @@ b'{"foo": "bar"}'
     Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```bash
@@ -127,23 +127,23 @@ $ curl localhost:8000 -d 'foo=bar'
 ```
 
 ```python
->>> print(request.body)
+>> > print(request.body)
 b'foo=bar'
 
->>> print(request.form)
-{'foo': ['bar']}
+>> Print(request). orm)
+{'foot': ['bar']}
 
->>> print(request.form.get("foo"))
+>> Print(request.form.get("foo"))
 bar
 
->>> print(request.form.getlist("foo"))
+>> Print(request.form.getlist("foo"))
 ['bar']
 ```
 ````
 
-### Uploaded
+### 上传完成
 
-.. column::
+.. 列:
 
 ```
 **Parameter**: `request.files`  
@@ -156,7 +156,7 @@ bar
     Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```bash
@@ -178,15 +178,15 @@ File(type='application/octet-stream', body=b'hello\n', name='TEST')
 ```
 ````
 
-## Context
+## 二. 背景
 
-### Request context
+### 请求上下文内容
 
-The `request.ctx` object is your playground to store whatever information you need to about the request. This lives only for the duration of the request and is unique to the request.
+`request.ctx`对象是您的游戏场，可以存储您需要的关于请求的任何信息。 这只适用于请求的持续时间，是请求独有的。
 
-This can be constrasted with the `app.ctx` object which is shared across all requests. Be careful not to confuse them!
+这可以与所有请求共享的 `app.ctx` 对象混合。 请注意不要混淆他们！
 
-The `request.ctx` object by default is a `SimpleNamespace` object allowing you to set arbitrary attributes on it. Sanic will not use this object for anything, so you are free to use it however you want without worrying about name clashes.
+默认情况下，`request.ctx`对象是 `SimpleNamespace`，允许您在它上设置任意属性。 Sanic将不会为任何东西使用此对象，所以你可以自由地使用它，不管你想不必担心名称冲突。
 
 ````python
 
@@ -206,11 +206,11 @@ async def hi_my_name_is(request):
     return text(f"Hi, my name is {request.ctx.user.name}")
 ````
 
-As you can see, the `request.ctx` object is a great place to store information that you need to access in multiple handlers making your code more DRY and easier to maintain. But, as we will learn in the [middleware section](./middleware.md), you can also use it to store information from one middleware that will be used in another.
+正如你可以看到的那样，`请求'。 tx`对象是一个很好的地方来存储您需要在多个处理程序中访问的信息，使您的代码更加DRY和更容易维护。 但是，我们将在[中间件部分](./中间件部分)中学习。 您也可以使用它来存储来自一个中间件的信息，这些信息将用于另一个中间件中。
 
-### Connection context
+### 连接环境
 
-.. column::
+.. 列:
 
 ```
 Often times your API will need to serve multiple concurrent (or consecutive) requests to the same client. This happens, for example, very often with progressive web apps that need to query multiple endpoints to get data.
@@ -220,7 +220,7 @@ The HTTP protocol calls for an easing of overhead time caused by the connection 
 When multiple requests share a single connection, Sanic provides a context object to allow those requests to share state.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -243,25 +243,25 @@ request.conn_info.ctx.foo=3
 ```
 ````
 
-.. warning::
+.. 警告：:
 
 ```
-While this looks like a convenient place to store information between requests by a single HTTP connection, do not assume that all requests on a single connection came from a single end user. This is because HTTP proxies and load balancers can multiplex multiple connections into a single connection to your server.
+虽然这看起来是一个方便的地方来存储通过单个HTTP连接请求之间的信息。 不假设单个连接上的所有请求来自单个终端用户。 这是因为HTTP 代理和负载均衡器可以将多个多个连接连接到您的服务器。
 
-**DO NOT** use this to store information about a single user. Use the `request.ctx` object for that.
+**DO Not** 使用它来存储有关单个用户的信息。为此使用 `request.ctx` 对象。
 ```
 
-### Custom Request Objects
+### 自定义请求对象
 
-As dicussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. This is useful for adding additional attributes or methods that are specific to your application.
+As dicussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. 这有助于添加特定于您应用程序的附加属性或方法。
 
-.. column::
+.. 列:
 
 ```
-For example, imagine your application sends a custom header that contains a user ID. You can create a custom request object that will parse that header and store the user ID for you.
+例如，请想象您的应用程序发送一个包含用户ID的自定义标题。 您可以创建一个自定义请求对象，解析该标头并为您存储用户 ID。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -276,13 +276,13 @@ app = Sanic("Example", request_class=CustomRequest)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Now, in your handlers, you can access the `user_id` attribute.
+现在，您可以在处理器中访问 `user_id` 属性。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -292,19 +292,19 @@ async def handler(request: CustomRequest):
 ```
 ````
 
-### Custom Request Context
+### 自定义请求内容
 
-By default, the request context (`request.ctx`) is a [`Simplenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) object allowing you to set arbitrary attributes on it. While this is super helpful to reuse logic across your application, it can be difficult in the development experience since the IDE will not know what attributes are available.
+默认情况下，请求上下文(`request.ctx`) 是一个[`Simpenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) 对象，允许您在它上设置任意属性。 虽然这对于在您的应用程序中重新使用逻辑非常有用， 在发展经验中可能很困难，因为IDE将不知道有哪些属性。
 
-To help with this, you can create a custom request context object that will be used instead of the default `SimpleNamespace`. This allows you to add type hints to the context object and have them be available in your IDE.
+为了帮助解决这个问题，您可以创建一个将被使用的自定义请求上下文对象，而不是默认的\`SimpleNamespace'。 这可以让您在上下文对象中添加提示并让它们在您的 IDE 中可用。
 
-.. column::
+.. 列:
 
 ```
 Start by subclassing the :class:`sanic.request.Request` class to create a custom request type. Then, you will need to add a `make_context()` method that returns an instance of your custom context object. *NOTE: the `make_context` method should be a static method.*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -326,59 +326,59 @@ class CustomContext:
 ```
 ````
 
-.. note::
+.. 注：
 
 ```
-This is a Sanic poweruser feature that makes it super convenient in large codebases to have typed request context objects. It is of course not required, but can be very helpful.
+这是一个神秘的电源用户功能，它使得在大代码折叠中具有请求上下文对象变得非常方便。 当然，这是不需要的，但可能很有帮助。
 ```
 
-_Added in v23.6_
+_添加于 v23.6_
 
-## Parameters
+## 参数
 
-.. column::
+.. 列:
 
 ```
-Values that are extracted from the path parameters are injected into the handler as argumets, or more specifically as keyword arguments. There is much more detail about this in the [Routing section](./routing.md).
+从路径参数中提取的值作为参数注入到处理程序中，或更具体地作为关键字参数注入。 [路由部分](./routing.md) 中有更多关于这一点的详细信息。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route('/tag/<tag>')
-async def tag_handler(request, tag):
-    return text("Tag - {}".format(tag))
+Async def tag_handler(请求，标签):
+    return text("Tag - {}"。 ormat(标签))
 
-# or, explicitly as keyword arguments
-@app.route('/tag/<tag>')
-async def tag_handler(request, *, tag):
-    return text("Tag - {}".format(tag))
+# 或明确作为关键词参数
+@app。 oute('/tag/<tag>')
+async def tag_handler(请求, *, 标签):
+    return text("Tag - {}".format (tag))
 ```
 ````
 
-## Arguments
+## 参数
 
-There are two attributes on the `request` instance to get query parameters:
+在 "request" 实例上有两个属性来获取查询参数：
 
 - `request.args`
-- `request.query_args`
+- `requery_args`
 
-These allow you to access the query parameters from the request path (the part after the `?` in the URL).
+这些允许您访问请求路径中的查询参数(URL中`?`后面的部分)。
 
-### Typical use case
+### 典型的使用情况
 
-In most use cases, you will want to use the `request.args` object to access the query parameters. This will be the parsed query string as a dictionary.
+在大多数情况下，您将想使用 `request.args` 对象来访问查询参数。 这将是解析的查询字符串。
 
-This is by far the most common pattern.
+这是迄今最常见的模式。
 
-.. column::
+.. 列:
 
 ```
-Consider the example where we have a `/search` endpoint with a `q` parameter that we want to use to search for something.
+考虑一个我们想要用来搜索某些东西的 `/search` 端点的例子。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -391,36 +391,36 @@ async def search(request):
 ```
 ````
 
-### Parsing the query string
+### 解析查询字符串
 
-Sometimes, however, you may want to access the query string as a raw string or as a list of tuples. For this, you can use the `request.query_string` and `request.query_args` attributes.
+但有时您可能想要以原始字符串或导管列表的形式访问查询字符串。 为此，您可以使用 `request.query_string` 和 `request.query_args` 属性。
 
-It also should be noted that HTTP allows multiple values for a single key. Although `request.args` may seem like a regular dictionary, it is actually a special type that allows for multiple values for a single key. You can access this by using the `request.args.getlist()` method.
+还应该注意的是，HTTP允许单个键的多个值。 虽然`request.args`看起来像一个常规字典，但它实际上是一种特殊的类型，允许一个单个键的多个值。 您可以使用 `request.args.getlist()` 方法访问这个。
 
-- `request.query_string` - The raw query string
-- `request.query_args` - The parsed query string as a list of tuples
-- `request.args` - The parsed query string as a _special_ dictionary
-  - `request.args.get()` - Get the first value for a key (behaves like a regular dictionary)
-  - `request.args.getlist()` - Get all values for a key
+- `requery_string` - 原始查询字符串
+- `requery_args` - 解析的查询字符串为导游列表
+- `request.args` - 解析的查询字符串为 _特殊_ 字典
+  - `request.args.get()` - 获取关键字的第一个值 (像普通字典一样)
+  - `request.args.getlist()` - 获取所有键值
 
 ```sh
 curl "http://localhost:8000?key1=val1&key2=val2&key1=val3"
 ```
 
 ```python
->>> print(request.args)
+>>> Print(request.args)
 {'key1': ['val1', 'val3'], 'key2': ['val2']}
 
->>> print(request.args.get("key1"))
+>> print(request.args.get("key1"))
 val1
 
->>> print(request.args.getlist("key1"))
+>> print(request.args. etlist("key1"))
 ['val1', 'val3']
 
->>> print(request.query_args)
+>> Print(request.query_args)
 [('key1', 'val1'), ('key2', 'val2'), ('key1', 'val3')]
 
->>> print(request.query_string)
+>> > 打印(request.query_string)
 key1=val1&key2=val2&key1=val3
 
 ```
@@ -428,16 +428,16 @@ key1=val1&key2=val2&key1=val3
 .. tip:: FYI
 
 ```
-The `request.args` object is one of a few types that is a dictionary with each value being a list. This is because HTTP allows a single key to be reused to send multiple values.  
+"request.args"对象是几种类型的字典之一，每个值都是一个列表。 这是因为HTTP允许重用单个键来发送多个值。  
 
-Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
+大多数您想使用 `.get()` 方法访问第一个元素而不是列表的时间。 如果您确实想要列出所有项目，您可以使用 `.getlist()` 。
 ```
 
-## Current request getter
+## 当前请求获取
 
-Sometimes you may find that you need access to the current request in your application in a location where it is not accessible. A typical example might be in a `logging` format. You can use `Request.get_current()` to fetch the current request (if any).
+有时您可能会在无法访问的地方发现您需要访问您的应用程序中的当前请求。 一个典型的例子可能是 `logging` 格式。 您可以使用 `Request.get_current()` 方法获取当前请求(如果有)。
 
-Remember, the request object is confined to the single [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) that is running the handler. If you are not in that task, there is no request object.
+记住，请求对象仅限于正在运行处理程序的单个[[asyncio.Task\`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)。 如果你没有执行这项任务，没有请求对象。
 
 ```python
 import logging
@@ -473,6 +473,6 @@ LOGGING_CONFIG_DEFAULTS["formatters"]["access"]["format"] = LOGGING_FORMAT
 app = Sanic("Example", log_config=LOGGING_CONFIG_DEFAULTS)
 ```
 
-In this example, we are adding the `request.id` to every access log message.
+在此示例中，我们正在将`request.id`添加到每个访问日志消息中。
 
-_Added in v22.6_
+_添加于 v22.6_

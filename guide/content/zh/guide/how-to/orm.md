@@ -1,23 +1,23 @@
 # ORM
 
-> How do I use SQLAlchemy with Sanic ?
+> 如何使用 SQLAlchemy 和 Sanic ？
 
-All ORM tools can work with Sanic, but non-async ORM tool have a impact on Sanic performance.
-There are some orm packages who support
+所有ORM工具都可以使用 Sanic 但非异步的 ORM 工具对Sanic 性能产生影响。
+有一些或者软件包支持
 
-At present, there are many ORMs that support Python's `async`/`await` keywords. Some possible choices include：
+目前有许多ORM支持Python的“async`/`await\`”关键字。 一些可能的选项包括：
 
 - [Mayim](https://ahopkins.github.io/mayim/)
 - [SQLAlchemy 1.4](https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html)
 - [tortoise-orm](https://github.com/tortoise/tortoise-orm)
 
-Integration in to your Sanic application is fairly simple:
+您的 Sanic 应用程序的集成相当简单：
 
-## Mayim
+## 马伊姆
 
-Mayim ships with [an extension for Sanic Extensions](https://ahopkins.github.io/mayim/guide/extensions.html#sanic), which makes it super simple to get started with Sanic. It is certainly possible to run Mayim with Sanic without the extension, but it is recommended because it handles all of the [lifecycle events](https://sanic.dev/en/guide/basics/listeners.html) and [dependency injections](https://sanic.dev/en/plugins/sanic-ext/injection.html).
+Mayim船上有[Sanic Extensions的扩展](https://ahopkins.github.io/mayim/guide/extensions.html#sanic)，这使得开始萨尼克变得非常简单。 当然可以在没有扩展的情况下运行Mayim，但是建议它处理所有的[生命周期事件](https://sanic)。 ev/en/guide/basics/listeners.html)和[依赖注入](https://sanic.dev/en/plugins/sanic-ext/injection.html)。
 
-.. column::
+.. 列:
 
 ```
 ### Dependencies
@@ -25,7 +25,7 @@ Mayim ships with [an extension for Sanic Extensions](https://ahopkins.github.io/
 First, we need to install the required dependencies. See [Mayim docs](https://ahopkins.github.io/mayim/guide/install.html#postgres) for the installation needed for your DB driver.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```shell
@@ -34,7 +34,7 @@ pip install mayim[postgres]
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### Define ORM Model
@@ -42,17 +42,17 @@ pip install mayim[postgres]
 Mayim allows you to use whatever you want for models. Whether it is [dataclasses](https://docs.python.org/3/library/dataclasses.html), [pydantic](https://pydantic-docs.helpmanual.io/), [attrs](https://www.attrs.org/en/stable/), or even just plain `dict` objects. Since it works very nicely [out of the box with Pydantic](https://ahopkins.github.io/mayim/guide/pydantic.html), that is what we will use here.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-# ./models.py
-from pydantic import BaseModel
+# ./models。 y
+from pydanticimporting BaseModel
 
 class City(BaseModel):
     id: int
     name: str
-    district: str
+    region: str
     population: int
 
 class Country(BaseModel):
@@ -64,15 +64,15 @@ class Country(BaseModel):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Define SQL
+### 定义SQL
 
-If you are unfamiliar, Mayim is different from other ORMs in that it is one-way, SQL-first. This means you define your own queries either inline, or in a separate `.sql` file, which is what we will do here.
+如果您不熟悉，也许与其他ORM不同，因为它是单向的，SQL-先的。 这意味着您可以在内部或者在一个单独的`.sql`文件中定义自己的查询，这就是我们将在这里做的。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sql
@@ -97,7 +97,7 @@ LIMIT $limit OFFSET $offset;
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### Create Sanic App and Async Engine
@@ -105,59 +105,59 @@ LIMIT $limit OFFSET $offset;
 We need to create the app instance and attach the `SanicMayimExtension` with any executors.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 # ./server.py
 from sanic import Sanic, Request, json
-from sanic_ext import Extend
-from mayim.executor import PostgresExecutor
-from mayim.extensions import SanicMayimExtension
-from models import Country
+from sanic_ext import Exten
+from mayim.expertor import Postgresultor
+from mayim. xtenes import SanicMayimextension
+from model import Country
 
-class CountryExecutor(PostgresExecutor):
+class CountryExecutor(Postgresultor):
     async def select_all_countries(
-        self, limit: int = 4, offset: int = 0
-    ) -> list[Country]:
-        ...
+        self, 限制：int = 4 偏移：int = 0
+    ) -> 列表[Country]:
+        .
 
-app = Sanic("Test")
-Extend.register(
+app = Sanic("测试")
+Extend。 egister(
     SanicMayimExtension(
-        executors=[CountryExecutor],
-        dsn="postgres://...",
-    )
+        expertors=[CountryExecutor],
+        dsn="postgres://。 .",
+    (
 )
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Register Routes
+### 注册航线
 
-Because we are using Mayim's extension for Sanic, we have the automatic `CountryExecutor` injection into the route handler. It makes for an easy, type-annotated development experience.
+因为我们正在使用 Mayim's 扩展 Sanic, 我们在路由处理器中自动注入了 "CountryExecutor" 。 它使人们能够轻松地获得附加类型说明的发展经验。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.get("/")
 async def handler(request: Request, executor: CountryExecutor):
-    countries = await executor.select_all_countries()
+    countries = required executor.select_all_countries()
     return json({"countries": [country.dict() for country in co
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Send Requests
+### 发送请求
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -168,9 +168,9 @@ curl 'http://127.0.0.1:8000'
 
 ## SQLAlchemy
 
-Because [SQLAlchemy 1.4](https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html) has added native support for `asyncio`, Sanic can finally work well with SQLAlchemy. Be aware that this functionality is still considered _beta_ by the SQLAlchemy project.
+因为[SQLAlchemy 1.4](https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html)添加了本机支持`asyncio`, Sanic最终可以与 SQLAlchemy 进行很好的工作。 请注意，SQLAlchemy项目仍然认为此功能是_测试版_。
 
-.. column::
+.. 列:
 
 ```
 ### Dependencies
@@ -178,7 +178,7 @@ Because [SQLAlchemy 1.4](https://docs.sqlalchemy.org/en/14/changelog/changelog_1
 First, we need to install the required dependencies. In the past, the dependencies installed were `sqlalchemy` and `pymysql`, but now `sqlalchemy` and `aiomysql` are needed.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```shell
@@ -187,15 +187,15 @@ pip install -U aiomysql
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Define ORM Model
+### 定义ORM Model
 
-ORM model creation remains the same.
+ORM model 创建保持不变。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -226,7 +226,7 @@ class Car(BaseModel):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### Create Sanic App and Async Engine
@@ -234,7 +234,7 @@ class Car(BaseModel):
 Here we use mysql as the database, and you can also choose PostgreSQL/SQLite. Pay attention to changing the driver from `aiomysql` to `asyncpg`/`aiosqlite`.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -248,7 +248,7 @@ bind = create_async_engine("mysql+aiomysql://root:root@localhost/test", echo=Tru
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### Register Middlewares
@@ -258,15 +258,15 @@ The request middleware creates an usable `AsyncSession` object and set it to `re
 Thread-safe variable `_base_model_session_ctx` helps you to use the session object instead of fetching it from `request.ctx`.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 # ./server.py
-from contextvars import ContextVar
+from contextVar Import ContextVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy rm importing sessionmaker
 
 _sessionmaker = sessionmaker(bind, AsyncSession, expire_on_commit=False)
 
@@ -274,18 +274,18 @@ _base_model_session_ctx = ContextVar("session")
 
 @app.middleware("request")
 async def inject_session(request):
-    request.ctx.session = _sessionmaker()
+    request. tx.session = _sessionmaker()
     request.ctx.session_ctx_token = _base_model_session_ctx.set(request.ctx.session)
 
 @app.middleware("response")
 async def close_session(request, response):
-    if hasattr(request.ctx, "session_ctx_token"):
-        _base_model_session_ctx.reset(request.ctx.session_ctx_token)
-        await request.ctx.session.close()
+    if havasttrac(request). tx, "session_ctx_token"):
+        _base_model_session_ctx.reset(crequest.ctx.session_ctx_token)
+        等待request.ctx.session.close()
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### Register Routes
@@ -293,54 +293,54 @@ async def close_session(request, response):
 According to sqlalchemy official docs, `session.query` will be legacy in 2.0, and the 2.0 way to query an ORM object is using `select`.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 # ./server.py
-from sqlalchemy import select
+from sqlalchemy import selected
 from sqlalchemy.orm import selectinload
-from sanic.response import json
+from sanic. esponse importer json
 
-from models import Car, Person
+from models importing Car, Person
 
 @app.post("/user")
 async def create_user(request):
-    session = request.ctx.session
-    async with session.begin():
+    session = request。 tx.session
+    异步与会话。 egin():
         car = Car(brand="Tesla")
-        person = Person(name="foo", cars=[car])
-        session.add_all([person])
-    return json(person.to_dict())
+        person = Person(name="foo", cars=[car]()
+        会话。 dd_all([person])
+    return json(person). o_dict())
 
 @app.get("/user/<pk:int>")
 async def get_user(request, pk):
-    session = request.ctx.session
+    session = request。 tx.session
     async with session.begin():
-        stmt = select(Person).where(Person.id == pk).options(selectinload(Person.cars))
-        result = await session.execute(stmt)
-        person = result.scalar()
+        stmt = select(Person).where(Person.id == pk). ptions(selectinload(Person.cars))
+        results = 等待会话。 xecute(stmt)
+        persons = result。 calar()
 
-    if not person:
+    如果不是个人，则为：
         return json({})
 
-    return json(person.to_dict())
+    return json(person). o_dict())
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Send Requests
+### 发送请求
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
 curl --location --request POST 'http://127.0.0.1:8000/user'
-{"name":"foo","cars":[{"brand":"Tesla"}]}
-```
+{"name":"foo","cars":[[{"brand":"Tesla"}]}
+``
 
 ```sh
 curl --location --request GET 'http://127.0.0.1:8000/user/1'
@@ -350,31 +350,31 @@ curl --location --request GET 'http://127.0.0.1:8000/user/1'
 
 ## Tortoise-ORM
 
-.. column::
+.. 列:
 
 ```
-### Dependencies
+### 依赖项
 
-tortoise-orm's dependency is very simple, you just need install tortoise-orm.
+tortoise-orm 的依赖关系非常简单，您只需要安装 tortoise-orm 。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```shell
-pip install -U tortoise-orm
+pip安装-U tortoise-orm
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Define ORM Model
+### 定义ORM Model
 
-If you are familiar with Django, you should find this part very familiar.
+如果你熟悉Django，你应该发现这一部分非常熟悉。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -390,15 +390,15 @@ class Users(Model):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Create Sanic App and Async Engine
+### 创建 Sanic App 和 Async 引擎
 
-Tortoise-orm provides a set of registration interface, which is convenient for users, and you can use it to create database connection easily.
+Tortoise-orm 提供了一套注册界面。 这对用户是方便的，您可以使用它来轻松地创建数据库连接。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -416,13 +416,13 @@ register_tortoise(
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Register Routes
+### 注册路由
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -446,22 +446,22 @@ if __name__ == "__main__":
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Send Requests
+### 发送请求
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
 curl --location --request POST 'http://127.0.0.1:8000/user'
-{"users":["I am foo", "I am bar"]}
-```
+{"users":["I are foo", "I are bar"]}
+```\
 
 ```sh
-curl --location --request GET 'http://127.0.0.1:8000/user/1'
-{"user": "I am foo"}
+curl --location --request GET 'http://127。 0.0.1:8000/user/1'
+{"user": "我是foot"}
 ```
 ````

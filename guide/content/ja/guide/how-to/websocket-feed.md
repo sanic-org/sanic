@@ -1,1 +1,1 @@
-websocket feed
+websocket フィード

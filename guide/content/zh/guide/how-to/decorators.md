@@ -1,1 +1,1 @@
-decorators
+装饰

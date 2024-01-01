@@ -1,22 +1,22 @@
 ---
-title: Sanic Extensions - Health Monitor
+title: サニックエクステンション - ヘルスモニター
 ---
 
-# Health monitor
+# ヘルスモニター
 
-The health monitor requires both `sanic>=22.9` and `sanic-ext>=22.9`.
+ヘルスモニターには、`sanic>=22.9` と `sanic-ext>=22.9` の両方が必要です。
 
-You can setup Sanic Extensions to monitor the health of your worker processes. This requires that you not be in [single process mode](../../guide/deployment/manager.md#single-process-mode).
+Sanic Extensionsを設定して、作業工程の健全性を監視できます。 format@@0(../../guide/deployment/manager.md#single-process-mode) ではないことが必要です。
 
-## Setup
+## セットアップ
 
-.. column::
+.. 列::
 
 ```
-Out of the box, the health monitor is disabled. You will need to opt-in if you would like to use it.
+ヘルスモニターは無効になっています。使用したい場合はオプトインする必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -24,23 +24,23 @@ app.config.HEALTH = True
 ```
 ````
 
-## How does it work
+## どのように機能します
 
-The monitor sets up a new background process that will periodically receive acknowledgements of liveliness from each worker process. If a worker process misses a report too many times, then the monitor will restart that one worker.
+モニターは新しいバックグラウンドプロセスを設定し、それぞれのワーカープロセスから定期的に活気を認識します。 ワーカープロセスがレポートを何度も見逃した場合、モニターはそのワーカーを再起動します。
 
-## Diagnostics endpoint
+## 診断エンドポイント
 
-.. column::
+.. 列::
 
 ```
-The health monitor will also enable a diagnostics endpoint that outputs the [worker state](../../guide/deployment/manager.md#worker-state). By default is id disabled.
+ヘルスモニターは、[worker state](../../guide/deployment/manager)を出力する診断エンドポイントも有効にします。 d#worker-state). デフォルトではIDが無効になっています。
 
 .. danger:: 
 
-    The diagnostics endpoint is not secured. If you are deploying it in a production environment, you should take steps to protect it with a proxy server if you are using one. If not, you may want to consider disabling this feature in production since it will leak details about your server state.
+    診断エンドポイントはセキュリティ保護されていません。 本番環境でデプロイする場合は、プロキシサーバーを使用して保護する手順を実行する必要があります。 そうでない場合は、サーバーの状態に関する詳細が漏れるため、本番環境でこの機能を無効にすることを検討することをお勧めします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```
@@ -66,15 +66,15 @@ $ curl http://localhost:8000/__health__
 ```
 ````
 
-## Configuration
+## 設定
 
-| Key                                                                               | Type   | Default         | Description                                                                 |
-| --------------------------------------------------------------------------------- | ------ | --------------- | --------------------------------------------------------------------------- |
-| HEALTH                                                                            | `bool` | `False`         | Whether to enable this extension.                                           |
-| HEALTH_ENDPOINT                                              | `bool` | `False`         | Whether to enable the diagnostics endpoint.                                 |
-| HEALTH_MAX_MISSES                       | `int`  | `3`             | The number of consecutive misses before a worker process is restarted.      |
-| HEALTH_MISSED_THRESHHOLD                | `int`  | `10`            | The number of seconds the monitor checks for worker process health.         |
-| HEALTH_MONITOR                                               | `bool` | `True`          | Whether to enable the health monitor.                                       |
-| HEALTH_REPORT_INTERVAL                  | `int`  | `5`             | The number of seconds between reporting each acknowledgement of liveliness. |
-| HEALTH_URI_TO_INFO | `str`  | `""`            | The URI path of the diagnostics endpoint.                                   |
-| HEALTH_URL_PREFIX                       | `str`  | `"/__health__"` | The URI prefix of the diagnostics blueprint.                                |
+| キー                                   | タイプ    | デフォルト           | 説明                          |
+| ------------------------------------ | ------ | --------------- | --------------------------- |
+| 健康                                   | `bool` | `False`         | この拡張機能を有効にするかどうか。           |
+| HEALTH_ENDPOINT | `bool` | `False`         | 診断のエンドポイントを有効にするかどうか。       |
+| 最大値が足りません                            | `int`  | `3`             | ワーカープロセスが再起動される前に連続したミスの数。  |
+| 健康状態がありません。                          | `int`  | `10`            | モニターがワーカープロセスの健全性をチェックする秒数。 |
+| ヘルスモニター                              | `bool` | `True`          | かどうかのヘルスモニターを有効にします。        |
+| 内部レポート                               | `int`  | `5`             | 活気のあるそれぞれの確認を報告するまでの秒数。     |
+| CHALLENGE_LABEL | `str`  | `""`            | 診断エンドポイントの URI パス。          |
+| PREFIX                               | `str`  | `"/__health__"` | 診断のブループリントの URI プレフィックス。    |

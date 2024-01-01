@@ -1,19 +1,19 @@
-# Nginx Deployment
+# Nginx 部署
 
-## Introduction
+## 一. 导言
 
-Although Sanic can be run directly on Internet, it may be useful to use a proxy
-server such as Nginx in front of it. This is particularly useful for running
-multiple virtual hosts on the same IP, serving NodeJS or other services beside
-a single Sanic app, and it also allows for efficient serving of static files.
-TLS and HTTP/2 are also easily implemented on such proxy.
+虽然Sanic可以直接在互联网上运行，但在互联网前使用代理
+服务器可能是有用的，例如Nginx。 这对于运行同一IP上的
+多个虚拟主机特别有用， 服务于NodeJS或除了
+单个Sanic应用之外的其他服务，并且它还允许有效地服务于静态文件。
+TLS和HTTP-2也很容易在这种代理上执行。
 
-We are setting the Sanic app to serve only locally at 127.0.0.1:8001, while the
-Nginx installation is responsible for providing the service to public Internet
-on domain example.com. Static files will be served by Nginx for maximal
-performance.
+我们正在设置 Sanic 应用程序仅在本地服务为127.0.0。 :8001，
+Nginx 安装负责为域示例.com上的公共互联网
+提供服务。 静态文件将由Nginx提供最大
+性能。
 
-## Proxied Sanic app
+## Proxied Sanic 应用
 
 ```python
 from sanic import Sanic
@@ -30,44 +30,44 @@ def index(request):
     )
 ```
 
-Since this is going to be a system service, save your code to
-`/srv/sanicservice/proxied_example.py`.
+由于这是一个系统服务，将您的代码保存到
+`/srv/sanicservice/proxied_example.py`。
 
-For testing, run your app in a terminal using the `sanic` CLI in the folder where you saved the file.
+为测试，使用你保存文件的文件夹中的 `sanic` CLI 在终端中运行你的应用程序。
 
 ```bash
-SANIC_FORWARDED_SECRET=_hostname sanic proxied_example --port 8001
+SANIC_FORWARDED_SECRET=_hostname sanic proxied_example --端口 8001
 ```
 
 We provide Sanic config `FORWARDED_SECRET` to identify which proxy it gets
-the remote addresses from. Note the `_` in front of the local hostname.
-This gives basic protection against users spoofing these headers and faking
-their IP addresses and more.
+the remote addresses from. 请注意本地主机名前面的`_` 。
+这提供了基本的保护，免受那些假冒头头并传真到
+他们的IP地址等用户的伤害。
 
-## SSL certificates
+## SSL 证书
 
-Install Certbot and obtain a certicate for all your domains. This will spin up its own webserver on port 80 for a moment to verify you control the given domain names.
+安装 Certbot 并获得您所有域的节拍。 这将会在80端口上增加它自己的web服务器，以验证您控制给定的域名。
 
 ```bash
 certbot -d example.com -d www.example.com
 ```
 
-## Nginx configuration
+## Nginx 配置
 
-Quite much configuration is required to allow fast transparent proxying, but
-for the most part these don't need to be modified, so bear with me.
+需要很多配置才能快速透明的代理， 但
+大部分情况下不需要修改这些内容，所以与我休戚与共。
 
-.. tip:: Note
+.. 提示：备注
 
 ```
-Separate upstream section, rather than simply adding the IP after `proxy_pass`
-as in most tutorials, is needed for HTTP keep-alive. We also enable streaming,
-WebSockets and Nginx serving static files.
+HTTP keep-live需要分隔上游部分，而不是像大多数教程中那样只是在"proxy_pass"
+之后添加IP。 我们还启用了串流，
+WebSockets 和 Nginx 服务于静态文件。
 ```
 
-The following config goes inside the `http` section of `nginx.conf` or if your
-system uses multiple config files, `/etc/nginx/sites-available/default` or
-your own files (be sure to symlink them to `sites-enabled`):
+以下配置在 `nginx 的 `http` 部分内。 开启或如果您的
+系统使用多个配置文件，`/etc/nginx/sites-available/default` 或
+您自己的文件(肯定要将它们与`sites-enabled\`链接)：
 
 ```nginx
 # Files managed by Certbot
@@ -127,46 +127,46 @@ map $remote_addr $for_addr {
 }
 ```
 
-Start or restart Nginx for changes to take effect. E.g.
+启动或重启 Nginx 以使更改生效。 例如：
 
 ```bash
-systemctl restart nginx
+systemctl 重启 nginx
 ```
 
-You should be able to connect your app on `https://example.com`. Any 404
-errors and such will be handled by Sanic's error pages, and whenever a static
-file is present at a given path, it will be served by Nginx.
+您应该能够在 `https://example.com` 上连接您的应用程序。 任何 404
+错误将通过 Sanic's 错误页面处理， 并且当静态
+文件存在于给定路径时，它将由Nginx提供服务。
 
-## Running as a service
+## 作为服务运行
 
-This part is for Linux distributions based on `systemd`. Create a unit file
+本部分是基于 `systemd` 的 Linux 发行版。 创建一个单位文件
 `/etc/systemd/system/sanicexample.service`
 
 ```
 [Unit]
-Description=Sanic Example
+描述=Sanic 示例
 
 [Service]
-DynamicUser=Yes
+动态用户=是
 WorkingDirectory=/srv/sanicservice
 Environment=SANIC_PROXY_SECRET=_hostname
-ExecStart=sanic proxied_example --port 8001 --fast
-Restart=always
+ExecStart=sanic proxied_example --porter 8001 --fast
+Restart=始终
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target。
 ```
 
-Then reload service files, start your service and enable it on boot:
+然后重新加载服务文件，启动您的服务并在启动时启用它：
 
 ```bash
 systemctl daemon-reload
 systemctl start sanicexample
-systemctl enable sanicexample
+systemctl 启用sanicexample
 ```
 
-.. tip:: Note
+.. 提示：备注
 
 ```
-For brevity we skipped setting up a separate user account and a Python virtual environment or installing your app as a Python module. There are good tutorials on those topics elsewhere that easily apply to Sanic as well. The DynamicUser setting creates a strong sandbox which basically means your application cannot store its data in files, so you may consider setting `User=sanicexample` instead if you need that.
+为简洁起见，我们跳过了设置一个单独的用户帐户和 Python 虚拟环境或将您的应用程序安装为 Python 模块。 其他地方也有很好的关于这些题目的教程，很容易应用于萨尼克。 动态用户设置创建了一个强大的沙盒，基本上意味着您的应用程序不能将其数据存储在文件中， 所以，如果您需要，您可以考虑设置 `User=sanicexplle` 。
 ```

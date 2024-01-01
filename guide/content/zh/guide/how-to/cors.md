@@ -2,16 +2,16 @@
 title: CORS
 ---
 
-# Cross-origin resource sharing (CORS)
+# 跨来源资源共享
 
-> How do I configure my application for CORS?
+> 如何配置我的 CORS 应用程序？
 
-.. note::
+.. 注：
 
 ```
-🏆 The best solution is to use [Sanic Extensions](../../plugins/sanic-ext/http/cors.md). 
+🏆 最好的解决方案是使用 [Sanic Extensions](../../plugins/sanic-ext/http/cors.md). 
 
-However, if you would like to build your own version, you could use this limited example as a starting point.
+然而，如果你想要建立自己的版本，你可以使用这个有限的例子作为起点。
 ```
 
 ### `server.py`
@@ -38,27 +38,27 @@ app.register_middleware(add_cors_headers, "response")
 ## `cors.py`
 
 ```python
-from typing import Iterable
+从输入导入Iterable
 
-def _add_cors_headers(response, methods: Iterable[str]) -> None:
+def _add_cors_headers(响应) 方法: Iterable[str]) -> 无:
     allow_methods = list(set(methods))
-    if "OPTIONS" not in allow_methods:
-        allow_methods.append("OPTIONS")
-    headers = {
-        "Access-Control-Allow-Methods": ",".join(allow_methods),
-        "Access-Control-Allow-Origin": "mydomain.com",
+    如果"OPTIONS" 不在allow_methods:
+        allow_methods. pend("OPTIONS")
+    headers = 哇，
+        "Access-Control-Allow-Methods"：","。 oin(allow_methods),
+        "Access-Control-Allow-origin": mydomain. om,
         "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Allow-Headers": (
-            "origin, content-type, accept, "
+        “Access Control-Allow-Headers”: (
+            "original, 内容类型，接受，"
             "authorization, x-xsrf-token, x-request-id"
-        ),
+        ,
     }
-    response.headers.extend(headers)
+    响应。 eaders.extend(headers)
 
 def add_cors_headers(request, response):
-    if request.method != "OPTIONS":
-        methods = [method for method in request.route.methods]
-        _add_cors_headers(response, methods)
+    if request. ethod != "OPTIONS":
+        methods = [方法是请求的。 退出.methods]
+        _add_cors_headers(响应, 方法)
 ```
 
 ## `options.py`
@@ -133,6 +133,6 @@ Access-Control-Allow-Headers: origin, content-type, accept, authorization, x-xsr
 connection: keep-alive
 ```
 
-Also, checkout some resources from the community:
+此外，结算社区的一些资源：
 
-- [Awesome Sanic](https://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)
+- [极好的卫生](https://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)

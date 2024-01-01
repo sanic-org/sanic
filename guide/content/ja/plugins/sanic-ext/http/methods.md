@@ -1,18 +1,18 @@
 ---
-title: Sanic Extensions - HTTP Methods
+title: サニックエクステンション - HTTPメソッド
 ---
 
-# HTTP Methods
+# HTTPメソッド
 
-## Auto-endpoints
+## 自動エンドポイント
 
-The default behavior is to automatically generate `HEAD` endpoints for all `GET` routes, and `OPTIONS` endpoints for all
-routes. Additionally, there is the option to automatically generate `TRACE` endpoints. However, these are not enabled by
-default.
+デフォルトの動作は、すべての `GET` ルートの `HEAD` エンドポイントと、すべての
+ルートの `OPTIONS` エンドポイントを自動的に生成することです。 さらに、 `TRACE` エンドポイントを自動生成するオプションもあります。 ただし、これらは
+デフォルトでは有効になっていません。
 
-### HEAD
+### 頭
 
-.. column::
+.. 列::
 
 ```
 - **Configuration**: `AUTO_HEAD` (default `True`)
@@ -22,7 +22,7 @@ A `HEAD` request provides the headers and an otherwise identical response to wha
 However, it does not actually return the body.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -43,9 +43,9 @@ content-type: text/plain; charset=utf-8
 ```
 ````
 
-### OPTIONS
+### オプション
 
-.. column::
+.. 列::
 
 ```
 - **Configuration**: `AUTO_OPTIONS` (default `True`)
@@ -55,7 +55,7 @@ content-type: text/plain; charset=utf-8
 endpoint.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -81,12 +81,12 @@ connection: keep-alive
 .. tip::
 
 ```
-Even though Sanic Extensions will setup these routes for you automatically, if you decide to manually create an `@app.options` route, it will *not* be overridden.
+Sanic Extensionsは自動的にこれらのルートを設定しますが、`@app.options`ルートを手動で作成する場合、上書きされることはありません。
 ```
 
-### TRACE
+### トレースする
 
-.. column::
+.. 列::
 
 ```
 - **Configuration**: `AUTO_TRACE` (default `False`)
@@ -96,7 +96,7 @@ By default, `TRACE` endpoints will **not** be automatically created. However, Sa
 create them if you wanted. This is something that is not allowed in vanilla Sanic.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -127,24 +127,24 @@ Accept: */*
 .. tip::
 
 ```
-Setting up `AUTO_TRACE` can be super helpful, especially when your application is deployed behind a proxy since it will help you determine how the proxy is behaving.
+`AUTO_TRACE` のセットアップはとても役に立ちます。 アプリケーションがプロキシの背後に展開されている場合は特にプロキシがどのように動作するかを判断するのに役立ちます
 ```
 
-## Additional method support
+## 追加メソッドのサポート
 
-Vanilla Sanic allows you to build endpoints with the following HTTP methods:
+Vanilla Sanicは以下のHTTPメソッドでエンドポイントを構築できます。
 
-- [GET](/en/guide/basics/routing.html#get)
-- [POST](/en/guide/basics/routing.html#post)
-- [PUT](/en/guide/basics/routing.html#put)
-- [HEAD](/en/guide/basics/routing.html#head)
-- [OPTIONS](/en/guide/basics/routing.html#options)
-- [PATCH](/en/guide/basics/routing.html#patch)
-- [DELETE](/en/guide/basics/routing.html#delete)
+- [GET](/ja/guide/basics/routing.html#get)
+- [POST](/ja/guide/basics/routing.html#post)
+- [PUT](/ja/guide/basics/routing.html#put)
+- [HEAD](/ja/guide/basics/routing.html#head)
+- [OPTIONS](/ja/guide/basics/routing.html#options)
+- [PATCH](/ja/guide/basics/routing.html#patch)
+- [DELETE](/ja/guide/basics/routing.html#delete)
 
-See [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) for more.
+詳細は [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) を参照してください。
 
-.. column::
+.. 列::
 
 ```
 There are, however, two more "standard" HTTP methods: `TRACE` and `CONNECT`. Sanic Extensions will allow you to build
@@ -154,7 +154,7 @@ It is worth pointing out that this will *NOT* enable convenience methods: `@app.
 use `@app.route` as shown in the example here.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

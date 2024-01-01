@@ -1,28 +1,28 @@
 ---
-title: Sanic Extensions - Custom
+title: Sanic 扩展 - 自定义
 ---
 
-# Custom extensions
+# 自定义扩展
 
-It is possible to create your own custom extensions.
+可以创建您自己的自定义扩展。
 
-Version 22.9 added the `Extend.register` [method](#extension-preregistration). This makes it extremely easy to add custom expensions to an application.
+22.9版本添加了 `Extend.register` [method](#extension-preregistration)。 这使得在应用程序中添加自定义支出变得极为容易。
 
-## Anatomy of an extension
+## 扩展的解析度
 
-All extensions must subclass `Extension`.
+所有扩展必须是子类“扩展”。
 
-### Required
+### 必填
 
-- `name`: By convention, the name is an all-lowercase string
-- `startup`: A method that runs when the extension is added
+- `name`: 按惯例, 名称是一个小写字符串
+- `启动`: 添加扩展时运行的方法
 
-### Optional
+### 可选的
 
-- `label`: A method that returns additional information about the extension in the MOTD
-- `included`: A method that returns a boolean whether the extension should be enabled or not (could be used for example to check config state)
+- `label`：返回MOTD中有关扩展的额外信息的方法
+- `included`：返回是否启用扩展名布尔值的方法 (可以用来检查配置状态)
 
-### Example
+### 示例
 
 ```python
 from sanic import Request, Sanic, json
@@ -68,25 +68,25 @@ async def handler(request: Request):
     return json({"foo": "bar"})
 ```
 
-## Extension preregistration
+## 扩展预注册
 
-.. column::
+.. 列:
 
 ```
-`Extend.register` simplifies the addition of custom extensions.
+`Extend.register` 简化了自定义扩展的添加。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_ext import Extend, Extension
+from sanic_ext import Extend, extension
 
 class MyCustomExtension(Extension):
-    ...
 
-Extend.register(MyCustomExtension())
+
+Extend.register(MyCustomExtencion())
 ```
 ````
 
-_Added in v22.9_
+_添加于 v22.9_

@@ -1,26 +1,26 @@
-# Inspector
+# 检查员
 
-The Sanic Inspector is a feature of Sanic Server. It is _only_ available when running Sanic with the built-in [worker manager](./manager.md).
+Sanic 检查员是Sanic Server的一个特征。 在使用内置的 [工人经理] (./manager.md) 运行 Sanic 时，它是唯一可用的。
 
-It is an HTTP application that _optionally_ runs in the background of your application to allow you to interact with the running instance of your application.
+这是一个 HTTP 应用程序_可选_在您的应用程序后台运行，允许您与运行中的应用程序的实例进行交互。
 
 .. tip:: INFO
 
 ```
-The Inspector was introduced in limited capacity in v22.9, but the documentation on this page assumes you are using v22.12 or higher.
+在v22.9中，检查员的能力有限，但本页上的文件假定您正在使用v22.12或更多。
 ```
 
-## Getting Started
+## 正在开始
 
-The inspector is disabled by default. To enable it, you have two options.
+检查员默认是禁用的。 要启用它，您有两个选项。
 
-.. column::
+.. 列:
 
 ```
-Set a flag when creating your application instance.
+在创建应用程序实例时设置一个标记。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -28,128 +28,128 @@ app = Sanic("TestApp", inspector=True)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Or, set a configuration value.
+或者设置一个配置值。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-app = Sanic("TestApp")
+app = Sanic("测试应用")
 app.config.INSPECTOR = True
 ```
 ````
 
-.. warning::
+.. 警告：:
 
 ```
-If you are using the configuration value, it *must* be done early and before the main worker process starts. This means that it should either be an environment variable, or it should be set shortly after creating the application instance as shown above.
+如果您正在使用配置值，它*必须在主工作流程开始之前尽早完成。 这意味着它要么应该是一个环境变量，要么应该在创建上文所示的应用程序实例之后马上设定。
 ```
 
-## Using the Inspector
+## 使用检查器
 
-Once the inspector is running, you will have access to it via the CLI or by directly accessing its web API via HTTP.
+一旦检查员运行，您将可以通过 CLI 或通过 HTTP 直接访问 Web API 访问它。
 
-.. column::
+.. 列:
 
 ````
 **Via CLI**
 ```sh
-sanic inspect
+sanic inspection
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
-**Via HTTP**
+**通过 HTTP**
 ```sh
 curl http://localhost:6457
 ```
 ````
 
-.. note::
+.. 注：
 
 ```
-Remember, the Inspector is not running on your Sanic application. It is a seperate process, with a seperate application, and exposed on a seperate socket.
+请记住，检查员没有在您的 Sanic 应用程序上运行。它是一个分隔过程，具有一个分隔的应用程序，并且在一个隔绝的套接字上暴露。
 ```
 
-## Built-in Commands
+## 内置命令
 
-The Inspector comes with the following built-in commands.
+检查员带着以下内置命令。
 
-| CLI Command        | HTTP Action                        | Description                                                              |
-| ------------------ | ---------------------------------- | ------------------------------------------------------------------------ |
-| `inspect`          | `GET /`                            | Display basic details about the running application.                     |
-| `inspect reload`   | `POST /reload`                     | Trigger a reload of all server workers.                                  |
-| `inspect shutdown` | `POST /shutdown`                   | Trigger a shutdown of all processes.                                     |
-| `inspect scale N`  | `POST /scale`<br>`{"replicas": N}` | Scale the number of workers. Where `N` is the target number of replicas. |
+| CLI 命令   | HTTP 操作                            | 描述                  |
+| -------- | ---------------------------------- | ------------------- |
+| `检查`     | `GET /`                            | 显示正在运行的应用程序的基本细节。   |
+| `检查重新加载` | `POST /重新加载`                       | 触发所有服务器员工的重新加载。     |
+| \`检查关机'  | `POST /shutdown`                   | 触发所有进程的关闭。          |
+| `检查比例N`  | `POST /scale`<br>`{"replicas": N}` | 缩放工人数量。 `N`是复制的目标数。 |
 
-## Custom Commands
+## 自定义命令
 
-The Inspector is easily extendable to add custom commands (and endpoints).
+检查员很容易添加自定义命令(和终点)。
 
-.. column::
+.. 列:
 
 ```
-Subclass the `Inspector` class and create arbitrary methods. As long as the method name is not preceded by an underscore (`_`), then the name of the method will be a new subcommand on the inspector.
+将`Inspector`类子类并创建任意方法。 只要方法名称前面没有下划线(`_`)， 然后方法的名称将是视察员上的一个新的子命令。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic import json
-from sanic.worker.inspector import Inspector
+从Sanic.worker导入json
+n旁观导入检查员
 
 class MyInspector(Inspector):
-    async def something(self, *args, **kwargs):
+    async def something(self, *args, **kwargs：
         print(args)
         print(kwargs)
 
-app = Sanic("TestApp", inspector_class=MyInspector, inspector=True)
+app = Sanic("测试应用", spector_class=MyInspector, spector=True)
 ```
 ````
 
-This will expose custom methods in the general pattern:
+这将会显示常规模式中的自定义方法：
 
-- CLI: `sanic inspect <method_name>`
+- CLI: `sanic inspection <method_name>`
 - HTTP: `POST /<method_name>`
 
-It is important to note that the arguments that the new method accepts are derived from how you intend to use the command. For example, the above `something` method accepts all positional and keyword based parameters.
+必须指出，新方法接受的参数来自你打算如何使用命令。 例如，上面的“something”方法接受所有基于位置和关键字的参数。
 
-.. column::
+.. 列:
 
 ```
-In the CLI, the positional and keyword parameters are passed as either positional or keyword arguments to your method. All values will be a `str` with the following exceptions:
+在 CLI 中，位置和关键字参数作为您方法的定位或关键词参数传递。 所有值都将是一个 `str` 但有以下例外情况:
 
-- A keyword parameter with no assigned value will be: `True`
-- Unless the parameter is prefixed with `no-`, then it will be: `False`
+- 一个没有分配值的关键字参数将是: `True`
+- 除非参数前缀为 `no `, 然后它将是：`False`
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
-sanic inspect something one two three --four --no-five --six=6
+sanic 检查了两个--four --no-five --six=6
+``
+在您的应用程序日志控制台中， 你会看到：
 ```
-In your application log console, you will see:
-```
-('one', 'two', 'three')
+('one', 'tw', 'three')
 {'four': True, 'five': False, 'six': '6'}
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-The same can be achieved by hitting the API directly. You can pass arguments to the method by exposing them in a JSON payload. The only thing to note is that the positional arguments should be exposed as `{"args": [...]}`.
+直接点击 API 可以实现同样的目标。您可以在 JSON 有效载荷中将参数传递到方法中。 唯一需要注意的是，位置参数应该以`{"args": [...] }`的形式暴露。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -163,25 +163,25 @@ In your application log console, you will see:
 ```
 ````
 
-## Using in production
+## 在生产中使用
 
-.. danger::
-
-```
-Before exposing the Inspector on a product, please consider all of the options in this section carefully.
-```
-
-When running Inspector on a remote production instance, you can protect the endpoints by requiring TLS encryption, and requiring API key authentication.
-
-### TLS encryption
-
-.. column::
+.. 危险：:
 
 ```
-To the Inspector HTTP instance over TLS, pass the paths to your certificate and key.
+在向检查员展示产品之前，请仔细考虑本节中的所有选项。
 ```
 
-.. column::
+当在远程生产实例中运行检查员时，您可以通过需要 TLS 加密和需要 API 密钥认证来保护端点。
+
+### TLS 加密
+
+.. 列:
+
+```
+通过 TLS 向检查员HTTP 实例将路径传递到您的证书和密钥。
+```
+
+.. 列:
 
 ````
 ```python
@@ -190,32 +190,32 @@ app.config.INSPECTOR_TLS_KEY = "/path/to/key.pem"
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-This will require use of the `--secure` flag, or `https://`.
+这将需要使用 "--secure" 标志或 "https://"。
 ```
 
-.. column::
+.. 列:
 
+`````
+```sh
+sanic inspection --secure --host=<somewhere>
 ````
 ```sh
-sanic inspect --secure --host=<somewhere>
+curl https:////<somewhere>:6457
 ```
-```sh
-curl https://<somewhere>:6457
-```
-````
+`````
 
-### API Key Authentication
+### API 密钥认证
 
-.. column::
+.. 列:
 
 ```
-You can secure the API with bearer token authentication.
+您可以通过持单人令牌身份验证来保护 API。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -223,13 +223,13 @@ app.config.INSPECTOR_API_KEY = "Super-Secret-200"
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-This will require the `--api-key` parameter, or bearer token authorization header.
+这将需要 "--api-key" 参数，或无记者令牌授权标题。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -240,6 +240,6 @@ curl http://localhost:6457  -H "Authorization: Bearer Super-Secret-200"
 ```
 ````
 
-## Configuration
+## 配置
 
 See [configuration](./configuration.md)

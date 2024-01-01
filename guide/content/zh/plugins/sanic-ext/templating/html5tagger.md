@@ -1,7 +1,7 @@
 ---
-title: Sanic Extensions - html5tagger
+title: Sanic 扩展 - html5tagger
 ---
 
-# Coming soon
+# 即将开始
 
-See [GitHub])(https\://github.com/sanic-org/html5tagger/)
+See [GitHub](https://github.com/sanic-org/html5tagger/)

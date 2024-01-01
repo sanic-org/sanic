@@ -2,13 +2,13 @@
 title: Sanic Extensions - OAS Decorators
 ---
 
-# Decorators
+# デコレーター
 
-The primary mechanism for adding content to your schema is by decorating your endpoints. If you have
-used `sanic-openapi` in the past, this should be familiar to you. The decorators and their arguments match closely
+スキーマにコンテンツを追加する主なメカニズムは、エンドポイントを飾ることです。 過去に
+が`sanic-openapi`を使ったことがあるなら、これはよく知っているはずです。 The decorators and their arguments match closely
 the [OAS v3.0 specification](https://swagger.io/specification/).
 
-.. column::
+.. 列::
 
 ```
 All of the examples show will wrap around a route definition. When you are creating these, you should make sure that
@@ -16,7 +16,7 @@ your Sanic route decorator (`@app.route`, `@app.get`, etc) is the outermost deco
 put that first and then one or more of the below decorators after.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -30,7 +30,7 @@ async def handler(request, something: str):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 You will also see a lot of the below examples reference a model object. For the sake of simplicity, the examples will
@@ -38,7 +38,7 @@ use `UserProfile` that will look like this. The point is that it can be any well
 this being a `dataclass` or some other kind of model object.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -49,19 +49,19 @@ class UserProfile:
 ```
 ````
 
-## Definition decorator
+## 定義デコレーター
 
 ### `@openapi.definition`
 
-The `@openapi.definition` decorator allows you to define all parts of an operations on a path at once. It is an omnibums
-decorator in that it has the same capabilities to create operation definitions as the rest of the decorators. Using
-multiple field-specific decorators or a single decorator is a style choice for you the developer.
+`@openapi.definition` デコレータを使用すると、一度にパス上の操作のすべての部分を定義できます。 それは装飾者の残りの部分と同じ操作定義を作成する能力を持っているという点でオムニバス
+デコレータです。
+複数のフィールド固有のデコレータまたは単一のデコレータを使用することは、開発者にとってスタイルの選択です。
 
-The fields are purposely permissive in accepting multiple types to make it easiest for you to define your operation.
+フィールドは意図的に複数の型を受け入れることで、操作を定義するのが最も簡単になります。
 
-**Arguments**
+**引数**
 
-| Field         | Type                                                                                                                                                                                                             |
+| フィールド         | タイプ                                                                                                                                                                                                              |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `body`        | **dict, RequestBody, _YourModel_**                                                                                                                                                                               |
 | `deprecated`  | **bool**                                                                                                                                                                                                         |
@@ -69,15 +69,15 @@ The fields are purposely permissive in accepting multiple types to make it easie
 | `document`    | **str, ExternalDocumentation**                                                                                                                                                                                   |
 | `exclude`     | **bool**                                                                                                                                                                                                         |
 | `operation`   | **str**                                                                                                                                                                                                          |
-| `parameter`   | **str, dict, Parameter, [str], [dict], [Parameter]** |
+| `パラメータ`       | **str, dict, Parameter, [str], [dict], [Parameter]** |
 | `response`    | **dict, Response, _YourModel_, [dict], [Response]**                                                      |
 | `summary`     | **str**                                                                                                                                                                                                          |
 | `tag`         | **str, Tag, [str], [Tag]**                                                                               |
 | `secured`     | **Dict[str, Any]**                                                                                                                                           |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -85,31 +85,31 @@ The fields are purposely permissive in accepting multiple types to make it easie
     body=RequestBody(UserProfile, required=True),
     summary="User profile update",
     tag="one",
-    response=[Success, Response(Failure, status=400)],
+    response=[Success, Response, status=400)],
 )
 ```
 ````
 
-.. column::
+.. 列::
 
-_See below examples for more examples. Any of the values for the below decorators can be used in the corresponding
-keyword argument._
+_より多くの例については以下を参照してください。 以下のデコレータのいずれかの値は、対応する
+キーワード引数で使用できます。_
 
-## Field-specific decorators
+## フィールド固有の装飾
 
-All the following decorators are based on `@openapi`
+以下のデコレータは `@openapi` に基づいています。
 
 ### body
 
-**Arguments**
+**引数**
 
-| Field       | Type                               |
+| フィールド       | タイプ                                |
 | ----------- | ---------------------------------- |
 | **content** | **_YourModel_, dict, RequestBody** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -125,7 +125,7 @@ All the following decorators are based on `@openapi`
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -141,15 +141,15 @@ All the following decorators are based on `@openapi`
 ```
 ````
 
-### deprecated
+### 非推奨です
 
-**Arguments**
+**引数**
 
-_None_
+_なし_
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -157,7 +157,7 @@ _None_
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -165,17 +165,17 @@ _None_
 ```
 ````
 
-### description
+### 説明
 
-**Arguments**
+**引数**
 
-| Field  | Type    |
+| フィールド  | タイプ     |
 | ------ | ------- |
 | `text` | **str** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -192,20 +192,20 @@ _None_
 ```
 ````
 
-.. column::
+.. 列::
 
-### document
+### ドキュメント
 
-**Arguments**
+**引数**
 
-| Field         | Type    |
+| フィールド         | タイプ     |
 | ------------- | ------- |
 | `url`         | **str** |
 | `description` | **str** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -213,7 +213,7 @@ _None_
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -221,20 +221,20 @@ _None_
 ```
 ````
 
-### exclude
+### 除外する
 
-Can be used on route definitions like all of the other decorators, or can be called on a Blueprint
+他のデコレータと同様にルート定義に使用したり、ブループリントで呼び出したりできます。
 
-**Arguments**
+**引数**
 
-| Field  | Type          | Default  |
-| ------ | ------------- | -------- |
-| `flag` | **bool**      | **True** |
-| `bp`   | **Blueprint** |          |
+| フィールド  | タイプ      | デフォルト    |
+| ------ | -------- | -------- |
+| `flag` | **bool** | **True** |
+| `bp`   | **設計図**  |          |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -242,7 +242,7 @@ Can be used on route definitions like all of the other decorators, or can be cal
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -250,19 +250,19 @@ openapi.exclude(bp=some_blueprint)
 ```
 ````
 
-### operation
+### 操作
 
-Sets the operation ID.
+操作 ID を設定します。
 
-**Arguments**
+**引数**
 
-| Field  | Type    |
+| フィールド  | タイプ     |
 | ------ | ------- |
 | `name` | **str** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -270,19 +270,19 @@ Sets the operation ID.
 ```
 ````
 
-.. column::
+.. 列::
 
-**Arguments**
+**引数**
 
-| Field      | Type                                      | Default     |
+| フィールド      | タイプ                                       | デフォルト       |
 | ---------- | ----------------------------------------- | ----------- |
 | `name`     | **str**                                   |             |
 | `schema`   | _**type**_                                | **str**     |
 | `location` | **"query", "header", "path" or "cookie"** | **"query"** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -294,7 +294,7 @@ Sets the operation ID.
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -306,22 +306,22 @@ Sets the operation ID.
 ```
 ````
 
-### response
+### 応答
 
-**Arguments**
+**引数**
 
-If using a `Response` object, you should not pass any other arguments.
+`Response` オブジェクトを使用する場合は、他の引数を渡すべきではありません。
 
-| Field         | Type                          |
+| フィールド         | タイプ                           |
 | ------------- | ----------------------------- |
 | `status`      | **int**                       |
 | `content`     | **_type_, _YourModel_, dict** |
 | `description` | **str**                       |
-| `response`    | **Response**                  |
+| `response`    | **応答**                        |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -349,7 +349,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -369,15 +369,15 @@ If using a `Response` object, you should not pass any other arguments.
 
 ### summary
 
-**Arguments**
+**引数**
 
-| Field  | Type    |
+| フィールド  | タイプ     |
 | ------ | ------- |
 | `text` | **str** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -385,19 +385,19 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列::
 
-### tag
+### タグ
 
-**Arguments**
+**引数**
 
-| Field   | Type         |
+| フィールド   | タイプ          |
 | ------- | ------------ |
 | `*args` | **str, Tag** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -405,7 +405,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -413,17 +413,17 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-### secured
+### 保護されている
 
-**Arguments**
+**引数**
 
-| Field             | Type                                                                        |
+| フィールド             | タイプ                                                                         |
 | ----------------- | --------------------------------------------------------------------------- |
 | `*args, **kwargs` | **str, Dict[str, Any]** |
 
-**Examples**
+**例**
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -431,9 +431,9 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列::
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -441,7 +441,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -449,7 +449,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -457,7 +457,7 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -465,20 +465,20 @@ If using a `Response` object, you should not pass any other arguments.
 ```
 ````
 
-Do not forget to use `add_security_scheme`. See [security](./security.md) for more details.
+`add_security_scheme` を使用することを忘れないでください。 詳細は [security](./security.md) を参照してください。
 \`\`
 
-## Integration with Pydantic
+## Pydanticとの統合
 
-Pydantic models have the ability to [generate OpenAPI schema](https://pydantic-docs.helpmanual.io/usage/schema/).
+Pydanticモデルはformat@@0(https\://pydantic-docs.helpmanual.io/usage/schema/)を生成する機能を持っています。
 
-.. column::
+.. 列::
 
 ```
-To take advantage of Pydantic model schema generation, pass the output in place of the schema.
+Pydanticモデルスキーマ生成を利用するには、スキーマの代わりに出力を渡してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -514,7 +514,7 @@ async def get(request):
 .. note::
 
 ```
-It is important to set that `ref_template`. By default Pydantic will select a template that is not standard OAS. This will cause the schema to not be found when generating the final document.
+`ref_template`を設定することが重要です。デフォルトではPydanticは標準のOASではないテンプレートを選択します。 これにより、最終的なドキュメントを生成する際にスキーマが見つかりません。
 ```
 
-_Added in v22.9_
+_v22.9_に追加されました

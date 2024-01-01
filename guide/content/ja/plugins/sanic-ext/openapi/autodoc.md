@@ -1,20 +1,20 @@
 ---
-title: Sanic Extensions - Auto-documentation
+title: サニックエクステンション - 自動ドキュメント
 ---
 
-# Auto-documentation
+# 自動ドキュメント
 
-To make documenting endpoints easier, Sanic Extensions will use a function's docstring to populate your documentation.
+エンドポイントの文書化を容易にするために、Sanic Extensionsはdocstringを使ってドキュメントを作成します。
 
-## Summary and description
+## 概要と説明
 
-.. column::
+.. 列::
 
 ```
-A function's docstring will be used to create the summary and description. As you can see from this example here, the docstring has been parsed to use the first line as the summary, and the remainder of the string as the description.
+要約と説明を作成するために、関数の docstring が使用されます。 この例からわかるように、docstringは最初の行を要約として使用するようにパースされています。 文字列の説明として残りの部分を指定します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -48,17 +48,17 @@ async def handler(request, something: str):
 ```
 ````
 
-## Operation level YAML
+## 操作レベルYAML
 
-.. column::
+.. 列::
 
 ```
-You can expand upon this by adding valid OpenAPI YAML to the docstring. Simply add a line that contains `openapi:`, followed by your YAML. 
+これを展開するには、有効なOpenAPI YAML を docstring に追加します。単純に `openapi:` を含む行を追加し、その後に YAML を追加します。 
 
-The `---` shown in the example is *not* necessary. It is just there to help visually identify the YAML as a distinct section of the docstring.
+例に示す`---`は*不要*です。 YAML をドキュメント文字列の明確なセクションとして視覚的に識別するために、そこにあるだけです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -125,12 +125,12 @@ async def handler(request, something: str):
 .. note::
 
 ```
-When both YAML documentation and decorators are used, it is the content from the decorators that will take priority when generating the documentation.
+YAML ドキュメントとデコレータの両方が使用される場合、ドキュメントを生成する際に優先されるデコレータのコンテンツです。
 ```
 
-## Excluding docstrings
+## docstringsを除外
 
-.. column::
+.. 列::
 
 ```
 Sometimes a function may contain a docstring that is not meant to be consumed inside the documentation.
@@ -140,7 +140,7 @@ Sometimes a function may contain a docstring that is not meant to be consumed in
 **Option 2**: Disable it for the single handler with the `@openapi.no_autodoc` decorator
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

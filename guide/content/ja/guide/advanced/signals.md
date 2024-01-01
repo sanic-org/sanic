@@ -29,40 +29,40 @@ async def handle_registration(request):
 ````
 ```python
 async def my_signal_handler():
-    print("something happened")
+    print("何かが起こった")
 
-app.add_signal(my_signal_handler, "something.happened.ohmy")
+app.add_signal(my_signal_handler, "something.happed.ohmy")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-But, perhaps a slightly more convenient method is to use the built-in decorators.
+しかし、おそらくもう少し便利な方法は、組み込みのデコレータを使用することです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 @app.signal("something.happened.ohmy")
 async def my_signal_handler():
-    print("something happened")
+    print("something")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-If the signal requires conditions, make sure to add them while adding the handler.
+シグナルに条件(conditions)が必要な場合は、ハンドラを追加する際に必ず追加してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 async def my_signal_handler1():
-    print("something happened")
+    print("何かが起こった")
 
 app.add_signal(
     my_signal_handler,
@@ -72,17 +72,17 @@ app.add_signal(
 
 @app.signal("something.happened.ohmy2", conditions={"some_condition": "value"})
 async def my_signal_handler2():
-    print("something happened")
+    print("何かが起こった")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Signals can also be declared on blueprints
+シグナルはblueprintsで宣言することもできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -90,74 +90,74 @@ bp = Blueprint("foo")
 
 @bp.signal("something.happened.ohmy")
 async def my_signal_handler():
-    print("something happened")
+    print("何かが起こった")
 ```
 ````
 
-## Built-in signals
+## ビルトインシグナル
 
-In addition to creating a new signal, there are a number of built-in signals that are dispatched from Sanic itself. These signals exist to provide developers with more opportunities to add functionality into the request and server lifecycles.
+新しいシグナルを作成することに加えて、Sanic自体からディスパッチされる組み込みシグナルがいくつかあります。 これらのシグナルは、開発者に要求とサーバーのライフサイクルに機能を追加する機会を増やすために存在します。
 
-_Added in v21.9_
+_v21.9で追加_
 
 .. column::
 
 ```
-You can attach them just like any other signal to an application or blueprint instance.
+他のシグナルと同じように、アプリケーションまたはブループリントインスタンスにアタッチできます。
 ```
 
 .. column::
 
 ````
 ```python
-@app.signal("http.lifecycle.complete")
+@app.signal("http.lifycle.complete")
 async def my_signal_handler(conn_info):
     print("Connection has been closed")
 ```
 ````
 
-These signals are the signals that are available, along with the arguments that the handlers take, and the conditions that attach (if any).
+これらのシグナルは、ハンドラが取る引数、およびアタッチする条件(存在する場合)とともに、利用可能なシグナルです。
 
-| Event name                 | Arguments                       | Conditions                                                |
-| -------------------------- | ------------------------------- | --------------------------------------------------------- |
-| `http.routing.before`      | request                         |                                                           |
-| `http.routing.after`       | request, route, kwargs, handler |                                                           |
-| `http.handler.before`      | request                         |                                                           |
-| `http.handler.after`       | request                         |                                                           |
-| `http.lifecycle.begin`     | conn_info  |                                                           |
-| `http.lifecycle.read_head` | head                            |                                                           |
-| `http.lifecycle.request`   | request                         |                                                           |
-| `http.lifecycle.handle`    | request                         |                                                           |
-| `http.lifecycle.read_body` | body                            |                                                           |
-| `http.lifecycle.exception` | request, exception              |                                                           |
-| `http.lifecycle.response`  | request, response               |                                                           |
-| `http.lifecycle.send`      | data                            |                                                           |
-| `http.lifecycle.complete`  | conn_info  |                                                           |
-| `http.middleware.before`   | request, response               | `{"attach_to": "request"}` or `{"attach_to": "response"}` |
-| `http.middleware.after`    | request, response               | `{"attach_to": "request"}` or `{"attach_to": "response"}` |
-| `server.exception.report`  | app, exception                  |                                                           |
-| `server.init.before`       | app, loop                       |                                                           |
-| `server.init.after`        | app, loop                       |                                                           |
-| `server.shutdown.before`   | app, loop                       |                                                           |
-| `server.shutdown.after`    | app, loop                       |                                                           |
+| イベント名                     | 引数                              | 条件                                                         |
+| ------------------------- | ------------------------------- | ---------------------------------------------------------- |
+| `http.routing.before`     | request                         |                                                            |
+| `http.routing.after`      | request, route, kwargs, handler |                                                            |
+| `http.handler.before`     | request                         |                                                            |
+| `http.handler.after`      | request                         |                                                            |
+| `http.lifycle.begin`      | conn_info  |                                                            |
+| `http.lifycle.read_head`  | head                            |                                                            |
+| `http.lifycle.request`    | request                         |                                                            |
+| `http.lifycle.handle`     | request                         |                                                            |
+| `http.lifycle.read_body`  | body                            |                                                            |
+| `http.lifycle.exception`  | request, exception              |                                                            |
+| `http.lifycle.response`   | request, response               |                                                            |
+| `http.lifycle.send`       | data                            |                                                            |
+| `http.lifycle.complete`   | conn_info  |                                                            |
+| `http.middleware.before`  | request, response               | `{"attach_to": "request"}` または `{"attach_to": "response"}` |
+| `http.middleware.after`   | request, response               | `{"attach_to": "request"}` または `{"attach_to": "response"}` |
+| `server.exception.report` | app, exception                  |                                                            |
+| `server.init.before`      | app, loop                       |                                                            |
+| `server.init.after`       | app, loop                       |                                                            |
+| `server.shutdown.before`  | app, loop                       |                                                            |
+| `server.shutdown.after`   | app, loop                       |                                                            |
 
-Version 22.9 added `http.handler.before` and `http.handler.after`.
+バージョン22.9で`http.handler.before`と`http.handler.after`が追加されました。
 
-Version 23.6 added `server.exception.report`.
+バージョン23.6で`server.exception.report`が追加されました。
 
 .. column::
 
 ```
-To make using the built-in signals easier, there is an `Enum` object that contains all of the allowed built-ins. With a modern IDE this will help so that you do not need to remember the full list of event names as strings.
+ビルトインシグナルを使いやすくするために、許可されたビルトインをすべて含む `Enum` オブジェクトが用意されています。 最近の IDE では、イベント名の完全なリストを文字列として覚えておく必要がないので、これは便利です。
 
-*Added in v21.12*
+*v21.12で追加*
 ```
 
 .. column::
 
 ````
 ```python
-from sanic.signals import Event
+from sanic.signal import Event
 
 @app.signal(Event.HTTP_LIFECYCLE_COMPLETE)
 async def my_signal_handler(conn_info):
@@ -165,12 +165,12 @@ async def my_signal_handler(conn_info):
 ```
 ````
 
-## Events
+## イベント
 
 .. column::
 
 ```
-Signals are based off of an _event_. An event, is simply a string in the following pattern:
+シグナルは _event_ に基づいています。イベントは以下のパターンの単なる文字列です。
 ```
 
 .. column::
@@ -181,22 +181,22 @@ namespace.reference.action
 ```
 ````
 
-.. tip:: Events must have three parts. If you do not know what to use, try these patterns:
+.. tip:: イベントには3つの部分が必要です。 何を使っていいかわからない場合は、次のパターンを試してみてください。
 
 ```
 - `my_app.something.happened`
 - `sanic.notice.hello`
 ```
 
-### Event parameters
+### イベントパラメータ
 
 .. column::
 
 ```
-An event can be "dynamic" and declared using the same syntax as [path parameters](../basics/routing.md#path-parameters). This allows matching based upon arbitrary values.
+イベントは「動的」であり、[pathパラメータ](../basics/routing.md#path-parameters)と同じ構文を使用して宣言できます。これにより、任意の値に基づいてマッチングできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -207,25 +207,25 @@ async def signal_handler(thing):
 @app.get("/")
 async def trigger(request):
     await app.dispatch("foo.bar.baz")
-    return response.text("Done.")
+    return response.text("完了。")
 ```
 ````
 
-Checkout [path parameters](../basics/routing.md#path-parameters) for more information on allowed type definitions.
+利用可能な型定義に関する詳細は[pathパラメータ](../basics/routing.md#path-parameters)を参照してください。
 
-.. info:: Only the third part of an event (the action) may be dynamic:
+.. info:: イベントの3番目の部分(アクション)のみが動的です。
 
 ```
 - `foo.bar.<thing>` 🆗
 - `foo.<bar>.baz` ❌
 ```
 
-### Waiting
+### 待つ
 
 .. column::
 
 ```
-In addition to executing a signal handler, your application can wait for an event to be triggered.
+アプリケーションは、シグナルハンドラを実行するだけでなく、イベントがトリガーされるのを待つこともできます。
 ```
 
 .. column::
@@ -239,7 +239,7 @@ await app.event("foo.bar.baz")
 .. column::
 
 ```
-**IMPORTANT**: waiting is a blocking function. Therefore, you likely will want this to run in a [background task](../basics/tasks.md).
+**重要**: 待つことはブロッキング機能です。したがって、これを[バックグラウンドタスク](../basics/tasks.md)で実行する必要があります。
 ```
 
 .. column::
@@ -248,9 +248,9 @@ await app.event("foo.bar.baz")
 ```python
 async def wait_for_event(app):
     while True:
-        print("> waiting")
+        print("> 待機中")
         await app.event("foo.bar.baz")
-        print("> event found\n")
+        print("> イベント発見\n")
 
 @app.after_server_start
 async def after_server_start(app, loop):
@@ -261,7 +261,7 @@ async def after_server_start(app, loop):
 .. column::
 
 ```
-If your event was defined with a dynamic path, you can use `*` to catch any action.
+イベントが動的パスで定義されている場合は、`*`を使用して任意のアクションをキャッチできます。
 ```
 
 .. column::
@@ -276,17 +276,17 @@ await app.event("foo.bar.*")
 ```
 ````
 
-## Dispatching
+## ディスパッチ
 
-_In the future, Sanic will dispatch some events automatically to assist developers to hook into life cycle events._
+_将来的には、Sanicは開発者がライフサイクルイベントに参加するのを支援するために、いくつかのイベントを自動的にディスパッチするようになります。_
 
 .. column::
 
 ```
-Dispatching an event will do two things:
+イベントをディスパッチすると、2つのことを行います。
 
-1. execute any signal handlers defined on the event, and
-2. resolve anything that is "waiting" for the event to complete.
+1. イベントで定義されたシグナルハンドラを実行し、
+2. イベントが完了するまで「待っている」ことをすべて解決します。
 ```
 
 .. column::
@@ -304,12 +304,12 @@ thing=baz
 ```
 ````
 
-### Context
+### コンテキスト
 
 .. column::
 
 ```
-Sometimes you may find the need to pass extra information into the signal handler. In our first example above, we wanted our email registration process to have the email address for the user.
+シグナルハンドラに追加情報を渡す必要がある場合があります。 上記の最初の例では、ユーザーのメールアドレスを持つようにメール登録プロセスを望んでいました。
 ```
 
 .. column::
@@ -330,20 +330,20 @@ await app.dispatch(
 ```
 ````
 
-.. tip:: FYI
+.. tip:: 参考
 
 ```
-Signals are dispatched in a background task.
+シグナルはバックグラウンドタスクでディスパッチされます。
 ```
 
 ### Blueprints
 
-Dispatching blueprint signals works similar in concept to [middleware](../basics/middleware.md). Anything that is done from the app level, will trickle down to the blueprints. However, dispatching on a blueprint, will only execute the signals that are defined on that blueprint.
+Blueprintシグナルのディスパッチは、[ミドルウェア](../basics/middleware.md)と同様に機能します。 appレベルから行われるシグナルは、blueprintにも伝播します。 ただし、blueprintでディスパッチすると、そのblueprintで定義されているシグナルのみが実行されます。
 
 .. column::
 
 ```
-Perhaps an example is easier to explain:
+おそらく、例は説明しやすいでしょう:
 ```
 
 .. column::
@@ -370,7 +370,7 @@ def bp_signal():
 .. column::
 
 ```
-Running `app.dispatch("foo.bar.baz")` will execute both signals.
+`app.dispatch("foo.bar.baz")`を実行すると、両方のシグナルが実行されます。
 ```
 
 .. column::
@@ -379,14 +379,14 @@ Running `app.dispatch("foo.bar.baz")` will execute both signals.
 ```python
 await app.dispatch("foo.bar.baz")
 assert app_counter == 1
-assert bp_counter == 1
+assertt bp_counter == 1
 ```
 ````
 
 .. column::
 
 ```
-Running `bp.dispatch("foo.bar.baz")` will execute only the blueprint signal.
+`bp.dispatch("foo.bar.baz")`を実行すると、Blueprintシグナルのみが実行されます。
 ```
 
 .. column::
@@ -394,7 +394,7 @@ Running `bp.dispatch("foo.bar.baz")` will execute only the blueprint signal.
 ````
 ```python
 await bp.dispatch("foo.bar.baz")
-assert app_counter == 1
-assert bp_counter == 2
+assertt app_counter == 1
+assertt bp_counter == 2
 ```
 ````

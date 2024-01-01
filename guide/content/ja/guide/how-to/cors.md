@@ -2,16 +2,16 @@
 title: CORS
 ---
 
-# Cross-origin resource sharing (CORS)
+# クロスオリジンリソース共有 (CORS)
 
-> How do I configure my application for CORS?
+> CORS のアプリケーションを設定するにはどうすればよいですか?
 
 .. note::
 
 ```
-🏆 The best solution is to use [Sanic Extensions](../../plugins/sanic-ext/http/cors.md). 
+🏆 最善の解決策は[Sanic Extensions](../../plugins/sanic-ext/http/cors.md)を使用することです。 
 
-However, if you would like to build your own version, you could use this limited example as a starting point.
+ただし、独自のバージョンをビルドしたい場合は、この限られた例を出発点として使用することができます。
 ```
 
 ### `server.py`
@@ -133,6 +133,6 @@ Access-Control-Allow-Headers: origin, content-type, accept, authorization, x-xsr
 connection: keep-alive
 ```
 
-Also, checkout some resources from the community:
+また、コミュニティからいくつかのリソースをチェックアウトします。
 
-- [Awesome Sanic](https://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)
+- format@@0(https\://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)

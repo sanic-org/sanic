@@ -1,13 +1,13 @@
 ---
-title: Need some help?
-layout: main
+title: ヘルプが必要ですか？
+layout: メイン
 ---
 
-# Need some help?
+# ヘルプが必要ですか？
 
-As an active community of developers, we try to support each other. If you need some help, try one of the following:
+開発者の積極的なコミュニティとして、私たちはお互いをサポートしようとしています。 ヘルプが必要な場合は、以下のいずれかをお試しください。
 
-.. column::
+.. 列::
 
 ```
 ### Discord 💬
@@ -17,16 +17,16 @@ Best place to turn for quick answers and live chat
 `#sanic-support` channel on the [Discord server](https://discord.gg/FARQzAEMAA)
 ```
 
-.. column::
+.. 列::
 
 ```
-### Community Forums 👥
+### Community Forums :busts_in_sシルエット:
 
-Good for sharing snippets of code and longer support queries
+
 
 `Questions and Help` category on the [Forums](https://community.sanicframework.org/c/questions-and-help/6)
 ```
 
 ***
 
-We also actively monitor the `[sanic]` tag on [Stack Overflow](https://stackoverflow.com/questions/tagged/sanic).
+[Stack Overflow](https://stackoverflow.com/questions/tagged/sanic)の`[sanic]`タグも積極的に監視しています。

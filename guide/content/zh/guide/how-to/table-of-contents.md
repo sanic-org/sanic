@@ -1,17 +1,17 @@
 ---
-title: Table of Contents
+title: 目录
 ---
 
-# Table of Contents
+# 目录
 
-We have compiled fully working examples to answer common questions and user cases. For the most part, the examples are as minimal as possible, but should be complete and runnable solutions.
+我们汇编了充分运作的例子，以回答共同的问题和用户案例。 在大多数情况下，这些例子尽可能少一些，但应该是完整和可运作的解决办法。
 
-| Page                                        | How do I ...                                                        |
-| :------------------------------------------ | :------------------------------------------------------------------ |
-| [Application mounting](./mounting.md)       | ... mount my application at some path above the root?               |
-| [Authentication](./authentication.md)       | ... control authentication and authorization?                       |
-| [Autodiscovery](./autodiscovery.md)         | ... autodiscover the components I am using to build my application? |
-| [CORS](./cors.md)                           | ... configure my application for CORS?                              |
-| [ORM](./orm)                                | ... use an ORM with Sanic?                                          |
-| ["Static" Redirects](./static-redirects.md) | ... configure static redirects                                      |
-| [TLS/SSL/HTTPS](./tls.md)                   | ... run Sanic via HTTPS?<br> ... redirect HTTP to HTTPS?            |
+| 页                                 | 如何做...                                             |
+| :-------------------------------- | :------------------------------------------------- |
+| [应用程序挂载](./mounting.md)           | ... 将我的应用程序挂载到root上方的某个路径？                         |
+| [Authentication](./认证.md)         | ... 控制认证和授权？                                       |
+| [Autodiscovery](./autocovery.md)  | ... 自动发现我用来构建应用程序的组件？                              |
+| [CORS](./cors.md)                 | ... 配置我的 CORS 应用程序？                                |
+| [ORM](./orm)                      | ... 使用 Sanic 的 ORM 吗？                              |
+| ["静态" 重定向](./static-redirects.md) | ... 配置静态重定向                                        |
+| [TLS/SSL/HTTPS](./tls.md)         | ... 通过 HTTPS 运行 Sanic 吗？<br>... 将 HTTP 重定向到 HTTPS？ |

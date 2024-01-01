@@ -1,53 +1,53 @@
 ---
-title: Sanic Extensions - Getting Started
+title: サニックエクステンション - はじめに
 ---
 
-# Getting Started
+# はじめに
 
-Sanic Extensions is an _officially supported_ plugin developed, and maintained by the SCO. The primary goal of this project is to add additional features to help Web API and Web application development easier.
+Sanic Extensionsは、SCOによって開発され、維持されている_公式にサポートされている_プラグインです。 このプロジェクトの主な目的は、Web API および Web アプリケーション開発を容易にする追加機能を追加することです。
 
-## Features
+## 特徴
 
-- CORS protection
-- Template rendering with Jinja
-- Dependency injection into route handlers
-- OpenAPI documentation with Redoc and/or Swagger
-- Predefined, endpoint-specific response serializers
-- Request query arguments and body input validation
-- Auto create `HEAD`, `OPTIONS`, and `TRACE` endpoints
+- CORS保護
+- 神社でテンプレートをレンダリングする
+- ルートハンドラへの依存性インジェクション
+- やり直しや Swagger を使用した OpenAPI ドキュメント
+- 事前定義されたエンドポイント固有のレスポンスシリアライザー
+- クエリクエストの引数と本文入力のバリデーションをリクエスト
+- `HEAD`、`OPTIONS`、および `TRACE`エンドポイントを自動的に作成します
 
-## Minimum requirements
+## 最低要件
 
 - **Python**: 3.8+
 - **Sanic**: 21.9+
 
-## Install
+## インストール
 
-The best method is to just install Sanic Extensions along with Sanic itself:
+最良の方法は、Sanic自体と一緒にSanic Extensionsをインストールすることです:
 
 ```bash
 pip install sanic[ext]
 ```
 
-You can of course also just install it by itself.
+もちろん、単独でインストールすることもできます。
 
 ```bash
 pip install sanic-ext
 ```
 
-## Extend your application
+## アプリケーションを拡張
 
-Out of the box, Sanic Extensions will enable a bunch of features for you.
+Sanic Extensionsは、すぐにたくさんの機能を利用できるようになります。
 
-.. column::
+.. 列::
 
 ```
-To setup Sanic Extensions (v21.12+), you need to do: **nothing**. If it is installed in the environment, it is setup and ready to go.
+Sanic Extensions(v21.12+)をセットアップするには、次の手順を実行する必要があります。**何もありません**。環境内にインストールされている場合は、セットアップして準備が整います。
 
-This code is the Hello, world app in the [Sanic Getting Started page](../../guide/getting-started.md) _without any changes_, but using Sanic Extensions with `sanic-ext` installed in the background.
+このコードは、[Sanic Getting Started page](../../guide/getting-started)のHello, world appです。 d) _何も変更せずに `sanic-ext` がバックグラウンドにインストールされた Sanic 拡張機能を使用します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -62,7 +62,7 @@ async def hello_world(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 **_OLD DEPRECATED SETUP_**
@@ -72,7 +72,7 @@ In v21.9, the easiest way to get started is to instantiate it with `Extend`.
 If you look back at the Hello, world app in the [Sanic Getting Started page](../../guide/getting-started.md), you will see the only additions here are the two highlighted lines.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -89,4 +89,4 @@ async def hello_world(request):
 ```
 ````
 
-Regardless of how it is setup, you should now be able to view the OpenAPI documentation and see some of the functionality in action: [http://localhost:8000/docs](http://localhost:8000/docs).
+どのように設定されているかに関わらず、OpenAPI ドキュメントを表示し、動作中のいくつかの機能を確認できるようになりました: [http://localhost:8000/docs](http://localhost:8000/docs)。

@@ -1,78 +1,78 @@
 ---
-title: Sanic Extensions - Getting Started
+title: Sanic 扩展 - 开始使用
 ---
 
-# Getting Started
+# 正在开始
 
-Sanic Extensions is an _officially supported_ plugin developed, and maintained by the SCO. The primary goal of this project is to add additional features to help Web API and Web application development easier.
+Sanic 扩展是由 SCO开发和维护的 _官方支持_ 插件。 这个项目的主要目标是增加额外的功能，帮助Web API 和Web 应用程序开发更容易。
 
-## Features
+## 功能
 
-- CORS protection
-- Template rendering with Jinja
-- Dependency injection into route handlers
-- OpenAPI documentation with Redoc and/or Swagger
-- Predefined, endpoint-specific response serializers
-- Request query arguments and body input validation
-- Auto create `HEAD`, `OPTIONS`, and `TRACE` endpoints
+- CORS 保护
+- 使用 Jinja 渲染模板
+- 依赖注入路由处理
+- 与 Redoc 或 Swagger 的 OpenAPI 文档
+- 预定义的端点特定响应序列转换器
+- 请求查询参数和实体输入验证
+- 自动创建 `HEAD`, `OPTIONS` 和 `TRACE` 终点
 
-## Minimum requirements
+## 最低要求
 
 - **Python**: 3.8+
 - **Sanic**: 21.9+
 
-## Install
+## 安装
 
-The best method is to just install Sanic Extensions along with Sanic itself:
+最好的方法是立即安装 Sanic 扩展以及Sanic 本身：
 
 ```bash
 pip install sanic[ext]
 ```
 
-You can of course also just install it by itself.
+当然你也可以自己安装它。
 
 ```bash
-pip install sanic-ext
+pip 安装 sanic-ext
 ```
 
-## Extend your application
+## 扩展您的应用程序
 
-Out of the box, Sanic Extensions will enable a bunch of features for you.
+Sanic 扩展将从箱子中为您启用一堆功能。
 
-.. column::
+.. 列:
 
 ```
-To setup Sanic Extensions (v21.12+), you need to do: **nothing**. If it is installed in the environment, it is setup and ready to go.
+若要设置 Sanic 扩展 (v21.12+), 您需要做: **nithing** 。如果它是在环境中安装的，它将被设置并准备就绪。
 
-This code is the Hello, world app in the [Sanic Getting Started page](../../guide/getting-started.md) _without any changes_, but using Sanic Extensions with `sanic-ext` installed in the background.
+此代码是Hello, 世界应用在 [Sanic Getting Started page](../../guide/getting-started). d) _没有任何更改_, 但使用 Sanic Extensions 使用 `sanic-ext` 在后台安装。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic import Sanic
+from sanic importing Sanic
 from sanic.response import text
 
 app = Sanic("MyHelloWorldApp")
 
-@app.get("/")
+@app. et("/")
 async def hello_world(request):
     return text("Hello, world.")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 **_OLD DEPRECATED SETUP_**
 
-In v21.9, the easiest way to get started is to instantiate it with `Extend`.
+在 v21.9中，最容易启动的方法是使用 `Extend` 实例化它。
 
-If you look back at the Hello, world app in the [Sanic Getting Started page](../../guide/getting-started.md), you will see the only additions here are the two highlighted lines.
+如果你回到你好，世界应用在 [Sanic Getting Started页面](../) 向导/getting-started.md, 您将看到这里唯一的添加是两行高亮显示。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -89,4 +89,4 @@ async def hello_world(request):
 ```
 ````
 
-Regardless of how it is setup, you should now be able to view the OpenAPI documentation and see some of the functionality in action: [http://localhost:8000/docs](http://localhost:8000/docs).
+无论如何设置，您现在都应该能够查看 OpenAPI 文档，并查看一些功能：[[http://localhost:8000/docs](http://localhost:8000/docs](http://localhost:8000/docs)。

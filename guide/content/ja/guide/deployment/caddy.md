@@ -1,12 +1,12 @@
-# Caddy Deployment
+# キャディデプロイメント
 
-## Introduction
+## はじめに
 
-Caddy is a state-of-the-art web server and proxy that supports up to HTTP/3. Its simplicity lies in its minimalistic configuration and the inbuilt ability to automatically procure TLS certificates for your domains from Let's Encrypt. In this setup, we will configure the Sanic application to serve locally at 127.0.0.1:8001, with Caddy playing the role of the public-facing server for the domain example.com.
+CaddyはHTTP/3までサポートする最先端のWebサーバーとプロキシです。 そのシンプルさは、最小限の設定と、Let's Encrypt からドメイン用の TLS 証明書を自動的に調達するための構築機能にあります。 この設定では、127.0.0でローカルで動作するようにSanicアプリケーションを設定します。 :8001, Caddy がドメインの example.com の公開サーバーの役割を果たしています。
 
-You may install Caddy from your favorite package menager on Windows, Linux and Mac. The package is named `caddy`.
+Windows、Linux、Macでお気に入りのパッケージメニューからCaddyをインストールできます。 パッケージ名は `caddy` です。
 
-## Proxied Sanic app
+## プロキシされたサニックアプリ
 
 ```python
 from sanic import Sanic
@@ -23,27 +23,27 @@ def index(request):
     )
 ```
 
-To run this application, save as `proxied_example.py`, and use the sanic command-line interface as follows:
+このアプリケーションを実行するには、`proxied_example.py` として保存し、sanic コマンドラインインターフェイスを以下のように使用します。
 
 ```bash
 SANIC_PROXIES_COUNT=1 sanic proxied_example --port 8001
 ```
 
-Setting the SANIC_PROXIES_COUNT environment variable instructs Sanic to trust the X-Forwarded-\* headers sent by Caddy, allowing it to correctly identify the client's IP address and other information.
+SANIC_PROXIES_COUNT環境変数を設定すると、SanicはCaddyから送信されたX-Forward-\*ヘッダを信頼するように命令します。 クライアントのIPアドレスやその他の情報を正しく識別できるようにします。
 
-## Caddy is simple
+## キャディはシンプルです
 
-If you have no other web servers running, you can simply run Caddy CLI (needs `sudo` on Linux):
+他の Web サーバーが動作していない場合は、Caddy CLI を実行できます（Linux では `sudo` が必要です）。
 
 ```bash
-caddy reverse-proxy --from example.com --to :8001
+caddy リバース・プロキシ --from example.com --to :8001
 ```
 
-This is a complete server that includes a certificate for your domain, http-to-https redirect, proxy headers, streaming and WebSockets. Your Sanic application should now be available on the domain you specified by HTTP versions 1, 2 and 3. Remember to open up UDP/443 on your firewall to enable H3 communications.
+これはあなたのドメインの証明書、http-to-https リダイレクト、プロキシヘッダ、ストリーミング、WebSocketを含む完全なサーバーです。 Sanicアプリケーションは、HTTPバージョン1、2、3で指定されたドメインで利用可能になるはずです。 H3通信を有効にするには、ファイアウォールでUDP/443 を開いてください。
 
-All done?
+すべて完了しましたか？
 
-Soon enough you'll be needing more than one server, or more control over details, which is where the configuration files come in. The above command is equivalent to this `Caddyfile`, serving as a good starting point for your install:
+すぐに、複数のサーバーが必要になります。または、設定ファイルが入ってくる詳細を制御する必要があります。 上記のコマンドは `Caddyfile` と同等で、インストールの良い開始点として機能します。
 
 ```
 example.com {
@@ -51,11 +51,11 @@ example.com {
 }
 ```
 
-Some Linux distributions install Caddy such that it reads configuration from `/etc/caddy/Caddyfile`, which `import /etc/caddy/conf.d/*` for each site you are running. If not, you'll need to manually run `caddy run` as a system service, pointing it at the proper config file. Alternatively, use Caddy API mode with `caddy run --resume` for persistent config changes. Note that any Caddyfile loading will replace all prior configuration and thus `caddy-api` is not configurable in this traditional manner.
+Linuxディストリビューションによっては、`/etc/caddy/Caddy/Caddy/Caddyfile` から設定を読み込むようにインストールされているものもあります。これは `import /etc/caddy/conf.d/*` です。 そうでない場合は、 `caddy run` をシステムサービスとして手動で実行し、適切な設定ファイルを指す必要があります。 もしくは、永続的な設定変更には、 `caddy run --resume` を使用して Caddy API モードを使用してください。 Caddyfile の読み込みはすべての設定を置き換えるため、 `caddy-api` は従来の方法では設定できません。
 
-## Advanced configuration
+## 高度な構成
 
-At times, you might need to mix static files and handlers at the site root for cleaner URLs. In Sanic, you'd use `app.static("/", "static", index="index.html")` to achieve this. However, for improved performance, you can offload serving static files to Caddy:
+時には、静的なファイルとハンドラをサイトルートで混在させ、よりクリーンな URL を得る必要があるかもしれません。 Sanicでは、\`app.static("/", "static", index="index.html")を使用します。 ただし、パフォーマンスを向上させるために、静的ファイルをCaddyにオフロードすることができます。
 
 ```
 app.example.com {
@@ -71,4 +71,4 @@ app.example.com {
 }
 ```
 
-Please refer to [Caddy documentation](https://caddyserver.com/docs/) for more options.
+詳細については、format@@0(https\://caddyserver.com/docs/)を参照してください。

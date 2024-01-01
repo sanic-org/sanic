@@ -1,24 +1,24 @@
 ---
-title: Sanic Testing - Test Clients
+title: サニックテスト - テストクライアント
 ---
 
-# Test Clients
+# クライアントのテスト
 
-There are three different test clients available to you, each of them presents different capabilities.
+3つの異なるテストクライアントが用意されており、それぞれが異なる機能を提供します。
 
-## Regular sync client: `SanicTestClient`
+## 定期的な同期クライアント: `SanicTestClient`
 
-The `SanicTestClient` runs an actual version of the Sanic Server on your local network to run its tests. Each time it calls an endpoint it will spin up a version of the application and bind it to a socket on the host OS. Then, it will use `httpx` to make calls directly to that application.
+`SanicTestClient` はローカルネットワーク上で実際のバージョンの Sanic Server を実行し、テストを実行します。 エンドポイントを呼び出すたびに、アプリケーションのバージョンを起動し、ホスト OS 上のソケットにバインドします。 次に、そのアプリケーションへ直接呼び出しを行うために `httpx` を使用します。
 
-This is the typical way that Sanic applications are tested.
+これは、Sanicアプリケーションがテストされる典型的な方法です。
 
-.. column::
+.. 列::
 
 ```
-Once installing Sanic Testing, the regular `SanicTestClient` can be used without further setup. This is because Sanic does the leg work for you under the hood. 
+Sanic Testing をインストールすると、通常の `SanicTestClient` をセットアップせずに使用できます。 これは、サニックがフードの下であなたのために脚を動作させるからです。 
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -26,13 +26,13 @@ app.test_client.get("/path/to/endpoint")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-However, you may find it desirable to instantiate the client yourself.
+しかし、クライアントを自分でインスタンス化することが望ましいと思うかもしれません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -43,13 +43,13 @@ test_client.get("/path/to/endpoint")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-A third option for starting the test client is to use the `TestManager`. This is a convenience object that sets up both the `SanicTestClient` and the `SanicASGITestClient`.
+テストクライアントを開始するための3つ目のオプションは、`TestManager` を使用することです。 これは、`SanicTestClient` と `SanicASGITestClient` の両方を設定する便利なオブジェクトです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -62,7 +62,7 @@ mgr.test_client.get("/path/to/endpoint")
 ```
 ````
 
-You can make a request by using one of the following methods
+以下のいずれかの方法でリクエストを行うことができます。
 
 - `SanicTestClient.get`
 - `SanicTestClient.post`
@@ -74,7 +74,7 @@ You can make a request by using one of the following methods
 - `SanicTestClient.websocket`
 - `SanicTestClient.request`
 
-You can use these methods _almost_ identically as you would when using `httpx`. Any argument that you would pass to `httpx` will be accepted, **with one caveat**: If you are using `test_client.request` and want to manually specify the HTTP method, you should use: `http_method`:
+これらのメソッドは `httpx` を使用するときとほぼ同じように使うことができます。 `httpx`に渡す引数は、**ひとつの注意を払って**以下のように受け入れられます: `test_clientを使用している場合。 equest`とHTTPメソッドを手動で指定したい場合は、`http_method`を使用してください。
 
 ```python
 test_client.request("/path/to/endpoint", http_method="get")
@@ -82,15 +82,15 @@ test_client.request("/path/to/endpoint", http_method="get")
 
 ## ASGI async client: `SanicASGITestClient`
 
-Unlike the `SanicTestClient` that spins up a server on every request, the `SanicASGITestClient` does not. Instead it makes use of the `httpx` library to execute Sanic as an ASGI application to reach inside and execute the route handlers.
+リクエストごとにサーバーをスピンアップする `SanicTestClient` とは異なり、`SanicASGITestClient` はありません。 代わりに、`httpx`ライブラリを使用して、SanicをASGIアプリケーションとして実行し、ルートハンドラにアクセスして実行します。
 
-.. column::
+.. 列::
 
 ```
-This test client provides all of the same methods and generally works as the `SanicTestClient`. The only difference is that you will need to add an `await` to each call:
+このテストクライアントは全ての同じメソッドを提供し、一般的には `SanicTestClient` として動作します。 唯一の違いは、呼び出しごとに`await`を追加する必要があることです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -98,27 +98,27 @@ await app.test_client.get("/path/to/endpoint")
 ```
 ````
 
-The `SanicASGITestClient` can be used in the exact same three ways as the `SanicTestClient`.
+`SanicASGITestClient` は `SanicTestClient` と全く同じ3つの方法で使用できます。
 
 .. note::
 
 ```
-The `SanicASGITestClient` does not need to only be used with ASGI applications. The same way that the `SanicTestClient` does not need to only test sync endpoints. Both of these clients are capable of testing *any* Sanic application.
+`SanicASGITestClient` は ASGI アプリケーションでのみ使用する必要はありません。 `SanicTestClient` は同期エンドポイントのみをテストする必要がないのと同じ方法です。どちらのクライアントも、*任意*のSanicアプリケーションをテストすることができます。
 ```
 
-## Persistent service client: `ReusableClient`
+## 永続的なサービスクライアント: `ReusableClient`
 
-This client works under a similar premise as the `SanicTestClient` in that it stands up an instance of your application and makes real HTTP requests to it. However, unlike the `SanicTestClient`, when using the `ReusableClient` you control the lifecycle of the application.
+このクライアントは `SanicTestClient` と同様の前提で動作し、アプリケーションのインスタンスを立ち上げ、実際の HTTP リクエストを行います。 しかし、`SanicTestClient` とは異なり、`ReusableClient` を使用する場合は、アプリケーションのライフサイクルを制御します。
 
-That means that every request **does not** start a new web server. Instead you will start the server and stop it as needed and can make multiple requests to the same running instance.
+つまり、リクエストごとに**新しいWebサーバーを起動しません**。 代わりに、サーバーを起動し、必要に応じて停止し、同じ実行中のインスタンスに複数のリクエストを行うことができます。
 
-.. column::
+.. 列::
 
 ```
-Unlike the other two clients, you **must** instantiate this client for use:
+他の2つのクライアントとは異なり、このクライアントを**インスタンス化**して使用する必要があります：
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -128,13 +128,13 @@ client = ReusableClient(app)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Once created, you will use the client inside of a context manager. Once outside of the scope of the manager, the server will shutdown.
+作成されると、コンテキストマネージャーの内部のクライアントを使用します。マネージャーの範囲外の場合、サーバーはシャットダウンします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

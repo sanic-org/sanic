@@ -1,20 +1,20 @@
 ---
-title: Sanic Extensions - Auto-documentation
+title: Sanic 扩展 - 自动文档
 ---
 
-# Auto-documentation
+# 自动文档
 
-To make documenting endpoints easier, Sanic Extensions will use a function's docstring to populate your documentation.
+要使文档端点变得更容易，Sanic 扩展将使用函数的 docstring 来填充您的文档。
 
-## Summary and description
+## 摘要和说明
 
-.. column::
+.. 列:
 
 ```
-A function's docstring will be used to create the summary and description. As you can see from this example here, the docstring has been parsed to use the first line as the summary, and the remainder of the string as the description.
+函数的 docstring 将用于创建摘要和描述。 从这里的例子中你可以看到， docstring 已被解析成第一行作为总结。 和字符串的其余部分作为描述。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -48,17 +48,17 @@ async def handler(request, something: str):
 ```
 ````
 
-## Operation level YAML
+## 操作级别 YAML
 
-.. column::
+.. 列:
 
 ```
-You can expand upon this by adding valid OpenAPI YAML to the docstring. Simply add a line that contains `openapi:`, followed by your YAML. 
+你可以通过将有效的 OpenAPI YAML 添加到文档字符串来扩展这个。只需添加一行包含 `openapi:`, 然后是你的 YAML。 
 
-The `---` shown in the example is *not* necessary. It is just there to help visually identify the YAML as a distinct section of the docstring.
+示例中显示的 "---" 是*不需要*。 只是为了帮助视觉辨认YAML是文档的一个独特部分。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -122,25 +122,25 @@ async def handler(request, something: str):
 ```
 ````
 
-.. note::
+.. 注：
 
 ```
-When both YAML documentation and decorators are used, it is the content from the decorators that will take priority when generating the documentation.
+当使用YAML文档和装饰器时，在生成文档时优先考虑的是装饰器的内容。
 ```
 
-## Excluding docstrings
+## 不包括文档字符串
 
-.. column::
+.. 列:
 
 ```
-Sometimes a function may contain a docstring that is not meant to be consumed inside the documentation.
+有时候函数可能包含一个文档字符串，该字符串不打算在文档内消耗。
 
-**Option 1**: Globally turn off auto-documentation `app.config.OAS_AUTODOC = False`
+**选项1**：全局关闭自动文档“应用”。 onfig.OAS_AUTODOC = False`
 
-**Option 2**: Disable it for the single handler with the `@openapi.no_autodoc` decorator
+**选项2**：使用 `@openapi.no_autodoc` 装饰器禁用单个处理程序
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python

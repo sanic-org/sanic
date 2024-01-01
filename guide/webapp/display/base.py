@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from os import environ
+
 from html5tagger import Builder, Document, E  # type: ignore
 
 
@@ -30,7 +32,7 @@ class BaseRenderer:
         return self.base_title
 
     def _head(self) -> list[Builder]:
-        return [
+        head = [
             E.meta(name="theme-color", content="#ff0d68"),
             E.meta(name="title", content=self.title()),
             E.meta(
@@ -69,3 +71,13 @@ class BaseRenderer:
                 rel="mask-icon", href="/safari-pinned-tab.svg", color="#ff0d68"
             ),
         ]
+        umami = E.script(
+            None,
+            async_=True,
+            defer=True,
+            data_website_id="0131e426-4d6d-476b-a84b-34a45e0be6de",
+            src="https://analytics.sanicframework.org/umami.js",
+        )
+        if environ.get("UMAMI"):
+            head.append(umami)
+        return head

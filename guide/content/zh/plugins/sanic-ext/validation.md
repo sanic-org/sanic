@@ -1,24 +1,24 @@
 ---
-title: Sanic Extensions - Validation
+title: Sanic 扩展 - 验证
 ---
 
-# Validation
+# 验证
 
-One of the most commonly implemented features of a web application is user-input validation. For obvious reasons, this is not only a security issue, but also just plain good practice. You want to make sure your data conforms to expectations, and throw a `400` response when it does not.
+网络应用程序最常用的功能之一是用户输入验证。 由于明显的原因，这不仅是一个安全问题，而且也是一个明显的良好做法。 你想要确保你的数据符合预期，并且在没有响应时扔出一个 \`400'。
 
-## Implementation
+## 二． 执行情况
 
-### Validation with Dataclasses
+### 与 Dataclasses 验证
 
-With the introduction of [Data Classes](https://docs.python.org/3/library/dataclasses.html), Python made it super simple to create objects that meet a defined schema. However, the standard library only supports type checking validation, **not** runtime validation. Sanic Extensions adds the ability to do runtime validations on incoming requests using `dataclasses` out of the box. If you also have either `pydantic` or `attrs` installed, you can alternatively use one of those libraries.
+随着[Data Classes](https://docs.python.org/3/library/dataclasses.html)的引入，Python使得创建符合定义模式的对象变得非常简单。 但是，标准库只支持类型检查验证， **不** 运行时间验证。 Sanic 扩展增加了使用`dataclasses`从方框中下载的请求进行运行时验证的能力。 如果你也安装了"pydantic"或"景点"，你也可以使用这些库中的一个。
 
-.. column::
+.. 列:
 
 ```
-First, define a model.
+首先，定义一个模型。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -28,13 +28,13 @@ class SearchParams:
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Then, attach it to your route
+然后将其附加到您的路由
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -47,38 +47,38 @@ async def handler(request, query: SearchParams):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You should now have validation on the incoming request.
+您现在应该对传入请求进行验证。
 ```
 
-.. column::
+.. 列:
 
 ````
-```
+``
 $ curl localhost:8000/search                                       
-⚠️ 400 — Bad Request
-====================
-Invalid request body: SearchParams. Error: missing a required argument: 'q'
+⚠️ 400 - Bad Request
+==============
+无效的请求正文: 搜索参数 错误：缺少一个必需的参数：'q'
 ```
 ```
-$ curl localhost:8000/search\?q=python                             
+$ curl localhost:8000/search\? =python                             
 {"q":"python"}
 ```
 ````
 
-### Validation with Pydantic
+### 使用 Pydantic验证
 
-You can use Pydantic models also.
+您也可以使用 Pydantic模型。
 
-.. column::
+.. 列:
 
 ```
-First, define a model.
+首先，定义一个模型。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -88,107 +88,107 @@ class Person(BaseModel):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Then, attach it to your route
+然后将其附加到您的路由
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_ext import validate
+from sanic_ext import valides
 
 @app.post("/person")
 @validate(json=Person)
 async def handler(request, body: Person):
-    return json(body.dict())
+    return json(Body.dict())
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You should now have validation on the incoming request.
+您现在应该对传入请求进行验证。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```
-$ curl localhost:8000/person -d '{"name": "Alice", "age": 21}' -X POST  
+$ curl localhost:8000/personn -d '{"name": "Alice", "age": 21}" -X POST  
 {"name":"Alice","age":21}
 ```
 ````
 
-### Validation with Attrs
+### 使用Attrs进行验证
 
-You can use Attrs also.
+您也可以使用Attrso。
 
-.. column::
+.. 列:
 
 ```
-First, define a model.
+首先，定义一个模型。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@attrs.define
-class Person:
+@trans.define
+class person:
     name: str
     age: int
 
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Then, attach it to your route
+然后将其附加到您的路由
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_ext import validate
+from sanic_ext import valides
 
 @app.post("/person")
 @validate(json=Person)
 async def handler(request, body: Person):
-    return json(attrs.asdict(body))
+    return json(Body))
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You should now have validation on the incoming request.
+您现在应该对传入请求进行验证。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```
-$ curl localhost:8000/person -d '{"name": "Alice", "age": 21}' -X POST  
+$ curl localhost:8000/personn -d '{"name": "Alice", "age": 21}" -X POST  
 {"name":"Alice","age":21}
 ```
 ````
 
-## What can be validated?
+## 什么可以验证？
 
-The `validate` decorator can be used to validate incoming user data from three places: JSON body data (`request.json`), form body data (`request.form`), and query parameters (`request.args`).
+`validate`装饰符可以用来验证来自三个地方的用户数据：JSON body data (\`request ). 这种情况可能会影响到国家的经济和社会经济利益。
 
-.. column::
+.. 列:
 
 ```
-As you might expect, you can attach your model using the keyword arguments of the decorator.
+正如您可能期望的那样，您可以使用装饰器的关键字参数附上您的模型。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python

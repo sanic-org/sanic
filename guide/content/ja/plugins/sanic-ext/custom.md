@@ -1,28 +1,28 @@
 ---
-title: Sanic Extensions - Custom
+title: サニックエクステンション - Custom
 ---
 
-# Custom extensions
+# カスタムの拡張機能
 
-It is possible to create your own custom extensions.
+独自の拡張機能を作成することは可能です。
 
-Version 22.9 added the `Extend.register` [method](#extension-preregistration). This makes it extremely easy to add custom expensions to an application.
+バージョン 22.9 は `Extend.register` [method](#extension-preregistration) を追加しました。 これにより、アプリケーションにカスタムの拡張機能を追加することが非常に簡単になります。
 
-## Anatomy of an extension
+## 拡張機能の解剖学
 
-All extensions must subclass `Extension`.
+すべてのエクステンションは `Extension` のサブクラスでなければなりません。
 
-### Required
+### 必須
 
-- `name`: By convention, the name is an all-lowercase string
-- `startup`: A method that runs when the extension is added
+- `name`: 規約により、名前は全て小文字の文字列です
+- `startup`: 拡張機能が追加されたときに実行されるメソッド
 
-### Optional
+### 省略可能
 
-- `label`: A method that returns additional information about the extension in the MOTD
-- `included`: A method that returns a boolean whether the extension should be enabled or not (could be used for example to check config state)
+- `label`: MOTD の拡張機能に関する追加情報を返すメソッド
+- `included`: 拡張機能を有効にするかどうかを真偽値を返すメソッド (設定状態を確認するために例えば使用できます)
 
-### Example
+### 例
 
 ```python
 from sanic import Request, Sanic, json
@@ -68,15 +68,15 @@ async def handler(request: Request):
     return json({"foo": "bar"})
 ```
 
-## Extension preregistration
+## エクステンションの事前登録
 
-.. column::
+.. 列::
 
 ```
-`Extend.register` simplifies the addition of custom extensions.
+`Extend.register` はカスタムエクステンションの追加を簡単にします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -89,4 +89,4 @@ Extend.register(MyCustomExtension())
 ```
 ````
 
-_Added in v22.9_
+_v22.9_に追加されました

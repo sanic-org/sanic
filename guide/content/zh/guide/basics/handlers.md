@@ -1,20 +1,20 @@
 # Handlers
 
-The next important building block are your _handlers_. These are also sometimes called "views".
+下一个重要的构件块是你的 _handlers_。 它们有时也被称为“视野”。
 
 In Sanic, a handler is any callable that takes at least a :class:`sanic.request.Request` instance as an argument, and returns either an :class:`sanic.response.HTTPResponse` instance, or a coroutine that does the same.
 
-.. column::
+.. 列:
 
 ```
-Huh? 😕
+啊？😕
 
-It is a **function**; either synchronous or asynchronous.
+是一个 **函数**; 要么同步，要么异步函数。
 
-The job of the handler is to respond to an endpoint and do something. This is where the majority of your business logic will go.
+处理程序的任务是响应一个端点并做一些事情。 这是您的大多数业务逻辑将要走的地方。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -26,27 +26,27 @@ async def i_am_ALSO_a_handler(request):
 ```
 ````
 
-Two more important items to note:
+需要注意的另外两个重要项目：
 
-1. You almost _never_ will want to use :class:`sanic.response.HTTPresponse` directly. It is much simpler to use one of the [convenience methods](./response#methods).
+1. You almost _never_ will want to use :class:`sanic.response.HTTPresponse` directly. 使用[方便方法](./response#methods)非常简单。
 
-   - `from sanic import json`
-   - `from sanic import html`
-   - `from sanic import redirect`
-   - _etc_
-2. As we will see in [the streaming section](../advanced/streaming#response-streaming), you do not always need to return an object. If you use this lower-level API, you can control the flow of the response from within the handler, and a return object is not used.
+   - `从 sanic import json`
+   - `从 sanic import html`
+   - `从 Sanic 导入重定向`
+   - _等_
+2. 我们会在[串流部分](../advanced/streaming#response-streaming)中看到的，您并不总是需要返回一个对象。 如果您使用此较低级别的 API，您可以控制处理器内响应的流量，并且返回对象未被使用。
 
-.. tip:: Heads up
+.. 提示：浮动通知
 
 ```
-If you want to learn more about encapsulating your logic, checkout [class based views](../advanced/class-based-views.md). For now, we will continue forward with just function-based views.
+如果你想了解更多关于封装你的逻辑的信息，结帐[基于类的视图](../advanced/class-based-views.md)。现在，我们将继续只是基于函数的视图。
 ```
 
-### A simple function-based handler
+### 一个简单的基于功能的处理程序
 
-The most common way to create a route handler is to decorate the function. It creates a visually simple identification of a route definition. We'll learn more about [routing soon](./routing.md).
+创建路由处理程序的最常见方式是装饰函数。 它为路线定义建立简单的视觉标识。 我们将了解更多关于[路由](./routing.md)
 
-.. column::
+.. 列:
 
 ```
 Let's look at a practical example.
@@ -57,7 +57,7 @@ Let's look at a practical example.
 Mission accomplished 💪
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -65,39 +65,39 @@ from sanic import text
 
 @app.get("/foo")
 async def foo_handler(request):
-    return text("I said foo!")
+    return text("我说了！")
 ```
 ````
 
 ***
 
-## A word about _async_...
+## 关于 _async_...
 
-.. column::
+.. 列:
 
 ```
-It is entirely possible to write handlers that are synchronous.
+完全可以写入同步处理程序。
 
-In this example, we are using the _blocking_ `time.sleep()` to simulate 100ms of processing time. Perhaps this represents fetching data from a DB, or a 3rd-party website.
+在此示例中，我们正在使用 _blocking_ `time.sleep()` 模拟100毫秒的处理时间。 也许这意味着从数据库或第三方网站获取数据。
 
-Using four (4) worker processes and a common benchmarking tool:
+使用四(4)个工序和一个共同的基准工具：
 
-- **956** requests in 30.10s
-- Or, about **31.76** requests/second
+- **956** 在 30.10s
+- 或大约**31.76** 请求/秒
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.get("/sync")
 def sync_handler(request):
     time.sleep(0.1)
-    return text("Done.")
+    return text("完成")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 Just by changing to the asynchronous alternative `asyncio.sleep()`, we see an incredible change in performance. 🚀
@@ -113,24 +113,24 @@ Using the same four (4) worker processes:
     🤯
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.get("/async")
 async def async_handler(request):
-    await asyncio.sleep(0.1)
-    return text("Done.")
+    等待asyncio.sleep(0.1)
+    return text("完成")
 ```
 ````
 
-Okay... this is a ridiculously overdramatic result. And any benchmark you see is inherently very biased. This example is meant to over-the-top show the benefit of `async/await` in the web world. Results will certainly vary. Tools like Sanic and other async Python libraries are not magic bullets that make things faster. They make them _more efficient_.
+好的... 这是一个荒谬的过于戏剧性的结果。 你们所看到的任何基准都本质上是非常偏颇的。 这个示例是为了在网上显示`async/await`的好处。 结果肯定会有所不同。 诸如Sanic和其他异步Python图书馆之类的工具不是使事情变得更快的神奇子弹。 它们使它们更有效率。
 
-In our example, the asynchronous version is so much better because while one request is sleeping, it is able to start another one, and another one, and another one, and another one...
+在我们的例子中，异步版本要好得多，因为当一个请求正在睡觉时， 它能够开始另一个和另一个，以及另一个...
 
-But, this is the point! Sanic is fast because it takes the available resources and squeezes performance out of them. It can handle many requests concurrently, which means more requests per second.
+但这是要点！ 沙漠之所以迅速，是因为它需要现有的资源，并挤压了可用资源的业绩。 它可以同时处理许多请求，这意味着每秒要有更多的请求。
 
-.. tip:: A common mistake!
+.. 提示：常见错误！
 
 ```
 Don't do this! You need to ping a website. What do you use? `pip install your-fav-request-library` 🙈
@@ -142,9 +142,9 @@ Sanic uses [httpx](https://www.python-httpx.org/) inside of its testing package 
 
 ***
 
-## A fully annotated handler
+## 一个完整注释的处理程序
 
-For those that are using type annotations...
+对于那些使用类型注释的人...
 
 ```python
 from sanic.response import HTTPResponse, text
@@ -155,63 +155,63 @@ async def typed_handler(request: Request) -> HTTPResponse:
     return text("Done.")
 ```
 
-## Naming your handlers
+## 命名您的处理程序
 
-All handlers are named automatically. This is useful for debugging, and for generating URLs in templates. When not specified, the name that will be used is the name of the function.
+所有处理程序都是自动命名的。 这对调试和生成模板中的 URL非常有用。 未指定时，将使用的名称是函数的名称。
 
-.. column::
+.. 列:
 
 ```
-For example, this handler will be named `foo_handler`.
+例如，这个处理程序将被命名为“foo_handler”。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-# Handler name will be "foo_handler"
+# Handler 名称将是“foo_handler”
 @app.get("/foo")
 async def foo_handler(request):
-    return text("I said foo!")
+    return text("我说了！")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-However, you can override this by passing the `name` argument to the decorator.
+然而，你可以把`name`的参数传递给装饰师来覆盖这个问题。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-# Handler name will be "foo"
+# Handler 名称将是“foo”
 @app.get("/foo", name="foo")
 async def foo_handler(request):
-    return text("I said foo!")
+    return text("我说了！")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-In fact, as you will, there may be times when you **MUST** supply a name. For example, if you use two decorators on the same function, you will need to supply a name for at least one of them.
+事实上，正如你将要做的那样，可能有时候你**MUST** 提供一个名称。 例如，如果你在同一函数上使用两个装饰器，你需要为其中至少一个提供一个名称。
 
-If you do not, you will get an error and your app will not start. Names **must** be unique within your app.
+如果您不这样做，您将会遇到一个错误，您的应用程序将不会启动。名称**必须** 在您的应用程序中是唯一的。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-# Two handlers, same function,
-# different names:
+# 两个处理器，相同的函数，
+# 不同的名字：
 # - "foo_arg"
 # - "foo"
-@app.get("/foo/<arg>", name="foo_arg")
+@app。 et("/foo/<arg>", name="foo_arg")
 @app.get("/foo")
-async def foo(request, arg=None):
-    return text("I said foo!")
+异步脚(请求，arg=Non):
+    return text("我说了！")
 ```
 ````

@@ -109,21 +109,21 @@ async def index(request):
             await response.send(record[0])
 ```
 
-`await response.eof()` を呼び出すことで、ストリームを明示的に終了させることができます。 これは `await response.send("", True)` を置き換える便利なメソッドです。 ハンドラがクライアントに送り返すものが何も残っていないと判断した _後に_ **1度だけ** 呼び出されるべきです。 Sanic サーバーで使用するのは_任意_ですが、Sanic を ASGI モードで実行している場合は、ストリームを明示的に終了させる必要があります。
+`await response.eof()` を呼び出すことで、ストリームを明示的に終了させることができます。 これは `await response.send("", True)` を置き換える便利なメソッドです。 ハンドラがクライアントに送り返すものが何も残っていないと判断した _後に_ **1度だけ** 呼び出されるべきです。 Sanic サーバーで使用するのは_任意_ですが、SanicをASGIモードで動作させている場合は、**必ず**明示的にストリームを終了させなければなりません。
 
-_v21.6_で`eof`を呼び出すことがオプションになりました
+_v21.6で`eof`の呼び出しが任意になりました_
 
 ## ファイルストリーミング
 
-.. 列::
+.. column::
 
 ```
-Sanic は `sanic.response.file_stream` 関数を提供しており、大きなファイルを送信したいときに便利です。 `StreamingHTTPResponse` オブジェクトを返し、デフォルトではチャンクされた転送エンコーディングを使用します。このため、Sanicはレスポンスに`Content-Length` HTTPヘッダーを追加しません。
+Sanicは、大きなファイルを送信する場合に便利な `sanic.response.file_stream` 関数を提供します。`StreamingHTTPResponse`オブジェクトを返し、デフォルトではチャンク転送エンコーディングを使用します。このため、Sanicはレスポンスに`Content-Length` HTTPヘッダーを追加しません。
 
-典型的なユースケースは、ビデオファイルをストリーミングすることでしょう。
+典型的な使用例は、ビデオファイルをストリーミングしている場合です。
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python
@@ -141,13 +141,13 @@ async def handler_file_stream(request):
 ```
 ````
 
-.. 列::
+.. column::
 
 ```
-`Content-Length` ヘッダーを使用したい場合は、チャンク付き転送エンコーディングを無効にし、`Content-Length` ヘッダーを追加するだけで手動で追加できます。
+`Content-Length`ヘッダーを使用したい場合は、チャンク転送エンコーディングを無効にし、`Content-Length`ヘッダーを手動で追加するだけです。
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python

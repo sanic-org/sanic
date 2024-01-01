@@ -1,33 +1,33 @@
 ---
-title: Sanic Testing - Getting Started
+title: サニックテスト - はじめに
 ---
 
-# Getting Started
+# はじめに
 
-Sanic Testing is the _official_ testing client for Sanic. Its primary use is to power the tests of the Sanic project itself. However, it is also meant as an easy-to-use client for getting your API tests up and running quickly.
+Sanic Testingは、Sanicの_公式_テストクライアントです。 その主な使用は、Sanicプロジェクト自体のテストに電力を供給することです。 ただし、APIテストをすばやく実行するための使いやすいクライアントとしても意味されます。
 
-## Minimum requirements
+## 最低要件
 
 - **Python**: 3.7+
 - **Sanic**: 21.3+
 
-Versions of Sanic older than 21.3 have this module integrated into Sanic itself as `sanic.testing`.
+21.3より古いSanicのバージョンは、このモジュールをSanic自体に`sanic.testing`として統合しています。
 
-## Install
+## インストール
 
-Sanic Testing can be installed from PyPI:
+PyPI からテストをインストールすることができます。
 
 ```
 pip install sanic-testing
 ```
 
-## Basic Usage
+## 基本的な使用法
 
-As long as the `sanic-testing` package is in the environment, there is nothing you need to do to start using it.
+`sanic-testing`パッケージが環境の中にある限り、使い始める必要はありません。
 
-### Writing a sync test
+### 同期テストを書く
 
-In order to use the test client, you just need to access the property `test_client` on your application instance:
+テストクライアントを使用するには、アプリケーションインスタンスの `test_client` プロパティにアクセスするだけです。
 
 ```python
 import pytest
@@ -51,15 +51,15 @@ def test_basic_test_client(app):
     assert response.status == 200
 ```
 
-### Writing an async test
+### 非同期テストを書く
 
-In order to use the async test client in `pytest`, you should install the `pytest-asyncio` plugin.
+`pytest`でasyncテストクライアントを使用するには、`pytest-asyncio`プラグインをインストールしてください。
 
 ```
 pip install pytest-asyncio
 ```
 
-You can then create an async test and use the ASGI client:
+非同期テストを作成し、ASGI クライアントを使用できます。
 
 ```python
 import pytest

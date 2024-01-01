@@ -1,16 +1,16 @@
-# Getting Started
+# 正在开始
 
-Before we begin, make sure you are running Python 3.8 or higher. Currently, Sanic is works with Python versions 3.8 – 3.11.
+在我们开始之前，请确保您正在运行 Python 3.8或更高版本。 目前，Sanic正在与 Python 版本 3.8 - 3.11一起工作。
 
-## Install
+## 安装
 
 ```sh
-pip install sanic
+pip 安装sanic
 ```
 
-## Hello, world application
+## 您好，全局应用程序
 
-.. column::
+.. 列:
 
 ```
 If you have ever used one of the many decorator based frameworks, this probably looks somewhat familiar to you.
@@ -22,36 +22,36 @@ If you have ever used one of the many decorator based frameworks, this probably 
     If you are coming from Flask or another framework, there are a few important things to point out. Remember, Sanic aims for performance, flexibility, and ease of use. These guiding principles have tangible impact on the API and how it works.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic import Sanic
+from sanic importing Sanic
 from sanic.response import text
 
 app = Sanic("MyHelloWorldApp")
 
-@app.get("/")
+@app. et("/")
 async def hello_world(request):
     return text("Hello, world.")
 ```
 ````
 
-### Important to note
+### 重要的注意事项
 
-- Every request handler can either be sync (`def hello_world`) or async (`async def hello_world`). Unless you have a clear reason for it, always go with `async`.
-- The `request` object is always the first argument of your handler. Other frameworks pass this around in a context variable to be imported. In the `async` world, this would not work so well and it is far easier (not to mention cleaner and more performant) to be explicit about it.
-- You **must** use a response type. MANY other frameworks allow you to have a return value like this: `return "Hello, world."` or this: `return {"foo": "bar"}`. But, in order to do this implicit calling, somewhere in the chain needs to spend valuable time trying to determine what you meant. So, at the expense of this ease, Sanic has decided to require an explicit call.
+- 每个请求处理程序都可以同步(`def hello_world`)，也可以同步(`async def hello_world`)。 除非你有明确的理由，否则总是使用 "async"。
+- "request" 对象始终是你处理器的第一个参数。 其它框架在要导入的上下文变量中传递这一点。 在 "async" 世界中 这种情况不会很好地发挥作用，因此更容易(更干净和业绩更好)对此加以明确说明。
+- 您**必须** 使用响应类型。 其他框架允许您有一个返回值，如：`return "Hello, world."` 或者 `return {"foo": "bar"}`。 但是，为了进行这种隐性的呼叫，链中的某个地方需要花费宝贵的时间来确定你的意思。 因此，萨尼克以牺牲这个容易为代价，决定要求明确呼叫。
 
-### Running
+### 正在运行
 
-.. column::
+.. 列:
 
 ```
-Let's save the above file as `server.py`. And launch it.
+让我们把上面的文件保存为 `server.py`。然后启动它。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -59,30 +59,30 @@ sanic server
 ```
 ````
 
-.. note::
+.. 注：
 
 ```
-This **another** important distinction. Other frameworks come with a built in development server and explicitly say that it is _only_ intended for development use. The opposite is true with Sanic. 
+这**另一个**重要的区别。其它框架包含在开发服务器中，并明确表示它仅用于开发用途。 Sanic的情况正好相反。 
 
-**The packaged server is production ready.**
+**打包服务器已准备就绪。**
 ```
 
-## Sanic Extensions
+## 无声扩展
 
-Sanic intentionally aims for a clean and unopinionated feature list. The project does not want to require you to build your application in a certain way, and tries to avoid prescribing specific development patterns. There are a number of third-party plugins that are built and maintained by the community to add additional features that do not otherwise meet the requirements of the core repository.
+无知的特色清单的目的是要有一个清洁和无见解的特色清单。 该项目不想要求您以某种方式构建您的应用程序，并试图避免指定特定的开发模式。 有一些第三方插件由社区构建和维护，用于添加额外的功能，这些功能不符合核心存储库的要求。
 
-However, in order **to help API developers**, the Sanic organization maintains an official plugin called [Sanic Extensions](../plugins/sanic-ext/getting-started.md) to provide all sorts of goodies, including:
+但是，为了帮助API开发者\*\*，Sanic 组织维持一个名为[Sanic Extensions](../plugins/sanic-ext/getting-started.md)的官方插件，提供各种各样的谷物，其中包括：
 
-- **OpenAPI** documentation with Redoc and/or Swagger
-- **CORS** protection
-- **Dependency injection** into route handlers
-- Request query arguments and body input **validation**
-- Auto create `HEAD`, `OPTIONS`, and `TRACE` endpoints
-- Predefined, endpoint-specific response serializers
+- **OpenAPI** 文档与 Redoc 或 Swagger
+- **CORS** 保护
+- **依赖注入** 对路由处理程序
+- 请求查询参数和正文输入 **验证**
+- 自动创建 `HEAD`, `OPTIONS` 和 `TRACE` 终点
+- 预定义的端点特定响应序列转换器
 
-The preferred method to set it up is to install it along with Sanic, but you can also install the packages on their own.
+设置它的首选方法是与 Sanic 一起安装，但你也可以自己安装这个软件包。
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -90,7 +90,7 @@ pip install sanic[ext]
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -98,9 +98,9 @@ pip install sanic sanic-ext
 ```
 ````
 
-Starting in v21.12, Sanic will automatically setup Sanic Extensions if it is in the same environment. You will also have access to two additional application properties:
+从 v21.12开始，萨尼语将在同一环境中自动设置萨尼克扩展。 您还可以访问另外两个应用程序属性：
 
-- `app.extend()` - used to configure Sanic Extensions
-- `app.ext` - the `Extend` instance attached to the application
+- `app.extend()` - 用于配置 Sanic 扩展
+- `app.ext` - 附加到应用程序的`Extend`实例
 
-See [the plugin documentation](../plugins/sanic-ext/getting-started.md) for more information about how to use and work with the plugin
+请参阅[插件文档](../plugins/sanic-ext/getting-started.md) 了解如何使用和使用插件的更多信息

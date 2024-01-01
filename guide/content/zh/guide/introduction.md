@@ -1,6 +1,6 @@
-# Introduction
+# 一. 导言
 
-Sanic is a Python 3.8+ web server and web framework that’s written to go fast. It allows the usage of the async/await syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic 是 Python 的 3.8+ 网页服务器和网页框架，它写得更快。 它允许使用 Python 3.5中添加的异步/等待语法，这使您的代码不受阻挡和快速。
 
 .. attrs::
 :class: introduction-table
@@ -15,21 +15,21 @@ Sanic is a Python 3.8+ web server and web framework that’s written to go fast.
 | Stats    | [![Monthly Downloads](https://img.shields.io/pypi/dm/sanic.svg)](https://pepy.tech/project/sanic) [![Weekly Downloads](https://img.shields.io/pypi/dw/sanic.svg)](https://pepy.tech/project/sanic) [![Conda downloads](https://img.shields.io/conda/dn/conda-forge/sanic.svg)](https://anaconda.org/conda-forge/sanic) |
 ```
 
-## What is it?
+## 什么是？
 
-First things first, before you jump in the water, you should know that Sanic is different than other frameworks.
+首先，在你跳进水面之前，你应该知道Sanic与其他框架不同。
 
-Right there in that first sentence there is a huge mistake because Sanic is _both_ a **framework** and a **web server**. In the deployment section we will talk a little bit more about this.
+就在第一句中，因为Sanic 是 _both_a **framework** 和 **web server** 。 我们将在部署部分更多地谈论这个问题。
 
-But, remember, out of the box Sanic comes with everything you need to write, deploy, and scale a production grade web application. 🚀
+但请记住，Sanic 从盒子中带有你需要写、部署和缩放生产级网页应用程序的一切。 🚀
 
-## Goal
+## 目标
 
-> To provide a simple way to get up and running a highly performant HTTP server that is easy to build, to expand, and ultimately to scale.
+> 提供一个简单的方式来启动和运行一个易于构建的高性能的 HTTP 服务器， 扩大并最终扩大规模。
 
-## Features
+## 功能
 
-.. column::
+.. 列:
 
 ```
 ### Core
@@ -42,7 +42,7 @@ But, remember, out of the box Sanic comes with everything you need to write, dep
 - By the community, for the community
 ```
 
-.. column::
+.. 列:
 
 ```
 ### Sanic Extensions [[learn more](../plugins/sanic-ext/getting-started.md)]
@@ -56,16 +56,16 @@ But, remember, out of the box Sanic comes with everything you need to write, dep
 - Auto create `HEAD`, `OPTIONS`, and `TRACE` endpoints
 ```
 
-## Sponsor
+## 赞助商
 
-Check out [open collective](https://opencollective.com/sanic-org) to learn more about helping to fund Sanic.
+查看[打开集体](https://opencollective.com/sanic-org)来了解更多关于帮助融资Sanic的信息。
 
-## Join the Community
+## 加入社区
 
-The main channel for discussion is at the [community forums](https://community.sanicframework.org/). There also is a [Discord Server](https://discord.gg/FARQzAEMAA) for live discussion and chat.
+讨论的主要渠道是[社区论坛](https://community.sanicframework.org/)。 还有一个 [Discord 服务器](https://discord.gg/RARQzAEMAA) 进行现场讨论和聊天。
 
-The Stackoverflow `[sanic]` tag is [actively monitored](https://stackoverflow.com/questions/tagged/sanic) by project maintainers.
+Stackoverflow \`[sanic]' 标签由项目维护者[积极监视](https://stackoverflow.com/questions/tagged/sanic)。
 
-## Contribution
+## 贡献
 
-We are always happy to have new contributions. We have [marked issues good for anyone looking to get started](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner), and welcome [questions/answers/discussion on the forums](https://community.sanicframework.org/). Please take a look at our [Contribution guidelines](https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst).
+我们总是乐于得到新的捐助。 我们有[标记的问题对任何想要开始的人来说都是好的](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)，欢迎[questions/answers/discussion on on the forums](https://community.sanicframework.org/)。 请查看我们的[贡献指南](https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst)。

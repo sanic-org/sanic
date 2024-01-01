@@ -1,78 +1,78 @@
-# Policies
+# 政策
 
 ## Versioning
 
-Sanic uses [calendar versioning](https://calver.org/), aka "calver". To be more specific, the pattern follows:
+Sanic 使用 [日历版本](https://calver.org/), 别名“calver”。 为了更具体地说明以下模式：
 
 ```
-YY.MM.MICRO
+YY.MMM.MMRO
 ```
 
-Generally, versions are referred to in their `YY.MM` form. The `MICRO` number indicates an incremental patch version, starting at `0`.
+一般情况下，版本在他们的 `YY.MM` 表格中被引用。 `MICRO`数字表示一个递增补补版，从`0`开始。
 
-## Reporting a Vulnerability
+## 报告脆弱性
 
-If you discover a security vulnerability, we ask that you **do not** create an issue on GitHub. Instead, please [send a message to the core-devs](https://community.sanicframework.org/g/core-devs) on the community forums. Once logged in, you can send a message to the core-devs by clicking the message button.
+如果你发现安全脆弱性，我们请你**不**在GitHub 上创建一个问题。 相反，请在社区论坛上[发送消息给core-devs](https://community.sanicframework.org/g/core-devs)。 登录后，您可以通过单击消息按钮向核心开发人员发送消息。
 
-Alternatively, you can send a private message to Adam Hopkins on Discord. Find him on the [Sanic discord server](https://discord.gg/FARQzAEMAA).
+或者，您可以在 Discord 上向Adam Hopkins发送私信。 在 [Sanic Discord 服务器](https://discord.gg/RARQzAEMA) 查找他。
 
-This will help to not publicize the issue until the team can address it and resolve it.
+这将有助于在小组能够处理和解决问题之前不予公布。
 
-## Release Schedule
+## 发布计划
 
-There are four (4) scheduled releases per year: March, June, September, and December. Therefore, there are four (4) released versions per year: `YY.3`, `YY.6`, `YY.9`, and `YY.12`.
+计划每年释放四(4)人：3月、6月、9月和12月。 因此，每年发布4种版本：`YY.3`、`YY.6`、`YY.9`和`YY.12`。
 
-This release schedule provides:
+此发布时间表规定：
 
-- a predictable release cadence,
-- relatively short development windows allowing features to be regularly released,
-- controlled [deprecations](#deprecation), and
-- consistent stability with a yearly LTS.
+- 一种可预见的释放方式，
+- 相对较短的开发窗口，允许定期发布功能，
+- 控制 [deprecations](#废弃)，及
+- 与一年一度的LTS保持稳定性。
 
-We also use the yearly release cycle in conjunction with our governance model, covered by the [S.C.O.P.E.](./scope.md)
+我们还使用年度发行周期，同时使用 [S.C.O.P.E.](./ scope.md)
 
-### Long term support v Interim releases
+### 长期支助诉临时释放案
 
-Sanic releases a long term support release (aka "LTS") once a year in December. The LTS releases receive bug fixes and security updates for **24 months**. Interim releases throughout the year occur every three months, and are supported until the subsequent release.
+12月，Sanic每年发布一次长期支持释放（又名“LTS”）。 LTS 版本在 **24 个月**中获得错误修复和安全更新。 全年的临时释放每三个月进行一次，并在随后的释放之前得到支持。
 
-| Version | Release    | LTS           | Supported |
-| ------- | ---------- | ------------- | --------- |
-| 23.12   | 2023-12-31 | until 2025-12 | ✅         |
-| 23.6    | 2023-07-25 |               | ⚪         |
-| 23.3    | 2023-03-26 |               | ⚪         |
-| 22.12   | 2022-12-27 | until 2024-12 | ☑️        |
-| 22.9    | 2022-09-29 |               | ⚪         |
-| 22.6    | 2022-06-30 |               | ⚪         |
-| 22.3    | 2022-03-31 |               | ⚪         |
-| 21.12   | 2021-12-26 |               | ⚪         |
-| 21.9    | 2021-09-30 |               | ⚪         |
-| 21.6    | 2021-06-27 |               | ⚪         |
-| 21.3    | 2021-03-21 |               | ⚪         |
-| 20.12   | 2020-12-29 |               | ⚪         |
-| 20.9    | 2020-09-30 |               | ⚪         |
-| 20.6    | 2020-06-28 |               | ⚪         |
-| 20.3    | 2020-05-14 |               | ⚪         |
-| 19.12   | 2019-12-27 |               | ⚪         |
-| 19.9    | 2019-10-12 |               | ⚪         |
-| 19.6    | 2019-06-21 |               | ⚪         |
-| 19.3    | 2019-03-23 |               | ⚪         |
-| 18.12   | 2018-12-27 |               | ⚪         |
-| 0.8.3   | 2018-09-13 |               | ⚪         |
-| 0.7.0   | 2017-12-06 |               | ⚪         |
-| 0.6.0   | 2017-08-03 |               | ⚪         |
-| 0.5.4   | 2017-05-09 |               | ⚪         |
-| 0.4.1   | 2017-02-28 |               | ⚪         |
-| 0.3.1   | 2017-02-09 |               | ⚪         |
-| 0.2.0   | 2017-01-14 |               | ⚪         |
-| 0.1.9   | 2016-12-25 |               | ⚪         |
-| 0.1.0   | 2016-10-16 |               | ⚪         |
+| 版本    | 发布         | LTS     | 支持的 |
+| ----- | ---------- | ------- | --- |
+| 23.12 | 2023-12-31 | 2025-12 | ✅   |
+| 23.6  | 2023-07-25 |         | ⚪   |
+| 23.3  | 2023-03-26 |         | ⚪   |
+| 22.12 | 2022-12-27 | 2024-12 | ☑️  |
+| 22.9  | 2022-09-29 |         | ⚪   |
+| 22.6  | 2022-06-30 |         | ⚪   |
+| 22.3  | 2022-03-31 |         | ⚪   |
+| 21.12 | 2021-12-26 |         | ⚪   |
+| 21.9  | 2021-09-30 |         | ⚪   |
+| 21.6  | 2021-06-27 |         | ⚪   |
+| 21.3  | 2021-03-21 |         | ⚪   |
+| 20.12 | 2020-12-29 |         | ⚪   |
+| 20.9  | 2020-09-30 |         | ⚪   |
+| 20.6  | 2020-06-28 |         | ⚪   |
+| 20.3  | 2020-05-14 |         | ⚪   |
+| 19.12 | 2019-12-27 |         | ⚪   |
+| 19.9  | 2019-10-12 |         | ⚪   |
+| 19.6  | 2019-06-21 |         | ⚪   |
+| 19.3  | 2019-03-23 |         | ⚪   |
+| 18.12 | 2018-12-27 |         | ⚪   |
+| 0.8.3 | 2018-09-13 |         | ⚪   |
+| 0.7.0 | 2017-12-06 |         | ⚪   |
+| 0.6.0 | 2017-08-03 |         | ⚪   |
+| 0.5.4 | 2017-05-09 |         | ⚪   |
+| 0.4.1 | 2017-02-28 |         | ⚪   |
+| 0.3.1 | 2017-02-09 |         | ⚪   |
+| 0.2.0 | 2017-01-14 |         | ⚪   |
+| 0.1.9 | 2016-12-25 |         | ⚪   |
+| 0.1.0 | 2016-10-16 |         | ⚪   |
 
 ☑️ = security fixes\
-✅ = full support\
-⚪ = no support
+:check_mark_buton: = 完全支持\
+⚪ = 不支持
 
-## Deprecation
+## 废弃的
 
-Before a feature is deprecated, or breaking changes are introduced into the API, it shall be publicized and shall appear with deprecation warnings through two release cycles. No deprecations shall be made in an LTS release.
+在某个功能被废弃之前，或者对API引入破解的更改。 它应予公布，并应在两个释放周期内以过时警告出现。 LTS 版本中不应放弃使用。
 
-Breaking changes or feature removal may happen outside of these guidelines when absolutely warranted. These circumstances should be rare. For example, it might happen when no alternative is available to curtail a major security issue.
+在绝对必要的情况下，有可能在这些准则之外发生打破变化或取消特征的情况。 这种情况应该是少见的。 例如，如果没有其他办法来减少一个重大的安全问题，就可能出现这种情况。

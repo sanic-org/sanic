@@ -1,61 +1,61 @@
 ---
-title: Sanic Extensions - HTTP Methods
+title: Sanic 扩展 - HTTP 方法
 ---
 
-# HTTP Methods
+# HTTP 方法
 
-## Auto-endpoints
+## 自动终点
 
-The default behavior is to automatically generate `HEAD` endpoints for all `GET` routes, and `OPTIONS` endpoints for all
-routes. Additionally, there is the option to automatically generate `TRACE` endpoints. However, these are not enabled by
-default.
+默认行为是自动生成所有的 `GET` 路径的 `HEAD` 端点，以及所有
+路径的 `OPTIONS` 端点。 此外，还有自动生成 `TRACE` 端点的选项。 然而，
+默认情况下没有启用这些功能。
 
-### HEAD
+### 黑色
 
-.. column::
+.. 列:
 
 ```
-- **Configuration**: `AUTO_HEAD` (default `True`)
-- **MDN**: [Read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD)
+- **配置**: `AUTO_HEAD` (默认 `True`)
+- **MDN**: [阅读更多](https://developer.mozilla). rg/en-US/docs/Web/HTTPMethods/HEAD
 
-A `HEAD` request provides the headers and an otherwise identical response to what a `GET` request would provide.
-However, it does not actually return the body.
+A `HEAD` 请求提供了标题和对一个 `GET` 请求提供的相同的响应。
+然而，实际上并没有归还尸体。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.get("/")
 async def hello_world(request):
-    return text("Hello, world.")
-```
+    return text("Hello, world"
+``
 
-Given the above route definition, Sanic Extensions will enable `HEAD` responses, as seen here.
+鉴于上述路由定义，Sanic Extensions 将能使`HEAD` 反应，如上所示。
 
 ```
 $ curl localhost:8000 --head
-HTTP/1.1 200 OK
-access-control-allow-origin: *
+HTTP/1。 200 OK
+access-allow-origin: *
 content-length: 13
 connection: keep-alive
 content-type: text/plain; charset=utf-8
 ```
 ````
 
-### OPTIONS
+### 选项
 
-.. column::
+.. 列:
 
 ```
-- **Configuration**: `AUTO_OPTIONS` (default `True`)
-- **MDN**: [Read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS)
+- **配置**: `AUTO_OPTIONS` (默认 `True`)
+- **MDN**: [阅读更多] (https://developer.mozilla). rg/en-US/docs/Web/HTTP/Methods/OPTIONS
 
-`OPTIONS` requests provide the recipient with details about how the client is allowed to communicate with a given
-endpoint.
+"OPTIONS" 请求向收件人详细介绍了如何允许客户端与指定
+端口进行通信。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -81,12 +81,12 @@ connection: keep-alive
 .. tip::
 
 ```
-Even though Sanic Extensions will setup these routes for you automatically, if you decide to manually create an `@app.options` route, it will *not* be overridden.
+即使Sanic 扩展会自动为您设置这些路径，如果您决定手动创建一个 `@app.options` 路径，它将*不*被覆盖。
 ```
 
-### TRACE
+### 追踪器
 
-.. column::
+.. 列:
 
 ```
 - **Configuration**: `AUTO_TRACE` (default `False`)
@@ -96,69 +96,69 @@ By default, `TRACE` endpoints will **not** be automatically created. However, Sa
 create them if you wanted. This is something that is not allowed in vanilla Sanic.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.route("/", methods=["trace"])
-async def handler(request):
-    ...
+@app.route("/", methods=["追踪"])
+async def 处理器(请求):
+
 ```
 
-To enable auto-creation of these endpoints, you must first enable them when extending Sanic.
+要启用这些端点的自动创建，您必须先启用它们才能扩展 Sanic。
 
 ```python
 from sanic_ext import Extend, Config
 
-app.extend(config=Config(http_auto_trace=True))
+app. xtend(config=Config(http_auto_trace=True))
 ```
 
-Now, assuming you have some endpoints setup, you can trace them as shown here:
+现在，假定您有一些端点设置， 你可以在这里追踪它们：
 
 ```
 $ curl localhost:8000 -X TRACE
-TRACE / HTTP/1.1
-Host: localhost:9999
-User-Agent: curl/7.76.1
-Accept: */*
+TRACE / HTTP/1。
+主机：localhost:9999
+User-Agent：curl/7.76.1
+接受：*/*
 ```
 ````
 
 .. tip::
 
 ```
-Setting up `AUTO_TRACE` can be super helpful, especially when your application is deployed behind a proxy since it will help you determine how the proxy is behaving.
+设置 `AUTO_TRACE` 可以提供超级帮助， 尤其是当您的应用程序被部署在代理后面，因为它将帮助您确定代理人的行为方式。
 ```
 
-## Additional method support
+## 额外方法支持
 
-Vanilla Sanic allows you to build endpoints with the following HTTP methods:
+Vanilla Sanic允许您使用 HTTP 方法构建终点：
 
 - [GET](/en/guide/basics/routing.html#get)
 - [POST](/en/guide/basics/routing.html#post)
 - [PUT](/en/guide/basics/routing.html#put)
 - [HEAD](/en/guide/basics/routing.html#head)
-- [OPTIONS](/en/guide/basics/routing.html#options)
+- [OPTIONS](/en/guide/basics/routing.html#选项)
 - [PATCH](/en/guide/basics/routing.html#patch)
 - [DELETE](/en/guide/basics/routing.html#delete)
 
-See [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) for more.
+详见[MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
 
-.. column::
+.. 列:
 
 ```
-There are, however, two more "standard" HTTP methods: `TRACE` and `CONNECT`. Sanic Extensions will allow you to build
-endpoints using these methods, which would otherwise not be allowed.
+然而，还有两种"标准"HTTP方法：`TRACE`和`CONNECT`。 Sanic 扩展将允许您使用这些方法构建
+端点，否则这些方法是不允许的。
 
-It is worth pointing out that this will *NOT* enable convenience methods: `@app.trace` or `@app.connect`. You need to
-use `@app.route` as shown in the example here.
+值得指出的是，这将*无* 启用方便方法：`@app。 竞技`或`@app.connect`。您需要
+使用示例`@app.route`。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.route("/", methods=["trace", "connect"])
+@app.route("/", methods=["追踪", "connect"])
 async def handler(_):
     return empty()
 ```

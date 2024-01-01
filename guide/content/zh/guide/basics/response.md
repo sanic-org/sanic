@@ -1,16 +1,16 @@
-# Response
+# 答复
 
-All [handlers](./handlers.md) _usually_ return a response object, and [middleware](./middleware.md) may optionally return a response object.
+所有 [handlers](./handlers.md) _通常_返回一个响应对象， [middleware](./midd) 可以选择返回一个响应对象。
 
-To clarify that statement:
+2. 澄清该陈述：
 
-- unless the handler is a streaming endpoint handling its own pattern for sending bytes to the client, the return value must be an instance of :class:`sanic.response.HTTPResponse` (to learn more about this exception see [streaming responses](../advanced/streaming.md#response-streaming)). In **most** use cases, you will need to return a response.
-- if a middleware does return a response object, that will be used instead of whatever the handler would do (see [middleware](./middleware.md) to learn more).
+- unless the handler is a streaming endpoint handling its own pattern for sending bytes to the client, the return value must be an instance of :class:`sanic.response.HTTPResponse` (to learn more about this exception see [streaming responses](../advanced/streaming.md#response-streaming)). 在 **最多** 个案件中，您需要返回响应。
+- 如果中间件返回响应对象，这将被用来代替处理程序所做的任何(见 [middleware](./midd) 来了解更多)。
 
-A most basic handler would look like the following. The :class:`sanic.response.HTTPResponse` object will allow you to set the status, body, and headers to be returned to the client.
+最基本的处理程序看起来就像下面一样。 The :class:`sanic.response.HTTPResponse` object will allow you to set the status, body, and headers to be returned to the client.
 
 ```python
-from sanic import HTTPResponse, Sanic
+从 HTTPResponse, Sanic
 
 app = Sanic("TestApp")
 
@@ -19,22 +19,22 @@ def handler(_):
     return HTTPResponse()
 ```
 
-However, usually it is easier to use one of the convenience methods discussed below.
+然而，通常较容易使用下文讨论的一种方便方法。
 
-## Methods
+## 方法
 
-The easiest way to generate a response object is to use one of the convenience functions.
+生成响应对象的最简单方法是使用一个方便函数。
 
-### Text
+### 文本
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: `text/plain; charset=utf-8`  
-**Description**: Returns plain text
+**默认内容类型**: `text/plain; charset=utf-8`  
+**描述**: 返回纯文本
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -48,14 +48,14 @@ async def handler(request):
 
 ### HTML
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: `text/html; charset=utf-8`  
-**Description**: Returns an HTML document
+**默认内容类型**: `text/html; charset=utf-8`  
+**描述**: 返回一个 HTML 文档
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -69,14 +69,14 @@ async def handler(request):
 
 ### JSON
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: `application/json`  
-**Description**: Returns a JSON document
+**默认 Content-Type**: `application/json`  
+**Description**: 返回 JSON 文档
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -88,9 +88,9 @@ async def handler(request):
 ```
 ````
 
-By default, Sanic ships with [`ujson`](https://github.com/ultrajson/ultrajson) as its JSON encoder of choice. If `ujson` is not installed, it will fall back to the standard library `json` module.
+默认情况下，是 [`ujson`](https://github.com/ultrajson/ultrajson)的 Sanic 船舶，作为其JSON 编码器。 如果未安装 `ujson` ，它将返回到标准库`json` 模块。
 
-It is super simple to change this if you want.
+如果你想要更改这一点是非常简单的。
 
 ```python
 from sanic import json
@@ -99,24 +99,24 @@ from orjson import dumps
 json({"foo": "bar"}, dumps=dumps)
 ```
 
-You may additionally declare which implementation to use globally across your application at initialization:
+您还可以声明在初始化时在全局使用哪些实现：
 
 ```python
-from orjson import dumps
+从 orjson 导入转储
 
-app = Sanic(..., dumps=dumps)
+应用 = Sanic(..., dumps=dumps)
 ```
 
-### File
+### 文件
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: N/A  
-**Description**: Returns a file
+**默认内容类型**：N/  
+**描述**：返回一个文件
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -124,32 +124,32 @@ from sanic import file
 
 @app.route("/")
 async def handler(request):
-    return await file("/path/to/whatever.png")
+    return 等待文件 ("/path/to/whatever.png")
 ```
 ````
 
-Sanic will examine the file, and try and guess its mime type and use an appropriate value for the content type. You could be explicit, if you would like:
+Sanic 将检查该文件，并尝试和猜其mime 类型并使用一个适当的内容类型值。 如果您想要：
 
 ```python
 file("/path/to/whatever.png", mime_type="image/png")
 ```
 
-You can also choose to override the file name:
+您也可以选择覆盖文件名称：
 
 ```python
-file("/path/to/whatever.png", filename="super-awesome-incredible.png")
+file("/path/to/whatever.png", filename="超级超棒不可思议的.png")
 ```
 
-### File Streaming
+### 文件流
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: N/A  
-**Description**: Streams a file to a client, useful when streaming large files, like a video
+**默认内容类型**: N/A  
+**描述**: 流一个文件到一个客户端, 当像视频一样流出大文件时有用。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -161,18 +161,18 @@ async def handler(request):
 ```
 ````
 
-Like the `file()` method, `file_stream()` will attempt to determine the mime type of the file.
+和`file()`方法一样，`file_stream()`会尝试确定文件的 mime 类型。
 
-### Raw
+### 原始文件
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: `application/octet-stream`  
-**Description**: Send raw bytes without encoding the body
+**默认Content-Type**: `application/octet-stream`  
+**Description**: 发送原始字节而不对正文进行编码
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -180,24 +180,24 @@ from sanic import raw
 
 @app.route("/")
 async def handler(request):
-    return raw(b"raw bytes")
+    return raw(B"raw bytes")
 ```
 ````
 
-### Redirect
+### 重定向
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: `text/html; charset=utf-8`  
-**Description**: Send a `302` response to redirect the client to a different path
+**默认Content-Type**: `text/html; charset=utf-8`  
+**Description**: 发送一个 `302` 响应来将客户重定向到另一个路径
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic import redirect
+from sanic import redirecte
 
 @app.route("/")
 async def handler(request):
@@ -205,61 +205,61 @@ async def handler(request):
 ```
 ````
 
-### Empty
+### 空的
 
-.. column::
+.. 列:
 
 ```
-**Default Content-Type**: N/A  
-**Description**: For responding with an empty message as defined by [RFC 2616](https://tools.ietf.org/search/rfc2616#section-7.2.1)
+**默认 Content-Type**: N/A  
+**Description**: 为响应[RFC 2616](https://tools.ietf.org/search/rfc2616#section-7.2.1)
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic import empty
+来自sanic import 空
 
 @app.route("/")
 async def handler(request):
     return empty()
 ```
 
-Defaults to a `204` status.
+默认`204` 状态。
 ````
 
-## Default status
+## 默认状态
 
-The default HTTP status code for the response is `200`. If you need to change it, it can be done by the response method.
+响应默认的 HTTP 状态代码是 \`200'。 如果您需要更改它，它可以通过响应方式完成。
 
 ```python
 @app.post("/")
 async def create_new(request):
-    new_thing = await do_create(request)
+    new_thing = 等待do_create(request)
     return json({"created": True, "id": new_thing.thing_id}, status=201)
 ```
 
-## Returning JSON data
+## 返回 JSON 数据
 
 Starting in v22.12, When you use the `sanic.json` convenience method, it will return a subclass of `HTTPResponse` called :class:`sanic.response.types.JSONResponse`. This object will
 have several convenient methods available to modify common JSON body.
 
 ```python
-from sanic import json
+从沙尼导入 json
 
 resp = json(...)
 ```
 
-- `resp.set_body(<raw_body>)` - Set the body of the JSON object to the value passed
-- `resp.append(<value>)` - Append a value to the body like `list.append` (only works if the root JSON is an array)
-- `resp.extend(<value>)` - Extend a value to the body like `list.extend` (only works if the root JSON is an array)
-- `resp.update(<value>)` - Update the body with a value like `dict.update` (only works if the root JSON is an object)
-- `resp.pop()` - Pop a value like `list.pop` or `dict.pop` (only works if the root JSON is an array or an object)
+- `resp.set_body(<raw_body>)` - 设定JSON对象的正文到传递的值
+- `resp.append(<value>)` - 追加一个 `list.append` 这个物体的值(仅当root JSON 是一个数组时才起作用)
+- `resp.extend(<value>)` - 将一个值扩展到物体像`list.extend` (仅当root JSON 是一个数组时才能工作)
+- `resp.update(<value>)` - 更新像`dict.update` 这样的物体(仅当root JSON是一个对象时才工作)
+- `resp.pop()` - 弹出一个 `list.pop` 或 `dict.pop` 等值(仅当root JSON 是数组或对象时才起作用)
 
-.. warning::
+.. 警告：:
 
 ```
-The raw Python object is stored on the `JSONResponse` object as `raw_body`. While it is safe to overwrite this value with a new one, you should **not** attempt to mutate it. You should instead use the methods listed above.
+原生的 Python 对象作为`raw_body` 存储在 `JSONResponse` 对象上。 虽然用新值覆盖此值是安全的，但是你应该**不应该**试图变换它。 你应该使用上面列出的方法。
 ```
 
 ```python
@@ -279,21 +279,21 @@ resp.raw_body.update({"something": "else"})
 ```
 
 ```python
-# Or, even treat it like a list
+# 或者，甚至将其视为列表
 resp = json(["foo", "bar"])
 
-# This is OKAY
-resp.raw_body = ["foo", "bar", "something", "else"]
+# 这是非常重要的
+resp. aw_body = ["foo", "bar", "something", "else"]
 
-# This is better
-resp.extend(["something", "else"])
+# 这是更好的
+resp. xtend(["something", "else"])
 
-# This is also works well
+# 这也很适合
 resp.append("something")
 resp.append("else")
 
-# This is NOT OKAY
+# 这不是很重要的
 resp.raw_body.append("something")
 ```
 
-_Added in v22.9_
+_添加于 v22.9_

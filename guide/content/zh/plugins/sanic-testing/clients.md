@@ -1,68 +1,68 @@
 ---
-title: Sanic Testing - Test Clients
+title: Sanic 测试-测试客户端
 ---
 
-# Test Clients
+# 测试客户端
 
-There are three different test clients available to you, each of them presents different capabilities.
+您有三个不同的测试客户端，每个客户端具有不同的能力。
 
-## Regular sync client: `SanicTestClient`
+## 常规同步客户端： `SanicTestClient`
 
-The `SanicTestClient` runs an actual version of the Sanic Server on your local network to run its tests. Each time it calls an endpoint it will spin up a version of the application and bind it to a socket on the host OS. Then, it will use `httpx` to make calls directly to that application.
+`SanicTestClient` 在您的本地网络上运行一个实际版本的 Sanic Server 来运行测试程序。 每次调用端点时，它会旋转应用程序的版本，并将它绑定到主机OS上的套接字。 然后，它将使用 `httpx` 直接拨打该应用程序。
 
-This is the typical way that Sanic applications are tested.
+这是测试Sanic应用的典型方式。
 
-.. column::
+.. 列:
 
 ```
-Once installing Sanic Testing, the regular `SanicTestClient` can be used without further setup. This is because Sanic does the leg work for you under the hood. 
+安装 Sanic 测试后，普通的 `SanicTestClient` 可以在不需要进一步设置的情况下使用。 这是因为Sanic在树枝下为你工作。 
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.test_client.get("/path/to/endpoint")
-```
+
 ````
 
-.. column::
+.. 列:
 
 ```
-However, you may find it desirable to instantiate the client yourself.
+然而，您可能会发现自己需要实例化客户端。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_testing.testing import SanicTestClient
+from sanic_testing.testimate importing SanicTestClient
 
 test_client = SanicTestClient(app)
 test_client.get("/path/to/endpoint")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-A third option for starting the test client is to use the `TestManager`. This is a convenience object that sets up both the `SanicTestClient` and the `SanicASGITestClient`.
+开始测试客户端的第三个选项是使用 `TestManager` 。 这个方便对象同时设置 `SanicTestClient` 和 `SanicASGITestClient` 。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_testing import TestManager
+来自sanic_testination TestManager
 
 mgr = TestManager(app)
 app.test_client.get("/path/to/endpoint")
-# or
+# 或
 mgr.test_client.get("/path/to/endpoint")
 ```
 ````
 
-You can make a request by using one of the following methods
+您可以通过以下方法之一提出请求
 
 - `SanicTestClient.get`
 - `SanicTestClient.post`
@@ -74,7 +74,7 @@ You can make a request by using one of the following methods
 - `SanicTestClient.websocket`
 - `SanicTestClient.request`
 
-You can use these methods _almost_ identically as you would when using `httpx`. Any argument that you would pass to `httpx` will be accepted, **with one caveat**: If you are using `test_client.request` and want to manually specify the HTTP method, you should use: `http_method`:
+您可以使用这些方法 _almost_ 和您使用 `httpx`时的相同方法。 你传递到`httpx`的任何参数都将被接受，**有一个警告**：如果你在使用`test_client。 赤道`并想手动指定 HTTP 方法，你应该使用: `http_method`:
 
 ```python
 test_client.request("/path/to/endpoint", http_method="get")
@@ -82,71 +82,71 @@ test_client.request("/path/to/endpoint", http_method="get")
 
 ## ASGI async client: `SanicASGITestClient`
 
-Unlike the `SanicTestClient` that spins up a server on every request, the `SanicASGITestClient` does not. Instead it makes use of the `httpx` library to execute Sanic as an ASGI application to reach inside and execute the route handlers.
+不同于“SanicTestClient”在每个请求上旋转服务器，`SanicASGITestClient`不是。 相反，它使用`httpx`库来执行 Sanic 作为ASGI 应用程序来到内部并执行路由处理器。
 
-.. column::
+.. 列:
 
 ```
-This test client provides all of the same methods and generally works as the `SanicTestClient`. The only difference is that you will need to add an `await` to each call:
+此测试客户端提供了所有相同的方法，通常与“SanicTestClient”相同。 唯一的区别是您需要在每次通话中添加一个 "等待" ：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-await app.test_client.get("/path/to/endpoint")
-```
+等待app.test_client.get("/path/to/endpoint")
+
 ````
 
-The `SanicASGITestClient` can be used in the exact same three ways as the `SanicTestClient`.
+`SanicASGITestClient`可以用与`SanicTestClient`完全相同的三种方式使用。
 
-.. note::
-
-```
-The `SanicASGITestClient` does not need to only be used with ASGI applications. The same way that the `SanicTestClient` does not need to only test sync endpoints. Both of these clients are capable of testing *any* Sanic application.
-```
-
-## Persistent service client: `ReusableClient`
-
-This client works under a similar premise as the `SanicTestClient` in that it stands up an instance of your application and makes real HTTP requests to it. However, unlike the `SanicTestClient`, when using the `ReusableClient` you control the lifecycle of the application.
-
-That means that every request **does not** start a new web server. Instead you will start the server and stop it as needed and can make multiple requests to the same running instance.
-
-.. column::
+.. 注：
 
 ```
-Unlike the other two clients, you **must** instantiate this client for use:
+`SanicASGITestClient` 不需要只能用于ASGI 应用程序。 类似于“SanicTestClient”不需要只测试同步端点。这两个客户端都能测试*任何*无声应用程序。
 ```
 
-.. column::
+## 持久服务客户端: `ReusableClient`
+
+此客户端在类似于`SanicTestClient`的前提下工作，因为它代表了您应用程序的实例，并且向它提出了真正的 HTTP 请求。 然而，与`SanicTestClient`不同的是，当使用 `ReusableClient` 时，你会控制应用程序的生命周期。
+
+这意味着每个请求 **不** 启动一个新的 web 服务器。 相反，您将根据需要启动并停止服务器，并且可以向同一个运行中的实例多次提出请求。
+
+.. 列:
+
+```
+不同于其他两个客户端，您**必须** 实例化此客户端：
+```
+
+.. 列:
 
 ````
 ```python
-from sanic_testing.reusable import ReusableClient
+来自sanic_testing.reusableClient
 
 client = ReusableClient(app)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Once created, you will use the client inside of a context manager. Once outside of the scope of the manager, the server will shutdown.
+一旦创建，您将在上下文管理器中使用客户端。一旦管理器超出范围，服务器将关闭。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_testing.reusable import ReusableClient
+来自sanic_testing。 可用于导入可重复使用的客户端
 
 def test_multiple_endpoints_on_same_server(app):
-    client = ReusableClient(app)
-    with client:
-        _, response = client.get("/path/to/1")
-        assert response.status == 200
+    客户端= ReusableClient(app)
+    带客户端:
+        _, 响应 = 客户端。 et("/path/to/1")
+        要求响应。 tatus == 200
 
-        _, response = client.get("/path/to/2")
-        assert response.status == 200
+        _, 响应 = 客户。 et("/path/to/2")
+        claim response.status == 200
 ```
 ````

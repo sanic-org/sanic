@@ -1,25 +1,25 @@
 ---
-title: The lightning-fast asynchronous Python web framework
-layout: home
+title: 超高速非同期のPythonウェブフレームワーク
+layout: ホーム
 features:
-  - title: Simple and lightweight
-    details: Intuitive API with smart defaults and no bloat allows you to get straight to work building your app.
-  - title: Unopinionated and flexible
-    details: Build the way you want to build without letting your tooling constrain you.
-  - title: Performant and scalable
-    details: Built from the ground up with speed and scalability as a main concern. It is ready to power web applications big and small.
-  - title: Production ready
-    details: Out of the box, it comes bundled with a web server ready to power your web applications.
-  - title: Trusted by millions
-    details: Sanic is one of the overall most popular frameworks on PyPI, and the top async enabled framework
-  - title: Community driven
-    details: The project is maintained and run by the community for the community.
+  - title: シンプルで軽量な
+    details: スマートなデフォルトを持つ直感的なAPIと肥満がないと、アプリの構築を直進できます。
+  - title: 不要で柔軟性があります
+    details: ツールを使うことで制約がなくても構築方法を構築できます。
+  - title: パフォーマンスとスケーラブルな
+    details: 主な関心事として速度とスケーラビリティをゼロから構築しました。 大小のWebアプリケーションに電力を供給する準備ができています。
+  - title: 生産準備完了
+    details: ボックスの外には、Webアプリケーションに電力を供給するためのWebサーバーが付属しています。
+  - title: 何百万人に信頼されています
+    details: Sanic は PyPI 上で最も人気のあるフレームワークの一つであり、非同期対応フレームワーク
+  - title: コミュニティ主導型の
+    details: このプロジェクトはコミュニティによって運営されています。
 ---
 
-### ⚡ The lightning-fast asynchronous Python web framework
+### ⚡ 超高速非同期Pythonウェブフレームワーク
 
 .. attrs::
-:class: columns is-multiline mt-6
+:class: 列は mt-6
 
 ```
 .. attrs::
@@ -69,14 +69,14 @@ features:
 :class: is-size-3 mt-6
 
 ```
-**With the features and tools you'd expect.**
+**機能とツールを使って。**
 ```
 
 .. attrs::
 :class: is-size-3 ml-6
 
 ```
-**And some {span:has-text-primary:you wouldn't believe}.**
+**そしていくつかの {span:has-text-primary:you wouldn't believe}.**
 ```
 
 .. tab:: Production-grade
@@ -110,7 +110,7 @@ sanic path.to.server:app
 ```
 ````
 
-.. tab:: TLS server
+.. tab:: TLS サーバ
 
 ````
 Running Sanic with TLS enabled is as simple as passing it the file paths...
@@ -145,7 +145,7 @@ async def feed(request: Request, ws: Websocket):
 ```
 ````
 
-.. tab:: Static files
+.. tab:: 静的ファイル
 
 ````
 Serving static files is of course intuitive and easy. Just name an endpoint and either a file or directory that should be served.
@@ -223,7 +223,7 @@ await app.dispatch("something.happened.ohmy")
 ```
 ````
 
-.. tab:: Smart error handling
+.. tab:: スマートエラー処理
 
 ````
 Raising errors will intuitively result in proper HTTP errors:

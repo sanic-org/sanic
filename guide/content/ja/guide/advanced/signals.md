@@ -1,6 +1,6 @@
-# Signals
+# シグナル
 
-Signals provide a way for one part of your application to tell another part that something happened.
+シグナルは、アプリケーションのある部分が別の部分に何かが起こったことを伝える方法を提供します。
 
 ```python
 @app.signal("user.registration.created")
@@ -16,12 +16,12 @@ async def handle_registration(request):
     })
 ```
 
-## Adding a signal
+## シグナルを追加する
 
 .. column::
 
 ```
-The API for adding a signal is very similar to adding a route.
+シグナルを追加するためのAPIは、ルートの追加と非常によく似ています。
 ```
 
 .. column::

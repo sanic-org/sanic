@@ -1,16 +1,16 @@
 # Websockets
 
-Sanic provides an easy to use abstraction on top of [websockets](https://websockets.readthedocs.io/en/stable/).
+Sanic は [websockets](https://websockets.readthedocs.io/en/stable/) の上に簡単に使える抽象化を提供します。
 
-## Routing
+## ルーティング
 
-.. column::
+.. 列::
 
 ```
-Websocket handlers can be hooked up to the router similar to regular handlers.
+Websocket ハンドラは、通常のハンドラと同様にルータにフックアップできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -32,7 +32,7 @@ async def feed(request: Request, ws: Websocket):
 
 ## Handler
 
-.. column::
+.. 列::
 
 ```
 Typically, a websocket handler will want to hold open a loop.
@@ -42,7 +42,7 @@ It can then use the `send()` and `recv()` methods on the second object injected 
 This example is a simple endpoint that echos back to the client messages that it receives.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -59,15 +59,15 @@ async def feed(request: Request, ws: Websocket):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can simplify your loop by just iterating over the `Websocket` object in a for loop.
+forループ内の`Websocket`オブジェクトを繰り返すだけで、ループを簡素化できます。
 
-*Added in v22.9*
+*v22.9*に追加されました
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -80,9 +80,9 @@ async def feed(request: Request, ws: Websocket):
 ```
 ````
 
-## Configuration
+## 設定
 
-See [configuration section](/guide/deployment/configuration.md) for more details, however the defaults are shown below.
+詳細は [configuration section](/guide/deployment/configuration.md) をご覧ください。
 
 ```python
 app.config.WEBSOCKET_MAX_SIZE = 2 ** 20

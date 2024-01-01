@@ -1,14 +1,14 @@
-# Cookies
+# Cookie
 
-## Reading
+## 読書中
 
-.. column::
+.. 列::
 
 ```
-Cookies can be accessed via the `Request` object’s `cookies` dictionary.
+Cookie は `Request` オブジェクトの `cookies` 辞書からアクセスできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -29,15 +29,15 @@ Most of the time you will want to use the `.get()` method to access the first el
 *Added in v23.3*
 ```
 
-## Writing
+## 執筆中
 
-.. column::
+.. 列::
 
 ```
-When returning a response, cookies can be set on the `Response` object: `response.cookies`. This object is an instance of `CookieJar` which is a special sort of dictionary that automatically will write the response headers for you.
+レスポンスを返すときは、`Response` オブジェクト: `response.cookies` にクッキーを設定できます。 このオブジェクトは `CookieJar` のインスタンスで、自動的にレスポンスヘッダーを書き込む特別な種類の辞書です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -54,37 +54,37 @@ async def test(request):
 ```
 ````
 
-Response cookies can be set like dictionary values and have the following parameters available:
+Response Cookieは辞書の値のように設定でき、次のパラメータを使用できます。
 
-- `path: str` - The subset of URLs to which this cookie applies. Defaults to `/`.
-- `domain: str` - Specifies the domain for which the cookie is valid. An explicitly specified domain must always start with a dot.
-- `max_age: int` - Number of seconds the cookie should live for.
-- `expires: datetime` - The time for the cookie to expire on the client’s browser. Usually it is better to use max-age instead.
-- `secure: bool` - Specifies whether the cookie will only be sent via HTTPS. Defaults to `True`.
-- `httponly: bool` - Specifies whether the cookie cannot be read by JavaScript.
-- `samesite: str` - Available values: Lax, Strict, and None. Defaults to `Lax`.
-- `comment: str` - A comment (metadata).
-- `host_prefix: bool` - Whether to add the `__Host-` prefix to the cookie.
-- `secure_prefix: bool` - Whether to add the `__Secure-` prefix to the cookie.
-- `partitioned: bool` - Whether to mark the cookie as partitioned.
+- `path: str` - このクッキーが適用される URL のサブセット。 デフォルトは `/` です。
+- `domain: str` - クッキーが有効なドメインを指定します。 明示的に指定されたドメインは常にドットで始まる必要があります。
+- `max_age: int` - クッキーが生き残るべき秒数。
+- `expires: datetime` - クッキーがクライアントのブラウザで期限切れになる時間。 通常、max-age を代わりに使用する方が良いです。
+- `secure: bool` - HTTPS でのみクッキーを送信するかどうかを指定します。 デフォルトは `True` です。
+- `httponly: bool` - クッキーをJavaScriptで読み取れないかどうかを指定します。
+- `samesite: str` - 利用可能な値: Lax, Strict, None。 デフォルトは `Lax` です。
+- `comment: str` - コメント (metadata)
+- `host_prefix: bool` - Cookieに`__Host-`プレフィックスを追加するかどうか。
+- `secure_prefix: bool` - Cookieに`__Secure-`プレフィックスを追加するかどうか。
+- `partitioned: bool` - クッキーをパーティションとしてマークするかどうか。
 
-To better understand the implications and usage of these values, it might be helpful to read the [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) on [setting cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie).
+これらの値の意味と使用状況をよりよく理解するためには、format@@0(https\://developer.mozilla.org/en-US/docs/Web/HTTP/Cookie)のformat@@1(https\://developer.mozilla.org/docs/Web/HTTP/Cookie)を読むと便利かもしれません。
 
 .. tip:: FYI
 
 ```
-By default, Sanic will set the `secure` flag to `True` to ensure that cookies are only sent over HTTPS as a sensible default. This should not be impactful for local development since secure cookies over HTTP should still be sent to `localhost`. For more information, you should read the [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies) on [secure cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#Secure).
+デフォルトでは、Sanicは`secure`フラグを`True`に設定し、HTTPS経由でのみクッキーが正常なデフォルトとして送信されるようにします。 これはローカル開発にとって影響を与えるべきではありません。なぜなら、HTTP を介した セキュアな Cookie は `localhost` に送られるべきだからです。 詳細については、[secure cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookie#restrict_access_to_cookies) の[secure cookies](https://developer.mozilla.org/docs/Web/HTTP/Headers/Set-Cookie#Secure)をご覧ください。
 ```
 
-## Deleting
+## 削除中
 
-.. column::
+.. 列::
 
 ```
-Cookies can be removed semantically or explicitly.
+クッキーは意味的または明示的に削除することができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -104,19 +104,19 @@ async def test(request):
 *Don't forget to add `path` or `domain` if needed!*
 ````
 
-## Eating
+## 食べる
 
-.. column::
-
-```
-Sanic likes cookies
-```
-
-.. column::
+.. 列::
 
 ```
-.. attrs::
+Sanicはクッキーが好き
+```
+
+.. 列::
+
+```
+.. attrs:
     :class: is-size-1 has-text-centered
     
-    🍪
+🍪
 ```

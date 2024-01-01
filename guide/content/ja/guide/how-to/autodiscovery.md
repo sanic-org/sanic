@@ -1,16 +1,16 @@
 ---
-title: Autodiscovery
+title: 自動検出
 ---
 
-# Autodiscovery of Blueprints, Middleware, and Listeners
+# 設計図、ミドルウェア、リスナーの自動発見
 
-> How do I autodiscover the components I am using to build my application?
+> アプリケーションを構築するために使用しているコンポーネントを自動検出するにはどうすればよいですか?
 
-One of the first problems someone faces when building an application, is _how_ to structure the project. Sanic makes heavy use of decorators to register route handlers, middleware, and listeners. And, after creating blueprints, they need to be mounted to the application.
+誰かがアプリケーションを構築する際に直面する最初の問題の1つは、プロジェクトを構成する方法\*です。 Sanicはルートハンドラ、ミドルウェア、リスナーを登録するためにデコレータを活用しています。 そして、設計図を作成した後、アプリケーションにマウントする必要があります。
 
-A possible solution is a single file in which **everything** is imported and applied to the Sanic instance. Another is passing around the Sanic instance as a global variable. Both of these solutions have their drawbacks.
+可能な解決策は、**everything** がインポートされ、Sanic インスタンスに適用される単一のファイルです。 もう一つは、グローバル変数として Sanic インスタンスを渡すことです。 これらの解決策の両方に欠点があります。
 
-An alternative is autodiscovery. You point your application at modules (already imported, or strings), and let it wire everything up.
+代替案は自己発見である。 アプリケーションをモジュール(既にインポートされている、または文字列)に向けて、すべてのものを配線します。
 
 ## `server.py`
 
@@ -183,7 +183,7 @@ generate with 'find . -type d -name "__pycache__" -exec rm -rf {} +; tree'
 
 ```sh
 source ./.venv/bin/activate # activate the python venv which sanic is installed in
-sanic sever -d # run this in the directory containing server.py
+sanic sever -d # run this in the directory including server.py
 ```
 
 ```text

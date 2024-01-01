@@ -1,13 +1,13 @@
 ---
-title: Sanic Extensions - Advanced OAS
+title: サニックエクステンション - Advanced OAS
 ---
 
-# Advanced
+# 高度な設定
 
 _Documentation in progress_
 
 ## CBV
 
-## Blueprints
+## 建設計画
 
-## Components
+## コンポーネント

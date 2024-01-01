@@ -1,20 +1,20 @@
-# Docker Deployment
+# Docker 部署
 
-## Introduction
+## 一. 导言
 
-For a long time, the environment has always been a difficult problem for deployment. If there are conflicting configurations in your project, you have to spend a lot of time resolving them. Fortunately, virtualization provides us with a good solution. Docker is one of them. If you don't know Docker, you can visit [Docker official website](https://www.docker.com/) to learn more.
+长期以来，环境一直是部署的一个困难问题。 如果您的项目中存在相互冲突的配置，您必须花费大量时间解析它们。 幸运的是，虚拟化为我们提供了一个好的解决办法。 码头就是其中之一。 如果你不知道Docker，你可以访问 [Docker官方网站](https://www.docker.com/) 了解更多信息。
 
-## Build Image
+## 构建图像
 
-Let's start with a simple project. We will use a Sanic project as an example. Assume the project path is `/path/to/SanicDocker`.
+让我们从一个简单的项目开始。 我们将以Sanic项目为例。 假设项目路径是 `/path/to/SanicDocker` 。
 
-.. column::
+.. 列:
 
 ```
-The directory structure looks like this:
+目录结构看起来像这样：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```text
@@ -26,13 +26,13 @@ SanicDocker
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-And the `server.py` code looks like this:
+`server.py`代码看起来像这样：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -47,21 +47,21 @@ if __name__ == '__main__':
 ```
 ````
 
-.. note::
+.. 注：
 
 ```
-Please note that the host cannot be 127.0.0.1 . In docker container, 127.0.0.1 is the default network interface of the container, only the container can communicate with other containers. more information please visit [Docker network](https://docs.docker.com/engine/reference/commandline/network/)
+请注意主机不能为127.0.0.1 。在Docker容器中，127.0.0。 是容器的默认网络接口，只有容器可以与其他容器通信。 更多信息请访问[Docker network](https://docs.docker.com/engine/reference/commandline/network/)
 ```
 
-Code is ready, let's write the `Dockerfile`:
+代码已经准备好，让我们写入`Dockerfile`：
 
 ```Dockerfile
 
-FROM sanicframework/sanic:3.8-latest
+FROM sanicframework/sanic:3.8-最新
 
 WORKDIR /sanic
 
-COPY . .
+COPY .
 
 RUN pip install -r requirements.txt
 
@@ -70,21 +70,21 @@ EXPOSE 8000
 CMD ["python", "server.py"]
 ```
 
-Run the following command to build the image:
+运行以下命令来构建图像：
 
 ```shell
-docker build -t my-sanic-image .
+停靠构建-t my-sanic-image
 ```
 
-## Start Container
+## 启动容器
 
-.. column::
+.. 列:
 
 ```
-After the image built, we can start the container use `my-sanic-image`:
+在图像生成后，我们可以启动容器使用 "my-sanic-image" ：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```shell
@@ -92,13 +92,13 @@ docker run --name mysanic -p 8000:8000 -d my-sanic-image
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Now we can visit `http://localhost:8000` to see the result:
+现在我们可以访问 `http://localhost:8000` 来查看结果：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```text
@@ -106,19 +106,19 @@ OK!
 ```
 ````
 
-## Use docker-compose
+## 使用 docker-compose
 
-If your project consist of multiple services, you can use [docker-compose](https://docs.docker.com/compose/) to manage them.
+如果您的项目包含多项服务，您可以使用 [docker-compose](https://docs.docker.com/compose/) 来管理它们。
 
-for example, we will deploy `my-sanic-image` and `nginx`, achieve through nginx access sanic server.
+例如，我们将部署`my-sanic-image`和`nginx`，通过 nginx 访问智能服务器来实现。
 
-.. column::
+.. 列:
 
 ```
-First of all, we need prepare nginx configuration file. create a file named `mysanic.conf`:
+首先，我们需要准备 nginx 配置文件，创建一个名为 `mysanic.conf` 的文件：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```nginx
@@ -135,34 +135,34 @@ server {
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Then, we need to prepare `docker-compose.yml` file. The content follows:
+然后，我们需要准备`docker-compose.yml`文件。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```yaml
-version: "3"
+版本: "3"
 
 services:
   mysanic:
     image: my-sanic-image
     ports:
       - "8000:8000"
-    restart: always
+    重启
 
   mynginx:
-    image: nginx:1.13.6-alpine
-    ports:
+    image: nginx:1.13. -alpine
+    端口：
       - "80:80"
-    depends_on:
+    依赖于：
       - mysanic
-    volumes:
-      - ./mysanic.conf:/etc/nginx/conf.d/mysanic.conf
-    restart: always
+    卷：
+      - . 神秘。 onf/etc/nginx/conf.d/mysanic.conf
+    重启：总是
 
 networks:
   default:
@@ -170,13 +170,13 @@ networks:
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-After that, we can start them:
+然后，我们可以开始：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```shell
@@ -184,13 +184,13 @@ docker-compose up -d
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Now, we can visit `http://localhost:80` to see the result:
+现在，我们可以访问 `http://localhost:80` 查看结果：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```text

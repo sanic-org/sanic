@@ -1,8 +1,8 @@
-# Authentication
+# 認証
 
-> How do I control authentication and authorization?
+> 認証と認証を制御するにはどうすればよいですか?
 
-This is an _extremely_ complicated subject to cram into a few snippets. But, this should provide you with an idea on ways to tackle this problem. This example uses [JWTs](https://jwt.io/), but the concepts should be equally applicable to sessions or some other scheme.
+これは、いくつかのスニペットに詰め込むために_非常に複雑な対象です。 しかし、これはこの問題に取り組む方法についてのアイデアを提供する必要があります。 この例では [JWTs](https://jwt.io/)を使用しますが、この概念はセッションや他のスキームにも同様に適用されるはずです。
 
 ## `server.py`
 
@@ -74,7 +74,7 @@ def protected(wrapped):
     return decorator(wrapped)
 ```
 
-This decorator pattern is taken from the [decorators page](/en/guide/best-practices/decorators.md).
+このデコレータパターンは format@@0(/ja/guide/best-practices/decorators.md) から取得されます。
 
 ***
 
@@ -110,7 +110,7 @@ content-type: text/plain; charset=utf-8
 You are unauthorized.
 ```
 
-Also, checkout some resources from the community:
+また、コミュニティからいくつかのリソースをチェックアウトします。
 
 - Awesome Sanic - [Authorization](https://github.com/mekicha/awesome-sanic/blob/master/README.md#authentication) & [Session](https://github.com/mekicha/awesome-sanic/blob/master/README.md#session)
-- [EuroPython 2020 - Overcoming access control in web APIs](https://www.youtube.com/watch?v=Uqgoj43ky6A)
+- [EuroPython 2020 - Web APIでのアクセス制御の克服](https://www.youtube.com/watch?v=Uqgoj43ky6A)

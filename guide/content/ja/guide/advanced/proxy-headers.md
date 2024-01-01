@@ -453,7 +453,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ##### 例10
 
-Unexpected termination should not lose existing acceptable values
+予期しない終了は、既存の許容可能な値を失うことはありません
 
 ```sh
 curl localhost:8000/fwd \
@@ -493,7 +493,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ##### 例11
 
-Field normalization
+フィールドの正規化
 
 ```sh
 curl localhost:8000/fwd \
@@ -536,7 +536,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ##### 例12
 
-Using "by" field as secret
+「by」フィールドを秘密として使用する
 
 ```sh
 curl localhost:8000/fwd \

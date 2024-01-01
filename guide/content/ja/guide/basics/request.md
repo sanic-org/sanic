@@ -1,18 +1,18 @@
-# Request
+# リクエスト
 
-See API docs: [sanic.request](/api/sanic.request)
+API ドキュメント: [sanic.request](/api/sanic.request) を参照してください。
 
-The :class:`sanic.request.Request` instance contains **a lot** of helpful information available on its parameters. Refer to the [API documentation](https://sanic.readthedocs.io/) for full details.
+:class:`sanic.request.Request`インスタンスには、パラメータで入手可能な役立つ情報がたくさん含まれています。 詳細については、format@@0(https\://sanic.readthedocs.io/)を参照してください。
 
-As we saw in the section on [handlers](./handlers), the first argument in a route handler is usually the :class:`sanic.request.Request` object. Because Sanic is an async framework, the handler will run inside of a [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) and will be scheduled by the event loop. This means that the handler will be executed in an isolated context and the request object will be unique to that handler's task.
+[handlers](./handlers) のセクションで見たとおり、ルートハンドラの最初の引数は通常、 :class:`sanic.request.Request` オブジェクトです。 Sanic は非同期フレームワークなので、ハンドラは[`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)の中で実行され、イベントループによってスケジュールされます。 これは、ハンドラが分離されたコンテキストで実行され、リクエストオブジェクトはそのハンドラのタスクに固有であることを意味します。
 
-.. column::
+.. 列::
 
 ```
-By convention, the argument is named `request`, but you can name it whatever you want. The name of the argument is not important. Both of the following handlers are valid.
+規約により、引数は `request` という名前になりますが、好きな名前を付けることができます。 引数の名前は重要ではありません。以下のハンドラの両方が有効です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -28,14 +28,14 @@ async def atypical_use_case(req):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Annotating a request object is super simple.
+リクエストオブジェクトに注釈を付けるのはとても簡単です。
     
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -51,25 +51,25 @@ async def typed_handler(request: Request):
 .. tip::
 
 ```
-For your convenience, assuming you are using a modern IDE, you should leverage type annotations to help with code completion and documentation. This is especially helpful when using the `request` object as it has **MANY** properties and methods.
+最新のIDEを使用していると仮定すると、コード補完とドキュメントを支援するために型注釈を活用する必要があります。 これは特に、 **MANY** のプロパティとメソッドがあるので、 `request` オブジェクトを使用する場合に便利です。
     
-To see the full list of available properties and methods, refer to the [API documentation](/api/sanic.request).
+利用可能なプロパティとメソッドの完全なリストは、[API ドキュメント](/api/sanic.request) を参照してください。
 ```
 
-## Body
+## 本文
 
-The `Request` object allows you to access the content of the request body in a few different ways.
+`Request`オブジェクトは、いくつかの方法でリクエストボディのコンテンツにアクセスできます。
 
 ### JSON
 
-.. column::
+.. 列::
 
 ```
 **Parameter**: `request.json`  
-**Description**: The parsed JSON object
+**Description**: 解析されたJSONオブジェクト
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -84,14 +84,14 @@ $ curl localhost:8000 -d '{"foo": "bar"}'
 
 ### Raw
 
-.. column::
+.. 列::
 
 ```
 **Parameter**: `request.body`  
-**Description**: The raw bytes from the request body
+**Description**: リクエストボディからの生のバイト
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -104,9 +104,9 @@ b'{"foo": "bar"}'
 ```
 ````
 
-### Form
+### フォーム
 
-.. column::
+.. 列::
 
 ```
 **Parameter**: `request.form`  
@@ -119,7 +119,7 @@ b'{"foo": "bar"}'
     Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -141,9 +141,9 @@ bar
 ```
 ````
 
-### Uploaded
+### アップロードしました
 
-.. column::
+.. 列::
 
 ```
 **Parameter**: `request.files`  
@@ -156,7 +156,7 @@ bar
     Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -178,15 +178,15 @@ File(type='application/octet-stream', body=b'hello\n', name='TEST')
 ```
 ````
 
-## Context
+## コンテキスト
 
-### Request context
+### コンテキストをリクエスト
 
-The `request.ctx` object is your playground to store whatever information you need to about the request. This lives only for the duration of the request and is unique to the request.
+`request.ctx`オブジェクトは、リクエストに関して必要な情報を保存するためのプレイグラウンドです。 これはリクエストの期間のみ有効で、リクエストに固有のものです。
 
-This can be constrasted with the `app.ctx` object which is shared across all requests. Be careful not to confuse them!
+これはすべてのリクエストで共有される `app.ctx` オブジェクトで解釈できます。 それらを混乱させないように注意してください!
 
-The `request.ctx` object by default is a `SimpleNamespace` object allowing you to set arbitrary attributes on it. Sanic will not use this object for anything, so you are free to use it however you want without worrying about name clashes.
+デフォルトでは `request.ctx` オブジェクトは `SimpleNamespace` オブジェクトで、任意の属性を設定できます。 Sanicはこのオブジェクトを何にも使用しないので、名前の衝突を心配することなく自由に使用できます。
 
 ````python
 
@@ -206,11 +206,11 @@ async def hi_my_name_is(request):
     return text(f"Hi, my name is {request.ctx.user.name}")
 ````
 
-As you can see, the `request.ctx` object is a great place to store information that you need to access in multiple handlers making your code more DRY and easier to maintain. But, as we will learn in the [middleware section](./middleware.md), you can also use it to store information from one middleware that will be used in another.
+ご覧のとおり、 `request. tx`オブジェクトは、複数のハンドラにアクセスするために必要な情報を格納するのに最適な場所です。 しかし、format@@0(./middleware) で学びます。 d)を使用して、別のミドルウェアから情報を保存することもできます。
 
-### Connection context
+### 接続の内容
 
-.. column::
+.. 列::
 
 ```
 Often times your API will need to serve multiple concurrent (or consecutive) requests to the same client. This happens, for example, very often with progressive web apps that need to query multiple endpoints to get data.
@@ -220,7 +220,7 @@ The HTTP protocol calls for an easing of overhead time caused by the connection 
 When multiple requests share a single connection, Sanic provides a context object to allow those requests to share state.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -243,25 +243,25 @@ request.conn_info.ctx.foo=3
 ```
 ````
 
-.. warning::
+.. 警告::
 
 ```
-While this looks like a convenient place to store information between requests by a single HTTP connection, do not assume that all requests on a single connection came from a single end user. This is because HTTP proxies and load balancers can multiplex multiple connections into a single connection to your server.
+リクエスト間の情報を1つのHTTP接続で保存するのに便利な場所に見えます。 単一の接続上のすべてのリクエストが単一のエンドユーザーから来たと仮定しないでください。 これは、HTTP プロキシとロードバランサが複数の接続をサーバに複数回接続できるためです。
 
-**DO NOT** use this to store information about a single user. Use the `request.ctx` object for that.
+**単一のユーザーに関する情報を保存するには、これを使用しないでください** 。 `request.ctx` オブジェクトを使用してください。
 ```
 
-### Custom Request Objects
+### カスタムリクエストオブジェクト
 
-As dicussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. This is useful for adding additional attributes or methods that are specific to your application.
+[application customization](./app.md#custom-requests)で説明されているように、 :class:`sanic.request.Request` のサブクラスを作成して、リクエストオブジェクトに追加機能を追加できます。 これは、アプリケーションに固有の追加の属性やメソッドを追加する場合に便利です。
 
-.. column::
+.. 列::
 
 ```
-For example, imagine your application sends a custom header that contains a user ID. You can create a custom request object that will parse that header and store the user ID for you.
+たとえば、アプリケーションがユーザー ID を含むカスタム ヘッダーを送信するとします。 そのヘッダーを解析し、ユーザーIDを保存するカスタムリクエストオブジェクトを作成できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -276,13 +276,13 @@ app = Sanic("Example", request_class=CustomRequest)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Now, in your handlers, you can access the `user_id` attribute.
+ハンドラで `user_id` 属性にアクセスできるようになりました。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -292,19 +292,19 @@ async def handler(request: CustomRequest):
 ```
 ````
 
-### Custom Request Context
+### カスタムリクエストのコンテキスト
 
-By default, the request context (`request.ctx`) is a [`Simplenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) object allowing you to set arbitrary attributes on it. While this is super helpful to reuse logic across your application, it can be difficult in the development experience since the IDE will not know what attributes are available.
+デフォルトでは、リクエスト コンテキスト (`request.ctx`) は [`Simplenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) オブジェクトで、任意の属性を設定できます。 これはアプリケーション全体でロジックを再利用するのに非常に役立ちます。 IDEで利用可能な属性がわからないため、開発経験では困難な場合があります。
 
-To help with this, you can create a custom request context object that will be used instead of the default `SimpleNamespace`. This allows you to add type hints to the context object and have them be available in your IDE.
+これを支援するために、デフォルトの `SimpleNamespace` の代わりに使用されるカスタムリクエストコンテキストオブジェクトを作成できます。 これにより、型ヒントをコンテキストオブジェクトに追加し、それらをIDEで使用できるようにできます。
 
-.. column::
+.. 列::
 
 ```
-Start by subclassing the :class:`sanic.request.Request` class to create a custom request type. Then, you will need to add a `make_context()` method that returns an instance of your custom context object. *NOTE: the `make_context` method should be a static method.*
+:class:`sanic.request.Request`クラスをサブクラス化し、カスタムリクエストタイプを作成します。 次に、カスタムコンテキストオブジェクトのインスタンスを返す、 `make_context()` メソッドを追加する必要があります。 *注意: `make_context` メソッドは静的メソッドである必要があります。*
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -329,20 +329,20 @@ class CustomContext:
 .. note::
 
 ```
-This is a Sanic poweruser feature that makes it super convenient in large codebases to have typed request context objects. It is of course not required, but can be very helpful.
+これはSanic poweruser 機能で、大きなコードベースでリクエストコンテキストオブジェクトを入力するのに非常に便利です。 それはもちろん必要ではありませんが、非常に役に立ちます。
 ```
 
-_Added in v23.6_
+_V23.6_に追加されました
 
-## Parameters
+## パラメータ
 
-.. column::
+.. 列::
 
 ```
-Values that are extracted from the path parameters are injected into the handler as argumets, or more specifically as keyword arguments. There is much more detail about this in the [Routing section](./routing.md).
+パスパラメータから抽出された値は、引数としてハンドラに注入され、より具体的にはキーワード引数として注入されます。 format@@0(./routing.md) には詳細が記載されています。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -357,28 +357,28 @@ async def tag_handler(request, *, tag):
 ```
 ````
 
-## Arguments
+## 引数
 
-There are two attributes on the `request` instance to get query parameters:
+`request`インスタンスには、クエリパラメータを取得するための2つの属性があります。
 
 - `request.args`
 - `request.query_args`
 
-These allow you to access the query parameters from the request path (the part after the `?` in the URL).
+これにより、リクエストパス（URL内の `?` の後の部分）からクエリパラメータにアクセスできます。
 
-### Typical use case
+### 典型的な使用例
 
-In most use cases, you will want to use the `request.args` object to access the query parameters. This will be the parsed query string as a dictionary.
+ほとんどの場合、`request.args` オブジェクトを使用してクエリパラメータにアクセスします。 これは解析されたクエリ文字列を辞書として使用します。
 
-This is by far the most common pattern.
+これははるかに一般的なパターンです。
 
-.. column::
+.. 列::
 
 ```
-Consider the example where we have a `/search` endpoint with a `q` parameter that we want to use to search for something.
+何かを検索するために使用する `q` パラメータを持つ `/search` エンドポイントがある例を考えてみましょう。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -391,17 +391,17 @@ async def search(request):
 ```
 ````
 
-### Parsing the query string
+### クエリ文字列の解析
 
-Sometimes, however, you may want to access the query string as a raw string or as a list of tuples. For this, you can use the `request.query_string` and `request.query_args` attributes.
+場合によっては、クエリ文字列に生の文字列またはタプルのリストとしてアクセスしたい場合があります。 これには、 `request.query_string` と `request.query_args` 属性を使用できます。
 
-It also should be noted that HTTP allows multiple values for a single key. Although `request.args` may seem like a regular dictionary, it is actually a special type that allows for multiple values for a single key. You can access this by using the `request.args.getlist()` method.
+また、HTTP は 1 つのキーに対して複数の値を許可することに注意する必要があります。 `request.args` は通常の辞書のように見えるかもしれませんが、実際には1つのキーに対して複数の値を与える特別な型です。 `request.args.getlist()`メソッドを使用することでアクセスできます。
 
-- `request.query_string` - The raw query string
-- `request.query_args` - The parsed query string as a list of tuples
-- `request.args` - The parsed query string as a _special_ dictionary
-  - `request.args.get()` - Get the first value for a key (behaves like a regular dictionary)
-  - `request.args.getlist()` - Get all values for a key
+- `request.query_string` - 生クエリ文字列
+- `request.query_args` - タプルのリストとして解析されたクエリー文字列。
+- `request.args` - _special_辞書として解析されたクエリ文字列。
+  - `request.args.get()` - キーの最初の値を取得します (通常の辞書のように動作します)
+  - `request.args.getlist()` - キーの値をすべて取得します
 
 ```sh
 curl "http://localhost:8000?key1=val1&key2=val2&key1=val3"
@@ -428,16 +428,16 @@ key1=val1&key2=val2&key1=val3
 .. tip:: FYI
 
 ```
-The `request.args` object is one of a few types that is a dictionary with each value being a list. This is because HTTP allows a single key to be reused to send multiple values.  
+`request.args` オブジェクトは、それぞれの値がリストになる辞書である数少ない型の1つです。 これは、HTTP が 1 つのキーを再利用して複数の値を送信することを可能にするためです。  
 
-Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
+ほとんどの場合、リストではなく最初の要素にアクセスするために `.get()` メソッドを使用します。 全てのアイテムのリストが必要な場合は、 `.getlist()` を使用します。
 ```
 
-## Current request getter
+## 現在のリクエスト取得
 
-Sometimes you may find that you need access to the current request in your application in a location where it is not accessible. A typical example might be in a `logging` format. You can use `Request.get_current()` to fetch the current request (if any).
+場合によっては、アプリケーション内の現在のリクエストにアクセスできない場所でアクセスする必要があることがあります。 典型的な例は、`logging`形式です。 `Request.get_current()`を使用して、現在のリクエストをフェッチすることができます (もしあれば)。
 
-Remember, the request object is confined to the single [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) that is running the handler. If you are not in that task, there is no request object.
+リクエストオブジェクトは、ハンドラを実行している単一の[`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)に制限されていることを覚えておいてください。 そのタスクに参加していない場合、リクエストオブジェクトはありません。
 
 ```python
 import logging
@@ -473,6 +473,6 @@ LOGGING_CONFIG_DEFAULTS["formatters"]["access"]["format"] = LOGGING_FORMAT
 app = Sanic("Example", log_config=LOGGING_CONFIG_DEFAULTS)
 ```
 
-In this example, we are adding the `request.id` to every access log message.
+この例では、すべてのアクセスログメッセージに `request.id` を追加しています。
 
-_Added in v22.6_
+_v22.6_に追加されました

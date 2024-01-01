@@ -1,18 +1,18 @@
 ---
-title: Sanic Extensions - Convenience
+title: 无声扩展 - 便捷性
 ---
 
-# Convenience
+# 便捷性
 
-## Fixed serializer
+## 固定序列转换器
 
-.. column::
+.. 列:
 
 ```
-Often when developing an application, there will be certain routes that always return the same sort of response. When this is the case, you can predefine the return serializer and on the endpoint, and then all that needs to be returned is the content.
+在开发应用程序时，往往会有某些路径总是返回同样的响应。 如果情况如此，您可以预定义返回序列转换器和端点。 然后所有需要返回的都是内容。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -27,13 +27,13 @@ async def hello_world(request, name: str):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-The `serializer` decorator also can add status codes.
+`序列化器`装饰器也可以添加状态码。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -46,15 +46,15 @@ async def create_something(request):
 ```
 ````
 
-## Custom serializer
+## 自定义序列转换器
 
-.. column::
+.. 列:
 
 ```
-Using the `@serializer` decorator, you can also pass your own custom functions as long as they also return a valid type (`HTTPResonse`).
+使用 `@serializer` 装饰器，您也可以传递您自己的自定义函数只要他们返回一个有效的类型(`HTTPResonse`)。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -75,51 +75,51 @@ async def do_action(request, action: str):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Now, returning just a string should return a nice serialized output.
+现在，返回一个字符串应该返回一个很好的序列化输出。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 $ curl localhost:8000/eat_cookies -X POST
-{
-  "request_id": "ef81c45b-235c-46dd-9dbd-b550f8fa77f9",
+own
+  "request_id": "ef81c45b-235c-46ddd-b50f8fa77f9",
   "action": "eat_cookies",
-  "message": "This is a message"
+  "message": "这是一个消息"
 }
 
 ```
 ````
 
-## Request counter
+## 请求计数器
 
-.. column::
+.. 列:
 
 ```
-Sanic Extensions comes with a subclass of `Request` that can be setup to automatically keep track of the number of requests processed per worker process. To enable this, you should pass the `CountedRequest` class to your application contructor.
+Sanic 扩展有一个子类的 `Request` ，可以设置来自动跟踪每个工人进程处理的请求数量。 为了启用此功能，您应该将 ' CountedRequest` 类传递给您的应用程序contrator。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic_ext import CountedRequest
+来自sanic_ext import CountedRequest
 
-app = Sanic(..., request_class=CountedRequest)
+app = Sanic(...request_class=CountedRequest)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You will now have access to the number of requests served during the lifetime of the worker process.
+您现在将能够访问在工人整个过程中服务的请求数量。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -129,6 +129,6 @@ async def handler(request: CountedRequest):
 ```
 ````
 
-If possible, the request count will also be added to the [worker state](../../guide/deployment/manager.md#worker-state).
+如果可能，请求计数也将添加到[工人状态](../../guide/deplement/manager.md#worker-state)。
 
 ![](https://user-images.githubusercontent.com/166269/190922460-43bd2cfc-f81a-443b-b84f-07b6ce475cbf.png)

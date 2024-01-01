@@ -1,13 +1,13 @@
 ---
-title: Sanic Extensions - Advanced OAS
+title: 无声扩展 - 高级OAS
 ---
 
-# Advanced
+# 高级版
 
-_Documentation in progress_
+正在编写文档_
 
 ## CBV
 
-## Blueprints
+## 蓝图
 
-## Components
+## 组件

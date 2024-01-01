@@ -1,24 +1,24 @@
 ---
-title: Sanic Extensions - Validation
+title: サニックエクステンション - 検証
 ---
 
-# Validation
+# 検証
 
-One of the most commonly implemented features of a web application is user-input validation. For obvious reasons, this is not only a security issue, but also just plain good practice. You want to make sure your data conforms to expectations, and throw a `400` response when it does not.
+Webアプリケーションの最も一般的に実装されている機能の1つは、ユーザー入力検証です。 明らかな理由から、これはセキュリティの問題だけでなく、単に明白な良い実践です。 データが期待値に合致していることを確認し、そうでない場合は `400` レスポンスを投げます。
 
-## Implementation
+## 実装
 
-### Validation with Dataclasses
+### Dataclassの検証
 
-With the introduction of [Data Classes](https://docs.python.org/3/library/dataclasses.html), Python made it super simple to create objects that meet a defined schema. However, the standard library only supports type checking validation, **not** runtime validation. Sanic Extensions adds the ability to do runtime validations on incoming requests using `dataclasses` out of the box. If you also have either `pydantic` or `attrs` installed, you can alternatively use one of those libraries.
+format@@0(https\://docs.python.org/3/library/dataclasses.html)の導入により、Pythonは定義されたスキーマを満たすオブジェクトを簡単に作成できました。 しかし、標準ライブラリは型チェック検証のみをサポートしており、実行時の検証ではありません。 Sanic Extensionsは、 `dataclasses`を使って受信するリクエストに対して実行時の検証を行う機能を追加します。 `pydantic`または`attrs`のいずれかがインストールされている場合は、それらのライブラリのいずれかを使用することもできます。
 
-.. column::
+.. 列::
 
 ```
-First, define a model.
+まず、モデルを定義します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -28,13 +28,13 @@ class SearchParams:
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Then, attach it to your route
+次に、ルートに添付してください
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -42,18 +42,18 @@ from sanic_ext import validate
 
 @app.route("/search")
 @validate(query=SearchParams)
-async def handler(request, query: SearchParams):
+async def handler(request, query: SearchParams:
     return json(asdict(query))
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You should now have validation on the incoming request.
+これで、受信リクエストのバリデーションが完了するはずです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```
@@ -68,17 +68,17 @@ $ curl localhost:8000/search\?q=python
 ```
 ````
 
-### Validation with Pydantic
+### Pydanticによる検証
 
-You can use Pydantic models also.
+Pydanticモデルも使用できます。
 
-.. column::
+.. 列::
 
 ```
-First, define a model.
+まず、モデルを定義します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -88,13 +88,13 @@ class Person(BaseModel):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Then, attach it to your route
+次に、ルートに添付してください
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -107,13 +107,13 @@ async def handler(request, body: Person):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You should now have validation on the incoming request.
+これで、受信リクエストのバリデーションが完了するはずです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```
@@ -122,17 +122,17 @@ $ curl localhost:8000/person -d '{"name": "Alice", "age": 21}' -X POST
 ```
 ````
 
-### Validation with Attrs
+### Attrsによる検証
 
-You can use Attrs also.
+Attrsも使用できます。
 
-.. column::
+.. 列::
 
 ```
-First, define a model.
+まず、モデルを定義します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -144,13 +144,13 @@ class Person:
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Then, attach it to your route
+次に、ルートに添付してください
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -163,13 +163,13 @@ async def handler(request, body: Person):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You should now have validation on the incoming request.
+これで、受信リクエストのバリデーションが完了するはずです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```
@@ -178,17 +178,17 @@ $ curl localhost:8000/person -d '{"name": "Alice", "age": 21}' -X POST
 ```
 ````
 
-## What can be validated?
+## 何を検証できますか？
 
-The `validate` decorator can be used to validate incoming user data from three places: JSON body data (`request.json`), form body data (`request.form`), and query parameters (`request.args`).
+`validate` デコレータは、3つの場所から受信したユーザーデータを検証するために使用できます: JSON body data (`request. son`), form body data (`request.form`), and query parameters (`request.args`).
 
-.. column::
+.. 列::
 
 ```
-As you might expect, you can attach your model using the keyword arguments of the decorator.
+予想通り、デコレータのキーワード引数を使用してモデルをアタッチすることができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

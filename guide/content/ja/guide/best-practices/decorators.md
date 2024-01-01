@@ -1,14 +1,14 @@
-# Decorators
+# デコレーター
 
-One of the best ways to create a consistent and DRY web API is to make use of decorators to remove functionality from the handlers, and make it repeatable across your views.
+一貫性のあるDRY Web APIを作成する最善の方法の1つは、デコレータを使用してハンドラから機能を削除することです。 再現できるようにするのです
 
-.. column::
+.. 列::
 
 ```
-Therefore, it is very common to see a Sanic view handler with several decorators on it.
+したがって、その上に複数のデコレータを持つSanicビューハンドラを見ることは非常に一般的である。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -21,11 +21,11 @@ async def get_order_details(request, params, user):
 ```
 ````
 
-## Example
+## 例
 
-Here is a starter template to help you create decorators.
+ここにデコレータを作成するためのスターターテンプレートがあります。
 
-In this example, let’s say you want to check that a user is authorized to access a particular endpoint. You can create a decorator that wraps a handler function, checks a request if the client is authorized to access a resource, and sends the appropriate response.
+この例では、ユーザーが特定のエンドポイントにアクセスする権限があることを確認しましょう。 ハンドラ関数をラップするデコレータを作成できます。 クライアントがリソースにアクセスする権限があるかどうかをリクエストをチェックし、適切なレスポンスを送信します。
 
 ```python
 from functools import wraps
@@ -56,35 +56,35 @@ async def test(request):
     return json({"status": "authorized"})
 ```
 
-## Templates
+## テンプレート
 
-Decorators are **fundamental** to building applications with Sanic. They increase the portability and maintainablity of your code.
+デコレータはSanicでアプリケーションを構築するための**基本**です。 これらはコードの移植性と保守性を高めます。
 
-In paraphrasing the Zen of Python: "[decorators] are one honking great idea -- let's do more of those!"
+Pythonの禅を言い換えると、「[decorators] は素晴らしいアイデアです。
 
-To make it easier to implement them, here are three examples of copy/pastable code to get you started.
+実装を容易にするために、ここでは、始めるためのコピー/貼り付け可能なコードの3つの例を紹介します。
 
-.. column::
+.. 列::
 
 ```
-Don't forget to add these import statements. Although it is *not* necessary, using `@wraps` helps keep some of the metadata of your function intact. [See docs](https://docs.python.org/3/library/functools.html#functools.wraps). Also, we use the `isawaitable` pattern here to allow the route handlers to by regular or asynchronous functions.
+これらのインポート文を追加することを忘れないでください。 `@wraps`を使うと、関数のメタデータをそのまま保持することができます。format@@0(https://docs) ython.org/3/library/functtools.html#functools.wraps). また、ここでは`isawaitable`パターンを使用して、通常または非同期の関数でルートハンドラを使用できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 from inspect import isawaitable
-from functools import wraps
+from functtools import wraps
 ```
 ````
 
-### With args
+### 引数あり
 
-.. column::
+.. 列::
 
 ````
-Often, you will want a decorator that will *always* need arguments. Therefore, when it is implemented you will always be calling it.
+多くの場合、*常に*引数を必要とするデコレータが必要になります。そのため、実装された場合は常にそれを呼び出すことになります。
 
 ```python
 @app.get("/")
@@ -94,7 +94,7 @@ async def handler(request: Request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -115,9 +115,9 @@ def foobar(arg1, arg2):
 ```
 ````
 
-### Without args
+### 引数なし
 
-.. column::
+.. 列::
 
 ````
 Sometimes you want a decorator that will not take arguments. When this is the case, it is a nice convenience not to have to call it
@@ -130,7 +130,7 @@ async def handler(request: Request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -151,9 +151,9 @@ def foobar(func):
 ```
 ````
 
-### With or Without args
+### 引数の有無にかかわらず
 
-.. column::
+.. 列::
 
 ````
 If you want a decorator with the ability to be called or not, you can follow this pattern. Using keyword only arguments is not necessary, but might make implementation simpler.
@@ -173,7 +173,7 @@ async def handler(request: Request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python

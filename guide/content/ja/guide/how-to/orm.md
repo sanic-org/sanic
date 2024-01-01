@@ -1,31 +1,31 @@
 # ORM
 
-> How do I use SQLAlchemy with Sanic ?
+> どのように私はSanicでSQLAlchemyを使用しますか?
 
-All ORM tools can work with Sanic, but non-async ORM tool have a impact on Sanic performance.
-There are some orm packages who support
+すべてのORMツールはSanicで使用できますが、非同期ORMツールはSanicパフォーマンスに影響を与えます。
+サポートする Orm パッケージがいくつかあります
 
-At present, there are many ORMs that support Python's `async`/`await` keywords. Some possible choices include：
+現在、Python の `async`/`await` キーワードをサポートするORMがたくさんあります。 いくつかの可能な選択肢には：
 
 - [Mayim](https://ahopkins.github.io/mayim/)
-- [SQLAlchemy 1.4](https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html)
-- [tortoise-orm](https://github.com/tortoise/tortoise-orm)
+- [SQLAlchemy 1.4](https://docs.sqlalchemy.org/ja/14/changelog/changelog_14.html)
+- [tortoise-orm](https://github.com/tortoise/turtoise-orm)
 
-Integration in to your Sanic application is fairly simple:
+Sanicアプリケーションへの統合はかなり簡単です:
 
 ## Mayim
 
-Mayim ships with [an extension for Sanic Extensions](https://ahopkins.github.io/mayim/guide/extensions.html#sanic), which makes it super simple to get started with Sanic. It is certainly possible to run Mayim with Sanic without the extension, but it is recommended because it handles all of the [lifecycle events](https://sanic.dev/en/guide/basics/listeners.html) and [dependency injections](https://sanic.dev/en/plugins/sanic-ext/injection.html).
+Mayimはformat@@0(https\://ahopkins.github.io/mayim/guide/extensions.html#sanic)と一緒に出荷します。 確かに拡張機能なしで Mayim を実行することは可能ですが、すべての format@@0(https\://sanic )を処理するために推奨されています。 ev/ja/guide/basics/listeners.html) and [dependency injections](https://sanic.dev/en/plugins/sanic-ext/injection.html)
 
-.. column::
+.. 列::
 
 ```
-### Dependencies
+### 依存関係
 
-First, we need to install the required dependencies. See [Mayim docs](https://ahopkins.github.io/mayim/guide/install.html#postgres) for the installation needed for your DB driver.
+まず、必要な依存関係をインストールする必要があります。DBドライバに必要なインストールについては、[Mayim docs](https://ahopkins.github.io/mayim/guide/install.html#postgres)を参照してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```shell
@@ -34,7 +34,7 @@ pip install mayim[postgres]
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 ### Define ORM Model
@@ -42,7 +42,7 @@ pip install mayim[postgres]
 Mayim allows you to use whatever you want for models. Whether it is [dataclasses](https://docs.python.org/3/library/dataclasses.html), [pydantic](https://pydantic-docs.helpmanual.io/), [attrs](https://www.attrs.org/en/stable/), or even just plain `dict` objects. Since it works very nicely [out of the box with Pydantic](https://ahopkins.github.io/mayim/guide/pydantic.html), that is what we will use here.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -64,15 +64,15 @@ class Country(BaseModel):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Define SQL
+### SQLを定義する
 
-If you are unfamiliar, Mayim is different from other ORMs in that it is one-way, SQL-first. This means you define your own queries either inline, or in a separate `.sql` file, which is what we will do here.
+使い慣れていない場合、Mayimは一方向のSQL-firstであるという点で他のORMとは異なります。 これは、インラインまたは別の `.sql` ファイルで独自のクエリを定義することを意味します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sql
@@ -97,15 +97,15 @@ LIMIT $limit OFFSET $offset;
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Create Sanic App and Async Engine
+### Sanic App と Async Engine
 
-We need to create the app instance and attach the `SanicMayimExtension` with any executors.
+アプリインスタンスを作成し、任意の実行者に `SanicMayimExtension` を追加する必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -132,32 +132,32 @@ Extend.register(
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Register Routes
+### ルート登録
 
-Because we are using Mayim's extension for Sanic, we have the automatic `CountryExecutor` injection into the route handler. It makes for an easy, type-annotated development experience.
+Sanic用のMayimの拡張機能を使っているので、ルートハンドラに自動的に`CountryExecutor`を注入しています。 これにより、タイプ注釈付きの開発が容易になります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 @app.get("/")
-async def handler(request: Request, executor: CountryExecutor):
-    countries = await executor.select_all_countries()
+async def handler(request, executor: CountryExecutor):
+    countles = await executor.select_all_countries()
     return json({"countries": [country.dict() for country in co
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Send Requests
+### リクエストを送信する
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -168,17 +168,17 @@ curl 'http://127.0.0.1:8000'
 
 ## SQLAlchemy
 
-Because [SQLAlchemy 1.4](https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html) has added native support for `asyncio`, Sanic can finally work well with SQLAlchemy. Be aware that this functionality is still considered _beta_ by the SQLAlchemy project.
+[SQLAlchemy 1.4](https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html) が `asyncio` のネイティブサポートを追加したため、Sanic は SQLAlchemy でうまく動作します。 この機能はまだ SQLAlchemy プロジェクトで _beta_ とみなされていることに注意してください。
 
-.. column::
+.. 列::
 
 ```
-### Dependencies
+### 依存関係
 
-First, we need to install the required dependencies. In the past, the dependencies installed were `sqlalchemy` and `pymysql`, but now `sqlalchemy` and `aiomysql` are needed.
+まず、必要な依存関係をインストールする必要があります。 以前はインストールされていた依存関係は `sqlalcemy` と `pymysql` でしたが、現在は `sqlalcemy` と `aiomysql` が必要です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```shell
@@ -187,7 +187,7 @@ pip install -U aiomysql
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 ### Define ORM Model
@@ -195,7 +195,7 @@ pip install -U aiomysql
 ORM model creation remains the same.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -226,15 +226,15 @@ class Car(BaseModel):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Create Sanic App and Async Engine
+### Sanic AppとAsync Engine
 
-Here we use mysql as the database, and you can also choose PostgreSQL/SQLite. Pay attention to changing the driver from `aiomysql` to `asyncpg`/`aiosqlite`.
+ここではデータベースとしてmysqlを使用し、PostgreSQL/SQLiteを選択することもできます。 ドライバを`aiomysql`から`asyncpg`/`aiosqlite`に変更することに注意してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -248,7 +248,7 @@ bind = create_async_engine("mysql+aiomysql://root:root@localhost/test", echo=Tru
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 ### Register Middlewares
@@ -258,7 +258,7 @@ The request middleware creates an usable `AsyncSession` object and set it to `re
 Thread-safe variable `_base_model_session_ctx` helps you to use the session object instead of fetching it from `request.ctx`.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -285,15 +285,15 @@ async def close_session(request, response):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 ### Register Routes
 
-According to sqlalchemy official docs, `session.query` will be legacy in 2.0, and the 2.0 way to query an ORM object is using `select`.
+によると、 sqlalcemy の公式ドキュメント、 `session. uery`は2.0でレガシーとなり、ORMオブジェクトに問い合わせる2.0の方法は`select`を使用しています。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -328,37 +328,37 @@ async def get_user(request, pk):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Send Requests
+### リクエストを送信する
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
 curl --location --request POST 'http://127.0.0.1:8000/user'
 {"name":"foo","cars":[{"brand":"Tesla"}]}
-```
+```sh
 
 ```sh
-curl --location --request GET 'http://127.0.0.1:8000/user/1'
+curl --location ---request GET 'http://127.0.0.1:8000/user/1'
 {"name":"foo","cars":[{"brand":"Tesla"}]}
 ```
 ````
 
 ## Tortoise-ORM
 
-.. column::
+.. 列::
 
 ```
-### Dependencies
+### 依存関係
 
-tortoise-orm's dependency is very simple, you just need install tortoise-orm.
+tortoise-ormの依存関係はとてもシンプルで、インストールするだけで済みます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```shell
@@ -366,15 +366,15 @@ pip install -U tortoise-orm
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 ### Define ORM Model
 
-If you are familiar with Django, you should find this part very familiar.
+Djangoに慣れていれば、この部分はよく知っているはずです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -390,15 +390,15 @@ class Users(Model):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 ### Create Sanic App and Async Engine
 
-Tortoise-orm provides a set of registration interface, which is convenient for users, and you can use it to create database connection easily.
+Tortoise-ormは登録インターフェースのセットを提供しています。 利用者にとって便利で、簡単にデータベース接続を作成することができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -416,13 +416,13 @@ register_tortoise(
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Register Routes
+### ルート登録
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -446,13 +446,13 @@ if __name__ == "__main__":
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-### Send Requests
+### リクエストを送信する
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh

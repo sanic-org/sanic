@@ -1,65 +1,65 @@
 # Websockets
 
-Sanic provides an easy to use abstraction on top of [websockets](https://websockets.readthedocs.io/en/stable/).
+Sanic 提供了一个易于使用的 [websockets]顶部的摘要(https\://websockets.readthedocs.io/en/stable/)。
 
-## Routing
+## 路由
 
-.. column::
+.. 列:
 
 ```
-Websocket handlers can be hooked up to the router similar to regular handlers.
+Websocket 处理程序可以绑定到路由器，类似于常规处理程序。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 from sanic import Request, Websocket
 
-async def feed(request: Request, ws: Websocket):
-    pass
+async def Feed(request: Request, ws: Websocket):
+    pask
 
-app.add_websocket_route(feed, "/feed")
+appp dd_websocket_route(feed, "/feed")
 ```
 ```python
 from sanic import Request, Websocket
 
-@app.websocket("/feed")
-async def feed(request: Request, ws: Websocket):
-    pass
+@app. ebsocket("/feed")
+async def Feed(request, ws: Websocket):
+    passe
 ```
 ````
 
 ## Handler
 
-.. column::
+.. 列:
 
 ```
-Typically, a websocket handler will want to hold open a loop.
+通常情况下，一个 websocket 处理程序将会保持打开一个循环。
 
-It can then use the `send()` and `recv()` methods on the second object injected into the handler.
+然后它可以在注入处理器的第二个对象上使用 `send()` 和 `recv()` 方法。
 
-This example is a simple endpoint that echos back to the client messages that it receives.
+这个示例是一个简单的端点，回溯到它收到的客户端消息。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic import Request, Websocket
+来自sanic import Request, Websocket
 
-@app.websocket("/feed")
-async def feed(request: Request, ws: Websocket):
+@app. ebsocket("/feed")
+async def Feed(请求: 请求, ws: Websocket:
     while True:
-        data = "hello!"
-        print("Sending: " + data)
-        await ws.send(data)
-        data = await ws.recv()
-        print("Received: " + data)
+        data = "hello!
+        打印("发送：" + 数据)
+        等待ws。 end(data)
+        data = 等待ws。 ecv()
+        打印("接收：" + 数据)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 You can simplify your loop by just iterating over the `Websocket` object in a for loop.
@@ -67,22 +67,22 @@ You can simplify your loop by just iterating over the `Websocket` object in a fo
 *Added in v22.9*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic import Request, Websocket
+来自sanic import Request, Websocket
 
-@app.websocket("/feed")
-async def feed(request: Request, ws: Websocket):
-    async for msg in ws:
-        await ws.send(msg)
+@app. ebsocket("/feed")
+async def Feed(请求: 请求, ws: Websocket:
+    async for msg in w:
+        等待w. end(msg)
 ```
 ````
 
-## Configuration
+## 配置
 
-See [configuration section](/guide/deployment/configuration.md) for more details, however the defaults are shown below.
+详见[配置部分](/guide/deplement/configuration.md)，但默认值显示在下面。
 
 ```python
 app.config.WEBSOCKET_MAX_SIZE = 2 ** 20

@@ -1,19 +1,19 @@
-# Nginx Deployment
+# Nginx デプロイ
 
-## Introduction
+## はじめに
 
-Although Sanic can be run directly on Internet, it may be useful to use a proxy
-server such as Nginx in front of it. This is particularly useful for running
+Sanicはインターネット上で直接実行することができますが、Nginxなどのプロキシ
+サーバーをその前に使用すると便利です。 This is particularly useful for running
 multiple virtual hosts on the same IP, serving NodeJS or other services beside
 a single Sanic app, and it also allows for efficient serving of static files.
-TLS and HTTP/2 are also easily implemented on such proxy.
+TLS と HTTP/2 は、このようなプロキシでも容易に実装されています。
 
-We are setting the Sanic app to serve only locally at 127.0.0.1:8001, while the
-Nginx installation is responsible for providing the service to public Internet
-on domain example.com. Static files will be served by Nginx for maximal
-performance.
+Sanicアプリは127.0.0でローカルでのみ動作するように設定しています。 :8001, 一方、
+Nginx のインストールは、ドメインの example.com 上のパブリック インターネット
+にサービスを提供する責任があります。 スタティックファイルは最大
+パフォーマンスのためにNginxによって提供されます。
 
-## Proxied Sanic app
+## プロキシされたサニックアプリ
 
 ```python
 from sanic import Sanic
@@ -30,34 +30,34 @@ def index(request):
     )
 ```
 
-Since this is going to be a system service, save your code to
-`/srv/sanicservice/proxied_example.py`.
+これはシステムサービスになりますので、コードを
+`/srv/sanicservice/proxied_example.py`に保存してください。
 
-For testing, run your app in a terminal using the `sanic` CLI in the folder where you saved the file.
+テストのために、ファイルを保存したフォルダにある `sanic` CLI を使用して、アプリをターミナルで実行します。
 
 ```bash
 SANIC_FORWARDED_SECRET=_hostname sanic proxied_example --port 8001
 ```
 
-We provide Sanic config `FORWARDED_SECRET` to identify which proxy it gets
-the remote addresses from. Note the `_` in front of the local hostname.
+Sanic config `FORWARDED_SECRET`を用意して、リモートアドレスから
+取得するプロキシを特定します。 ローカルホスト名の前にある `_` に注意してください。
 This gives basic protection against users spoofing these headers and faking
 their IP addresses and more.
 
-## SSL certificates
+## SSL 証明書
 
-Install Certbot and obtain a certicate for all your domains. This will spin up its own webserver on port 80 for a moment to verify you control the given domain names.
+Certbotをインストールし、すべてのドメインの証明書を取得してください。 これは、指定されたドメイン名を制御することを確認するために、しばらくの間、ポート80上で独自のWebサーバーを起動します。
 
 ```bash
 certbot -d example.com -d www.example.com
 ```
 
-## Nginx configuration
+## Nginx 設定
 
-Quite much configuration is required to allow fast transparent proxying, but
-for the most part these don't need to be modified, so bear with me.
+高速な透過プロキシを許可するには、非常に多くの構成が必要です しかし、ほとんどの場合、
+は修正する必要はありません。
 
-.. tip:: Note
+.. tip:: メモ
 
 ```
 Separate upstream section, rather than simply adding the IP after `proxy_pass`
@@ -127,19 +127,19 @@ map $remote_addr $for_addr {
 }
 ```
 
-Start or restart Nginx for changes to take effect. E.g.
+変更を有効にするためにNginxを起動または再起動します。 例えば、
 
 ```bash
 systemctl restart nginx
 ```
 
-You should be able to connect your app on `https://example.com`. Any 404
+`https://example.com`でアプリを接続できます。 Any 404
 errors and such will be handled by Sanic's error pages, and whenever a static
 file is present at a given path, it will be served by Nginx.
 
-## Running as a service
+## サービスとして実行中
 
-This part is for Linux distributions based on `systemd`. Create a unit file
+この部分は `systemd` に基づいたLinuxディストリビューション用です。 Create a unit file
 `/etc/systemd/system/sanicexample.service`
 
 ```
@@ -157,7 +157,7 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-Then reload service files, start your service and enable it on boot:
+次に、サービスファイルを再読み込みし、サービスを開始し、起動時に有効にします:
 
 ```bash
 systemctl daemon-reload
@@ -165,8 +165,8 @@ systemctl start sanicexample
 systemctl enable sanicexample
 ```
 
-.. tip:: Note
+.. tip:: メモ
 
 ```
-For brevity we skipped setting up a separate user account and a Python virtual environment or installing your app as a Python module. There are good tutorials on those topics elsewhere that easily apply to Sanic as well. The DynamicUser setting creates a strong sandbox which basically means your application cannot store its data in files, so you may consider setting `User=sanicexample` instead if you need that.
+簡潔さのために、別のユーザアカウントとPython仮想環境のセットアップをスキップしたり、アプリケーションをPythonモジュールとしてインストールしたりしました。 Sanicにも簡単に適用できる他のトピックについても良いチュートリアルがあります。 DynamicUser設定は強力なサンドボックスを作成します。これは、アプリケーションがファイルにデータを保存できないことを意味します。 その代わりに、`User=sanicexample` を設定することを考えてみましょう。
 ```

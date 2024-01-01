@@ -1,28 +1,28 @@
 ---
-title: Background tasks
+title: バックグラウンドタスク
 ---
 
-# Background tasks
+# バックグラウンドタスク
 
-## Creating Tasks
+## タスクの作成
 
-It is often desirable and very convenient to make usage of [tasks](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task) in async Python. Sanic provides a convenient method to add tasks to the currently **running** loop. It is somewhat similar to `asyncio.create_task`. For adding tasks before the 'App' loop is running, see next section.
+async Pythonで [tasks](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task) を利用するのはとても便利です。 Sanicは、現在の**実行中**ループにタスクを追加する便利な方法を提供します。 これは `asyncio.create_task` に似ています。 'App' ループが実行される前にタスクを追加する場合は、次のセクションを参照してください。
 
 ```python
-async def notify_server_started_after_five_seconds():
+async def notify_server_started_after_five_secondss():
     await asyncio.sleep(5)
     print('Server successfully started!')
 
 app.add_task(notify_server_started_after_five_seconds())
 ```
 
-.. column::
+.. 列::
 
 ```
-Sanic will attempt to automatically inject the app, passing it as an argument to the task.
+Sanicは自動的にアプリを注入しようとし、タスクに引数として渡します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -34,13 +34,13 @@ app.add_task(auto_inject)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Or you can pass the `app` argument explicitly.
+もしくは、`app`引数を明示的に渡すこともできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -52,19 +52,19 @@ app.add_task(explicit_inject(app))
 ```
 ````
 
-## Adding tasks before `app.run`
+## `app.run`の前にタスクを追加する
 
-It is possible to add background tasks before the App is run ie. before `app.run`. To add a task before the App is run, it is recommended to not pass the coroutine object (ie. one created by calling the `async` callable), but instead just pass the callable and Sanic will create the coroutine object on **each worker**. Note: the tasks that are added such are run as `before_server_start` jobs and thus run on every worker (and not in the main process). This has certain consequences, please read [this comment](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668) on [this issue](https://github.com/sanic-org/sanic/issues/2139) for further details.
+`app.run`の前にバックグラウンドタスクを追加することができます。 アプリを実行する前にタスクを追加するには、コルーチンオブジェクトを渡さないことをお勧めします (すなわち。 `async`呼び出し可能を呼び出すことで作成されたものですが、代わりに呼び出し可能ファイルを渡すだけで、Sanicは**各ワーカー**にコルーチンオブジェクトを作成します。 注意: このように追加されたタスクは、 `before_server_start` ジョブとして実行されます。そのため、すべてのワーカーで実行されます (メインプロセスでは実行されません)。 これには一定の影響があります。詳細については、[このissue](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668)の[このissue](https://github.com/sanic-org/sanic/issues/2139)をご覧ください。
 
-To add work on the main process, consider adding work to [`@app.main_process_start`](./listeners.md). Note: the workers won't start until this work is completed.
+メインプロセスで作業を追加するには、[`@app.main_process_start`](./listeners.md)に作業を追加することを検討してください。 注意: この作業が完了するまでワーカーは起動しません。
 
-.. column::
+.. 列::
 
 ```
-Example to add a task before `app.run`
+`app.run`の前にタスクを追加する例
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -81,15 +81,15 @@ app.run(...)
 ```
 ````
 
-## Named tasks
+## 名前付きタスク
 
-.. column::
+.. 列::
 
 ```
-When creating a task, you can ask Sanic to keep track of it for you by providing a `name`.
+タスクを作成するときは、`name`を指定することで、Sanicにそのタスクを追跡させることができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -97,13 +97,13 @@ app.add_task(slow_work, name="slow_task")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can now retrieve that task instance from anywhere in your application using `get_task`.
+`get_task` を使用して、アプリケーションのどこからでもタスクインスタンスを取得できるようになりました。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -111,13 +111,13 @@ task = app.get_task("slow_task")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-If that task needs to be cancelled, you can do that with `cancel_task`. Make sure that you `await` it.
+そのタスクをキャンセルする必要がある場合は、`cancel_task` でそれを行うことができます。`await` を確認してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -125,13 +125,13 @@ await app.cancel_task("slow_task")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-All registered tasks can be found in the `app.tasks` property. To prevent cancelled tasks from filling up, you may want to run `app.purge_tasks` that will clear out any completed or cancelled tasks.
+登録されたすべてのタスクは `app.tasks` プロパティにあります。キャンセルされたタスクがいっぱいになるのを防ぐため、`app` を実行します。 完了またはキャンセルされたタスクをクリアする urge_tasks` 。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -139,7 +139,7 @@ app.purge_tasks()
 ```
 ````
 
-This pattern can be particularly useful with `websockets`:
+このパターンは `websockets` で特に役立ちます。
 
 ```python
 async def receiver(ws):
@@ -163,4 +163,4 @@ async def feed(request, ws):
         request.app.purge_tasks()
 ```
 
-_Added in v21.12_
+_v21.12_ に追加されました

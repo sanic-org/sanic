@@ -411,9 +411,9 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 9
+##### 例9
 
-Secret insulated by malformed field #2
+不正なフィールドによってシークレットが隔離される例 #2
 
 ```sh
 curl localhost:8000/fwd \
@@ -435,7 +435,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "",
   "scheme": "wss",
@@ -451,7 +451,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 10
+##### 例10
 
 Unexpected termination should not lose existing acceptable values
 
@@ -475,7 +475,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "",
   "scheme": "wss",
@@ -491,7 +491,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 11
+##### 例11
 
 Field normalization
 
@@ -515,7 +515,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "",
   "scheme": "wss",
@@ -534,7 +534,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ***
 
-##### Example 12
+##### 例12
 
 Using "by" field as secret
 
@@ -558,7 +558,7 @@ app.config.FORWARDED_SECRET = "_proxySecret"
 
 ````
 ```bash
-# curl response
+# curlの応答
 {
   "remote_addr": "1.2.3.4",
   "scheme": "http",

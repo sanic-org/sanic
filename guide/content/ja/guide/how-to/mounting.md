@@ -1,6 +1,6 @@
-# Application Mounting
+# アプリケーションのマウント
 
-> How do I mount my application at some path above the root?
+> アプリケーションを root の上にあるパスにマウントするにはどうすればよいですか?
 
 ```python
 # server.py
@@ -44,7 +44,7 @@ server {
 
 ```bash
 $ docker-compose up -d
-$ sanic server.app --port=9999 --host=0.0.0.0
+$ sanic server.app --port=9999 --host=0.0.0
 ```
 
 ```bash

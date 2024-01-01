@@ -1,6 +1,6 @@
-# Routing
+# 路由
 
-.. column::
+.. 列:
 
 ```
 So far we have seen a lot of this decorator in different forms.
@@ -8,7 +8,7 @@ So far we have seen a lot of this decorator in different forms.
 But what is it? And how do we use it?
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -23,9 +23,9 @@ But what is it? And how do we use it?
 ```
 ````
 
-## Adding a route
+## 添加路由
 
-.. column::
+.. 列:
 
 ```
 The most basic way to wire up a handler to an endpoint is with `app.add_route()`.
@@ -33,42 +33,42 @@ The most basic way to wire up a handler to an endpoint is with `app.add_route()`
 See [API docs](https://sanic.readthedocs.io/en/stable/sanic/api_reference.html#sanic.app.Sanic.url_for) for more details.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-async def handler(request):
+async def 处理器(请求):
     return text("OK")
 
 app.add_route(handler, "/test")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-By default, routes are available as an HTTP `GET` call. You can change a handler to respond to one or more HTTP methods.
+默认情况下，路由是可用的 HTTP `GET` 调用。您可以更改处理程序来响应一个或多个HTTP方法。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.add_route(
     handler,
     '/test',
-    methods=["POST", "PUT"],
+    meths=["POST", "PUT",
 )
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Using the decorator syntax, the previous example is identical to this.
+使用装饰符语法, 前面的示例与此相同。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -78,21 +78,21 @@ async def handler(request):
 ```
 ````
 
-## HTTP methods
+## HTTP 方法
 
-Each of the standard HTTP methods has a convenience decorator.
+每种标准HTTP方法都有一个方便装饰器。
 
-### GET
+### 获取
 
 ```python
 @app.get('/test')
-async def handler(request):
-    return text('OK')
+async def 处理器(请求):
+    返回文本('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/GET)
 
-### POST
+### 帖子
 
 ```python
 @app.post('/test')
@@ -100,14 +100,14 @@ async def handler(request):
     return text('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/POST)
 
-### PUT
+### 弹出
 
 ```python
 @app.put('/test')
-async def handler(request):
-    return text('OK')
+async def 处理器(请求):
+    返回文本('OK')
 ```
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT)
@@ -116,117 +116,117 @@ async def handler(request):
 
 ```python
 @app.patch('/test')
-async def handler(request):
-    return text('OK')
+async def 处理器(请求):
+    返回文本('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/PATCH)
 
-### DELETE
+### 删除
 
 ```python
 @app.delete('/test')
-async def handler(request):
-    return text('OK')
+async def 处理器(请求):
+    返回文本('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/DELETE)
 
-### HEAD
+### 黑色
 
 ```python
 @app.head('/test')
-async def handler(request):
+async def 处理器(请求):
     return empty()
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/HEAD)
 
-### OPTIONS
+### 选项
 
 ```python
 @app.options('/test')
-async def handler(request):
+async def 处理器(请求):
     return empty()
 ```
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS)
 
-.. warning::
+.. 警告：:
 
 ````
-By default, Sanic will **only** consume the incoming request body on non-safe HTTP methods: `POST`, `PUT`, `PATCH`, `DELETE`. If you want to receive data in the HTTP request on any other method, you will need to do one of the following two options:
+默认情况下，Sanic **只**在不安全的 HTTP 方法上消耗传入的请求机构：“POST`、`PUT`、`PATCH`、`DELETE`”。 如果您想要在 HTTP 请求中在任何其他方法上接收数据，， 您将需要做以下两个选项之一：
 
-**Option #1 - Tell Sanic to consume the body using `ignore_body`**
+**选项#1 - 告诉Sanic使用`ignore_body`**
 ```python
-@app.request("/path", ignore_body=False)
+@app。 赤道("/path", ignore_body=False)
 async def handler(_):
     ...
 ```
 
-**Option #2 - Manually consume the body in the handler using `receive_body`**
+**Option #2 - 手动使用 `receive_body`**
 ```python
-@app.get("/path")
-async def handler(request: Request):
-    await request.receive_body()
+@app. et("/path")
+async def 处理器(请求: 请求):
+    等待request.receive_body()
 ```
 ````
 
-## Path parameters
+## 路径参数
 
-.. column::
+.. 列:
 
 ```
-Sanic allows for pattern matching, and for extracting values from URL paths. These parameters are then injected as keyword arguments in the route handler.
+Sanic 允许模式匹配，也允许从 URL 路径中提取值。然后这些参数作为关键词参数在路由处理器中注入。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.get("/tag/<tag>")
-async def tag_handler(request, tag):
-    return text("Tag - {}".format(tag))
+async def tag_handler(请求，标签):
+    return text("Tag - {}".form(标签))
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You can declare a type for the parameter. This will be enforced when matching, and also will type cast the variable.
+您可以声明参数类型。匹配时将强制执行，并且还将输入变量。
 ```
 
-.. column::
-
-````
-```python
-@app.get("/foo/<foo_id:uuid>")
-async def uuid_handler(request, foo_id: UUID):
-    return text("UUID - {}".format(foo_id))
-```
-````
-
-.. column::
-
-```
-For some standard types like `str`, `int`, and `UUID`, Sanic can infer the path parameter type from the function signature. This means that it may not always be necessary to include the type in the path parameter definition.
-```
-
-.. column::
+.. 列:
 
 ````
 ```python
-@app.get("/foo/<foo_id>")  # Notice there is no :uuid in the path parameter
+@app.get("/fo/<foo_id:uuid>")
 async def uuid_handler(request, foo_id: UUID):
-    return text("UUID - {}".format(foo_id))
+    return text("UUUID - {}".format (fo_id))
 ```
 ````
 
-### Supported types
+.. 列:
+
+```
+对于一些标准类型，如`str`、`int`和`UUID`，Sanic可以从函数签名中推断路径参数类型。 这意味着可能并非总是需要在路径参数定义中包含类型。
+```
+
+.. 列:
+
+````
+```python
+@app。 et("/foo/<foo_id>") # 路径参数
+async def uuid_handler不存在:uuid (请求) foo_id: UUID:
+    return text("UUID - {}" ormat(fo_id))
+```
+````
+
+### 支持的类型
 
 ### `str`
 
-.. column::
+.. 列:
 
 ```
 **Regular expression applied**: `r"[^/]+"`  
@@ -239,19 +239,19 @@ async def uuid_handler(request, foo_id: UUID):
 Beginning in v22.3 `str` will *not* match on empty strings. See `strorempty` for this behavior.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:str>")
-async def handler(request, foo: str):
+Async def 处理器(请求, foo: str):
     ...
 ```
 ````
 
 ### `strorempty`
 
-.. column::
+.. 列:
 
 ```
 **Regular expression applied**: `r"[^/]*"`  
@@ -267,169 +267,169 @@ Unlike the `str` path parameter type, `strorempty` can also match on an empty st
 *Added in v22.3*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:strorempty>")
-async def handler(request, foo: str):
+Async def 处理器(请求, foo: str):
     ...
 ```
 ````
 
 ### `int`
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: `r"-?\d+"`  
-**Cast type**: `int`  
-**Example matches**:  
+**正则表达式已应用**: `r"-?\d+"  
+**Cast 类型**: `int`  
+**示例匹配** :  
 
 - `/path/to/10`
 - `/path/to/-10`
 
-_Does not match float, hex, octal, etc_
+_不匹配浮点, 十六进制, octal等_
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:int>")
-async def handler(request, foo: int):
+Async def 处理器(请求, foo: int):
     ...
 ```
 ````
 
 ### `float`
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: `r"-?(?:\d+(?:\.\d*)?|\.\d+)"`  
-**Cast type**: `float`  
-**Example matches**:  
+**正则表达式已应用**: `r"-?(?:\d+(?:\.\d*)?|\.\d+)"  
+**投射类型**: `float`  
+**示例匹配**:  
 
 - `/path/to/10`
 - `/path/to/-10`
 - `/path/to/1.5`
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:float>")
-async def handler(request, foo: float):
+Async def 处理器(请求，foo: float):
     ...
 ```
 ````
 
 ### `alpha`
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: `r"[A-Za-z]+"`  
-**Cast type**: `str`  
-**Example matches**:  
+**正则表达式已应用**：`r'[A-Za-z]+"`  
+**快速类型**：`str`  
+**示例匹配**：  
 
 - `/path/to/Bob`
 - `/path/to/Python`
 
-_Does not match a digit, or a space or other special character_
+_不匹配数字， 或空格或其他特殊字符_
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:alpha>")
-async def handler(request, foo: str):
+Async def 处理器(请求, foo: str):
     ...
 ```
 ````
 
 ### `slug`
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: `r"[a-z0-9]+(?:-[a-z0-9]+)*"`  
-**Cast type**: `str`  
-**Example matches**:  
+**正则表达式**：`r'[a-z0-9]+(?:-[a-z0-9]+)*"  
+**快速类型**：`str`  
+**示例匹配**：  
 
 - `/path/to/some-news-story`
 - `/path/to/or-has-digits-123`
 
-*Added in v21.6*
+*添加于v21.6*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<article:slug>")
-async def handler(request, article: str):
+async def 处理器(请求，文章: str):
     ...
 ```
 ````
 
 ### `path`
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: `r"[^/].*?"`  
-**Cast type**: `str`  
-**Example matches**:
+**正则表达式已应用**: `r"[^/].*?"  
+**快速类型**: `str`  
+**示例匹配**:
 - `/path/to/hello`
 - `/path/to/hello.txt`
 - `/path/to/hello/world.txt`
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:path>")
-async def handler(request, foo: str):
+Async def 处理器(请求, foo: str):
     ...
 ```
 ````
 
-.. warning::
+.. 警告：:
 
 ```
-Because this will match on `/`, you should be careful and thoroughly test your patterns that use `path` so they do not capture traffic intended for another endpoint. Additionally, depending on how you use this type, you may be creating a path traversal vulnerability in your application. It is your job to protect your endpoint against this, but feel free to ask in our community channels for help if you need it :)
+因为这将在`/`上匹配， 你应该仔细和彻底地测试你使用`path`的模式，这样他们就不会捕获打算用于另一端点的流量。 此外，根据您如何使用这种类型，您可能会在应用程序中创建一条横向脆弱性。 你的任务是保护你的终点不受这种影响。 但如果您需要帮助，请在我们的社区频道中寻求帮助:)
 ```
 
 ### `ymd`
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: `r"^([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))"`  
-**Cast type**: `datetime.date`  
-**Example matches**:  
+**正则表达式已应用**: `r"^([12]\d{3}( 0[1-9]|1[0-2])-( 0[1-9]|[12]\d|3[01])""  
+**Cast类型**: `datetime.  
+**示例匹配**:  
 
 - `/path/to/2021-03-28`
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:ymd>")
-async def handler(request, foo: datetime.date):
+Async def 处理程序(请求，foo: datetime.date):
     ...
 ```
 ````
 
 ### `uuid`
 
-.. column::
+.. 列:
 
 ```
 **Regular expression applied**: `r"[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}"`  
@@ -439,94 +439,94 @@ async def handler(request, foo: datetime.date):
 - `/path/to/123a123a-a12a-1a1a-a1a1-1a12a1a12345`
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:uuid>")
-async def handler(request, foo: UUID):
+Async def 处理器(请求, foo: UUID):
     ...
 ```
 ````
 
 ### ext
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: n/a
-**Cast type**: *varies*
-**Example matches**:
+**正则表达式**：n/a
+**铸造类型**：*varies*
+**示例匹配**：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/path/to/<foo:ext>")
-async def handler(request, foo: str, ext: str):
+Async def 处理程序(请求，foo: str, ext: str):
     ...
 ```
 ````
 
-| definition                         | example     | filename | extension  |
-| ---------------------------------- | ----------- | -------- | ---------- |
-| \<file:ext>                        | page.txt    | `"page"` | `"txt"`    |
-| \<file:ext=jpg>                    | cat.jpg     | `"cat"`  | `"jpg"`    |
-| \<file:ext=jpg\|png\|gif\|svg>     | cat.jpg     | `"cat"`  | `"jpg"`    |
-| \<file=int:ext>                    | 123.txt     | `123`    | `"txt"`    |
-| \<file=int:ext=jpg\|png\|gif\|svg> | 123.svg     | `123`    | `"svg"`    |
-| \<file=float:ext=tar.gz>           | 3.14.tar.gz | `3.14`   | `"tar.gz"` |
+| 定义                                 | 示例          | 文件名      | 扩展          |
+| ---------------------------------- | ----------- | -------- | ----------- |
+| \<file:ext>                        | 页次          | `"page"` | `"txt"`     |
+| \<file:ext=jpg>                    | jpg         | `"cat"`  | \`"jpg""    |
+| \<file:ext=jpg\|png\|gif\|svg>     | jpg         | `"cat"`  | \`"jpg""    |
+| \<file=int:ext>                    | 123.txt     | `123`    | `"txt"`     |
+| \<file=int:ext=jpg\|png\|gif\|svg> | 123.svg     | `123`    | `"svg"`     |
+| \<file=float:ext=tar.gz>           | 3.14.tar.gz | `3.14`   | \`"tar.gz"" |
 
-File extensions can be matched using the special `ext` parameter type. It uses a special format that allows you to specify other types of parameter types as the file name, and one or more specific extensions as shown in the example table above.
+文件扩展名可以使用特殊的 `ext` 参数类型匹配。 它使用特殊格式，允许您指定其他类型的参数类型作为文件名。 和上面的示例表所示的一个或多个具体扩展。
 
-It does _not_ support the `path` parameter type.
+它不支持 `path` 参数类型。
 
-_Added in v22.3_
+_添加于 v22.3_
 
-### regex
+### 正则表达式
 
-.. column::
+.. 列:
 
 ```
-**Regular expression applied**: _whatever you insert_  
-**Cast type**: `str`  
-**Example matches**:  
+**正则表达式已应用**：_无论你插入了什么样的  
+**投射类型**：`str`  
+**示例匹配**：  
 
 - `/path/to/2021-01-01`
 
-This gives you the freedom to define specific matching patterns for your use case.
+这使你能够自由地定义你使用的特定匹配模式。
 
-In the example shown, we are looking for a date that is in `YYYY-MM-DD` format.
+在所显示的示例中，我们正在寻找一个 `YYYY-MM-DD` 格式的日期。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route(r"/path/to/<foo:([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))>")
-async def handler(request, foo: str):
+async def 处理程序(请求，foo: str):
     ...
 ```
 ````
 
-### Regex Matching
+### 正则表达式匹配
 
-More often than not, compared with complex routing, the above example is too simple, and we use a completely different routing matching pattern, so here we will explain the advanced usage of regex matching in detail.
+与复杂的路由相比，上述例子往往太简单， 我们使用完全不同的路由匹配模式，所以我们将在这里详细解释正则表达式匹配的高级用途。
 
-Sometimes, you want to match a part of a route:
+有时候你想要匹配路由的一部分：
 
 ```text
 /image/123456789.jpg
 ```
 
-If you wanted to match the file pattern, but only capture the numeric portion, you need to do some regex fun 😄:
+如果你想要匹配文件模式，但仅捕获数字部分，你需要做一些regex funn 😄:
 
 ```python
 app.route(r"/image/<img_id:(?P<img_id>\d+)\.jpg>")
 ```
 
-Further, these should all be acceptable:
+此外，所有这些都应当是可以接受的：
 
 ```python
 @app.get(r"/<foo:[a-z]{3}.txt>")                # matching on the full pattern
@@ -535,81 +535,81 @@ Further, these should all be acceptable:
 @app.get(r"/<foo:(?P<foo>[a-z]{3}).(?:txt)>")   # defining a single named matching group, with one or more non-matching groups
 ```
 
-Also, if using a named matching group, it must be the same as the segment label.
+而且，如果使用一个命名匹配组，它必须与段标签相同。
 
 ```python
 @app.get(r"/<foo:(?P<foo>\d+).jpg>")  # OK
 @app.get(r"/<foo:(?P<bar>\d+).jpg>")  # NOT OK
 ```
 
-For more regular usage methods, please refer to [Regular expression operations](https://docs.python.org/3/library/re.html)
+更多常规使用方法，请参阅[正则表达式操作](https://docs.python.org/3/library/re.html)
 
-## Generating a URL
+## 正在生成 URL
 
-.. column::
+.. 列:
 
 ```
-Sanic provides a method to generate URLs based on the handler method name: `app.url_for()`. This is useful if you want to avoid hardcoding url paths into your app; instead, you can just reference the handler name.
+Sanic 提供了一个基于处理方法名称：`app.url_for()`生成URL的方法。 如果你想要避免硬编码URL路径到你的应用，那么这将是有用的；相反，你只能引用处理程序名称。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.route('/')
+@app。 oute('/')
 async def index(request):
-    # generate a URL for the endpoint `post_handler`
-    url = app.url_for('post_handler', post_id=5)
+    # 为端点 `post_handler`
+    url = app. rl_for('post_handler', post_id=5)
 
-    # Redirect to `/posts/5`
+    # 重定向到 "/posts/5"
     return redirect(url)
 
-@app.route('/posts/<post_id>')
+@app. oute('/posts/<post_id>')
 async def post_handler(request, post_id):
     ...
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You can pass any arbitrary number of keyword arguments. Anything that is _not_ a request parameter will be implemented as a part of the query string.
+您可以传递任意数量的关键字参数。 任何为 _not_ 的请求参数都将作为查询字符串的一部分实现。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-assert app.url_for(
+claim app.url_for(
     "post_handler",
     post_id=5,
     arg_one="one",
     arg_two="two",
-) == "/posts/5?arg_one=one&arg_two=two"
+) =="/posts/5?arg_one=one&arg_two=two"
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Also supported is passing multiple values for a single query key.
+还支持通过单个查询键的多个值。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-assert app.url_for(
+claim app.url_for(
     "post_handler",
     post_id=5,
-    arg_one=["one", "two"],
-) == "/posts/5?arg_one=one&arg_one=two"
+    arg_one=["one", "two",
+) =="/posts/5?arg_one=one=one&arg_one=two"
 ```
 ````
 
-### Special keyword arguments
+### 特殊关键字参数
 
-See API Docs for more details.
+详见API Docs。
 
 ```python
 app.url_for("post_handler", post_id=5, arg_one="one", _anchor="anchor")
@@ -628,15 +628,15 @@ app.url_for("post_handler", post_id=5, arg_one=["one", "two"], arg_two=2, _ancho
 # 'http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor'
 ```
 
-### Customizing a route name
+### 自定义路由名称
 
-.. column::
+.. 列:
 
 ```
-A custom route name can be used by passing a `name` argument while registering the route.
+在注册路由时可以通过 `name` 参数使用自定义路由名称。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -646,13 +646,13 @@ def handler(request):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Now, use this custom name to retrieve the URL
+现在，使用此自定义名称检索URL
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -660,63 +660,63 @@ assert app.url_for("get_handler", foo="bar") == "/get?foo=bar"
 ```
 ````
 
-## Websockets routes
+## Websockets路由
 
-.. column::
+.. 列:
 
 ```
-Websocket routing works similar to HTTP methods.
+Websocket 路由器类似于HTTP方法。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-async def handler(request, ws):
+async def 处理器(请求) ws：
     message = "Start"
-    while True:
-        await ws.send(message)
-        message = await ws.recv()
+    而True：
+        等待w。 end(message)
+        message = 等待ws.recv()
 
 app.add_websocket_route(handler, "/test")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-It also has a convenience decorator.
+它还有一个方便装饰器。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.websocket("/test")
-async def handler(request, ws):
+async def handler(request, w):
     message = "Start"
     while True:
-        await ws.send(message)
-        message = await ws.recv()
+        request ws.send(message)
+        message = 等待ws.recv()
 ```
 ````
 
-Read the [websockets section](/guide/advanced/websockets.md) to learn more about how they work.
+阅读[websockets部分](/guide/advanced/websockets.md)以了解如何工作的更多信息。
 
-## Strict slashes
+## 严格斜线
 
-.. column::
+.. 列:
 
 ```
-Sanic routes can be configured to strictly match on whether or not there is a trailing slash: `/`. This can be configured at a few levels and follows this order of precedence:
+Sanic 路由可以被配置为完全匹配是否存在尾随斜线： `/`。 这可以在几个级别上进行配置，按照这个先后顺序排列：
 
-1. Route
-2. Blueprint
-3. BlueprintGroup
-4. Application
+1。 Route
+2. 蓝图
+3. 蓝图组
+4 应用程序
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -755,9 +755,9 @@ group = Blueprint.group([bp1, bp2], strict_slashes=True)
 ```
 ````
 
-## Static files
+## 静态文件
 
-.. column::
+.. 列:
 
 ```
 In order to serve static files from Sanic, use `app.static()`.
@@ -770,27 +770,27 @@ The order of arguments is important:
 See [API docs](https://sanic.readthedocs.io/en/stable/sanic/api/app.html#sanic.app.Sanic.static) for more details.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-app.static("/static/", "/path/to/directory/")
+app.static("/static/", "/path/to/directory")
 ```
 ````
 
 .. tip::
 
 ```
-It is generally best practice to end your directory paths with a trailing slash (`/this/is/a/directory/`). This removes ambiguity by being more explicit.
+通常最佳做法是以斜杠结束您的目录路径(`/this/is/a/directory/`)。这会通过更明确地去除模糊性。
 ```
 
-.. column::
+.. 列:
 
 ```
-You can also serve individual files.
+您也可以为个别文件服务。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -798,44 +798,44 @@ app.static("/", "/path/to/index.html")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-It is also sometimes helpful to name your endpoint
+命名您的端点有时也是有用的
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.static(
     "/user/uploads/",
     "/path/to/uploads/",
-    name="uploads",
+    name="上传",
 )
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Retrieving the URLs works similar to handlers. But, we can also add the `filename` argument when we need a specific file inside a directory.
+检索URL与处理程序相似。但当我们需要一个目录中的特定文件时，我们也可以添加 `filename` 参数。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-assert app.url_for(
+claim app.url_for(
     "static",
     name="static",
-    filename="file.txt",
+    filename="filename="文件。 xt",
 ) == "/static/file.txt"
 ```
 ```python
-assert app.url_for(
+sapp. rl_for(
     "static",
-    name="uploads",
+    name="上传",
     filename="image.png",
 ) == "/user/uploads/image.png"
 
@@ -845,23 +845,23 @@ assert app.url_for(
 .. tip::
 
 ````
-If you are going to have multiple `static()` routes, then it is *highly* suggested that you manually name them. This will almost certainly alleviate potential hard to discover bugs.
+如果你要多道`static()`路由，那么*强烈*建议你手动命名。 这几乎肯定会缓解发现缺陷的可能性。
 
 ```python
-app.static("/user/uploads/", "/path/to/uploads/", name="uploads")
+app.static("/user/uploads/", "/path/to/uploads/", name="上传")
 app.static("/user/profile/", "/path/to/profile/", name="profile_pics")
 ```
 ````
 
-#### Auto index serving
+#### 自动索引服务
 
-.. column::
+.. 列:
 
 ```
-If you have a directory of static files that should be served by an index page, you can provide the filename of the index. Now, when reaching that directory URL, the index page will be served.
+如果你有一个静态文件目录，应该通过索引页面来使用，你可以提供索引的文件名。 现在，当到达该目录 URL 时，索引页面将被服务。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -869,39 +869,39 @@ app.static("/foo/", "/path/to/foo/", index="index.html")
 ```
 ````
 
-_Added in v23.3_
+_添加于 v23.3_
 
-#### File browser
+#### 文件浏览器
 
-.. column::
+.. 列:
 
 ```
-When serving a directory from a static handler, Sanic can be configured to show a basic file browser instead using `directory_view=True`.
+当使用静态处理器的目录时，Sanic可以被配置为显示基本文件浏览器，而不是使用 `directory_view=True`。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.static("/uploads/", "/path/to/dir", directory_view=True)
-```
+
 ````
 
-You now have a browsable directory in your web browser:
+您的浏览器现在有一个可浏览的目录：
 
 ![image](/assets/images/directory-view.png)
 
-_Added in v23.3_
+_添加于 v23.3_
 
-## Route context
+## 路由环境
 
-.. column::
+.. 列:
 
 ```
-When a route is defined, you can add any number of keyword arguments with a `ctx_` prefix. These values will be injected into the route `ctx` object.
+当路由被定义时，您可以添加任何数量的关键字参数与 `ctx_` 前缀。 这些值将被注入到路由 `ctx` 对象中。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -924,4 +924,4 @@ async def do_something(request):
 ```
 ````
 
-_Added in v21.12_
+_添加于 v21.12_

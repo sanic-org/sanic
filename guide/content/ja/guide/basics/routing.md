@@ -1,18 +1,18 @@
-# Routing
+# ルーティング
 
-.. column::
+.. 列::
 
 ```
-So far we have seen a lot of this decorator in different forms.
+これまで、様々な形でこのデコレータをたくさん見てきました。
 
-But what is it? And how do we use it?
+しかし、それは何ですか？そして、どのように使うのですか？
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
-@app.route("/stairway")
+@app.route("/storeway")
     ...
 
 @app.get("/to")
@@ -23,17 +23,17 @@ But what is it? And how do we use it?
 ```
 ````
 
-## Adding a route
+## ルートの追加
 
-.. column::
+.. 列::
 
 ```
-The most basic way to wire up a handler to an endpoint is with `app.add_route()`.
+ハンドラをエンドポイントに接続する最も基本的な方法は、 `app.add_route()` です。
 
-See [API docs](https://sanic.readthedocs.io/en/stable/sanic/api_reference.html#sanic.app.Sanic.url_for) for more details.
+詳細は [API docs](https://sanic.readthedocs.io/en/stable/sanic/api_reference.html#sanic.app.url_for) を参照してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -44,13 +44,13 @@ app.add_route(handler, "/test")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-By default, routes are available as an HTTP `GET` call. You can change a handler to respond to one or more HTTP methods.
+デフォルトでは、ルートは HTTP `GET` 呼び出しとして使用できます。ハンドラーを1つまたは複数の HTTP メソッドに応答するように変更できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -62,13 +62,13 @@ app.add_route(
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Using the decorator syntax, the previous example is identical to this.
+デコレータ構文を使用すると、前の例はこれと同じです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -78,11 +78,11 @@ async def handler(request):
 ```
 ````
 
-## HTTP methods
+## HTTPメソッド
 
-Each of the standard HTTP methods has a convenience decorator.
+それぞれの標準的な HTTP メソッドには、利便性のデコレータがあります。
 
-### GET
+### 取得
 
 ```python
 @app.get('/test')
@@ -100,7 +100,7 @@ async def handler(request):
     return text('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)
+[MDN Docs](https\://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST
 
 ### PUT
 
@@ -122,7 +122,7 @@ async def handler(request):
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH)
 
-### DELETE
+### 削除
 
 ```python
 @app.delete('/test')
@@ -132,7 +132,7 @@ async def handler(request):
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE)
 
-### HEAD
+### 頭
 
 ```python
 @app.head('/test')
@@ -142,7 +142,7 @@ async def handler(request):
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD)
 
-### OPTIONS
+### オプション
 
 ```python
 @app.options('/test')
@@ -152,7 +152,7 @@ async def handler(request):
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS)
 
-.. warning::
+.. 警告::
 
 ````
 By default, Sanic will **only** consume the incoming request body on non-safe HTTP methods: `POST`, `PUT`, `PATCH`, `DELETE`. If you want to receive data in the HTTP request on any other method, you will need to do one of the following two options:
@@ -172,15 +172,15 @@ async def handler(request: Request):
 ```
 ````
 
-## Path parameters
+## パスパラメータ
 
-.. column::
+.. 列::
 
 ```
-Sanic allows for pattern matching, and for extracting values from URL paths. These parameters are then injected as keyword arguments in the route handler.
+SanicはパターンマッチングとURLパスからの値抽出を可能にします。これらのパラメータはルートハンドラのキーワード引数として注入されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -190,13 +190,13 @@ async def tag_handler(request, tag):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can declare a type for the parameter. This will be enforced when matching, and also will type cast the variable.
+パラメータの型を宣言できます。これはマッチング時に強制され、変数をキャストします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -206,13 +206,13 @@ async def uuid_handler(request, foo_id: UUID):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-For some standard types like `str`, `int`, and `UUID`, Sanic can infer the path parameter type from the function signature. This means that it may not always be necessary to include the type in the path parameter definition.
+`str`、`int`、`UUID`のようないくつかの標準型では、Sanicは関数のシグネチャからパスパラメータ型を推測することができます。 つまり、pathパラメータ定義に型を含める必要があるわけではありません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -222,24 +222,24 @@ async def uuid_handler(request, foo_id: UUID):
 ```
 ````
 
-### Supported types
+### サポートされているタイプ
 
 ### `str`
 
-.. column::
+.. 列::
 
 ```
-**Regular expression applied**: `r"[^/]+"`  
-**Cast type**: `str`  
-**Example matches**:  
+**正規表現が適用されました**: `r"[^/]+"`  
+**キャストタイプ**: `str`  
+**一致例**:  
 
 - `/path/to/Bob`
 - `/path/to/Python%203`
 
-Beginning in v22.3 `str` will *not* match on empty strings. See `strorempty` for this behavior.
+v22から始まります。 `str`は空の文字列では*マッチしません*。この動作については`strorempty`を参照してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -251,7 +251,7 @@ async def handler(request, foo: str):
 
 ### `strorempty`
 
-.. column::
+.. 列::
 
 ```
 **Regular expression applied**: `r"[^/]*"`  
@@ -267,7 +267,7 @@ Unlike the `str` path parameter type, `strorempty` can also match on an empty st
 *Added in v22.3*
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -279,20 +279,20 @@ async def handler(request, foo: str):
 
 ### `int`
 
-.. column::
+.. 列::
 
 ```
-**Regular expression applied**: `r"-?\d+"`  
-**Cast type**: `int`  
-**Example matches**:  
+**正規表現が適用されます**: `r"-?\d+"`  
+**キャストタイプ**: `int`  
+**一致例**:  
 
 - `/path/to/10`
 - `/path/to/-10`
 
-_Does not match float, hex, octal, etc_
+_float, hex, octal, etc_
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -304,19 +304,19 @@ async def handler(request, foo: int):
 
 ### `float`
 
-.. column::
+.. 列::
 
 ```
-**Regular expression applied**: `r"-?(?:\d+(?:\.\d*)?|\.\d+)"`  
-**Cast type**: `float`  
-**Example matches**:  
+**正規表現が適用されます**: `r"-?(?:\d+(?:\.\d*)?|\.\d+)"`  
+**キャストタイプ**: `float`  
+**マッチ例**:  
 
 - `/path/to/10`
 - `/path/to/-10`
 - `/path/to/1.5`
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -328,20 +328,20 @@ async def handler(request, foo: float):
 
 ### `alpha`
 
-.. column::
+.. 列::
 
 ```
-**Regular expression applied**: `r"[A-Za-z]+"`  
-**Cast type**: `str`  
-**Example matches**:  
+**正規表現が適用されました**: `r"[A-Za-z]+"`  
+**キャストタイプ**: `str`  
+**一致例**:  
 
 - `/path/to/Bob`
 - `/path/to/Python`
 
-_Does not match a digit, or a space or other special character_
+_数字と一致しません。 またはスペースまたはその他の特殊文字_
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -353,20 +353,20 @@ async def handler(request, foo: str):
 
 ### `slug`
 
-.. column::
+.. 列::
 
 ```
-**Regular expression applied**: `r"[a-z0-9]+(?:-[a-z0-9]+)*"`  
-**Cast type**: `str`  
-**Example matches**:  
+**正規表現が適用されます**: `r"[a-z0-9]+(?:-[a-z0-9]+)*"`  
+**キャストタイプ**: `str`  
+**一致例**:  
 
 - `/path/to/some-news-story`
 - `/path/to/or-has-digits-123`
 
-*Added in v21.6*
+*v21.6* に追加されました
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -378,18 +378,18 @@ async def handler(request, article: str):
 
 ### `path`
 
-.. column::
+.. 列::
 
 ```
-**Regular expression applied**: `r"[^/].*?"`  
-**Cast type**: `str`  
-**Example matches**:
+**正規表現が適用されます**: `r"[^/].*?"`  
+**キャストタイプ**: `str`  
+**一致例**:
 - `/path/to/hello`
 - `/path/to/hello.txt`
 - `/path/to/hello/world.txt`
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -399,15 +399,15 @@ async def handler(request, foo: str):
 ```
 ````
 
-.. warning::
+.. 警告::
 
 ```
-Because this will match on `/`, you should be careful and thoroughly test your patterns that use `path` so they do not capture traffic intended for another endpoint. Additionally, depending on how you use this type, you may be creating a path traversal vulnerability in your application. It is your job to protect your endpoint against this, but feel free to ask in our community channels for help if you need it :)
+これは `/` にマッチするためです。 `path`を使ってパターンをテストすれば、別の端点に向かってトラフィックを捕まえることができません。 さらに、このタイプの使い方に応じて、アプリケーションにパストラバーサルの脆弱性を作成する可能性があります。 これに対してエンドポイントを保護するのはあなたの仕事です。 でも必要な場合はコミュニティチャンネルでお気軽にお問い合わせください :)
 ```
 
 ### `ymd`
 
-.. column::
+.. 列::
 
 ```
 **Regular expression applied**: `r"^([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))"`  
@@ -417,7 +417,7 @@ Because this will match on `/`, you should be careful and thoroughly test your p
 - `/path/to/2021-03-28`
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -429,7 +429,7 @@ async def handler(request, foo: datetime.date):
 
 ### `uuid`
 
-.. column::
+.. 列::
 
 ```
 **Regular expression applied**: `r"[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}"`  
@@ -439,7 +439,7 @@ async def handler(request, foo: datetime.date):
 - `/path/to/123a123a-a12a-1a1a-a1a1-1a12a1a12345`
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -451,15 +451,15 @@ async def handler(request, foo: UUID):
 
 ### ext
 
-.. column::
+.. 列::
 
 ```
-**Regular expression applied**: n/a
-**Cast type**: *varies*
-**Example matches**:
+**正規表現が適用されました**: n/a
+**キャストタイプ**: *varies*
+**一致例**:
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -469,7 +469,7 @@ async def handler(request, foo: str, ext: str):
 ```
 ````
 
-| definition                         | example     | filename | extension  |
+| 定義                                 | 例           | ファイル名    | 拡張         |
 | ---------------------------------- | ----------- | -------- | ---------- |
 | \<file:ext>                        | page.txt    | `"page"` | `"txt"`    |
 | \<file:ext=jpg>                    | cat.jpg     | `"cat"`  | `"jpg"`    |
@@ -478,15 +478,15 @@ async def handler(request, foo: str, ext: str):
 | \<file=int:ext=jpg\|png\|gif\|svg> | 123.svg     | `123`    | `"svg"`    |
 | \<file=float:ext=tar.gz>           | 3.14.tar.gz | `3.14`   | `"tar.gz"` |
 
-File extensions can be matched using the special `ext` parameter type. It uses a special format that allows you to specify other types of parameter types as the file name, and one or more specific extensions as shown in the example table above.
+ファイル拡張子は、特別なパラメータタイプ`ext`を使用して一致させることができます。 これは、ファイル名として他のタイプのパラメータを指定することができる特別な形式を使用します。 上の表に示されているように、1つまたは複数の特定の拡張子を指定します。
 
-It does _not_ support the `path` parameter type.
+`path`パラメータ型は\*サポートしていません。
 
-_Added in v22.3_
+_v22.3_に追加されました
 
-### regex
+### Regex
 
-.. column::
+.. 列::
 
 ```
 **Regular expression applied**: _whatever you insert_  
@@ -500,7 +500,7 @@ This gives you the freedom to define specific matching patterns for your use cas
 In the example shown, we are looking for a date that is in `YYYY-MM-DD` format.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -510,23 +510,23 @@ async def handler(request, foo: str):
 ```
 ````
 
-### Regex Matching
+### 正規表現の一致
 
-More often than not, compared with complex routing, the above example is too simple, and we use a completely different routing matching pattern, so here we will explain the advanced usage of regex matching in detail.
+多くの場合、複雑なルーティングと比較して、上記の例は単純すぎます。 我々は全く異なるルーティングマッチングパターンを使っています ここではRegexマッチングの高度な使い方を詳しく説明します
 
-Sometimes, you want to match a part of a route:
+ルートの一部をマッチさせたい場合もあります。
 
 ```text
 /image/123456789.jpg
 ```
 
-If you wanted to match the file pattern, but only capture the numeric portion, you need to do some regex fun 😄:
+ファイルパターンを一致させたいが、数値部分だけをキャプチャしたい場合は、正規表現の楽しみ😄:
 
 ```python
 app.route(r"/image/<img_id:(?P<img_id>\d+)\.jpg>")
 ```
 
-Further, these should all be acceptable:
+さらに、これらはすべて許容されるべきです:
 
 ```python
 @app.get(r"/<foo:[a-z]{3}.txt>")                # matching on the full pattern
@@ -535,24 +535,24 @@ Further, these should all be acceptable:
 @app.get(r"/<foo:(?P<foo>[a-z]{3}).(?:txt)>")   # defining a single named matching group, with one or more non-matching groups
 ```
 
-Also, if using a named matching group, it must be the same as the segment label.
+また、名前付きの一致グループを使用する場合は、セグメント ラベルと同じでなければなりません。
 
 ```python
 @app.get(r"/<foo:(?P<foo>\d+).jpg>")  # OK
 @app.get(r"/<foo:(?P<bar>\d+).jpg>")  # NOT OK
 ```
 
-For more regular usage methods, please refer to [Regular expression operations](https://docs.python.org/3/library/re.html)
+format@@0(https\://docs.python.org/3/library/re.html) を参照してください。
 
-## Generating a URL
+## URLの生成
 
-.. column::
+.. 列::
 
 ```
-Sanic provides a method to generate URLs based on the handler method name: `app.url_for()`. This is useful if you want to avoid hardcoding url paths into your app; instead, you can just reference the handler name.
+Sanicはハンドラメソッド名`app.url_for()`に基づいてURLを生成するメソッドを提供しています。 これは、アプリケーション内のハードコーディングの url パスを避けたい場合に便利です。代わりに、ハンドラ名を参照するだけです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -570,13 +570,13 @@ async def post_handler(request, post_id):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can pass any arbitrary number of keyword arguments. Anything that is _not_ a request parameter will be implemented as a part of the query string.
+任意の数のキーワード引数を渡せます。 リクエストパラメータでないものは、クエリ文字列の一部として実装されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -584,18 +584,18 @@ assert app.url_for(
     "post_handler",
     post_id=5,
     arg_one="one",
-    arg_two="two",
-) == "/posts/5?arg_one=one&arg_two=two"
+    arg_two",
+) == "/posts/5?arg_one=one&arg_two"
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Also supported is passing multiple values for a single query key.
+また、単一のクエリキーに複数の値を渡すこともサポートされています。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -603,13 +603,13 @@ assert app.url_for(
     "post_handler",
     post_id=5,
     arg_one=["one", "two"],
-) == "/posts/5?arg_one=one&arg_one=two"
+) == "/posts/5?arg_one=one_one=two"
 ```
 ````
 
-### Special keyword arguments
+### 特殊キーワード引数
 
-See API Docs for more details.
+詳細は API Docs を参照してください。
 
 ```python
 app.url_for("post_handler", post_id=5, arg_one="one", _anchor="anchor")
@@ -628,15 +628,15 @@ app.url_for("post_handler", post_id=5, arg_one=["one", "two"], arg_two=2, _ancho
 # 'http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor'
 ```
 
-### Customizing a route name
+### ルート名をカスタマイズ
 
-.. column::
+.. 列::
 
 ```
-A custom route name can be used by passing a `name` argument while registering the route.
+route (ルート)を登録する際に `name` 引数を渡すことで、カスタムルート名を使用できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -646,13 +646,13 @@ def handler(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Now, use this custom name to retrieve the URL
+このカスタム名を使用してURLを取得する
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -662,13 +662,13 @@ assert app.url_for("get_handler", foo="bar") == "/get?foo=bar"
 
 ## Websockets routes
 
-.. column::
+.. 列::
 
 ```
-Websocket routing works similar to HTTP methods.
+Websocket ルーティングは HTTP メソッドに似ています。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -682,18 +682,18 @@ app.add_websocket_route(handler, "/test")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-It also has a convenience decorator.
+それはまた、コンビニエンスデコレータを持っています。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 @app.websocket("/test")
-async def handler(request, ws):
+async def handler(request, ws:
     message = "Start"
     while True:
         await ws.send(message)
@@ -701,11 +701,11 @@ async def handler(request, ws):
 ```
 ````
 
-Read the [websockets section](/guide/advanced/websockets.md) to learn more about how they work.
+動作の詳細については、[websockets section](/guide/advanced/websockets.md) をご覧ください。
 
-## Strict slashes
+## 厳密なスラッシュ
 
-.. column::
+.. 列::
 
 ```
 Sanic routes can be configured to strictly match on whether or not there is a trailing slash: `/`. This can be configured at a few levels and follows this order of precedence:
@@ -716,7 +716,7 @@ Sanic routes can be configured to strictly match on whether or not there is a tr
 4. Application
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -755,9 +755,9 @@ group = Blueprint.group([bp1, bp2], strict_slashes=True)
 ```
 ````
 
-## Static files
+## 静的ファイル
 
-.. column::
+.. 列::
 
 ```
 In order to serve static files from Sanic, use `app.static()`.
@@ -770,7 +770,7 @@ The order of arguments is important:
 See [API docs](https://sanic.readthedocs.io/en/stable/sanic/api/app.html#sanic.app.Sanic.static) for more details.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -781,16 +781,16 @@ app.static("/static/", "/path/to/directory/")
 .. tip::
 
 ```
-It is generally best practice to end your directory paths with a trailing slash (`/this/is/a/directory/`). This removes ambiguity by being more explicit.
+一般的には、ディレクトリパスをスラッシュ(`/this/is/a/directory/`)で終わらせることをお勧めします。これにより、より明示的に曖昧さを削除します。
 ```
 
-.. column::
+.. 列::
 
 ```
-You can also serve individual files.
+個々のファイルを提供することもできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -798,13 +798,13 @@ app.static("/", "/path/to/index.html")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-It is also sometimes helpful to name your endpoint
+エンドポイントに名前を付けることも時々役に立ちます
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -816,13 +816,13 @@ app.static(
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Retrieving the URLs works similar to handlers. But, we can also add the `filename` argument when we need a specific file inside a directory.
+URL の取得はハンドラに似ていますが、ディレクトリ内に特定のファイルが必要な場合は、 `filename` 引数を追加することもできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -845,7 +845,7 @@ assert app.url_for(
 .. tip::
 
 ````
-If you are going to have multiple `static()` routes, then it is *highly* suggested that you manually name them. This will almost certainly alleviate potential hard to discover bugs.
+複数の `static()`ルートを持つ場合は、手動で名前を付けることを提案されています。 これはバグを発見することが難しい可能性をほぼ確実に緩和します。
 
 ```python
 app.static("/user/uploads/", "/path/to/uploads/", name="uploads")
@@ -853,33 +853,33 @@ app.static("/user/profile/", "/path/to/profile/", name="profile_pics")
 ```
 ````
 
-#### Auto index serving
+#### 自動インデックス作成
 
-.. column::
+.. 列::
 
 ```
-If you have a directory of static files that should be served by an index page, you can provide the filename of the index. Now, when reaching that directory URL, the index page will be served.
+indexページによって提供されるべき静的ファイルのディレクトリがある場合は、indexのファイル名を指定できます。 ディレクトリの URL に到達すると、インデックス ページが表示されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
-app.static("/foo/", "/path/to/foo/", index="index.html")
+app.static("/foo/", "/path/to/foo/", index="index="html")
 ```
 ````
 
-_Added in v23.3_
+_V23.3_に追加されました
 
-#### File browser
+#### ファイルブラウザー
 
-.. column::
+.. 列::
 
 ```
-When serving a directory from a static handler, Sanic can be configured to show a basic file browser instead using `directory_view=True`.
+静的ハンドラからディレクトリを提供する場合、Sanic は `directory_view=True` を使用して基本的なファイルブラウザーを表示するように設定することができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -887,21 +887,21 @@ app.static("/uploads/", "/path/to/dir", directory_view=True)
 ```
 ````
 
-You now have a browsable directory in your web browser:
+ブラウザーにブラウザーが表示されるようになりました：
 
 ![image](/assets/images/directory-view.png)
 
-_Added in v23.3_
+_V23.3_に追加されました
 
-## Route context
+## ルートの説明
 
-.. column::
+.. 列::
 
 ```
-When a route is defined, you can add any number of keyword arguments with a `ctx_` prefix. These values will be injected into the route `ctx` object.
+route (ルート)が定義された場合、任意の数のキーワード引数を `ctx_` プレフィックスで追加できます。 これらの値はルート `ctx` オブジェクトに注入されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -924,4 +924,4 @@ async def do_something(request):
 ```
 ````
 
-_Added in v21.12_
+_v21.12_ に追加されました

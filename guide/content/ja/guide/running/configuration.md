@@ -1,14 +1,14 @@
-# Configuration
+# 設定
 
-## Basics
+## 基本
 
-.. column::
+.. 列::
 
 ```
-Sanic holds the configuration in the config attribute of the application object. The configuration object is merely an object that can be modified either using dot-notation or like a dictionary.
+Sanic はアプリケーションオブジェクトの config 属性に設定を保持します。 構成オブジェクトは、ドット表記または辞書のように変更できるオブジェクトにすぎません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -18,13 +18,13 @@ app.config["DB_USER"] = "appuser"
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can also use the `update()` method like on regular dictionaries.
+`update()`メソッドは、通常の辞書と同様に使用することもできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -40,20 +40,20 @@ app.config.update(db_settings)
 .. note::
 
 ```
-It is standard practice in Sanic to name your config values in **uppercase letters**. Indeed, you may experience weird behaviors if you start mixing uppercase and lowercase names.
+Sanicでは標準的な方法で、設定値を**大文字**で指定します。 確かに、大文字と小文字の名前を混ぜ始めると、奇妙な動作が発生することがあります。
 ```
 
-## Loading
+## 読み込み中
 
-### Environment variables
+### 環境変数
 
-.. column::
+.. 列::
 
 ```
-Any environment variables defined with the `SANIC_` prefix will be applied to the Sanic config. For example, setting `SANIC_REQUEST_TIMEOUT` will be loaded by the application automatically and fed into the `REQUEST_TIMEOUT` config variable.
+SANIC_`プレフィックスで定義された環境変数は、Sanicの設定に適用されます。 例えば、`SANIC_REQUEST_TIMEOUT` を設定すると、アプリケーションが自動的にロードされ、 `REQUEST_TIMEOUT` 設定変数に与えられます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -65,13 +65,13 @@ $ export SANIC_REQUEST_TIMEOUT=10
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can change the prefix that Sanic is expecting at startup.
+Sanicが起動時に期待しているプレフィックスを変更できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -84,13 +84,13 @@ $ export MYAPP_REQUEST_TIMEOUT=10
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can also disable environment variable loading completely.
+環境変数の読み込みを完全に無効にすることもできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -98,19 +98,19 @@ app = Sanic(__name__, load_env=False)
 ```
 ````
 
-### Using Sanic.update_config
+### Sanic.update_config の使用
 
-The `Sanic` instance has a _very_ versatile method for loading config: `app.update_config`. You can feed it a path to a file, a dictionary, a class, or just about any other sort of object.
+`Sanic`インスタンスは、config: `app.update_config`をロードするための_very_汎用的なメソッドを持っています。 ファイル、辞書、クラス、またはその他のあらゆる種類のオブジェクトにパスを与えることができます。
 
-#### From a file
+#### ファイルから
 
-.. column::
+.. 列::
 
 ```
-Let's say you have `my_config.py` file that looks like this.
+たとえば、次のような `my_config.py` ファイルがあるとします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -120,13 +120,13 @@ B = 2
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can load this as config values by passing its path to `app.update_config`.
+`app.update_config`にパスを渡すことで、これを設定値としてロードできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -136,13 +136,13 @@ You can load this as config values by passing its path to `app.update_config`.
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-This path also accepts bash style environment variables.
+このパスは、bash スタイルの環境変数も受け付けます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -156,18 +156,18 @@ app.update_config("${my_path}/my_config.py")
 .. note::
 
 ```
-Just remember that you have to provide environment variables in the format `${environment_variable}` and that `$environment_variable` is not expanded (is treated as "plain" text).
+ただ、`${environment_variable}`形式で環境変数を指定する必要があり、`$environment_variable`は展開されていないことを覚えておいてください（「プレーン」テキストとして扱われます）。
 ```
 
-#### From a dict
+#### 辞書から
 
-.. column::
+.. 列::
 
 ```
-The `app.update_config` method also works on plain dictionaries.
+`app.update_config` メソッドはプレーン辞書でも動作します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -175,15 +175,15 @@ app.update_config({"A": 1, "B": 2})
 ```
 ````
 
-#### From a class or object
+#### クラスまたはオブジェクトから
 
-.. column::
+.. 列::
 
 ```
-You can define your own config class, and pass it to `app.update_config`
+独自の設定クラスを定義し、`app.update_config`に渡すことができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -195,13 +195,13 @@ app.update_config(MyConfig)
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-It even could be instantiated.
+インスタンス化することもできます
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -209,30 +209,30 @@ app.update_config(MyConfig())
 ```
 ````
 
-### Type casting
+### 鋳造タイプ
 
-When loading from environment variables, Sanic will attempt to cast the values to expected Python types. This particularly applies to:
+環境変数から読み込むとき、Sanicは期待されるPython型に値をキャストしようとします。 これは特に以下に該当します：
 
 - `int`
 - `float`
 - `bool`
 
-In regards to `bool`, the following _case insensitive_ values are allowed:
+`bool`に関しては、以下の_大文字小文字を区別しません。
 
-- **`True`**: `y`, `yes`, `yep`, `yup`, `t`, `true`, `on`, `enable`, `enabled`, `1`
-- **`False`**: `n`, `no`, `f`, `false`, `off`, `disable`, `disabled`, `0`
+- **`True`**: `y`, `yes`, `yep`, `yep`, `yup`, `true`, `on`, `enable`, `enabled`, `1`
+- **`False`**: `n`, `no`, `f`, `false`, `off`, `disabled`, `0`
 
-If a value cannot be cast, it will default to a `str`.
+値をキャストできない場合、デフォルトは `str` になります。
 
-.. column::
+.. 列::
 
 ```
-Additionally, Sanic can be configured to cast additional types using additional type converters. This should be any callable that returns the value or raises a `ValueError`.
+さらに、Sanicは追加の型コンバータを使用して追加の型をキャストするように設定できます。 値を返したり、`ValueError` を発生させたりする任意の呼び出し可能である必要があります。
 
-*Added in v21.12*
+*v21.12* に追加されました
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -240,42 +240,42 @@ app = Sanic(..., config=Config(converters=[UUID]))
 ```
 ````
 
-## Builtin values
+## 組み込み値
 
-| **Variable**                                                                           | **Default**     | **Description**                                                                                                                       |
-| -------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| ACCESS_LOG                                                        | True            | Disable or enable access log                                                                                                          |
-| AUTO_EXTEND                                                       | True            | Control whether [Sanic Extensions](../../plugins/sanic-ext/getting-started.md) will load if it is in the existing virtual environment |
-| AUTO_RELOAD                                                       | True            | Control whether the application will automatically reload when a file changes                                                         |
-| EVENT_AUTOREGISTER                                                | True            | When `True` using the `app.event()` method on a non-existing signal will automatically create it and not raise an exception           |
-| FALLBACK_ERROR_FORMAT                        | html            | Format of error response if an exception is not caught and handled                                                                    |
-| FORWARDED_FOR_HEADER                         | X-Forwarded-For | The name of "X-Forwarded-For" HTTP header that contains client and proxy ip                                                           |
-| FORWARDED_SECRET                                                  | None            | Used to securely identify a specific proxy server (see below)                                                      |
-| GRACEFUL_SHUTDOWN_TIMEOUT                    | 15.0            | How long to wait to force close non-idle connection (sec)                                                          |
-| INSPECTOR                                                                              | False           | Whether to enable the Inspector                                                                                                       |
-| INSPECTOR_HOST                                                    | localhost       | The host for the Inspector                                                                                                            |
-| INSPECTOR_PORT                                                    | 6457            | The port for the Inspector                                                                                                            |
-| INSPECTOR_TLS_KEY                            | -               | The TLS key for the Inspector                                                                                                         |
-| INSPECTOR_TLS_CERT                           | *               | The TLS certificate for the Inspector                                                                                                 |
-| INSPECTOR_API_KEY                            | -               | The API key for the Inspector                                                                                                         |
-| KEEP_ALIVE_TIMEOUT                           | 120             | How long to hold a TCP connection open (sec)                                                                       |
-| KEEP_ALIVE                                                        | True            | Disables keep-alive when False                                                                                                        |
-| MOTD                                                                                   | True            | Whether to display the MOTD (message of the day) at startup                                                        |
-| MOTD_DISPLAY                                                      | {}              | Key/value pairs to display additional, arbitrary data in the MOTD                                                                     |
-| NOISY_EXCEPTIONS                                                  | False           | Force all `quiet` exceptions to be logged                                                                                             |
-| PROXIES_COUNT                                                     | None            | The number of proxy servers in front of the app (e.g. nginx; see below)                                            |
-| REAL_IP_HEADER                               | None            | The name of "X-Real-IP" HTTP header that contains real client ip                                                                      |
-| REGISTER                                                                               | True            | Whether the app registry should be enabled                                                                                            |
-| REQUEST_BUFFER_SIZE                          | 65536           | Request buffer size before request is paused, default is 64 Kib                                                                       |
-| REQUEST_ID_HEADER                            | X-Request-ID    | The name of "X-Request-ID" HTTP header that contains request/correlation ID                                                           |
-| REQUEST_MAX_SIZE                             | 100000000       | How big a request may be (bytes), default is 100 megabytes                                                         |
-| REQUEST_MAX_HEADER_SIZE | 8192            | How big a request header may be (bytes), default is 8192 bytes                                                     |
-| REQUEST_TIMEOUT                                                   | 60              | How long a request can take to arrive (sec)                                                                        |
-| RESPONSE_TIMEOUT                                                  | 60              | How long a response can take to process (sec)                                                                      |
-| USE_UVLOOP                                                        | True            | Whether to override the loop policy to use `uvloop`. Supported only with `app.run`.                                                   |
-| WEBSOCKET_MAX_SIZE                           | 2^20            | Maximum size for incoming messages (bytes)                                                                         |
-| WEBSOCKET_PING_INTERVAL                      | 20              | A Ping frame is sent every ping_interval seconds.                                                                |
-| WEBSOCKET_PING_TIMEOUT                       | 20              | Connection is closed when Pong is not received after ping_timeout seconds                                        |
+| **変数**                                                       | **デフォルト**       | **説明**                                                                                       |
+| ------------------------------------------------------------ | --------------- | -------------------------------------------------------------------------------------------- |
+| ACCESS_LOG                              | True            | アクセスログを無効または有効にする                                                                            |
+| 拡張されました。                                                     | True            | [Sanic Extensions](../../plugins/sanic-ext/getting-started.md) が既存の仮想環境にある場合にロードされるかどうかを制御する |
+| AUTO_RELOAD                             | True            | ファイルが変更されたときにアプリケーションが自動的にリロードされるかどうかを制御します                                                  |
+| number@@0 自動登録                                               | True            | 存在しない信号で `app.event()` メソッドを使用して `True` を使用すると自動的に作成され、例外は発生しません。                            |
+| FORMAT                                                       | html            | 例外がキャッチされて処理されていない場合のエラー応答のフォーマット                                                            |
+| 前に進みました。                                                     | X-Forwarded-For | クライアントとプロキシIPを含むHTTPヘッダー「X-Forwarded-For」の名前                                                 |
+| FORWARDED_SECRET                        | なし              | 特定のプロキシ サーバーを安全に識別するために使用します (下記参照)                                       |
+| タイムアウト                                                       | 15.0            | アイドル状態でない接続を強制終了するまで待機する時間 (秒)                                            |
+| 検査                                                           | False           | インスペクタを有効にするかどうか                                                                             |
+| INSPECTOR_HOST                          | localhost       | インスペクタのホスト                                                                                   |
+| インポートします。                                                    | 6457            | インスペクターのポート                                                                                  |
+| キー                                                           | -               | インスペクタの TLS キー                                                                               |
+| INSPECTOR_TLS_CERT | *               | インスペクタの TLS 証明書                                                                              |
+| INSPECTOR_API_KEY  | -               | インスペクタの API キー                                                                               |
+| ALIVE_TIMEOUT                           | 120             | TCPコネクションを保持する期間 (秒)                                                      |
+| 保持します。                                                       | True            | Falseのときは生き残りを無効にします                                                                         |
+| MOTD                                                         | True            | 起動時にMOTD (メッセージ) を表示するかどうか                                                |
+| MOTD_表示                                 | {}              | MOTD に追加の任意のデータを表示するキー/値のペア                                                                  |
+| NOISY_EXCEPTIONS                        | False           | すべての `quiet` 例外をログに記録する                                                                      |
+| PROXIES_COUNT                           | なし              | アプリの前にあるプロキシサーバーの数（例：nginx、下記参照）                                                             |
+| REAL_IP_HEADER     | なし              | 実際のクライアントIPを含むHTTPヘッダーの名前                                                                    |
+| 登録                                                           | True            | アプリレジストリを有効にするかどうか                                                                           |
+| リクエストのBUFF_サイズ                          | 65536           | リクエストを一時停止する前のリクエストバッファサイズ。デフォルトは64KBです。                                                     |
+| リクエストID                                                      | X-リクエストID       | リクエスト/相関IDを含む "X-Request-ID" HTTP ヘッダーの名前                                                    |
+| 最大サイズ                                                        | 100000000       | リクエストの大きさ（バイト）は100メガバイトです                                                                    |
+| 要求される最大ヘッダのサイズ                                               | 8192            | リクエストヘッダがどれくらい大きいか(バイト)、デフォルトは8192バイト                                     |
+| 要求時間                                                         | 60              | リクエスト到着までにかかる時間 (秒)                                                       |
+| タイムアウト                                                       | 60              | 応答の処理にかかる時間 (秒)                                                           |
+| UVLoopを使用します。                                                | True            | `uvloop` を使用するループポリシーをオーバーライドします。 `app.run`でのみサポートされています。                                    |
+| 最大サイズ                                                        | 2^20            | 受信メッセージの最大サイズ (バイト)                                                       |
+| Ping_INTERVAL                           | 20              | Pingフレームは、ping_interval 秒ごとに送信されます。                                     |
+| ping_timeout                            | 20              | ping_timeout 秒後に Pong が受信されなかった場合、接続は切断されます                             |
 
 .. tip:: FYI
 
@@ -287,42 +287,42 @@ app = Sanic(..., config=Config(converters=[UUID]))
 - v22.12 added: `INSPECTOR_HOST`, `INSPECTOR_PORT`, `INSPECTOR_TLS_KEY`, `INSPECTOR_TLS_CERT`, `INSPECTOR_API_KEY`
 ```
 
-## Timeouts
+## タイムアウト
 
-### REQUEST_TIMEOUT
+### 要求時間
 
-A request timeout measures the duration of time between the instant when a new open TCP connection is passed to the
-Sanic backend server, and the instant when the whole HTTP request is received. If the time taken exceeds the
+リクエストタイムアウトは、新しいオープンTCP接続が
+Sanicバックエンドサーバに渡された瞬間の時間を測定します。 そして全体の HTTP リクエストが受信された瞬間です。 If the time taken exceeds the
 `REQUEST_TIMEOUT` value (in seconds), this is considered a Client Error so Sanic generates an `HTTP 408` response
-and sends that to the client. Set this parameter's value higher if your clients routinely pass very large request payloads
-or upload requests very slowly.
+and sends that to the client. クライアントが非常に大きなリクエストペイロード
+を日常的に渡したり、リクエストを非常にゆっくりアップロードした場合、このパラメータの値を高く設定します。
 
-### RESPONSE_TIMEOUT
+### タイムアウト
 
-A response timeout measures the duration of time between the instant the Sanic server passes the HTTP request to the Sanic App, and the instant a HTTP response is sent to the client. If the time taken exceeds the `RESPONSE_TIMEOUT` value (in seconds), this is considered a Server Error so Sanic generates an `HTTP 503` response and sends that to the client. Set this parameter's value higher if your application is likely to have long-running process that delay the
-generation of a response.
+応答タイムアウトは、Sanic サーバーが HTTP リクエストを Sanic App に渡す瞬間の時間を測定します。 クライアントにHTTPレスポンスが送信されます。 経過時間が `RESPONSE_TIMEOUT` 値を超えた場合 (秒数) これはサーバーエラーと見なされるため、Sanic は `HTTP 503` レスポンスを生成してクライアントに送信します。 アプリケーションが、応答の
+生成を遅らせる長時間のプロセスを持つ可能性がある場合、このパラメータの値を大きく設定します。
 
-### KEEP_ALIVE_TIMEOUT
+### ALIVE_TIMEOUT
 
-#### What is Keep Alive? And what does the Keep Alive Timeout value do?
+#### Keep Aliveとは何ですか? そして、Keep Alive Timeoutの価値は何ですか?
 
-`Keep-Alive` is a HTTP feature introduced in `HTTP 1.1`. When sending a HTTP request, the client (usually a web browser application) can set a `Keep-Alive` header to indicate the http server (Sanic) to not close the TCP connection after it has send the response. This allows the client to reuse the existing TCP connection to send subsequent HTTP requests, and ensures more efficient network traffic for both the client and the server.
+`Keep-Alive`は、`HTTP 1.1`で導入されたHTTP機能です。 HTTP リクエストを送信するとき クライアント(通常はウェブブラウザアプリケーション)は、レスポンスを送信した後にTCPコネクションを閉じないように、httpサーバー(SANC)を示す「Keep-Alive」ヘッダを設定できます。 これにより、クライアントは既存の TCP コネクションを再利用して、後続の HTTP リクエストを送信することができます。 クライアントとサーバーの両方で、より効率的なネットワークトラフィックを確保します。
 
-The `KEEP_ALIVE` config variable is set to `True` in Sanic by default. If you don't need this feature in your application, set it to `False` to cause all client connections to close immediately after a response is sent, regardless of the `Keep-Alive` header on the request.
+デフォルトでは、`KEEP_ALIVE`設定変数は、Sanicでは`True`に設定されています。 アプリケーションでこの機能を必要としない場合 応答が送信された直後にすべてのクライアント接続が閉じられるようにするには、 `False` に設定します。 リクエストの `Keep-Alive` ヘッダーに関係なく。
 
-The amount of time the server holds the TCP connection open is decided by the server itself. In Sanic, that value is configured using the `KEEP_ALIVE_TIMEOUT` value. By default, **it is set to 120 seconds**. This means that if the client sends a `Keep-Alive` header, the server will hold the TCP connection open for 120 seconds after sending the response, and the client can reuse the connection to send another HTTP request within that time.
+サーバーがTCP接続を開いている時間は、サーバー自身によって決まります。 Sanic では、その値は `KEEP_ALIVE_TIMEOUT` 値を使用して設定されます。 デフォルトでは、**120秒**に設定されています。 これは、クライアントが `Keep-Alive` ヘッダーを送信した場合、サーバーは応答を送信した後 120 秒間、TCP コネクションを保持します。 クライアントはその時間内に別の HTTP リクエストを送信するために接続を再利用できます。
 
-For reference:
+参考:
 
-- Apache httpd server default keepalive timeout = 5 seconds
-- Nginx server default keepalive timeout = 75 seconds
-- Nginx performance tuning guidelines uses keepalive = 15 seconds
-- Caddy server default keepalive timeout = 120 seconds
-- IE (5-9) client hard keepalive limit = 60 seconds
-- Firefox client hard keepalive limit = 115 seconds
-- Opera 11 client hard keepalive limit = 120 seconds
-- Chrome 13+ client keepalive limit > 300+ seconds
+- Apache サーバのデフォルトの keepalving timeout = 5 秒
+- Nginx サーバーのデフォルトの keepalving タイムアウト = 75 秒
+- Nginx パフォーマンスチューニングガイドラインでは、keepliving = 15 seconds
+- キャディサーバーのデフォルトキープサバイバルタイムアウト = 120 秒
+- IE (5-9) クライアントハードキープアライブ制限 = 60秒
+- Firefox クライアントのハードキープサバイバル制限 = 115 秒
+- Opera 11 クライアントのハードキープサバイバル制限 = 120 秒
+- Chrome 13+クライアントキープサバイバル制限 > 300秒以上
 
-## Proxy configuration
+## プロキシ設定
 
-See [proxy configuration section](/guide/advanced/proxy-headers.md)
+format@@0(/guide/advanced/proxy-headers.md) を参照してください。

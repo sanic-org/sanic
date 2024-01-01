@@ -1,31 +1,31 @@
 # Versioning
 
-It is standard practice in API building to add versions to your endpoints. This allows you to easily differentiate incompatible endpoints when you try and change your API down the road in a breaking manner.
+API 构建中的标准做法是将版本添加到您的端点。 这使您能够轻松区分不兼容的端点，当您尝试并以破解的方式更改您的 API。
 
 Adding a version will add a `/v{version}` url prefix to your endpoints.
 
-The version can be a `int`, `float`, or `str`. Acceptable values:
+版本可以是 `int`、`float`、`str`。 可接受值：
 
 - `1`, `2`, `3`
 - `1.1`, `2.25`, `3.0`
-- `"1"`, `"v1"`, `"v1.1"`
+- `"1", `v1", `"v1.1"`
 
-## Per route
+## 每条路由
 
-.. column::
+.. 列:
 
 ```
-You can pass a version number to the routes directly.
+您可以直接将版本号传递给路由。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 # /v1/text
 @app.route("/text", version=1)
 def handle_request(request):
-    return response.text("Hello world! Version 1")
+    return response. ext("Hello world! 版本 1")
 
 # /v2/text
 @app.route("/text", version=2)
@@ -34,30 +34,30 @@ def handle_request(request):
 ```
 ````
 
-## Per Blueprint
+## 每个蓝图
 
-.. column::
+.. 列:
 
 ```
-You can also pass a version number to the blueprint, which will apply to all routes in that blueprint.
+您也可以将版本号传递到蓝图，这将适用于该蓝图中的所有路线。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-bp = Blueprint("test", url_prefix="/foo", version=1)
+bp = Blueprint("test", url_prefix="/fo", version=1)
 
-# /v1/foo/html
+# /v1/fo/html
 @bp.route("/html")
 def handle_request(request):
     return response.html("<p>Hello world!</p>")
 ```
 ````
 
-## Per Blueprint Group
+## 每个蓝图组
 
-.. column::
+.. 列:
 
 ```
 In order to simplify the management of the versioned blueprints, you can provide a version number in the blueprint
@@ -75,69 +75,68 @@ If we find a more pointed versioning specification, we will pick that over the m
 provided under the Blueprint or Blueprint Group
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic.blueprints import Blueprint
-from sanic.response import json
+从 sanic.blueprints 导入蓝图A.format@@1 esponse import json
 
 bp1 = Blueprint(
     name="blueprint-1",
     url_prefix="/bp1",
-    version=1.25,
+    version=1。 5 ,
 )
 bp2 = Blueprint(
     name="blueprint-2",
     url_prefix="/bp2",
-)
 
-group = Blueprint.group(
+
+group = Blueprint. 路由(
     [bp1, bp2],
     url_prefix="/bp-group",
     version="v2",
 )
 
-# GET /v1.25/bp-group/bp1/endpoint-1
-@bp1.get("/endpoint-1")
+# GET /v1。 5/bp-group/bp1/endpoint-1
+@bp1。 et("/endpoint-1")
 async def handle_endpoint_1_bp1(request):
-    return json({"Source": "blueprint-1/endpoint-1"})
+    return json({"Source": "bluprint-1/endpoint-1"})
 
 # GET /v2/bp-group/bp2/endpoint-2
-@bp2.get("/endpoint-1")
+@bp2. et("/endpoint-1")
 async def handle_endpoint_1_bp2(request):
     return json({"Source": "blueprint-2/endpoint-1"})
 
 # GET /v1/bp-group/bp2/endpoint-2
-@bp2.get("/endpoint-2", version=1)
+@bp2. et("/endpoint-2", version=1)
 async def handle_endpoint_2_bp2(request):
     return json({"Source": "blueprint-2/endpoint-2"})
 ```
 ````
 
-## Version prefix
+## 版本前缀
 
-As seen above, the `version` that is applied to a route is **always** the first segment in the generated URI path. Therefore, to make it possible to add path segments before the version, every place that a `version` argument is passed, you can also pass `version_prefix`.
+如上文所见，适用于路由的 `version` 总是生成的 URI 路径中的第一个部分。 因此，为了能够在版本之前添加路径段, 每个传递`version`参数的地方, 你也可以通过 `version_prefix`.
 
-The `version_prefix` argument can be defined in:
+`version_prefix`参数可以定义于：
 
-- `app.route` and `bp.route` decorators (and all the convenience decorators also)
-- `Blueprint` instantiation
-- `Blueprint.group` constructor
-- `BlueprintGroup` instantiation
-- `app.blueprint` registration
+- `app.route` 和 `bp.route` 装饰符 (也包括所有方便装饰师)
+- `Blueprint` 实例
+- `Blueprint.group` 构造函数
+- `BlueprintGroup` 实例
+- `app.bluprint` 注册
 
-If there are definitions in multiple places, a more specific definition overrides a more general. This list provides that hierarchy.
+如果在多个地方有定义，则更具体的定义优先于较一般的定义。 这个列表提供了这个等级。
 
-The default value of `version_prefix` is `/v`.
+`version_prefix`的默认值是 `/v`。
 
-.. column::
+.. 列:
 
 ```
-An often requested feature is to be able to mount versioned routes on `/api`. This can easily be accomplished with `version_prefix`.
+一个经常请求的功能是能够在`/api`上挂载版本路由。这可以很容易地通过`version_prefix`来完成。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -146,13 +145,13 @@ app.route("/my/path", version=1, version_prefix="/api/v")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Perhaps a more compelling usage is to load all `/api` routes into a single `BlueprintGroup`.
+或许一个更令人信服的用法是将所有的`/api`路由加载到一个单一的`蓝图组'。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -170,10 +169,10 @@ app.blueprint(api)
 ```
 ````
 
-We can therefore learn that a route's URI is:
+因此，我们可以了解到路由的 URI 是：
 
 ```
-version_prefix + version + url_prefix + URI definition
+version_prefix + 版本 + url_prefix + URI 定义
 ```
 
 .. tip::
@@ -186,4 +185,4 @@ version_prefix="/<foo:str>/v"
 ```
 ````
 
-_Added in v21.6_
+\*添加于 v21.6 \*

@@ -1,26 +1,26 @@
-# Headers
+# ヘッダー
 
-Request and response headers are available in the `Request` and `HTTPResponse` objects, respectively. They make use of the [`multidict` package](https://multidict.readthedocs.io/en/stable/multidict.html#cimultidict) that allows a single key to have multiple values.
+リクエストヘッダーとレスポンスヘッダーは `Request` オブジェクトと `HTTPResponse` オブジェクトでそれぞれ使用できます。 1つのキーが複数の値を持つことを可能にする[`multidict` package](https://multidict.io/en/stable/multidict.html#cimmultidict) を使用します。
 
 .. tip:: FYI
 
 ```
-Header keys are converted to *lowercase* when parsed. Capitalization is not considered for headers.
+ヘッダキーは解析時に *小文字* に変換されます。ヘッダの場合は大文字化は考慮されません。
 ```
 
-## Request
+## リクエスト
 
-Sanic does attempt to do some normalization on request headers before presenting them to the developer, and also make some potentially meaningful extractions for common use cases.
+Sanic は、リクエストヘッダの正規化を開発者に提示する前に試みています。 一般的なユースケースに意味のある抽出物を作ることもできます
 
-.. column::
+.. 列::
 
 ```
-#### Tokens
+#### トークン
 
-Authorization tokens in the form `Token <token>` or `Bearer <token>` are extracted to the request object: `request.token`.
+`トークン <token>`または `ベアラー <token>`の形式の承認トークンは、リクエストオブジェクト`request.token`に抽出されます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -42,13 +42,13 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
 ```
 ````
 
-### Proxy headers
+### プロキシヘッダー
 
-Sanic has special handling for proxy headers. See the [proxy headers](/guide/advanced/proxy-headers.md) section for more details.
+Sanicはプロキシヘッダーのための特別な扱いを持っています。 詳細は [プロキシ ヘッダー](/guide/advanced/proxy-headers.md) をご覧ください。
 
-### Host header and dynamic URL construction
+### ホストヘッダーと動的なURLの構築
 
-.. column::
+.. 列::
 
 ```
 The *effective host* is available via `request.host`. This is not necessarily the same as the host header, as it prefers proxy-forwarded host and can be forced by the server name setting.
@@ -62,7 +62,7 @@ The effective host is also used in dynamic URL construction via `request.url_for
     These URLs can be manipulated by sending misleading host headers. `app.url_for` should be used instead if this is a concern.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -91,15 +91,15 @@ curl localhost:8000/hosts
 ```
 ````
 
-### Other headers
+### その他のヘッダー
 
-.. column::
+.. 列::
 
 ```
-All request headers are available on `request.headers`, and can be accessed in dictionary form. Capitalization is not considered for headers, and can be accessed using either uppercase or lowercase keys.
+すべてのリクエストヘッダは `request.headers` 上で利用可能で、辞書形式でアクセスできます。 大文字化はヘッダとは見なされず、大文字または小文字のいずれかのキーでアクセスできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -155,20 +155,20 @@ curl localhost:9999/headers -H "Foo: one" -H "FOO: two"|jq
 .. tip:: FYI
 
 ```
-💡 The request.headers object is one of a few types that is a dictionary with each value being a list. This is because HTTP allows a single key to be reused to send multiple values.
+💡 request.headers オブジェクトは、それぞれの値がリストになる辞書である数少ない型の1つです。 これは、HTTP が 1 つのキーを再利用して複数の値を送信することを可能にするためです。
 
-Most of the time you will want to use the .get() or .getone() methods to access the first element and not a list. If you do want a list of all items, you can use .getall().
+ほとんどの場合、.get() または . を使用します。 etone() メソッドは、リストではなく最初の要素にアクセスします。すべての要素のリストが必要な場合は、.getall() を使用できます。
 ```
 
-### Request ID
+### 要求ID
 
-.. column::
+.. 列::
 
 ```
-Often it is convenient or necessary to track a request by its `X-Request-ID` header. You can easily access that as: `request.id`.
+`X-Request-ID` ヘッダーでリクエストを追跡するのは便利なことや必要なことがよくあります。`request.id` に簡単にアクセスできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -184,24 +184,24 @@ ABCDEF12345679
 ```
 ````
 
-## Response
+## 回答
 
-Sanic will automatically set the following response headers (when appropriate) for you:
+Sanicは次のレスポンスヘッダーを自動的に設定します（適切な場合）：
 
 - `content-length`
 - `content-type`
 - `connection`
 - `transfer-encoding`
 
-In most circumstances, you should never need to worry about setting these headers.
+ほとんどの状況では、これらのヘッダーを設定することを心配する必要はありません。
 
-.. column::
+.. 列::
 
 ```
-Any other header that you would like to set can be done either in the route handler, or a response middleware.
+設定したい他のヘッダーは、route (ルート)ハンドラか、レスポンスミドルウェアのどちらかで行うことができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -215,7 +215,7 @@ async def add_csp(request, response):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 A common [middleware](middleware.md) you might want is to add a `X-Request-ID` header to every response. As stated above: `request.id` will provide the ID from the incoming request. But, even if no ID was supplied in the request headers, one will be automatically supplied for you.
@@ -223,7 +223,7 @@ A common [middleware](middleware.md) you might want is to add a `X-Request-ID` h
 [See API docs for more details](https://sanic.readthedocs.io/en/latest/sanic/api_reference.html#sanic.request.Request.id)
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

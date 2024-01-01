@@ -1,20 +1,20 @@
 ---
-title: Running Sanic
+title: 実行中のサニック
 ---
 
-# Running Sanic
+# 実行中のサニック
 
-Sanic ships with its own internal web server. Under most circumstances, this is the preferred method for deployment. In addition, you can also deploy Sanic as an ASGI app bundled with an ASGI-able web server.
+Sanicは独自の内部Webサーバーを搭載しています。 ほとんどの状況では、これはデプロイに最適な方法です。 また、SanicをASGI対応のWebサーバーにバンドルされたASGIアプリとしてデプロイすることもできます。
 
 ## Sanic Server
 
-The main way to run Sanic is to use the included [CLI](#sanic-cli).
+Sanicを走る主な方法は、付属の [CLI](#sanic-cli)を使うことです。
 
 ```sh
 sanic path.to.server:app
 ```
 
-In this example, Sanic is instructed to look for a python module called `path.to.server`. Inside of that module, it will look for a global variable called `app`, which should be an instance of `Sanic(...)`.
+この例では、Sanicは`path.to.server`というPythonモジュールを探すように指示されています。 このモジュールの中では、`app`という名前のグローバル変数を探します。これは、`Sanic(...)`のインスタンスでなければなりません。
 
 ```python
 # ./path/to/server.py
@@ -27,37 +27,37 @@ async def handler(request: Request):
     return json({"foo": "bar"})
 ```
 
-You may also dropdown to the [lower level API](#low-level-apprun) to call `app.run` as a script. However, if you choose this option you should be more comfortable handling issues that may arise with `multiprocessing`.
+`app.run` をスクリプトとして呼び出すには、format@@0(#low-level-apprun) にドロップダウンすることもできます。 ただし、このオプションを選択した場合は、 `multiprocessing` で発生する可能性のある問題をより快適に処理する必要があります。
 
-### Workers
+### Worker
 
-.. column::
+.. 列::
 
 ```
-By default, Sanic runs a main process and a single worker process (see [worker manager](./manager.md) for more details).
+デフォルトでは、Sanicはメインプロセスと単一のワーカープロセスを実行します([worker manager](./manager)を参照してください)。 d) 詳細については)。
 
-To crank up the juice, just specify the number of workers in the run arguments.
+ジュースをクランクアップするには、実行引数に含まれるワーカーの数を指定します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
-sanic server:app --host=0.0.0.0 --port=1337 --workers=4
+sanic server:app --host=0.0.0.0 --port=1337 --works=4
 ```
 ````
 
-Sanic will automatically spin up multiple processes and route traffic between them. We recommend as many workers as you have available processors.
+Sanicは自動的に複数のプロセスとそれらの間のルートトラフィックを回します。 利用可能なプロセッサを持っている数だけの労働者をお勧めします。
 
-.. column::
+.. 列::
 
 ```
-The easiest way to get the maximum CPU performance is to use the `--fast` option. This will automatically run the maximum number of workers given the system constraints.
+最大CPUパフォーマンスを得る最も簡単な方法は、 `--fast` オプションを使用することです。 これは自動的にシステム制約を与えられたワーカーの最大数を実行します。
 
-*Added in v21.12*
+*v21.12* に追加されました
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -65,17 +65,17 @@ sanic server:app --host=0.0.0.0 --port=1337 --fast
 ```
 ````
 
-In version 22.9, Sanic introduced a new worker manager to provide more consistency and flexibility between development and production servers. Read [about the manager](./manager.md) for more details about workers.
+バージョン22.9では、Sanicは開発サーバーと本番サーバーの間でより一貫性と柔軟性を提供する新しいワーカーマネージャを導入しました。 format@@0(./manager.md) を読んで、worker の詳細を確認してください。
 
-.. column::
+.. 列::
 
 ```
-If you only want to run Sanic with a single process, specify `single_process` in the run arguments. This means that auto-reload, and the worker manager will be unavailable.
+Sanicを単一のプロセスでのみ実行したい場合は、run引数に`single_process`を指定します。 これは自動再読み込みを行い、ワーカーマネージャーが利用できなくなることを意味します。
 
-*Added in v22.9*
+*v22.9* に追加されました
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -83,11 +83,11 @@ sanic server:app --host=0.0.0.0 --port=1337 --single-process
 ```
 ````
 
-### Running via command
+### コマンドで実行
 
 #### Sanic CLI
 
-Use `sanic --help` to see all the options.
+すべてのオプションを見るには `sanic --help` を使います。
 
 .. attrs::
 :title: Sanic CLI help output
@@ -189,33 +189,33 @@ Optional
 ```
 ````
 
-#### As a module
+#### モジュールとして
 
-.. column::
+.. 列::
 
 ```
-Sanic applications can also be called directly as a module.
+Sanic アプリケーションはモジュールとして直接呼び出すこともできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```bash
-python -m sanic server.app --host=0.0.0.0 --port=1337 --workers=4
+python -m sanic server.app --host=0.0.0.0 --port=1337 --works=4
 ```
 ````
 
-#### Using a factory
+#### 工場の利用
 
-A very common solution is to develop your application _not_ as a global variable, but instead using the factory pattern. In this context, "factory" means a function that returns an instance of `Sanic(...)`.
+非常に一般的な解決策は、アプリケーションをグローバル変数としてではなく\*開発することですが、代わりにファクトリパターンを使用することです。 この文脈で、"factory"とは、`Sanic(...)`のインスタンスを返す関数を意味します。
 
-.. column::
+.. 列::
 
 ```
-Suppose that you have this in your `server.py`
+`server.py`にこれがあるとします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -228,13 +228,13 @@ def create_app() -> Sanic:
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can run this application now by referencing it in the CLI explicitly as a factory:
+このアプリケーションは、CLIで明示的にファクトリとして参照することで実行できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -252,17 +252,17 @@ sanic server:create_app
 *Implicit command added in v23.3*
 ````
 
-### Low level `app.run`
+### 低レベル `app.run`
 
-When using `app.run` you will just call your Python file like any other script.
+`app.run`を使用する場合は、他のスクリプトと同様にPythonファイルを呼び出します。
 
-.. column::
+.. 列::
 
 ```
-`app.run` must be properly nested inside of a name-main block.
+`app.run` は name-main ブロックの中に正しく入れ子にする必要があります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -274,7 +274,7 @@ if __name__ == "__main__":
 ```
 ````
 
-.. danger::
+.. 危険::
 
 ````
 Be *careful* when using this pattern. A very common mistake is to put too much logic inside of the `if __name__ == "__main__":` block.
@@ -309,39 +309,39 @@ elif __name__ == "__main__":
 ```
 ````
 
-To use the low-level `run` API, after defining an instance of `sanic.Sanic`, we can call the run method with the following keyword arguments:
+低レベルの`run` APIを使用するには、`sanic.Sanic`のインスタンスを定義した後、以下のキーワード引数を使用してrunメソッドを呼び出すことができます。
 
-|                 Parameter                 |      Default     | Description                                                                               |
-| :---------------------------------------: | :--------------: | :---------------------------------------------------------------------------------------- |
-|                  **host**                 |   `"127.0.0.1"`  | Address to host the server on.                                                            |
-|                  **port**                 |      `8000`      | Port to host the server on.                                                               |
-|                  **unix**                 |      `None`      | Unix socket name to host the server on (instead of TCP).               |
-|                  **dev**                  |      `False`     | Equivalent to `debug=True` and `auto_reload=True`.                                        |
-|                 **debug**                 |      `False`     | Enables debug output (slows server).                                   |
-|                  **ssl**                  |      `None`      | SSLContext for SSL encryption of worker(s).                            |
-|                  **sock**                 |      `None`      | Socket for the server to accept connections from.                                         |
-|                **workers**                |        `1`       | Number of worker processes to spawn. Cannot be used with fast.                            |
-|                  **loop**                 |      `None`      | An asyncio-compatible event loop. If none is specified, Sanic creates its own event loop. |
-|                **protocol**               |  `HttpProtocol`  | Subclass of asyncio.protocol.                                                             |
-|                **version**                | `HTTP.VERSION_1` | The HTTP version to use (`HTTP.VERSION_1` or `HTTP.VERSION_3`).        |
-|    **access_log**    |      `True`      | Enables log on handling requests (significantly slows server).         |
-|    **auto_reload**   |      `None`      | Enables auto-reload on the source directory.                                              |
-|    **reload_dir**    |      `None`      | A path or list of paths to directories the auto-reloader should watch.                    |
-| **noisy_exceptions** |      `None`      | Whether to set noisy exceptions globally. None means leave as default.                    |
-|                  **motd**                 |      `True`      | Whether to display the startup message.                                                   |
-|   **motd_display**   |      `None`      | A dict with extra key/value information to display in the startup message                 |
-|                  **fast**                 |      `False`     | Whether to maximize worker processes.  Cannot be used with workers.                       |
-|               **verbosity**               |        `0`       | Level of logging detail. Max is 2.                                                        |
-|     **auto_tls**     |      `False`     | Whether to auto-create a TLS certificate for local development. Not for production.       |
-|  **single_process**  |      `False`     | Whether to run Sanic in a single process.                                                 |
+|                   パラメータ                   |       デフォルト      | 説明                                                                           |
+| :---------------------------------------: | :--------------: | :--------------------------------------------------------------------------- |
+|                  **ホスト**                  |   `"127.0.0.1"`  | サーバーをホストするためのアドレス。                                                           |
+|                  **ポート**                  |      `8000`      | サーバーをホストするためのポート。                                                            |
+|                  **unix**                 |       `なし`       | (TCP の代わりに) サーバーをホストする Unix ソケット名。                        |
+|                  **dev**                  |      `False`     | `debug=True`と`auto_reload=True`と同じです。                                        |
+|                 **debug**                 |      `False`     | デバッグ出力を有効にします(サーバーを遅くします)。                                |
+|                  **ssl**                  |       `なし`       | ワーカーの SSL 暗号化の SSLContext です。                                                |
+|                  **sock**                 |       `なし`       | サーバーが接続を受け入れるソケット。                                                           |
+|                 **works**                 |        `1`       | spawn するワーカープロセスの数。 高速では使用できません。                                             |
+|                  **ループ**                  |       `なし`       | 非同期互換イベントループ。 何も指定されていない場合、Sanic は独自のイベントループを作成します。                          |
+|                **protocol**               |  `HttpProtocol`  | asyncio.protocolのサブクラス。                                                      |
+|                 **バージョン**                 | `HTTP.VERSION_1` | 使用する HTTP バージョン (`HTTP.VERSION_1` または `HTTP.VERSION_3` )。 |
+|    **access_log**    |      `True`      | リクエスト処理時にログを有効にします（サーバーが大幅に遅くなります）。                                          |
+|    **auto_reload**   |       `なし`       | ソースディレクトリの自動リロードを有効にします。                                                     |
+|    **reload_dir**    |       `なし`       | 自動リローダーが監視すべきディレクトリへのパスまたはリスト。                                               |
+| **noisy_exceptions** |       `なし`       | 騒々しい例外をグローバルに設定するかどうか。 はいずれもデフォルトのままにします。                                    |
+|                  **motd**                 |      `True`      | 起動時のメッセージを表示するかどうかを設定します。                                                    |
+|   **motd_display**   |       `なし`       | スタートアップメッセージに表示する追加のキー/値情報を持つディクト                                            |
+|                  **fast**                 |      `False`     | ワーカープロセスを最大化するかどうか。  ワーカーでは使用できません。                                          |
+|               **verbosity**               |        `0`       | ログの詳細レベル。 最大は 2 です。                                                          |
+|     **auto_tls**     |      `False`     | ローカル開発用の TLS 証明書を自動作成するかどうか。 生産のためではありません。                                   |
+|  **single_process**  |      `False`     | 単一のプロセスでSanicを実行するかどうか。                                                      |
 
-.. column::
+.. 列::
 
 ```
-For example, we can turn off the access log in order to increase performance, and bind to a custom host and port.
+たとえば、パフォーマンスを向上させるためにアクセスログをオフにし、カスタムホストとポートにバインドすることができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -353,13 +353,13 @@ if __name__ == "__main__":
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Now, just execute the python script that has `app.run(...)`
+`app.run(...)`を持つPythonスクリプトを実行してください。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -367,15 +367,15 @@ python server.py
 ```
 ````
 
-For a slightly more advanced implementation, it is good to know that `app.run` will call `app.prepare` and `Sanic.serve` under the hood.
+もう少し高度な実装では、 `app.run` は `app.prepare` と `Sanic.serve` をフードの下で呼び出すことを知っておくと良いでしょう。
 
-.. column::
+.. 列::
 
 ```
-Therefore, these are equivalent:
+したがって、これらは等価です:
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -389,33 +389,33 @@ if __name__ == "__main__":
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-This can be useful if you need to bind your appliction(s) to multiple ports.
+アプリケーションを複数のポートにバインドする必要がある場合に便利です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 if __name__ == "__main__":
     app1.prepare(host='0.0.0.0', port=9990)
     app1.prepare(host='0.0.0.0', port=9991)
-    app2.prepare(host='0.0.0.0', port=5555)
+    app2.prepare(host='0.0.0.0', port=555555)
     Sanic.serve()
 ```
 ````
 
 ### Sanic Simple Server
 
-.. column::
+.. 列::
 
 ```
-Sometimes you just have a directory of static files that need to be served. This especially can be handy for quickly standing up a localhost server. Sanic ships with a Simple Server, where you only need to point it at a directory.
+場合によっては、提供する必要がある静的ファイルのディレクトリがあります。 特に、localhostサーバーを素早く立ち上げるのに便利です。 Sanic shipにはシンプルなサーバーがあり、ディレクトリにそれを指すだけで済みます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -423,25 +423,25 @@ sanic ./path/to/dir --simple
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-This could also be paired with auto-reloading.
+これは自動リロードと組み合わせることもできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
-sanic ./path/to/dir --simple --reload --reload-dir=./path/to/dir
+sanic ./path/to/dir --simple -reload -reload-dir=./path/to/dir
 ```
 ````
 
-_Added in v21.6_
+_V21.6_に追加されました
 
 ### HTTP/3
 
-Sanic server offers HTTP/3 support using [aioquic](https://github.com/aiortc/aioquic). This **must** be installed to use HTTP/3:
+Sanic server provides HTTP/3 support using [aioquic](https://github.com/aiortc/aioquic). HTTP/3を使用するには**インストールする必要があります**
 
 ```sh
 pip install sanic aioquic
@@ -451,9 +451,9 @@ pip install sanic aioquic
 pip install sanic[http3]
 ```
 
-To start HTTP/3, you must explicitly request it when running your application.
+HTTP/3 を開始するには、アプリケーションの実行時に明示的にリクエストする必要があります。
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -465,7 +465,7 @@ sanic path.to.server:app -3
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -473,13 +473,13 @@ app.run(version=3)
 ```
 ````
 
-To run both an HTTP/3 and HTTP/1.1 server simultaneously, you can use [application multi-serve](../release-notes/v22.3.html#application-multi-serve) introduced in v22.3. This will automatically add an [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc) header to your HTTP/1.1 requests to let the client know that it is also available as HTTP/3.
+HTTP/3 と HTTP/1.1 の両方のサーバーを同時に実行するには、v22.3 で導入された [application multi-serve] (../release-notes/v22.3.html#application-multi-serve) を使用します。 これにより自動的に [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc) ヘッダーがHTTP/1.1 リクエストに追加され、クライアントにHTTP/3 としても利用可能であることを知らせます。
 
-.. column::
+.. 列::
 
 ````
 ```sh
-sanic path.to.server:app --http=3 --http=1
+sanic path.to.server:app --http=3 -http=1
 ```
 
 ```sh
@@ -487,7 +487,7 @@ sanic path.to.server:app -3 -1
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -497,21 +497,21 @@ Sanic.serve()
 ```
 ````
 
-Because HTTP/3 requires TLS, you cannot start a HTTP/3 server without a TLS certificate. You should [set it up yourself](../how-to/tls.html) or use `mkcert` if in `DEBUG` mode. Currently, automatic TLS setup for HTTP/3 is not compatible with `trustme`. See [development](./development.md) for more details.
+HTTP/3 は TLS を必要とするため、TLS 証明書なしでは HTTP/3 サーバーを起動できません。 `DEBUG`モードの場合は、format@@0(../how-to/tls.html) または `mkcert` を使用してください。 現在、HTTP/3 に対する自動的な TLS 設定は `trustme` と互換性がありません。 詳細は [development](./development.md) を参照してください。
 
-_Added in v22.6_
+_v22.6_に追加されました
 
 ## ASGI
 
-Sanic is also ASGI-compliant. This means you can use your preferred ASGI webserver to run Sanic. The three main implementations of ASGI are [Daphne](http://github.com/django/daphne), [Uvicorn](https://www.uvicorn.org/), and [Hypercorn](https://pgjones.gitlab.io/hypercorn/index.html).
+SanicもASGIに準拠しています。 つまり、ご希望のASGIウェブサーバーを使用してSanicを実行することができます。 ASGI の 3 つの主な実装は [Daphne](http://github.com/django/daphne), [Uvicorn](https://www.uvicorn.org/), および [Hypercorn](https://pgjones.gitlab.io/hypercorn/index.html) です。
 
-.. warning::
+.. 警告::
 
 ```
-Daphne does not support the ASGI `lifespan` protocol, and therefore cannot be used to run Sanic. See [Issue #264](https://github.com/django/daphne/issues/264) for more details.
+DaphneはASGIの`lifespan`プロトコルをサポートしていないため、Sanicを実行するために使用することはできません。詳細は[課題 264](https://github.com/django/daphne/issues/264)を参照してください。
 ```
 
-Follow their documentation for the proper way to run them, but it should look something like:
+適切な実行方法については、ドキュメントに従ってください。しかし、次のようになります。
 
 ```sh
 uvicorn myapp:app
@@ -521,46 +521,46 @@ uvicorn myapp:app
 hypercorn myapp:app
 ```
 
-A couple things to note when using ASGI:
+ASGIを使用する場合、いくつか注意すべきことがあります:
 
-1. When using the Sanic webserver, websockets will run using the `websockets` package. In ASGI mode, there is no need for this package since websockets are managed in the ASGI server.
-2. The ASGI lifespan protocol https\://asgi.readthedocs.io/en/latest/specs/lifespan.html, supports only two server events: startup and shutdown. Sanic has four: before startup, after startup, before shutdown, and after shutdown. Therefore, in ASGI mode, the startup and shutdown events will run consecutively and not actually around the server process beginning and ending (since that is now controlled by the ASGI server). Therefore, it is best to use `after_server_start` and `before_server_stop`.
+1. Sanic ウェブサーバを使用する場合、websocketsは`websockets`パッケージを使用して実行されます。 ASGI モードでは、ウェブソケットは ASGI サーバで管理されるため、このパッケージは必要ありません。
+2. ASGIの寿命プロトコル https\://asgi.readthedocs.io/en/latest/specs/lifespan.htmlは、起動とシャットダウンの2つのサーバーイベントのみをサポートしています。 Sanicは、起動前、起動後、シャットダウン前、シャットダウン後の4つを持っています。 したがって、ASGIモードで 起動イベントとシャットダウンイベントは連続して実行され、実際にはサーバープロセスの開始と終了の周りには実行されません(それ以降はASGIサーバーによって制御されます)。 ですから、`after_server_start` と `before_server_stop` を使うのがベストです。
 
-### Trio
+### トリオ
 
-Sanic has experimental support for running on Trio with:
+SanicはTrioでの実行を実験的にサポートしています。
 
 ```sh
 hypercorn -k trio myapp:app
 ```
 
-## Gunicorn
+## グニコーン
 
-[Gunicorn](http://gunicorn.org/) ("Green Unicorn") is a WSGI HTTP Server for UNIX based operating systems. It is a pre-fork worker model ported from Ruby’s Unicorn project.
+[Gunicorn](http://gunicorn.org/) ("Green Unicorn") は UNIX ベースのオペレーティングシステム用の WSGI HTTP Server です。 これは、RubyのUnicornプロジェクトから移植されたpre-forkワーカーモデルです。
 
-In order to run Sanic application with Gunicorn, you need to use it with the adapter from [uvicorn](https://www.uvicorn.org/). Make sure uvicorn is installed and run it with `uvicorn.workers.UvicornWorker` for Gunicorn worker-class argument:
+SanicalアプリケーションをGunicornで実行するには、 [uvicorn](https://www.uvicorn.org/)のアダプターで使用する必要があります。 uvicornがインストールされていることを確認し、Gunicorn.worker.UvicornWorker\`でGunicornワーカークラスの引数を実行します:
 
 ```sh
-gunicorn myapp:app --bind 0.0.0.0:1337 --worker-class uvicorn.workers.UvicornWorker
+gunicorn myapp:app --bind 0.0.0.0.0:1337 --worker-class uvicorn.worker.UvicornWorker
 ```
 
-See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) for more information.
+詳細は [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-requests) を参照してください。
 
-.. warning::
-
-```
-It is generally advised to not use `gunicorn` unless you need it. The Sanic Server is primed for running Sanic in production. Weigh your considerations carefully before making this choice. Gunicorn does provide a lot of configuration options, but it is not the best choice for getting Sanic to run at its fastest.
-```
-
-## Performance considerations
-
-.. column::
+.. 警告::
 
 ```
-When running in production, make sure you turn off `debug`.
+一般的には、必要な場合以外は `gunicorn` を使用しないことをお勧めします。 Sanic Serverは、本番環境でSanicを実行するためにプライミングされています。この選択を行う前に、慎重に考慮事項を検討してください。 Gunicornは多くの設定オプションを提供しますが、Sanicを最速で走らせるための最良の選択ではありません。
 ```
 
-.. column::
+## パフォーマンスに関する考慮事項
+
+.. 列::
+
+```
+本番環境で実行する場合は、`debug` をオフにしてください。
+```
+
+.. 列::
 
 ````
 ```sh
@@ -568,15 +568,15 @@ sanic path.to.server:app
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Sanic will also perform fastest if you turn off `access_log`.
+`access_log` をオフにすると、Sanicも最速に動作します。
 
-If you still require access logs, but want to enjoy this performance boost, consider using [Nginx as a proxy](./nginx.md), and letting that handle your access logging. It will be much faster than anything Python can handle.
+まだアクセスログが必要で、このパフォーマンスを向上させたい場合は、[Nginx をプロキシとして使用することを検討してください](。 nginx.md)、そしてアクセスログを処理させます。Pythonが扱えるどんなものよりもずっと速くなります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh

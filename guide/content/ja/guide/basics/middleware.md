@@ -1,19 +1,19 @@
-# Middleware
+# ミドルウェア
 
-Whereas listeners allow you to attach functionality to the lifecycle of a worker process, middleware allows you to attach functionality to the lifecycle of an HTTP stream.
+一方、リスナーはワーカープロセスのライフサイクルに機能を付加することができます。 ミドルウェアを使用すると、HTTPストリームのライフサイクルに機能を追加できます。
 
 ```python
 @app.on_request
 async def example(request):
-	print("I execute before the handler.")
+	print("I execute before the handler")
 ```
 
-You can execute middleware either _before_ the handler is executed, or _after_.
+ミドルウェアは _before_ ハンドラが実行されるか、_after_ のどちらかで実行できます。
 
 ```python
 @app.on_response
 async def example(request, response):
-	print("I execute after the handler.")
+	print("I execute after the handler")
 ```
 
 .. mermaid::
@@ -43,15 +43,15 @@ end
 Note over Worker: Deliver response
 ```
 
-## Attaching middleware
+## ミドルウェアをアタッチ中
 
-.. column::
+.. 列::
 
 ```
-This should probably look familiar by now. All you need to do is declare when you would like the middleware to execute: on the `request` or on the `response`.
+これはおそらく今ごろはよく見覚えがあるはずです。 ミドルウェアに`request`または`response`を実行させたいときに宣言するだけです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -62,13 +62,13 @@ app.register_middleware(extract_user, "request")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Again, the `Sanic` app instance also has a convenience decorator.
+繰り返しになりますが、`Sanic`アプリインスタンスには利便性デコレータもあります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -78,13 +78,13 @@ async def extract_user(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Response middleware receives both the `request` and `response` arguments.
+Response middleware は `request` と `response` の両方の引数を受け取ります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -94,15 +94,15 @@ async def prevent_xss(request, response):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can shorten the decorator even further. This is helpful if you have an IDE with autocomplete.
+デコレータをさらに短くすることができます。オートコンプリート付きの IDE がある場合に便利です。
 
-This is the preferred usage, and is what we will use going forward.
+これが好ましい用途であり、今後使用するものです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -118,20 +118,20 @@ async def prevent_xss(request, response):
 
 ## Modification
 
-Middleware can modify the request or response parameter it is given, _as long as it does not return it_.
+ミドルウェアは与えられたリクエストやレスポンスのパラメータを変更することができます。
 
-.. column::
+.. 列::
 
 ```
-#### Order of execution
+#### 実行順序
 
-1. Request middleware: `add_key`
-2. Route handler: `index`
-3. Response middleware: `prevent_xss`
-4. Response middleware: `custom_banner`
+1. リクエストミドルウェア: `add_key`
+2. ルートハンドラ: `index`
+3. レスポンスミドルウェア: `prevent_xss`
+4. レスポンスミドルウェア: `custom_banner`
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -155,13 +155,13 @@ async def index(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-You can modify the `request.match_info`. A useful feature that could be used, for example, in middleware to convert `a-slug` to `a_slug`.
+`request.match_info`を変更することができます。例えばミドルウェアで`a-slug`をa_slug`に変換するのに役立つ機能です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -179,22 +179,22 @@ foo_bar_baz
 ```
 ````
 
-## Responding early
+## 早期対応
 
-.. column::
+.. 列::
 
 ```
-If middleware returns a `HTTPResponse` object, the request will stop processing and the response will be returned. If this occurs to a request before the route handler is reached, the handler will **not** be called. Returning a response will also prevent any further middleware from running.
+middleware が `HTTPResponse` オブジェクトを返す場合、リクエストは処理を停止し、レスポンスが返されます。 ルートハンドラに到達する前にリクエストにこれが発生した場合、ハンドラは **呼び出されません** 。 応答を返すと、さらにミドルウェアが実行されなくなります。
 
 ```
 
 .. tip::
 
 ```
-You can return a `None` value to stop the execution of the middleware handler to allow the request to process as normal. This can be useful when using early return to avoid processing requests inside of that middleware handler.
+`None` を返すと、ミドルウェアハンドラの実行が停止し、リクエストが通常通り処理できるようになります。 これは、ミドルウェアハンドラ内のリクエスト処理を避けるために早期の戻り値を使用する場合に便利です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -208,13 +208,13 @@ async def halt_response(request, response):
 ```
 ````
 
-## Order of execution
+## 実行の順序
 
-Request middleware is executed in the order declared. Response middleware is executed in **reverse order**.
+リクエストミドルウェアは宣言された順序で実行されます。 レスポンスミドルウェアは**逆順**で実行されます。
 
-Given the following setup, we should expect to see this in the console.
+以下の設定では、コンソールでこれを確認する必要があります。
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -241,7 +241,7 @@ async def handler(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```bash
@@ -250,19 +250,19 @@ middleware_2
 ~ handler ~
 middleware_4
 middleware_3
-[INFO][127.0.0.1:44788]: GET http://localhost:8000/handler  200 5
+[INFO][127.0.0.1:44788]: GET http://localhost:8000/handler 200 5
 ```
 ````
 
-### Middleware priority
+### ミドルウェアの優先度
 
-.. column::
+.. 列::
 
 ```
-You can modify the order of execution of middleware by assigning it a higher priority. This happens inside of the middleware definition. The higher the value, the earlier it will execute relative to other middleware. The default priority for middleware is `0`.
+ミドルウェアの実行順序は、より高い優先度を割り当てることで変更できます。ミドルウェア定義の内部で発生します。 値が高いほど、他のミドルウェアから相対的に実行されます。ミドルウェアのデフォルトの優先度は `0` です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -276,4 +276,4 @@ async def high_priority(request):
 ```
 ````
 
-_Added in v22.9_
+_v22.9_に追加されました

@@ -1,1 +1,1 @@
-connecting to data sources
+データソースへの接続

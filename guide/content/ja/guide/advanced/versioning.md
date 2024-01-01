@@ -1,24 +1,24 @@
-# Versioning
+# バージョン進行
 
-エンドポイントにバージョンを追加するためのAPI構築の標準的な方法です。 これにより、互換性のないエンドポイントを簡単に区別することができます。
+API構築では、エンドポイントにバージョンを追加するのが標準的な方法です。 これにより、互換性のないエンドポイントを簡単に区別することができます。
 
 バージョンを追加すると、`/v{version}`のURLプレフィックスがエンドポイントに追加されます。
 
-バージョンは `int` 、`float` 、または `str` です。 許容可能な値:
+バージョンは `int` 、`float` 、または `str` にすることができます。 許容値:
 
 - `1`, `2`, `3`
 - `1.1`, `2.25`, `3.0`
 - `"1"`、`"v1"`、`"v1.1"`
 
-## ルートごと
+## ルートごとのバージョン
 
-.. 列::
+.. column::
 
 ```
 バージョン番号をルートに直接渡すことができます。
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python
@@ -34,15 +34,15 @@ def handle_request(request):
 ```
 ````
 
-## 設計図ごと
+## Blueprintごとのバージョン
 
-.. 列::
+.. column::
 
 ```
-また、バージョン番号を blueprint に渡すこともできます。blueprint 内のすべてのルートに適用されます。
+Blueprintにバージョン番号を渡すこともできます。 これは、そのBlueprint内のすべてのルートに適用されます。
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python
@@ -55,27 +55,23 @@ def handle_request(request):
 ```
 ````
 
-## ブループリントグループごと
+## Blueprintグループごとのバージョン
 
-.. 列::
+.. column::
 
 ```
-In order to simplify the management of the versioned blueprints, you can provide a version number in the blueprint
-group. The same will be inherited to all the blueprint grouped under it if the blueprints don't already override the
-same information with a value specified while creating a blueprint instance.
+バージョン化されたBlueprintの管理を簡素化するために、グループにバージョン番号を提供できます。Blueprintインスタンスを作成する際に指定された値で同じ情報を上書きしない場合、 その下方でグループ化されたすべてのBlueprintにも同じ情報が継承されます。
 
-When using blueprint groups for managing the versions, the following order is followed to apply the Version prefix to
-the routes being registered.
+バージョン管理にblueprintグループを使用する場合、ルートの登録中に以下の順序でバージョンプレフィックスが適用されます。
 
-1. Route Level configuration
-2. Blueprint level configuration
-3. Blueprint Group level configuration
+1. ルートレベルの設定
+2. Blueprintレベルの設定
+3. Blueprintグループレベルの設定
 
-If we find a more pointed versioning specification, we will pick that over the more generic versioning specification
-provided under the Blueprint or Blueprint Group
+もし、より小さな単位でのバージョン管理仕様が見つかれば、BlueprintやBlueprintグループの下で提供される一般的なバージョン管理仕様よりも、そちらを選ぶことになります。
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python
@@ -115,29 +111,29 @@ async def handle_endpoint_2_bp2(request):
 ```
 ````
 
-## バージョン接頭辞：
+## バージョンプレフィックス
 
-上記のように、ルートに適用される`version`は、生成されたURIパスの最初のセグメントである**常に**です。 したがって、バージョンの前にパスセグメントを追加するために、 `version` 引数が渡されるすべての場所を渡すことができます。`version_prefix` も渡すことができます。
+上で見たように、ルートに適用される`version`は、**常に**生成されたURIパスの最初のセグメントになります。 したがって、バージョンの前にパスセグメントを追加できるように、`version`引数が渡されるすべての場所で、`version_prefix`を渡すこともできます。
 
-引数 `version_prefix` は以下のように定義できます：
+引数 `version_prefix` は以下の場所で定義できます：
 
-- `app.route` と `bp.route` デコレーター （そしてすべてのコンビニエンスデコレーターも）
-- `Blueprint` インスタンス
-- `Blueprint.group` コンストラクター
-- `BlueprintGroup` インスタンス
-- `app.blueprint` 登録
+- `app.route` と `bp.route` デコレーター (そして、すべての便利なデコレータ)
+- `Blueprint`のインスタンス化
+- `Blueprint.group` コンストラクタ
+- `BlueprintGroup`のインスタンス化
+- `app.blueprint` の登録
 
-複数の場所に定義がある場合、より具体的な定義はより一般的に優先されます。 このリストはその階層を提供します。
+複数の場所に定義がある場合、より具体的な定義はより一般的な定義を上書きします。 上のリストはそのヒエラルキーと対応しています。
 
 `version_prefix` のデフォルト値は `/v` です。
 
-.. 列::
+.. column::
 
 ```
-`/api` にバージョン管理されたルートをマウントできる機能がよくあります。これは `version_prefix` で簡単に実現できます。
+バージョン管理されたルートを `/api` にマウントしたいという状況がよくあります。これは`version_prefix`で簡単に実現できます。
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python
@@ -146,13 +142,13 @@ app.route("/my/path", version=1, version_prefix="/api/v")
 ```
 ````
 
-.. 列::
+.. column::
 
 ```
-おそらく、`/api` ルートを単一の `BlueprintGroup` にロードすることでしょう。
+おそらく、より説得力のある使用法は、すべての`/api`ルートを単一の`BlueprintGroup`にロードすることです。
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python

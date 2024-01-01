@@ -1,14 +1,14 @@
-# Decorators
+# 装饰符
 
-One of the best ways to create a consistent and DRY web API is to make use of decorators to remove functionality from the handlers, and make it repeatable across your views.
+创建一致的 DRY 网页API 的最佳方法之一是利用装饰器从处理器中移除功能。 并使之可以在你的意见中重复出现。
 
-.. column::
+.. 列:
 
 ```
-Therefore, it is very common to see a Sanic view handler with several decorators on it.
+因此，非常常见的情况是看到一个带有几个装饰师的Sanic视图处理器。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -21,11 +21,11 @@ async def get_order_details(request, params, user):
 ```
 ````
 
-## Example
+## 示例
 
-Here is a starter template to help you create decorators.
+这是一个帮助您创建装饰程序的启动模板。
 
-In this example, let’s say you want to check that a user is authorized to access a particular endpoint. You can create a decorator that wraps a handler function, checks a request if the client is authorized to access a resource, and sends the appropriate response.
+在这个示例中，让我们说你想要检查用户是否被授权访问某个特定端点。 您可以创建一个装饰器，包装处理函数。 检查客户是否有权访问资源的请求，并发送适当的响应。
 
 ```python
 from functools import wraps
@@ -56,21 +56,21 @@ async def test(request):
     return json({"status": "authorized"})
 ```
 
-## Templates
+## 模板
 
-Decorators are **fundamental** to building applications with Sanic. They increase the portability and maintainablity of your code.
+装饰器是 **基础** ，用于构建带萨尼语的应用程序。 它们提高了您的代码的可携带性和可维护性。
 
-In paraphrasing the Zen of Python: "[decorators] are one honking great idea -- let's do more of those!"
+在解析Python的Zen时：“[decorators] 是一个很好的主意——让我们做更多的事！”
 
-To make it easier to implement them, here are three examples of copy/pastable code to get you started.
+为了使它们更容易实现，在这里是三个可复制/可粘贴代码的例子来让您开始操作。
 
-.. column::
+.. 列:
 
 ```
-Don't forget to add these import statements. Although it is *not* necessary, using `@wraps` helps keep some of the metadata of your function intact. [See docs](https://docs.python.org/3/library/functools.html#functools.wraps). Also, we use the `isawaitable` pattern here to allow the route handlers to by regular or asynchronous functions.
+不要忘记添加这些导入语句。 虽然它是*不是*必需的，但使用 @wraws` 有助于保持您函数的某些元数据完整。[见文档](https://docs)。 ython.org/3/library/functools.html#functools.wrawals。另外，我们在这里使用 `isawaitable` 模式，允许通过常规或异步函数处理路由处理程序。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -79,81 +79,81 @@ from functools import wraps
 ```
 ````
 
-### With args
+### 带参数：
 
-.. column::
+.. 列:
 
 ````
-Often, you will want a decorator that will *always* need arguments. Therefore, when it is implemented you will always be calling it.
+你常常想要一个装饰器，它将*总是需要参数。因此，当它实现时，你总是会调用它。
 
 ```python
 @app.get("/")
 @foobar(1, 2)
-async def handler(request: Request):
+async def 处理器(请求: 请求):
     return text("hi")
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
-def foobar(arg1, arg2):
-    def decorator(f):
-        @wraps(f)
-        async def decorated_function(request, *args, **kwargs):
+def foobar(g1, arg2:
+    def 装饰物(f):
+        @wraws(f)
+        async def 装饰函数(请求) *args, **kwargs):
 
             response = f(request, *args, **kwargs)
-            if isawaitable(response):
-                response = await response
+            if isawaitable (response):
+                response = requires
 
             return response
 
         return decorated_function
 
-    return decorator
+    return Decorator
 ```
 ````
 
-### Without args
+### 没有参数
 
-.. column::
+.. 列:
 
 ````
-Sometimes you want a decorator that will not take arguments. When this is the case, it is a nice convenience not to have to call it
+有时你想要一个不需要参数的装饰器。 在这种情况下，最好不要调用
 
-```python
-@app.get("/")
+``python
+@app。 et("/")
 @foobar
-async def handler(request: Request):
+async def 处理器(请求: 请求):
     return text("hi")
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
-def foobar(func):
+def foobar(function):
     def decorator(f):
-        @wraps(f)
-        async def decorated_function(request, *args, **kwargs):
+        @wraws(f)
+        async def decorated_function_request. *args, **kwargs):
 
             response = f(request, *args, **kwargs)
-            if isawaitable(response):
-                response = await response
+            if isawaitable (response):
+                response = 等待回应
 
             return response
 
         return decorated_function
 
-    return decorator(func)
+    return decorator(ffunc)
 ```
 ````
 
-### With or Without args
+### 使用或不使用参数
 
-.. column::
+.. 列:
 
 ````
 If you want a decorator with the ability to be called or not, you can follow this pattern. Using keyword only arguments is not necessary, but might make implementation simpler.
@@ -173,7 +173,7 @@ async def handler(request: Request):
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python

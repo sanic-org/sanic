@@ -1,18 +1,18 @@
-# Streaming
+# ストリーミング
 
-## Request streaming
+## ストリーミングのリクエスト
 
-Sanic allows you to stream data sent by the client to begin processing data as the bytes arrive.
+Sanicでは、クライアントから送信されたデータをストリーミングして、バイトが到着するとデータの処理を開始することができます。
 
 .. column::
 
 ```
-When enabled on an endpoint, you can stream the request body using `await request.stream.read()`.
+エンドポイントで有効にすると、`await request.stream.read()`を使ってリクエストボディをストリーミングできます。
 
-That method will return `None` when the body is completed.
+このメソッドは、ボディが完了すると`None`を返します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -34,7 +34,7 @@ class SimpleView(HTTPMethodView):
 .. column::
 
 ```
-It also can be enabled with a keyword argument in the decorator...
+また、デコレータのキーワード引数で有効にすることも...
 ```
 
 .. column::
@@ -52,7 +52,7 @@ async def handler(request):
 .. column::
 
 ```
-... or the `add_route()` method.
+...`add_route()`メソッドを使うこともできます。
 ```
 
 .. column::
@@ -68,18 +68,18 @@ bp.add_route(
 ```
 ````
 
-.. tip:: FYI
+.. tip:: 参考
 
 ```
-Only post, put and patch decorators have stream argument.
+post、put、patchデコレータのみが stream 引数を持っています。
 ```
 
-## Response streaming
+## Response ストリーミング
 
 .. column::
 
 ```
-Sanic allows you to stream content to the client.
+Sanicでは、クライアントにコンテンツをストリーミングできます。
 ```
 
 .. column::
@@ -92,12 +92,12 @@ async def test(request):
     await response.send("foo,")
     await response.send("bar")
 
-    # Optionally, you can explicitly end the stream by calling:
+    # 以下の関数を呼び出して、ストリームを明示的に終了することもできます:
     await response.eof()
 ```
 ````
 
-This is useful in situations where you want to stream content to the client that originates in an external service, like a database. For example, you can stream database records to the client with the asynchronous cursor that `asyncpg` provides.
+これは、データベースのような外部サービスで発生するクライアントにコンテンツをストリーミングしたい場合に便利です。 たとえば、`asyncpg` が提供する非同期カーソルを使用して、データベースレコードをクライアントにストリーミングできます。
 
 ```python
 @app.route("/")
@@ -109,21 +109,21 @@ async def index(request):
             await response.send(record[0])
 ```
 
-You can explicitly end a stream by calling `await response.eof()`. It a convenience method to replace `await response.send("", True)`. It should be called **one time** _after_ your handler has determined that it has nothing left to send back to the client. While it is _optional_ to use with Sanic server, if you are running Sanic in ASGI mode, then you **must** explicitly terminate the stream.
+`await response.eof()` を呼び出すことで、ストリームを明示的に終了させることができます。 これは `await response.send("", True)` を置き換える便利なメソッドです。 ハンドラがクライアントに送り返すものが何も残っていないと判断した _後に_ **1度だけ** 呼び出されるべきです。 Sanic サーバーで使用するのは_任意_ですが、Sanic を ASGI モードで実行している場合は、ストリームを明示的に終了させる必要があります。
 
-_Calling `eof` became optional in v21.6_
+_v21.6_で`eof`を呼び出すことがオプションになりました
 
-## File streaming
+## ファイルストリーミング
 
-.. column::
+.. 列::
 
 ```
-Sanic provides `sanic.response.file_stream` function that is useful when you want to send a large file. It returns a `StreamingHTTPResponse` object and will use chunked transfer encoding by default; for this reason Sanic doesn’t add `Content-Length` HTTP header in the response.
+Sanic は `sanic.response.file_stream` 関数を提供しており、大きなファイルを送信したいときに便利です。 `StreamingHTTPResponse` オブジェクトを返し、デフォルトではチャンクされた転送エンコーディングを使用します。このため、Sanicはレスポンスに`Content-Length` HTTPヘッダーを追加しません。
 
-A typical use case might be streaming an video file.
+典型的なユースケースは、ビデオファイルをストリーミングすることでしょう。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -141,13 +141,13 @@ async def handler_file_stream(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-If you want to use the `Content-Length` header, you can disable chunked transfer encoding and add it manually simply by adding the `Content-Length` header.
+`Content-Length` ヘッダーを使用したい場合は、チャンク付き転送エンコーディングを無効にし、`Content-Length` ヘッダーを追加するだけで手動で追加できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

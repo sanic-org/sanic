@@ -1,16 +1,16 @@
-# Getting Started
+# はじめに
 
-Before we begin, make sure you are running Python 3.8 or higher. Currently, Sanic is works with Python versions 3.8 – 3.11.
+始める前に、Python 3.8 以上を実行していることを確認してください。 現在、SanicはPythonバージョン3.8 - 3.11で動作します。
 
-## Install
+## インストール
 
 ```sh
 pip install sanic
 ```
 
-## Hello, world application
+## こんにちは、世界のアプリケーション
 
-.. column::
+.. 列::
 
 ```
 If you have ever used one of the many decorator based frameworks, this probably looks somewhat familiar to you.
@@ -22,7 +22,7 @@ If you have ever used one of the many decorator based frameworks, this probably 
     If you are coming from Flask or another framework, there are a few important things to point out. Remember, Sanic aims for performance, flexibility, and ease of use. These guiding principles have tangible impact on the API and how it works.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -37,21 +37,21 @@ async def hello_world(request):
 ```
 ````
 
-### Important to note
+### ご注意ください
 
-- Every request handler can either be sync (`def hello_world`) or async (`async def hello_world`). Unless you have a clear reason for it, always go with `async`.
-- The `request` object is always the first argument of your handler. Other frameworks pass this around in a context variable to be imported. In the `async` world, this would not work so well and it is far easier (not to mention cleaner and more performant) to be explicit about it.
-- You **must** use a response type. MANY other frameworks allow you to have a return value like this: `return "Hello, world."` or this: `return {"foo": "bar"}`. But, in order to do this implicit calling, somewhere in the chain needs to spend valuable time trying to determine what you meant. So, at the expense of this ease, Sanic has decided to require an explicit call.
+- 各リクエストハンドラーは、sync (`def hello_world`) または async (`async def hello_world`) のいずれかになります。 明確な理由がない限り、常に `async` を使用します。
+- `request` オブジェクトは常にハンドラの最初の引数です。 他のフレームワークは、インポートされるコンテキスト変数にこれを渡します。 `async` ワールドで うまくいかないし、明らかにするのははるかに簡単です(クリーナーやパフォーマンスの向上は言うまでもありません)。
+- 応答タイプを**使用する必要があります**。 他の多くのフレームワークでは、`return "Hello, world."` または: `return {"foo": "bar"}` のような戻り値を持つことができます。 しかしこの暗黙の呼び出しを行うためには、チェーン内のどこかで、あなたが何を意味するのかを判断するために貴重な時間を費やす必要があります。 したがって、これを犠牲にして、Sanicは明示的な呼び出しを要求することにしました。
 
-### Running
+### 実行中
 
-.. column::
+.. 列::
 
 ```
-Let's save the above file as `server.py`. And launch it.
+上記のファイルを `server.py` として保存して起動しましょう。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -62,27 +62,27 @@ sanic server
 .. note::
 
 ```
-This **another** important distinction. Other frameworks come with a built in development server and explicitly say that it is _only_ intended for development use. The opposite is true with Sanic. 
+この**別の**重要な区別。他のフレームワークには開発用サーバーが組み込まれており、開発用のものであることを明示的に示しています。 
 
-**The packaged server is production ready.**
+**パッケージ化されたサーバーは準備ができています。**
 ```
 
-## Sanic Extensions
+## サニックエクステンション
 
-Sanic intentionally aims for a clean and unopinionated feature list. The project does not want to require you to build your application in a certain way, and tries to avoid prescribing specific development patterns. There are a number of third-party plugins that are built and maintained by the community to add additional features that do not otherwise meet the requirements of the core repository.
+Sanicは、意図的にクリーンで不要なフィーチャーリストを目指しています。 プロジェクトは、特定の方法でアプリケーションを構築する必要はありませんし、特定の開発パターンを処方しないようにしようとします。 コミュニティによって構築され、維持されているいくつかのサードパーティーのプラグインがあります, それ以外の場合、コアリポジトリの要件を満たしていない追加の機能を追加します.
 
-However, in order **to help API developers**, the Sanic organization maintains an official plugin called [Sanic Extensions](../plugins/sanic-ext/getting-started.md) to provide all sorts of goodies, including:
+しかし、**API 開発者を助けるために**ために、Sanic Organization は [Sanic Extensions](../plugins/sanic-ext/getting-started.md) と呼ばれる公式プラグインを管理し、以下を含むあらゆる種類のグッズを提供します。
 
-- **OpenAPI** documentation with Redoc and/or Swagger
-- **CORS** protection
-- **Dependency injection** into route handlers
-- Request query arguments and body input **validation**
-- Auto create `HEAD`, `OPTIONS`, and `TRACE` endpoints
-- Predefined, endpoint-specific response serializers
+- **OpenAPI** Redoc や Swagger 付きドキュメント
+- **CORS** 保護
+- ルートハンドラへの**依存性注入**
+- クエリの引数と本文入力**バリデーション**
+- `HEAD`、`OPTIONS`、および `TRACE`エンドポイントを自動的に作成します
+- 事前定義されたエンドポイント固有のレスポンスシリアライザー
 
-The preferred method to set it up is to install it along with Sanic, but you can also install the packages on their own.
+設定するにはSanicと一緒にインストールする方法が推奨されますが、独自にパッケージをインストールすることもできます。
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -90,7 +90,7 @@ pip install sanic[ext]
 ```
 ````
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -98,9 +98,9 @@ pip install sanic sanic-ext
 ```
 ````
 
-Starting in v21.12, Sanic will automatically setup Sanic Extensions if it is in the same environment. You will also have access to two additional application properties:
+同じ環境であれば、Sanicは自動的にSanic Extensionをv21.12から設定します。 2つの追加アプリケーションプロパティにもアクセスできます。
 
-- `app.extend()` - used to configure Sanic Extensions
-- `app.ext` - the `Extend` instance attached to the application
+- `app.extend()` - Sanic Extensionsの設定に使用
+- `app.ext` - アプリケーションに追加された `Extend` インスタンス
 
-See [the plugin documentation](../plugins/sanic-ext/getting-started.md) for more information about how to use and work with the plugin
+プラグインの使用方法と操作方法については、format@@0(../plugins/sanic-ext/getting-started.md) を参照してください。

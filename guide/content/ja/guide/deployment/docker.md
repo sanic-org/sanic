@@ -1,20 +1,20 @@
 # Docker Deployment
 
-## Introduction
+## はじめに
 
-For a long time, the environment has always been a difficult problem for deployment. If there are conflicting configurations in your project, you have to spend a lot of time resolving them. Fortunately, virtualization provides us with a good solution. Docker is one of them. If you don't know Docker, you can visit [Docker official website](https://www.docker.com/) to learn more.
+長い間、環境はデプロイにとって困難な問題でした。 プロジェクトに矛盾する構成がある場合は、それらの解決に多くの時間を費やす必要があります。 幸いなことに、仮想化は私たちに良い解決策を提供します。 Dockerはその一つです。 Dockerを知らない場合は、format@@0(https\://www\.docker.com/)をご覧ください。
 
-## Build Image
+## ビルド画像
 
-Let's start with a simple project. We will use a Sanic project as an example. Assume the project path is `/path/to/SanicDocker`.
+簡単なプロジェクトから始めましょう 例として、Sanicプロジェクトを使用します。 プロジェクトのパスは `/path/to/SanicDocker` であるとします。
 
-.. column::
+.. 列::
 
 ```
-The directory structure looks like this:
+ディレクトリ構造は以下のようになります:
 ```
 
-.. column::
+.. 列::
 
 ````
 ```text
@@ -22,17 +22,17 @@ The directory structure looks like this:
 SanicDocker
 ├── requirements.txt
 ├── dockerfile
-└── server.py
+├── server.py
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-And the `server.py` code looks like this:
+`server.py`のコードは次のようになります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -50,10 +50,10 @@ if __name__ == '__main__':
 .. note::
 
 ```
-Please note that the host cannot be 127.0.0.1 . In docker container, 127.0.0.1 is the default network interface of the container, only the container can communicate with other containers. more information please visit [Docker network](https://docs.docker.com/engine/reference/commandline/network/)
+ホストは 127.0.0.1 ではありません。docker container, 127.0.0. は、コンテナのデフォルトのネットワークインターフェイスです。コンテナだけが他のコンテナと通信できます。 詳細はformat@@0(https://docs.docker.com/engine/reference/commandline/network/)をご覧ください。
 ```
 
-Code is ready, let's write the `Dockerfile`:
+コードの準備ができました。`Dockerfile`を書きましょう。
 
 ```Dockerfile
 
@@ -70,21 +70,21 @@ EXPOSE 8000
 CMD ["python", "server.py"]
 ```
 
-Run the following command to build the image:
+次のコマンドを実行してイメージをビルドします。
 
 ```shell
 docker build -t my-sanic-image .
 ```
 
-## Start Container
+## コンテナを起動
 
-.. column::
+.. 列::
 
 ```
-After the image built, we can start the container use `my-sanic-image`:
+イメージ構築後、コンテナは `my-sanic-image` を使用します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```shell
@@ -92,13 +92,13 @@ docker run --name mysanic -p 8000:8000 -d my-sanic-image
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Now we can visit `http://localhost:8000` to see the result:
+`http://localhost:8000`で結果を確認できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```text
@@ -106,19 +106,19 @@ OK!
 ```
 ````
 
-## Use docker-compose
+## docker-compose を使用
 
-If your project consist of multiple services, you can use [docker-compose](https://docs.docker.com/compose/) to manage them.
+プロジェクトが複数のサービスで構成されている場合は、 [docker-compose](https://docs.docker.com/compose/) を使用して管理できます。
 
-for example, we will deploy `my-sanic-image` and `nginx`, achieve through nginx access sanic server.
+例えば、`my-sanic-image` と `nginx` をデプロイし、nginx アクセスの sanic サーバーを使用して実現します。
 
-.. column::
+.. 列::
 
 ```
-First of all, we need prepare nginx configuration file. create a file named `mysanic.conf`:
+まず、nginxの設定ファイルを準備する必要があります。`mysanic.conf`という名前のファイルを作成します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```nginx
@@ -135,13 +135,13 @@ server {
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Then, we need to prepare `docker-compose.yml` file. The content follows:
+次に、`docker-compose.yml` ファイルを準備する必要があります。内容は以下のとおりです:
 ```
 
-.. column::
+.. 列::
 
 ````
 ```yaml
@@ -170,13 +170,13 @@ networks:
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-After that, we can start them:
+その後、次のように開始できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```shell
@@ -184,13 +184,13 @@ docker-compose up -d
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Now, we can visit `http://localhost:80` to see the result:
+`http://localhost:80`で結果を確認できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```text

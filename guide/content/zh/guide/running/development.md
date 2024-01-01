@@ -1,12 +1,12 @@
-# Development
+# 贸易和发展会议
 
-The first thing that should be mentioned is that the webserver that is integrated into Sanic is **not** just a development server.
+应该提到的第一件事是，集成到 Sanic 的 web 服务器是 **不是** 开发服务器。
 
-It is production ready out-of-the-box, _unless you enable in debug mode_.
+它已准备就绪，除非您在调试模式下启用\*。
 
-## Debug mode
+## 调试模式
 
-By setting the debug mode, Sanic will be more verbose in its output and will disable several run-time optimizations.
+通过设置调试模式，Sanic将会在其输出中更详细，并将禁用几个运行时的优化。
 
 ```python
 # server.py
@@ -24,7 +24,7 @@ async def hello_world(request):
 sanic server:app --host=0.0.0.0 --port=1234 --debug
 ```
 
-.. danger::
+.. 危险：:
 
 ```
 Sanic's debug mode will slow down the server's performance, and is **NOT** intended for production environments.
@@ -32,37 +32,37 @@ Sanic's debug mode will slow down the server's performance, and is **NOT** inten
 **DO NOT** enable debug mode in production.
 ```
 
-## Automatic Reloader
+## 自动重新加载
 
-.. column::
+.. 列:
 
 ```
-Sanic offers a way to enable or disable the Automatic Reloader. The easiest way to enable it is using the CLI's `--reload` argument to activate the Automatic Reloader. Every time a Python file is changed, the reloader will restart your application automatically. This is very convenient while developing.
+Sanic 提供了一种启用或禁用自动重新加载器的方式。 启用它的最简单方式是使用 CLI 的 `--reload` 参数来激活自动重新加载。 每次更改 Python 文件，读取器将自动重启您的应用程序。 正在开发时这非常方便。
 
-.. note:: 
+... 注意： 
 
-    The reloader is only available when using Sanic's [worker manager](./manager.md). If you have disabled it using `--single-process` then the reloader will not be available to you.
+    读取器仅在使用 Sanic's 的[工人经理](.) 时才可用。 manager.md. 如果您已禁用它使用 "--lin-process" ，则读取器将不会对您开放。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
 sanic path.to:app --reload
-```
-You can also use the shorthand property
+``
+你也可以使用短暂属性
 ```sh
 sanic path.to:app -r
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-If you have additional directories that you would like to automatically reload on file save (for example, a directory of HTML templates), you can add that using `--reload-dir`.
+如果你有额外的目录，你想要在文件保存时自动重新加载 (例如) 一个 HTML 模板的目录，您可以使用 "--reload-dir" 添加。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -76,19 +76,19 @@ sanic path.to:app -r -R /path/to/one -R /path/to/two
 
 ## Development REPL
 
-.. new:: v23.12
+.. 新：v23.12
 
 ```
-The Sanic CLI comes with a REPL (aka "read-eval-print loop") that can be used to interact with your application. This is useful for debugging and testing. A REPL is the interactive shell that you get when you run `python` without any arguments.
+Sanic CLI 带有一个 REPL (又名“读-写循环”)，可用来与您的应用程序进行交互。 这对调试和测试非常有用。REPL是你在没有任何参数的情况下运行python时得到的交互式外壳。
 ```
 
-.. column::
+.. 列:
 
 ```
-You can start the REPL by passing the `--repl` argument to the Sanic CLI.
+你可以将 "--repli" 参数传递到 Sanic CLI 来启动 REPL
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -96,13 +96,13 @@ sanic path.to.server:app --repl
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Or, perhaps more conveniently, when you run `--dev`, Sanic will automatically start the REPL for you. However, in this case you might be prompted to hit the "ENTER" key before actually starting the REPL.
+也许更方便的是，当你运行`--dev`时，萨尼克会自动为你启动REPL。 然而，在这种情况下，你可能会在实际启动REPL之前被提示按“ENTER”键。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -110,49 +110,49 @@ sanic path.to.server:app --dev
 ```
 ````
 
-![](/assets/images/repl.png)
+![](/assets/images/repli.png)
 
-As seen in the screenshot above, the REPL will automatically add a few variables to the global namespace. These are:
+如上文截图所示，REPL将自动为全局命名空间添加几个变量。 它们是：
 
-- `app` - The Sanic application instance. This is the same instance that is passed to the `sanic` CLI.
-- `sanic` - The `sanic` module. This is the same module that is imported when you run `import sanic`.
-- `do` - A function that will create a mock `Request` object and pass it to your application. This is useful for testing your application from the REPL.
-- `client` - An instance of `httpx.Client` that is configured to make requests to your application. This is useful for testing your application from the REPL. **Note:** This is only available if `httpx` is installed in your environment.
+- `app` - Sanic 应用程序实例。 这是传递到 `sanic` CLI 的相同实例。
+- `sanic` - `sanic` 模块。 这是在您运行 "import sanic" 时导入的同一个模块。
+- `do` - 一个将创建模拟`Request`对象并将其传递给您的应用程序的函数。 这对测试你来自REPL的申请非常有用。
+- `client` - 一个`httpx.glient`的实例被配置为向您的应用程序提出请求。 这对测试你来自REPL的申请非常有用。 **注意：** 只有在你的环境中安装了 `httpx` 时，这才是可用的。
 
-### Async/Await support
+### Async/Awaw 支持
 
-.. column::
+.. 列:
 
 ```
-The REPL supports `async`/`await` syntax. This means that you can use `await` in the REPL to wait for asynchronous operations to complete. This is useful for testing asynchronous code.
+REPL 支持 `async`/`await` 语法。这意味着你可以使用 `await` 来等待异步操作完成。 这有助于测试异步代码。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
->>> await app.ctx.db.fetchval("SELECT 1")
+>>> > 等待 app.ctx.db.fetchval("SELECT 1")
 1 
 ```
 ````
 
-### The `app` variable
+### `app`变量
 
-You need to keep in mind that the `app` variable is your app instance as it existed when the REPL was started. It is the instance that is loaded when running the CLI command. This means that any changes that are made to your source code and subsequently reloaded in the workers will not be reflected in the `app` variable. If you want to interact with the reloaded app instance, you will need to restart the REPL.
+你需要记住，`app`变量是你的应用程序实例，因为它是在REPL启动时存在的。 它是运行CLI 命令时加载的实例。 这意味着对你的源代码的任何更改，然后在工人中重新加载，都不会反映在`app`变量中。 如果你想要与重新加载的应用进行交互，你需要重新启动REPL。
 
-However, it is also very useful to have access to the original app instance in the REPL for adhoc testing and debugging.
+然而，访问REPL中的原始应用程序以进行临时测试和调试也非常有用。
 
-### The `client` variable
+### "客户端" 变量
 
-When [httpx](https://www.python-httpx.org/) is installed in your environment, the `client` variable will be available in the REPL. This is an instance of `httpx.Client` that is configured to make requests to your running application.
+当 [httpx](https://www.python-httpx.org/) 安装在您的环境中时，"client" 变量将可在REPL中找到。 这是一个 `httpxClient` 的实例，它被配置为向您正在运行的应用程序提出请求。
 
-.. column::
+.. 列:
 
 ```
-To use it, simply call one of the HTTP methods on the client. See the [httpx documentation](https://www.python-httpx.org/api/#client) for more information.
+若要使用它，只需调用客户端上的 HTTP 方法之一。请参阅[httpx documentation](https://www.python-httpx.org/api/#client)获取更多信息。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -161,50 +161,50 @@ To use it, simply call one of the HTTP methods on the client. See the [httpx doc
 ```
 ````
 
-### The `do` function
+### `do`函数
 
-As discussed above, the `app` instance exists as it did at the time the REPL was started, and as was modified inside the REPL. Any changes to the instance that cause a server to be reloaded will not be reflected in the `app` variable. This is where the `do` function comes in.
+正如上文所讨论的那样，“app”实例就像启动REPL时那样存在，并且在REPL内部进行了修改。 导致服务器重新加载的实例的任何更改都不会反映在`app`变量中。 这是`do`函数的位置。
 
-Let's say that you have modified your application inside the REPL to add a new route:
+让我们说你已经修改了你在REPL中的应用程序以添加一条新的路由：
 
 ```python
 >>> @app.get("/new-route")
 ... async def new_route(request):
-...     return sanic.json({"hello": "world"})
+... return sanic.json({"hello": "world"})
 ...
->>>
+>>
 ```
 
-You can use the `do` function to mock out a request, and pass it to the application as if it were a real HTTP request. This will allow you to test your new route without having to restart the REPL.
+您可以使用 `do` 函数模拟请求，并将其传递到应用程序中，仿佛它是一个真正的 HTTP 请求。 这将允许您测试您的新路线，而不必重新启动REPL。
 
 ```python
->>> await do("/new-route")
-Result(request=<Request: GET /new-route>, response=<JSONResponse: 200 application/json>)
+>>>>正在等待 do("/new-route")
+结果(request=<Request: GET /new-route>, response=<JSONResponse: 200 application/json>)
 ```
 
-The `do` function returns a `Result` object that contains the `Request` and `Response` objects that were returned by your application. It is a `NamedTuple`, so you can access the values by name:
+`do`函数返回一个包含 `Request` 和 `Response` 对象的 `Result` 对象。 这是一个 `NamedTuple` ，因此您可以按名称访问值：
 
 ```python
->>> result = await do("/new-route")
->>> result.request
+>>>> 结果 = 等待完成("/new-route")
+>>>> result.request
 <Request: GET /new-route>
->>> result.response
+>>> result.reply
 <JSONResponse: 200 application/json>
 ```
 
-Or, by destructuring the tuple:
+或者，通过摧毁管：
 
 ```python
->>> request, response = await do("/new-route")
->>> request
+>>>>请求, 应答 = 等待完成("/new-route")
+>>>>>>>>请求
 <Request: GET /new-route>
->>> response
+>>>>>>>> 应答
 <JSONResponse: 200 application/json>
 ```
 
-### When to use `do` vs `client`?
+### 什么时候使用 `do` 和 `client`?
 
-.. column::
+.. 列:
 
 ```
 **Use `do` when ...**
@@ -214,7 +214,7 @@ Or, by destructuring the tuple:
 - You make a change to your application inside the REPL
 ```
 
-.. column::
+.. 列:
 
 ```
 **Use `client` when ...**
@@ -224,31 +224,31 @@ Or, by destructuring the tuple:
 - You want to send an actual HTTP request to your application
 ```
 
-_Added in v23.12_
+_添加于 v23.12_
 
-## Complete development mode
+## 完成开发模式
 
-.. column::
+.. 列:
 
 ```
-If you would like to be in debug mode **and** have the Automatic Reloader running, you can pass `dev=True`. This is equivalent to **debug + auto reload**.
+如果你想要处于调试模式**和** 运行自动重新加载器，你可以通过 `dev=True`。 这相当于**调试+自动重新加载**。
 
-*Added in v22.3*
+*添加于v22.3*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
 sanic path.to:app --dev
-```
-You can also use the shorthand property
+``
+你也可以使用短暂属性
 ```sh
 sanic path.to:app -d
 ```
 ````
 
-.. new:: v23.12
+.. 新：v23.12
 
 ```
 Added to the `--dev` flag in v23.12 is the ability to start a REPL. See the [Development REPL](./development.md#development-repl) section for more information.
@@ -256,13 +256,13 @@ Added to the `--dev` flag in v23.12 is the ability to start a REPL. See the [Dev
 As of v23.12, the `--dev` flag is roughly equivalent to `--debug --reload --repl`. Using `--dev` will require you to expressly begin the REPL by hitting "ENTER", while passing the `--repl` flag explicitly starts it.
 ```
 
-.. column::
+.. 列:
 
 ```
-If you would like to disable the REPL while using the `--dev` flag, you can pass `--no-repl`.
+如果你想要在使用 --dev' 标志时禁用REPL，你可以通过 "--no-reply "。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -270,35 +270,35 @@ sanic path.to:app --dev --no-repl
 ```
 ````
 
-## Automatic TLS certificate
+## 自动TLS证书
 
-When running in `DEBUG` mode, you can ask Sanic to handle setting up localhost temporary TLS certificates. This is helpful if you want to access your local development environment with `https://`.
+当在 `DEBUG` 模式下运行时，您可以要求Sanic 处理本地主机临时TLS 证书的设置。 如果您想要访问 'https\://' 本地发展环境，这将是很有帮助的。
 
-This functionality is provided by either [mkcert](https://github.com/FiloSottile/mkcert) or [trustme](https://github.com/python-trio/trustme). Both are good choices, but there are some differences. `trustme` is a Python library and can be installed into your environment with `pip`. This makes for easy envrionment handling, but it is not compatible when running a HTTP/3 server. `mkcert` might be a more involved installation process, but can install a local CA and make it easier to use.
+此功能由 [mkcert](https://github.com/FiloSottile/mkcert) 或 [trustme](https://github.com/python-trio/trustme) 提供。 两者都是好的选择，但也有一些差异。 `Trustme` 是一个 Python 库，可以安装在 `pip` 里的环境。 这使得可以轻松地处理Envrionment，但在运行 HTTP/3 服务器时是不兼容的。 `mkcert`可能是一个更多的安装过程，但可以安装本地CA并使其更容易使用。
 
-.. column::
+.. 列:
 
 ```
-You can choose which platform to use by setting `config.LOCAL_CERT_CREATOR`. When set to `"auto"`, it will select either option, preferring `mkcert` if possible.
+您可以通过设置 `config.LOCAL_CERT_CREATOR` 选择哪个平台。当设置为 `auto`时，它将选择任何一个选项，如果可能则选择`mkcert`。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-app.config.LOCAL_CERT_CREATOR = "auto"
-app.config.LOCAL_CERT_CREATOR = "mkcert"
-app.config.LOCAL_CERT_CREATOR = "trustme"
+app.config.LOCAL_CERT_CREATOR= "auto"
+app.config.LOCAL_CERT_CREATOR= "mkcert"
+app.config.LOCAL_CERT_CREATOR= "trustme"
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Automatic TLS can be enabled at Sanic server run time:
+Sanic 服务器运行时间可以启用自动TLS：
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -306,10 +306,10 @@ sanic path.to.server:app --auto-tls --debug
 ```
 ````
 
-.. warning::
+.. 警告：:
 
 ```
-Localhost TLS certificates (like those generated by both `mkcert` and `trustme`) are **NOT** suitable for production environments. If you are not familiar with how to obtain a *real* TLS certificate, checkout the [How to...](../how-to/tls.md) section.
+本地的 TLS 证书（就像`mkcert` 和 `trustme` 生成的证书一样）**不适用于生产环境。 如果您不熟悉如何获得*真实*TLS证书，请签出[如何...](../how-to/tls.md)。
 ```
 
-_Added in v22.6_
+_添加于 v22.6_

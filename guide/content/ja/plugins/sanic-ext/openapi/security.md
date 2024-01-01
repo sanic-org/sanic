@@ -1,16 +1,16 @@
 ---
-title: Sanic Extensions - OAS Security Schemes
+title: サニックエクステンション - OASセキュリティスキーム
 ---
 
-# Security Schemes
+# セキュリティスキーム
 
-To document authentication schemes, there are two steps.
+認証スキームを文書化するには、2つのステップがあります。
 
-_Security is only available starting in v21.12.2_
+_Security は v21.12.2_ からのみ利用できます。
 
-## Document the scheme
+## スキームをドキュメント
 
-.. column::
+.. 列::
 
 ````
 The first thing that you need to do is define one or more security schemes. The basic pattern will be to define it as:
@@ -24,7 +24,7 @@ The `type` should correspond to one of the allowed security schemes: `"apiKey"`,
 You should consult the [OpenAPI Specification](https://swagger.io/specification/) for details on what values are appropriate.
 ````
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -58,15 +58,15 @@ app.ext.openapi.add_security_scheme(
 ```
 ````
 
-## Document the endpoints
+## エンドポイントをドキュメント
 
-.. column::
+.. 列::
 
 ```
-There are two options, document _all_ endpoints.
+2つのオプションがあります。文書には_all_エンドポイントがあります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -75,13 +75,13 @@ app.ext.openapi.secured("token")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Or, document only specific routes.
+または、特定のルートのみをドキュメントします。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

@@ -1,6 +1,6 @@
-# Application Mounting
+# 应用程序挂载
 
-> How do I mount my application at some path above the root?
+> 如何在root上方挂载我的应用程序？
 
 ```python
 # server.py
@@ -17,16 +17,16 @@ def handler(request):
 
 ```yaml
 # docker-compose.yml
-version: "3.7"
-services:
-  app:
-    image: nginx:alpine
-    ports:
+版本: "3.
+服务：
+  app：
+    图像：nginx:alpine
+    ports：
       - 80:80
-    volumes:
-      - type: bind
-        source: ./conf
-        target: /etc/nginx/conf.d/default.conf
+    卷：
+      - 类型：binding
+        消息来源： conf
+        目标：/etc/nginx/conf.d/default.conf
 ```
 
 ```nginx

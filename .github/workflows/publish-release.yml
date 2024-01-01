@@ -123,7 +123,7 @@ jobs:
     name: Publish Docker / Python ${{ matrix.python-version }}
     needs: [generate_info, publish_package]
     runs-on: ubuntu-latest
-    if: ${{ needs.generate_info.IS_TEST == 'false' }}
+    if: ${{ needs.generate_info.is-test == 'false' }}
     strategy:
       fail-fast: true
       matrix:

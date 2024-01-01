@@ -1,27 +1,27 @@
 ---
-title: Sanic Extensions - Configuration
+title: Sanic Extensions - 設定
 ---
 
-# Configuration
+# 設定
 
-Sanic Extensions can be configured in all of the same ways that [you can configure Sanic](../../guide/deployment/configuration.md). That makes configuring Sanic Extensions very easy.
+Sanic Extensionsは、format@@0(../../guide/deployment/configuration.md)と同じ方法で設定できます。 これにより、Sanic Extensionsを非常に簡単に構成できます。
 
 ```python
 app = Sanic("MyApp")
 app.config.OAS_URL_PREFIX = "/apidocs"
 ```
 
-However, there are a few more configuration options that should be considered.
+しかし、検討すべき設定オプションはいくつかあります。
 
-## Manual `extend`
+## 手動の`extend`
 
-.. column::
+.. 列::
 
 ```
-Even though Sanic Extensions will automatically attach to your application, you can manually choose `extend`. When you do that, you can pass all of the configuration values as a keyword arguments (lowercase).
+Sanic Extensionsはアプリケーションに自動的にアタッチされますが、手動で`extend`を選択することができます。 これを行うと、すべての設定値をキーワード引数(小文字)として渡すことができます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -30,13 +30,13 @@ app.extend(oas_url_prefix="/apidocs")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Or, alternatively they could be passed all at once as a single `dict`.
+あるいは、一度に 1 つの `dict` として渡すこともできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -45,13 +45,13 @@ app.extend(config={"oas_url_prefix": "/apidocs"})
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-Both of these solutions suffers from the fact that the names of the configuration settings are not discoverable by an IDE. Therefore, there is also a type annotated object that you can use. This should help the development experience.
+これらのソリューションはどちらも、IDEによって構成設定の名前が検出できないという事実に苦しんでいます。 したがって、使用できる型注釈付きオブジェクトもあります。これは開発に役立つはずです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -62,14 +62,14 @@ app.extend(config=Config(oas_url_prefix="/apidocs"))
 ```
 ````
 
-## Settings
+## 設定
 
 .. note::
 
 ````
-Often, the easiest way to change these for an application (since they likely are not going to change dependent upon an environment), is to set them directly on the `app.config` object.
+多くの場合、アプリケーションのためにこれらを変更する最も簡単な方法 (環境に依存して変更しない可能性が高いので) `appに直接設定することです。 onfig` オブジェクト
 
-Simply use the capitalized version of the configuration key as shown here:
+ここで示すように、設定キーの大文字のバージョンを使用します。
 
 ```python
 app = Sanic("MyApp")
@@ -79,210 +79,210 @@ app.config.OAS_URL_PREFIX = "/apidocs"
 
 ### `cors`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to enable CORS protection
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: CORS 保護を有効にするかどうか
 
 ### `cors_allow_headers`
 
-- **Type**: `str`
-- **Default**: `"*"`
-- **Description**: Value of the header: `access-control-allow-headers`
+- **タイプ**: `str`
+- **デフォルト**: `"*"`
+- **説明**: ヘッダの値: `access-control-allow-headers`
 
 ### `cors_always_send`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to always send the header: `access-control-allow-origin`
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: ヘッダを常に送信するかどうか: `access-control-allow-origin`
 
 ### `cors_automatic_options`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to automatically generate `OPTIONS` endpoints for routes that do _not_ already have one defined
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **Description**: _ない_ルートの「OPTIONS」エンドポイントを自動的に生成するかどうか
 
 ### `cors_expose_headers`
 
-- **Type**: `str`
-- **Default**: `""`
-- **Description**: Value of the header: `access-control-expose-headers`
+- **タイプ**: `str`
+- **デフォルト**: `""`
+- **説明**: ヘッダの値: `access-control-expose-headers`
 
 ### `cors_max_age`
 
-- **Type**: `int`
-- **Default**: `5`
-- **Description**: Value of the header: `access-control-max-age`
+- **タイプ**: `int`
+- **デフォルト**: `5`
+- **説明**: ヘッダの値: `access-control-max-age`
 
 ### `cors_methods`
 
-- **Type**: `str`
-- **Default**: `""`
-- **Description**: Value of the header: `access-control-access-control-allow-methods`
+- **タイプ**: `str`
+- **デフォルト**: `""`
+- **説明**: ヘッダの値: `access-control-access-control-allow-methods`
 
 ### `cors_origins`
 
-- **Type**: `str`
-- **Default**: `""`
-- **Description**: Value of the header: `access-control-allow-origin`
+- **タイプ**: `str`
+- **デフォルト**: `""`
+- **説明**: ヘッダの値: `access-control-allow-origin`
 
-.. warning::
+.. 警告::
 
 ```
-Be very careful if you place `*` here. Do not do this unless you know what you are doing as it can be a security issue.
+`*`をここに置くときは注意してください。 セキュリティの問題である可能性があるため、何をしているかを知っていない限り、これをしないでください。
 ```
 
 ### `cors_send_wildcard`
 
-- **Type**: `bool`
-- **Default**: `False`
-- **Description**: Whether to send a wildcard origin instead of the incoming request origin
+- **タイプ**: `bool`
+- **デフォルト**: `False`
+- **Description**: リクエストオリジンの代わりにワイルドカードを送信するかどうか
 
 ### `cors_supports_credentials`
 
-- **Type**: `bool`
-- **Default**: `False`
-- **Description**: Value of the header: `access-control-allow-credentials`
+- **タイプ**: `bool`
+- **デフォルト**: `False`
+- **説明**: ヘッダの値: `access-control-allow-credentials`
 
 ### `cors_vary_header`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to add the `vary` header
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **Description**: `vary`ヘッダーを追加するかどうか
 
 ### `http_all_methods`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Adds the HTTP `CONNECT` and `TRACE` methods as allowable
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **Description**: 許可されている HTTP の `CONNECT` と `TRACE` メソッドを追加します
 
 ### `http_auto_head`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Automatically adds `HEAD` handlers to any `GET` routes
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **Description**: 自動的に `HEAD` ハンドラを `GET` ルートに追加します。
 
 ### `http_auto_options`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Automatically adds `OPTIONS` handlers to any routes without
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: 自動的に `OPTIONS` ハンドラをルートなしで追加します
 
 ### `http_auto_trace`
 
-- **Type**: `bool`
-- **Default**: `False`
-- **Description**: Automatically adds `TRACE` handlers to any routes without
+- **タイプ**: `bool`
+- **デフォルト**: `False`
+- **説明**: 自動的に `TRACE` ハンドラをルートなしで追加します
 
 ### `oas`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to enable OpenAPI specification generation
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: OpenAPI仕様の生成を有効にするかどうか
 
 ### `oas_autodoc`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to automatically extract OpenAPI details from the docstring of a route function
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: ルート関数のdocstringからOpenAPIの詳細を自動的に抽出するかどうか
 
 ### `oas_ignore_head`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: WHen `True`, it will not add `HEAD` endpoints into the OpenAPI specification
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **Description**: When `True`, `HEAD`エンドポイントをOpenAPI仕様に追加しません
 
 ### `oas_ignore_options`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: WHen `True`, it will not add `OPTIONS` endpoints into the OpenAPI specification
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: When `True` はOpenAPI仕様に`OPTIONS`エンドポイントを追加しません
 
 ### `oas_path_to_redoc_html`
 
-- **Type**: `Optional[str]`
-- **Default**: `None`
-- **Description**: Path to HTML file to override the existing Redoc HTML
+- **タイプ**: `Optional[str]`
+- **デフォルト**: `None`
+- **Description**: 既存のやり直しHTMLをオーバーライドするHTMLファイルへのパス
 
 ### `oas_path_to_swagger_html`
 
-- **Type**: `Optional[str]`
-- **Default**: `None`
-- **Description**: Path to HTML file to override the existing Swagger HTML
+- **タイプ**: `Optional[str]`
+- **デフォルト**: `None`
+- **説明**: 既存の Swagger HTML をオーバーライドする HTML ファイルへのパス
 
 ### `oas_ui_default`
 
-- **Type**: `Optional[str]`
-- **Default**: `"redoc"`
-- **Description**: Which OAS documentation to serve on the bare `oas_url_prefix` endpoint; when `None` there will be no documentation at that location
+- **タイプ**: `Optional[str]`
+- **デフォルト**: `"redoc"`
+- **説明**: どのOASドキュメントを `oas_url_prefix` エンドポイントで提供します。`None` の場所にドキュメントがありません。
 
 ### `oas_ui_redoc`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to enable the Redoc UI
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: やり直しのUIを有効にするかどうか
 
 ### `oas_ui_swagger`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to enable the Swagger UI
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **説明**: Swagger UI を有効にするかどうか
 
 ### `oas_ui_swagger_version`
 
-- **Type**: `str`
-- **Default**: `"4.1.0"`
-- **Description**: Which Swagger version to use
+- **タイプ**: `str`
+- **デフォルト**: `"4.1.0"`
+- **説明**: どのSwaggerバージョンを使用するか
 
 ### `oas_uri_to_config`
 
-- **Type**: `str`
+- **タイプ**: `str`
 - **Default**: `"/swagger-config"`
-- **Description**: Path to serve the Swagger configurtaion
+- **説明**: Swagger configurtaion を提供するパス
 
 ### `oas_uri_to_json`
 
-- **Type**: `str`
+- **タイプ**: `str`
 - **Default**: `"/openapi.json"`
-- **Description**: Path to serve the OpenAPI JSON
+- **説明**: OpenAPI JSON を提供するためのパス
 
 ### `oas_uri_to_redoc`
 
-- **Type**: `str`
-- **Default**: `"/redoc"`
-- **Description**: Path to Redoc
+- **タイプ**: `str`
+- **デフォルト**: `"/redoc"`
+- **説明**: やり直しへのパス
 
 ### `oas_uri_to_swagger`
 
-- **Type**: `str`
+- **タイプ**: `str`
 - **Default**: `"/swagger"`
-- **Description**: Path to Swagger
+- **説明**: Swagger へのパス
 
 ### `oas_url_prefix`
 
-- **Type**: `str`
+- **タイプ**: `str`
 - **Default**: `"/docs"`
-- **Description**: URL prefix for the Blueprint that all of the OAS documentation witll attach to
+- **説明**: OASドキュメントのすべてのwitllが添付するブループリントのURLプレフィックス。
 
 ### `swagger_ui_configuration`
 
-- **Type**: `Dict[str, Any]`
-- **Default**: `{"apisSorter": "alpha", "operationsSorter": "alpha", "docExpansion": "full"}`
-- **Description**: The Swagger documentation to be served to the frontend
+- **タイプ**: `Dict[str, Any]`
+- **デフォルト**: `{"apisSorter": "alpha", "operationsSorter": "alpha", "docExpansion": "full"}`
+- **説明**: フロントエンドに提供される Swagger ドキュメント
 
 ### `templating_enable_async`
 
-- **Type**: `bool`
-- **Default**: `True`
-- **Description**: Whether to set `enable_async` on the Jinja `Environment`
+- **タイプ**: `bool`
+- **デフォルト**: `True`
+- **Description**: 神社`Environment` に `enable_async` を設定するかどうか
 
 ### `templating_path_to_templates`
 
-- **Type**: `Union[str, os.PathLike, Sequence[Union[str, os.PathLike]]] `
-- **Default**: `templates`
-- **Description**: A single path, or multiple paths to where your template files are located
+- **タイプ**: `Union[str, os.PathLike, Sequence[Union[str, os.PathLike]]] `
+- **デフォルト**: `templates`
+- **説明**: テンプレートファイルがどこにあるか、単一のパス、または複数のパスです。
 
 ### `trace_excluded_headers`
 
-- **Type**: `Sequence[str]`
-- **Default**: `("authorization", "cookie")`
-- **Description**: Which headers should be suppresed from responses to `TRACE` requests
+- **タイプ**: `Sequence[str]`
+- **デフォルト**: `("authorization", "cookie")`
+- **Description**: `TRACE`リクエストへのレスポンスから抑制されるヘッダーを指定します。

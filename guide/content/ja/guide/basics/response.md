@@ -1,13 +1,13 @@
-# Response
+# 回答
 
-All [handlers](./handlers.md) _usually_ return a response object, and [middleware](./middleware.md) may optionally return a response object.
+すべての [handlers](./handlers.md) _通常_ レスポンスオブジェクトを返し、 [middleware](./middleware.md) は任意でレスポンスオブジェクトを返すことができます。
 
-To clarify that statement:
+そのステートメントを明確にするには:
 
-- unless the handler is a streaming endpoint handling its own pattern for sending bytes to the client, the return value must be an instance of :class:`sanic.response.HTTPResponse` (to learn more about this exception see [streaming responses](../advanced/streaming.md#response-streaming)). In **most** use cases, you will need to return a response.
-- if a middleware does return a response object, that will be used instead of whatever the handler would do (see [middleware](./middleware.md) to learn more).
+- ハンドラがクライアントにバイトを送信するための独自のパターンを処理するストリーミングエンドポイントでない限り、 戻り値は :class:`sanic のインスタンスでなければなりません。 esponse.HTTPResponse` (format@@0(../advanced/streaming.md#response-streaming)を参照してください)。 **ほとんどの** ユースケースでは、レスポンスを返す必要があります。
+- ミドルウェアがレスポンスオブジェクトを返す場合は、ハンドラが何でも代わりに使用されます (詳細については、 [middleware](./middleware.md) を参照)。
 
-A most basic handler would look like the following. The :class:`sanic.response.HTTPResponse` object will allow you to set the status, body, and headers to be returned to the client.
+基本的なハンドラーは以下のようになります。 :class:`sanic.response.HTTPResponse` オブジェクトは、クライアントに返されるステータス、本文、およびヘッダーを設定できます。
 
 ```python
 from sanic import HTTPResponse, Sanic
@@ -19,22 +19,22 @@ def handler(_):
     return HTTPResponse()
 ```
 
-However, usually it is easier to use one of the convenience methods discussed below.
+ただし、通常、以下で説明する便利な方法のいずれかを使用する方が簡単です。
 
-## Methods
+## メソッド
 
-The easiest way to generate a response object is to use one of the convenience functions.
+レスポンスオブジェクトを生成する最も簡単な方法は、コンビニエンス関数のいずれかを使用することです。
 
-### Text
+### テキスト
 
-.. column::
+.. 列::
 
 ```
-**Default Content-Type**: `text/plain; charset=utf-8`  
-**Description**: Returns plain text
+**デフォルト Content-Type**: `text/plain; charset=utf-8`  
+**Description**: プレーン テキストを返す
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -42,20 +42,20 @@ from sanic import text
 
 @app.route("/")
 async def handler(request):
-    return text("Hi 😎")
+    return text("Hi 😎)
 ```
 ````
 
 ### HTML
 
-.. column::
+.. 列::
 
 ```
 **Default Content-Type**: `text/html; charset=utf-8`  
-**Description**: Returns an HTML document
+**Description**: HTML ドキュメントを返す
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -69,14 +69,14 @@ async def handler(request):
 
 ### JSON
 
-.. column::
+.. 列::
 
 ```
-**Default Content-Type**: `application/json`  
-**Description**: Returns a JSON document
+**デフォルト Content-Type**: `application/json`  
+**Description**: JSON ドキュメントを返す
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -88,35 +88,35 @@ async def handler(request):
 ```
 ````
 
-By default, Sanic ships with [`ujson`](https://github.com/ultrajson/ultrajson) as its JSON encoder of choice. If `ujson` is not installed, it will fall back to the standard library `json` module.
+デフォルトでは、Sanic は [`ujson`](https://github.com/ultrajson/ultrajson) を JSON エンコーダとして出荷します。 `ujson` がインストールされていない場合、標準ライブラリ `json` に戻ります。
 
-It is super simple to change this if you want.
+あなたが望むならば、これを変更するのは超簡単です。
 
 ```python
 from sanic import json
-from orjson import dumps
+from orjson import dump
 
 json({"foo": "bar"}, dumps=dumps)
 ```
 
-You may additionally declare which implementation to use globally across your application at initialization:
+また、アプリケーション全体で使用する実装を初期化時に宣言することもできます。
 
 ```python
-from orjson import dumps
+from orjson import dump
 
 app = Sanic(..., dumps=dumps)
 ```
 
-### File
+### ファイル
 
-.. column::
+.. 列::
 
 ```
 **Default Content-Type**: N/A  
-**Description**: Returns a file
+**Description**: ファイルを返す
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -128,28 +128,28 @@ async def handler(request):
 ```
 ````
 
-Sanic will examine the file, and try and guess its mime type and use an appropriate value for the content type. You could be explicit, if you would like:
+Sanicはファイルを調べ、MIMEタイプを推測し、コンテンツ型に適切な値を使用します。 必要に応じて、次のように説明できます。
 
 ```python
 file("/path/to/whatever.png", mime_type="image/png")
 ```
 
-You can also choose to override the file name:
+ファイル名を上書きすることもできます:
 
 ```python
-file("/path/to/whatever.png", filename="super-awesome-incredible.png")
+file("/path/to/whatever.png", filename="super-awesome-increverble.png")
 ```
 
-### File Streaming
+### ファイルストリーミング
 
-.. column::
+.. 列::
 
 ```
 **Default Content-Type**: N/A  
-**Description**: Streams a file to a client, useful when streaming large files, like a video
+**Description**: クライアントにファイルをストリーミングします。ビデオのような大きなファイルをストリーミングするときに便利です。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -161,18 +161,18 @@ async def handler(request):
 ```
 ````
 
-Like the `file()` method, `file_stream()` will attempt to determine the mime type of the file.
+`file()`メソッドと同様に、`file_stream()`はファイルのMIMEタイプを決定しようとします。
 
 ### Raw
 
-.. column::
+.. 列::
 
 ```
 **Default Content-Type**: `application/octet-stream`  
-**Description**: Send raw bytes without encoding the body
+**Description**: body をエンコードせずに raw bytes を送る
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -184,16 +184,16 @@ async def handler(request):
 ```
 ````
 
-### Redirect
+### リダイレクト
 
-.. column::
+.. 列::
 
 ```
-**Default Content-Type**: `text/html; charset=utf-8`  
-**Description**: Send a `302` response to redirect the client to a different path
+**デフォルトのContent-Type**: `text/html; charset=utf-8`  
+**Description**: クライアントを別のパスにリダイレクトするために `302` レスポンスを送信する
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -205,16 +205,16 @@ async def handler(request):
 ```
 ````
 
-### Empty
+### なし
 
-.. column::
+.. 列::
 
 ```
 **Default Content-Type**: N/A  
-**Description**: For responding with an empty message as defined by [RFC 2616](https://tools.ietf.org/search/rfc2616#section-7.2.1)
+**Description**: [RFC 2616] (https://tools.ietf.org/search/rfc2616#section-7.2.1) で定義されている空のメッセージで応答するためのものです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -225,12 +225,12 @@ async def handler(request):
     return empty()
 ```
 
-Defaults to a `204` status.
+デフォルトは `204` ステータスです。
 ````
 
-## Default status
+## 既定のステータス
 
-The default HTTP status code for the response is `200`. If you need to change it, it can be done by the response method.
+レスポンスのデフォルトの HTTP ステータスコードは `200` です。 変更が必要な場合は、responseメソッドで行うことができます。
 
 ```python
 @app.post("/")
@@ -239,10 +239,10 @@ async def create_new(request):
     return json({"created": True, "id": new_thing.thing_id}, status=201)
 ```
 
-## Returning JSON data
+## JSON データを返す
 
-Starting in v22.12, When you use the `sanic.json` convenience method, it will return a subclass of `HTTPResponse` called :class:`sanic.response.types.JSONResponse`. This object will
-have several convenient methods available to modify common JSON body.
+v22.12 から始まります。`sanic.json` コンビニエンスメソッドを使用すると、 :class:`sanic.response.types.JSONResponse` という `HTTPResponse` のサブクラスが返されます。 このオブジェクト
+には、一般的なJSONボディを変更するための便利なメソッドがいくつかあります。
 
 ```python
 from sanic import json
@@ -250,16 +250,16 @@ from sanic import json
 resp = json(...)
 ```
 
-- `resp.set_body(<raw_body>)` - Set the body of the JSON object to the value passed
-- `resp.append(<value>)` - Append a value to the body like `list.append` (only works if the root JSON is an array)
-- `resp.extend(<value>)` - Extend a value to the body like `list.extend` (only works if the root JSON is an array)
-- `resp.update(<value>)` - Update the body with a value like `dict.update` (only works if the root JSON is an object)
-- `resp.pop()` - Pop a value like `list.pop` or `dict.pop` (only works if the root JSON is an array or an object)
+- `resp.set_body(<raw_body>)` - JSONオブジェクトの本体を渡された値に設定します。
+- `resp.append(<value>)` - `list.append` のようにボディに値を追加します（ルートJSONが配列の場合のみ動作します）
+- `resp.extend(<value>)` - `list.extend` のように値をボディに拡張します（ルートJSONが配列の場合のみ動作します）
+- `resp.update(<value>)` - `dict.update` のような値で本文を更新します (ルートJSONがオブジェクトの場合のみ動作します)
+- `resp.pop()` - `list.pop` や `dict.pop` のような値をポップします (ルートJSONが配列またはオブジェクトの場合にのみ動作します)
 
-.. warning::
+.. 警告::
 
 ```
-The raw Python object is stored on the `JSONResponse` object as `raw_body`. While it is safe to overwrite this value with a new one, you should **not** attempt to mutate it. You should instead use the methods listed above.
+生の Python オブジェクトは `JSONResponse` オブジェクトに `raw_body` として保存されます。 この値を新しい値で上書きしても安全ですが、変更しようとしないでください。 代わりに上記の方法を使用する必要があります。
 ```
 
 ```python
@@ -296,4 +296,4 @@ resp.append("else")
 resp.raw_body.append("something")
 ```
 
-_Added in v22.9_
+_v22.9_に追加されました

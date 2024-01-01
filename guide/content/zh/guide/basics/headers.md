@@ -1,26 +1,26 @@
-# Headers
+# 信头
 
-Request and response headers are available in the `Request` and `HTTPResponse` objects, respectively. They make use of the [`multidict` package](https://multidict.readthedocs.io/en/stable/multidict.html#cimultidict) that allows a single key to have multiple values.
+请求和响应头分别在 `Request` 和 `HTTPResponse` 对象中可用。 他们使用 [`multidict` 包](https://multidict.readthocs.io/en/stable/multidict.html#cimultidict) 让单个键有多个值。
 
 .. tip:: FYI
 
 ```
-Header keys are converted to *lowercase* when parsed. Capitalization is not considered for headers.
+解析后头键会转换为 *lowercase*。头部不考虑大小写。
 ```
 
-## Request
+## 请求
 
-Sanic does attempt to do some normalization on request headers before presenting them to the developer, and also make some potentially meaningful extractions for common use cases.
+Sanic确实试图在请求头上实现某种正常化，然后将它们提交给开发者。 并为普通用途案件进行一些可能有意义的抽查。
 
-.. column::
+.. 列:
 
 ```
 #### Tokens
 
-Authorization tokens in the form `Token <token>` or `Bearer <token>` are extracted to the request object: `request.token`.
+认证令牌在 `Token <token>` 或 `Wearer <token>中被提取到请求对象： `request.token` 。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -42,27 +42,27 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
 ```
 ````
 
-### Proxy headers
+### 代理信头
 
-Sanic has special handling for proxy headers. See the [proxy headers](/guide/advanced/proxy-headers.md) section for more details.
+Sanic对代理头有特殊处理。 详情请查看[代理头](/guide/advanced/proxy-headers.md)部分。
 
-### Host header and dynamic URL construction
+### 主机头和动态URL设计
 
-.. column::
+.. 列:
 
 ```
-The *effective host* is available via `request.host`. This is not necessarily the same as the host header, as it prefers proxy-forwarded host and can be forced by the server name setting.
+有效主机*可通过 `request.host`获取。 这不一定与主机头相同，因为它喜欢代理转发的主机，并且可以通过服务器名称设置强制执行。
 
-Webapps should generally use this accessor so that they can function the same no matter how they are deployed. The actual host header, if needed, can be found via `request.headers`
+网络应用通常应使用此访问器，以便不论如何部署，它们都能够正常运行。 如果需要，实际主机头可以通过“请求”找到。 eaders`
 
-The effective host is also used in dynamic URL construction via `request.url_for`, which uses the request to determine the external address of a handler.
+有效主机也用于通过 `required 构造动态 URL 。 rl_for`, 它使用请求来确定处理程序的外部地址。
 
-.. tip:: Be wary of malicious clients
+提示：请警惕恶意客户端
 
-    These URLs can be manipulated by sending misleading host headers. `app.url_for` should be used instead if this is a concern.
+    这些URL可以通过发送误导的主机头来操纵。 `app.url_for` 如果是关注的话应该被使用。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -91,15 +91,15 @@ curl localhost:8000/hosts
 ```
 ````
 
-### Other headers
+### 其他标题
 
-.. column::
+.. 列:
 
 ```
-All request headers are available on `request.headers`, and can be accessed in dictionary form. Capitalization is not considered for headers, and can be accessed using either uppercase or lowercase keys.
+所有请求标题都在 `request.headers` 上可用，可以用字典形式访问。 大写不被视为头件，可以使用大写或小写键访问。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -155,67 +155,67 @@ curl localhost:9999/headers -H "Foo: one" -H "FOO: two"|jq
 .. tip:: FYI
 
 ```
-💡 The request.headers object is one of a few types that is a dictionary with each value being a list. This is because HTTP allows a single key to be reused to send multiple values.
+💡 request.headers对象是几种类型的字典之一，每个值都是一个列表。 这是因为HTTP允许重用单个键来发送多个值。
 
-Most of the time you will want to use the .get() or .getone() methods to access the first element and not a list. If you do want a list of all items, you can use .getall().
+您想要使用 .get() 或 . 的大部分时间。 etone() 方法来访问第一个元素而不是列表。如果你确实想要一个所有项目的列表，你可以使用 .getall()。
 ```
 
-### Request ID
+### 请求ID
 
-.. column::
+.. 列:
 
 ```
-Often it is convenient or necessary to track a request by its `X-Request-ID` header. You can easily access that as: `request.id`.
+通常，跟踪通过 `X-Request-ID` 文件头的请求是方便或必要的。您可以轻松访问 `request.id` 。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/")
-async def handler(request):
-    return text(request.id)
+async def 处理器(请求):
+    return text(request). d)
 ```
 
 ```sh
 curl localhost:8000 \
-    -H "X-Request-ID: ABCDEF12345679"
+    - H "X-Request-ID: ABCDEF12345679"
 ABCDEF12345679
 ```
 ````
 
-## Response
+## 答复
 
-Sanic will automatically set the following response headers (when appropriate) for you:
+Sanic 将自动为您设置以下响应头(在适当时)：
 
 - `content-length`
 - `content-type`
 - `connection`
 - `transfer-encoding`
 
-In most circumstances, you should never need to worry about setting these headers.
+在大多数情况下，您永远不必担心设置这些信头。
 
-.. column::
+.. 列:
 
 ```
-Any other header that you would like to set can be done either in the route handler, or a response middleware.
+您想要设置的任何其他页眉都可以在路由处理器或响应中间件中完成。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/")
 async def handler(request):
-    return text("Done.", headers={"content-language": "en-US"})
+    return text("完成"). , headers={"content-language": "en-US"})
 
 @app.middleware("response")
 async def add_csp(request, response):
-    response.headers["content-security-policy"] = "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self'"
+    响应。 eaders["content-security policy"] = "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';base-uri 'self';form-action 'self''
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 A common [middleware](middleware.md) you might want is to add a `X-Request-ID` header to every response. As stated above: `request.id` will provide the ID from the incoming request. But, even if no ID was supplied in the request headers, one will be automatically supplied for you.
@@ -223,7 +223,7 @@ A common [middleware](middleware.md) you might want is to add a `X-Request-ID` h
 [See API docs for more details](https://sanic.readthedocs.io/en/latest/sanic/api_reference.html#sanic.request.Request.id)
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -231,18 +231,18 @@ A common [middleware](middleware.md) you might want is to add a `X-Request-ID` h
 async def handler(request):
     return text(str(request.id))
 
-@app.on_response
+@app. n_response
 async def add_request_id_header(request, response):
-    response.headers["X-Request-ID"] = request.id
+    response.headers["X-Request-ID"] = request。 d
 ```
 
 ```sh
 curl localhost:8000 -i
-HTTP/1.1 200 OK
-X-Request-ID: 805a958e-9906-4e7a-8fe0-cbe83590431b
-content-length: 36
-connection: keep-alive
-content-type: text/plain; charset=utf-8
+HTTP/1。 200 OK
+X-Request-ID： 805a958e-9906-4e7a-8fe0-cbe83590431b
+内容长度： 36
+连接： 保持
+内容类型： text/pla；charset=utf-8
 
 805a958e-9906-4e7a-8fe0-cbe83590431b
 ```

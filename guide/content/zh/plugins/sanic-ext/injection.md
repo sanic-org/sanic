@@ -1,47 +1,47 @@
 ---
-title: Sanic Extensions - Dependency Injection
+title: 神经扩展 - 依赖注入量
 ---
 
-# Dependency Injection
+# 依赖注入次数
 
-Dependency injection is a method to add arguments to a route handler based upon the defined function signature. Specifically, it looks at the **type annotations** of the arguments in the handler. This can be useful in a number of cases like:
+依赖注入是基于定义函数签名向路由处理程序添加参数的方法。 具体而言，它看了处理器中参数的 **类型注释** 。 这在一些情况下可能是有用的，例如：
 
-- Fetching an object based upon request headers (like the current session user)
-- Recasting certain objects into a specific type
-- Using the request object to prefetch data
-- Auto inject services
+- 正在获取基于请求头的对象 (像当前会话用户)
+- 将某些对象重置为特定类型
+- 使用请求对象预获取数据
+- 自动注入服务
 
-The `Extend` instance has two basic methods on it used for dependency injection: a lower level `add_dependency`, and a higher level `dependency`.
+`Extend`实例有两种基本方法用于依赖注入：较低级别的 `add_dependency`和较高级别的 `dependency`。
 
-**Lower level**: `app.ext.add_dependency(...)`
+**较低级别**: `app.ext.add_dependency(...)`
 
-- `type: Type,`: some unique class that will be the type of the object
-- `constructor: Optional[Callable[..., Any]],` (OPTIONAL): a function that will return that type
+- `type,`: 某些独特的类将是对象的类型
+- `constructor: Optional[Callable[..., Any],` (OPTIONAL): 一个返回这种类型的函数
 
-**Higher level**: `app.ext.dependency(...)`
+**更高级别**: `app.ext.dependency(...)`
 
-- `obj: Any`: any object that you would like injected
-- `name: Optional[str]`: some name that could alternately be used as a reference
+- `obj: Any`: 任何你想要注入的对象
+- `name: 可选的[str]`: 可以交替用作参考的一些名称
 
-Let's explore some use cases here.
+让我们在这里探索一些案例。
 
-.. warning::
-
-```
-If you used dependency injection prior to v21.12, the lower level API method was called `injection`. It has since been renamed to `add_dependency` and starting in v21.12 `injection` is an alias for `add_dependency`. The `injection` method has been deprecated for removal in v22.6.
-```
-
-## Basic implementation
-
-The simplest use case would be simply to recast a value.
-
-.. column::
+.. 警告：:
 
 ```
-This could be useful if you have a model that you want to generate based upon the matched path parameters.
+如果您在 v21.12之前使用依赖注入，较低级别的 API 方法被称为“注入”。 其后更名为`add_dependency`，并从v21开始。 2 `injection` 是一个 `add_dependency` 的别名。`injection` 方法已经不推荐在 v22.6 中移除。
 ```
 
-.. column::
+## 基本执行
+
+最简单的情况是只是重定一个数值。
+
+.. 列:
+
+```
+如果你有一个模型，你想要根据匹配的路径参数生成，这可能是有用的。
+```
+
+.. 列:
 
 ````
 ```python
@@ -65,31 +65,31 @@ You chose Chocolate (Yum!)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-This works by passing a keyword argument to the constructor of the `type` argument. The previous example is equivalent to this.
+将关键字参数传递给`type`参数的构造函数。前一个例子就是这个例子。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-flavor = IceCream(flavor="chocolate")
+flavor = IceCream(flavor="巧克力")
 ```
 ````
 
-## Additional constructors
+## 附加构造器
 
-.. column::
+.. 列:
 
 ```
-Sometimes you may need to also pass a constructor. This could be a function, or perhaps even a classmethod that acts as a constructor. In this example, we are creating an injection that will call `Person.create` first.
+有时你可能也需要传递构造函数。这可能是一个函数，甚至可能是一个作为构造函数的类方法。 在这个例子中，我们正在创建一种叫做“人”的注射。 先得到`。
 
-Also important to note on this example, we are actually injecting **two (2)** objects! It of course does not need to be this way, but we will inject objects based upon the function signature.
+同样重要的是注意到这个示例。我们实际上正在注入**两个(2)** 对象！ 当然不需要这样做，但我们将根据函数签名注入物体。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -125,23 +125,23 @@ Person(person_id=PersonID(person_id=123), name='noname', age=111)
 ```
 ````
 
-When a `constructor` is passed to `ext.add_dependency` (like in this example) that will be called. If not, then the object will be created by calling the `type`. A couple of important things to note about passing a `constructor`:
+当一个 `constructor` 传递到 `ext.add_dependency` (就像在这个例子中那样)时，它将被调用。 如果没有，则将通过调用 `type` 来创建对象。 有几件重要的事情要注意到一个\`构造器'：
 
-1. A positional `request: Request` argument is _usually_ expected. See the `Person.create` method above as an example using a `request` and [arbitrary constructors](#arbitrary-constructors) for how to use a callable that does not require a `request`.
-2. All matched path parameters are injected as keyword arguments.
-3. Dependencies can be chained and nested. Notice how in the previous example the `Person` dataclass has a `PersonID`? That means that `PersonID` will be called first, and that value is added to the keyword arguments when calling `Person.create`.
+1. 一个位置的 `request: Request' 参数是 *通常的*。 请参阅“人员”。 获取上面的方法作为示例使用 `request`和 [arbitrary-constructors](#arbitry-constructors) 来使用不需要`request\` 的电报。
+2. 所有匹配的路径参数都作为关键字参数注入。
+3. 依赖关系可以被链和嵌套。 请注意在前一个示例中，`Person` 数据集如何有一个 `PersonID` ？ 这意味着`PersonID`将首先被调用，并且在调用 `Person.create` 时将该值添加到关键字参数中。
 
-## Arbitrary constructors
+## 任意构造器
 
-.. column::
+.. 列:
 
 ```
-Sometimes you may want to construct your injectable _without_ the `Request` object. This is useful if you have arbitrary classes or functions that create your objects. If the callable does have any required arguments, then they should themselves be injectable objects.
+有时您可能想要构建您注入的 _with_the `Request` 对象。 如果您有任意的类或函数创建您的对象，这是有用的。 如果传唤书中确实有任何必要的参数，那么传唤书本身应当是可以注射的物体。
 
-This is very useful if you have services or other types of objects that should only exist for the lifetime of a single request. For example, you might use this pattern to pull a single connection from your database pool.
+如果您有服务或其他类型的对象只能在单个请求的一生中存在，这是非常有用的。 例如，您可以使用此模式从数据库池中拉取单个连接。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -161,33 +161,33 @@ async def handler(request: Request, beta: Beta):
 ```
 ````
 
-_Added in v22.9_
+_添加于 v22.9_
 
-## Objects from the `Request`
+## 来自 `Request` 的对象
 
-.. column::
+.. 列:
 
 ````
-Sometimes you may want to extract details from the request and preprocess them. You could, for example, cast the request JSON to a Python object, and then add some additional logic based upon DB queries.
+有时您可能想要从请求中提取详细信息并预先处理。 例如，您可以将 JSON 投射到一个 Python 对象，然后添加一些基于数据库查询的附加逻辑。
 
-.. warning:: 
+... 警告：: 
 
-    If you plan to use this method, you should note that the injection actually happens *before* Sanic has had a chance to read the request body. The headers should already have been consumed. So, if you do want access to the body, you will need to manually consume as seen in this example.
+    如果您计划使用此方法，， 您应该注意到注射实际上发生在*先于*圣诞老人有机会阅读请求身体之前。 头应该已经消耗。 所以，如果你想要访问身体，你需要手动消耗在这个例子中看到。
 
-    ```python
-        await request.receive_body()
+    ``python
+        正在等待请求。 eceive_body()
     ```
 
 
-    This could be used in cases where you otherwise might:
+    这可以用于否则你可能:
 
-    - use middleware to preprocess and add something to the `request.ctx`
-    - use decorators to preprocess and inject arguments into the request handler
+    - 使用中间件预处理并添加某些内容到 "请求"。 tx`
+    - 使用装饰器预处理并注入参数到请求处理程序
 
-    In this example, we are using the `Request` object in the `compile_profile` constructor to run a fake DB query to generate and return a `UserProfile` object.
+    在此示例 我们正在使用 `compile_profile` 构造函数中的 `Request` 对象来运行一个假DB 查询来生成并返回一个 `UserProfile` 对象。
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -243,19 +243,19 @@ $ curl localhost:8000/profile -X PATCH -d '{"name": "Alice", "birthday": "2000-0
 ```
 ````
 
-## Injecting services
+## 注射服务
 
-It is a common pattern to create things like database connection pools and store them on the `app.ctx` object. This makes them available throughout your application, which is certainly a convenience. One downside, however, is that you no longer have a typed object to work with. You can use dependency injections to fix this. First we will show the concept using the lower level `add_dependency` like we have been using in the previous examples. But, there is a better way using the higher level `dependency` method.
+创建数据库连接池并将其存储在`app.ctx`对象上是常见的模式。 这将使它们能够在您的整个应用程序中使用，这肯定是一种方便。 然而，一个缺点是你不再有一个要处理的打字对象。 您可以使用依赖注入来解决这个问题。 首先，我们将使用下级`add_dependency`来显示这个概念，就像我们在前面的例子中所使用的那样。 但是，可以更好地使用更高级别的 \`依赖' 方法。
 
-### The lower level API using `add_dependency`
+### 使用 `add_dependency` 的较低级别 API
 
-.. column::
+.. 列:
 
 ```
-This works very similar to the [last example](#objects-from-the-request) where the goal is the extract something from the `Request` object. In this example, a database object was created on the `app.ctx` instance, and is being returned in the dependency injection constructor.
+这个操作非常类似于[最后一个例子](#objects-frow-the-request) 的目标是从 `Request` 对象中提取某些东西。 在这个示例中，在 `app.ctx` 实例上创建了一个数据库对象，正在返回依赖注入构造器。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -284,17 +284,17 @@ result
 ```
 ````
 
-### The higher level API using `dependency`
+### 较高级别的 API 使用 `dependency`
 
-.. column::
+.. 列:
 
 ```
-Since we have an actual *object* that is available when adding the dependency injection, we can use the higher level `dependency` method. This will make the pattern much easier to write.
+由于我们在添加依赖注入时有一个可用的实际的 *对象*，我们可以使用更高级别的 "依赖" 方法。 这将使写入模式变得更容易。
 
-This method should always be used when you want to inject something that exists throughout the lifetime of the application instance and is not request specific. It is very useful for services, third party clients, and connection pools since they are not request specific.
+当您想要注入在应用程序实例整个生命周期中存在而不是请求具体的东西时，这个方法应该始终使用。 它对服务、第三方客户和连接池非常有用，因为它们没有具体要求。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -318,17 +318,17 @@ result
 ```
 ````
 
-## Generic types
+## 通用类型
 
-Be carefule when using a [generic type](https://docs.python.org/3/library/typing.html#typing.Generic). The way that Sanic's dependency injection works is by matching the entire type definition. Therefore, `Foo` is not the same as `Foo[str]`. This can be particularly tricky when trying to use the [higher-level `dependency` method](#the-higher-level-api-using-dependency) since the type is inferred.
+使用[通用类型](https://docs.python.org/3/library/typing.html#typing.Generic)时小心谨慎。 Sanic依赖注入的方式是匹配整个类型的定义。 因此，`Foo`与`Foo[str] `不同。 当尝试使用 [更高级别的 '依赖' 方法](#the-high-level-api-using-dependency)时，这可能特别棘手，因为这种类型被推断。
 
-.. column::
+.. 列:
 
 ```
-For example, this will **NOT** work as expected since there is no definition for `Test[str]`.
+例如，由于没有`测试[str] `的定义，**不** 会正常工作。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -349,48 +349,48 @@ def test(request, test: Test[str]):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-To get this example to work, you will need to add an explicit definition for the type you intend to be injected.
+要使这个示例发挥作用，您需要为您打算注入的类型添加一个明确的定义。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-import typing
+import
 from sanic import Sanic, text
 
 T = typing.TypeVar("T")
 
-class Test(typing.Generic[T]):
+class Test(键入)。 enric[T]:
     test: T
 
-app = Sanic("testapp")
-_singleton = Test()
-app.ext.add_dependency(Test[str], lambda: _singleton)
+app = Sanic("taspp")
+_sinleton = Test()
+app. xt.add_dependency(Test[str], lambda: _sinleton)
 
 @app.get("/")
-def test(request, test: Test[str]):
+def 测试 (请求, test: 测试[str]):
     ...
 ```
 ````
 
-## Configuration
+## 配置
 
-.. column::
+.. 列:
 
 ```
 By default, dependencies will be injected after the `http.routing.after` [signal](../../guide/advanced/signals.md#built-in-signals). Starting in v22.9, you can change this to the `http.handler.before` signal.
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-app.config.INJECTION_SIGNAL = "http.handler.before"
+app.config.INJECTION_SIGAL = "http.handler.before"
 ```
 ````
 
-_Added in v22.9_
+_添加于 v22.9_

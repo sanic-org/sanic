@@ -1,1 +1,1 @@
-decorators
+デコレーター

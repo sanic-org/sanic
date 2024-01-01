@@ -1,22 +1,22 @@
 ---
-title: The lightning-fast asynchronous Python web framework
-layout: home
+title: 闪电快异步的 Python web 框架
+layout: 首页
 features:
-  - title: Simple and lightweight
-    details: Intuitive API with smart defaults and no bloat allows you to get straight to work building your app.
-  - title: Unopinionated and flexible
-    details: Build the way you want to build without letting your tooling constrain you.
-  - title: Performant and scalable
-    details: Built from the ground up with speed and scalability as a main concern. It is ready to power web applications big and small.
-  - title: Production ready
-    details: Out of the box, it comes bundled with a web server ready to power your web applications.
-  - title: Trusted by millions
-    details: Sanic is one of the overall most popular frameworks on PyPI, and the top async enabled framework
-  - title: Community driven
-    details: The project is maintained and run by the community for the community.
+  - title: 简单和轻量度
+    details: 智能默认和没有博客的直观API允许您直接建立您的应用程序。
+  - title: 无意见和灵活的
+    details: 构建你想要构建的方式而不让你的工具约束你。
+  - title: 性能和可缩放
+    details: 以速度和可伸缩性作为主要关切事项。 它已经准备好为无论大小的网络应用程序供电。
+  - title: 生产已准备好
+    details: 在盒子中，它被捆绑在一个网络服务器上，可以为您的网络应用程序提供电力。
+  - title: 受数以百万计的信任的
+    details: Sanic 是 PyPI 最受欢迎的框架之一，是启用异步的顶部框架
+  - title: 社区驱动的
+    details: 该项目由社区为社区维护和管理。
 ---
 
-### ⚡ The lightning-fast asynchronous Python web framework
+### :hig_voltag: lightning-fast asynchronous Python web Framework
 
 .. attrs::
 :class: columns is-multiline mt-6
@@ -69,17 +69,17 @@ features:
 :class: is-size-3 mt-6
 
 ```
-**With the features and tools you'd expect.**
+**使用您所期望的功能和工具。**
 ```
 
 .. attrs::
 :class: is-size-3 ml-6
 
 ```
-**And some {span:has-text-primary:you wouldn't believe}.**
+**和一些 {span:has-text-primary:you wouldn't believe}.**
 ```
 
-.. tab:: Production-grade
+.. 标签：生产等级
 
 ````
 After installing, Sanic has all the tools you need for a scalable, production-grade server—out of the box!
@@ -110,28 +110,28 @@ sanic path.to.server:app
 ```
 ````
 
-.. tab:: TLS server
+.. 标签：TLS服务器
 
 ````
-Running Sanic with TLS enabled is as simple as passing it the file paths...
+启用 TLS 来运行Sanic与传递文件路径一样简单...
 ```sh
-sanic path.to.server:app --cert=/path/to/bundle.crt --key=/path/to/privkey.pem
+sanic path.to.server:app --cert=/path/to/bundle。 rt --key=/path/to/privkey.pem
+``
+
+... 或包含`fullchain.pem` 和 `privkey.pem`
+
+```sh
+sanic path.to. erver:app --tls=/path/to/certs
 ```
 
-... or the a directory containing `fullchain.pem` and `privkey.pem`
+**甚至更好地**，正在开发中。 让Sanic处理设置本地TLS证书，以便您可以通过 TLS 访问 [https://localhost:8443](https://localhost:8443)
 
 ```sh
-sanic path.to.server:app --tls=/path/to/certs
-```
-
-**Even better**, while you are developing, let Sanic handle setting up local TLS certificates so you can access your site over TLS at [https://localhost:8443](https://localhost:8443)
-
-```sh
-sanic path.to.server:app --dev --auto-tls
+sanic 路径。 o.server:app --dev --auto-tls
 ```
 ````
 
-.. tab:: Websockets
+.. 标签：Websockets
 
 ````
 Up and running with websockets in no time using the [websockets](https://websockets.readthedocs.io) package.
@@ -145,35 +145,35 @@ async def feed(request: Request, ws: Websocket):
 ```
 ````
 
-.. tab:: Static files
+.. 标签：静态文件
 
 ````
-Serving static files is of course intuitive and easy. Just name an endpoint and either a file or directory that should be served.
+服务静态文件当然是直观和容易的。只需命名一个端点和一个应该服务的文件或目录。
 
 ```python
 app.static("/", "/path/to/index.html")
-app.static("/uploads/", "/path/to/uploads/")
+应用。 tatic("/uploads/", "/path/to/uploads/")
 ```
 
-Moreover, serving a directory has two additional features: automatically serving an index, and automatically serving a file browser.
+此外，服务目录还有两个额外功能：自动服务索引，自动服务于文件浏览器。
 
-Sanic can automatically serve `index.html` (or any other named file) as an index page in a directory or its subdirectories.
+Sanic 可以自动将 `index.html` (或任何其他命名文件) 作为目录或其子目录中的索引页。
 
 ```python
 app.static(
     "/uploads/",
     "/path/to/uploads/",
-    index="index.html"
-)
+    index="索引。
+()
 ```
 
-And/or, setup Sanic to display a file browser.
+And/or 设置Sanic 以显示文件浏览器。
 
 
-![image](/assets/images/directory-view.png)
+！[image](/assets/images/directory-view.png)
 
 ```python
-app.static(
+app tatic(
     "/uploads/",
     "/path/to/uploads/",
     directory_view=True
@@ -181,7 +181,7 @@ app.static(
 ```
 ````
 
-.. tab:: Lifecycle
+.. tab：生命周期：
 
 ````
 Beginning or ending a route with functionality is as simple as adding a decorator.
@@ -223,35 +223,35 @@ await app.dispatch("something.happened.ohmy")
 ```
 ````
 
-.. tab:: Smart error handling
+.. 标签：智能错误处理
 
 ````
-Raising errors will intuitively result in proper HTTP errors:
+提升错误会直观地导致正确的 HTTP 错误：
+
+``python
+raising sanic.exception。 ootFound # 自动响应HTTP 404
+``
+
+或是你自己：
 
 ```python
-raise sanic.exceptions.NotFound  # Automatically responds with HTTP 404
-```
-
-Or, make your own:
-
-```python
-from sanic.exceptions import SanicException
+xceptions import SanicException
 
 class TeapotError(SanicException):
     status_code = 418
-    message = "Sorry, I cannot brew coffee"
+    message = “对不起，” 我不能酿造咖啡”
 
-raise TeapotError
+提高Teapot错误
 ```
 
-And, when an error does happen, Sanic's beautiful DEV mode error page will help you drill down to the bug quickly.
+当发生错误时， Sanic美丽的 DEV 模式错误页面将帮助您快速钻到漏洞。
 
-![image](../assets/images/error-div-by-zero.png)
+！[image](../assets/images/error-div-zero.png)
 
-Regardless, Sanic comes with an algorithm that attempts to respond with HTML, JSON, or text-based errors as appropriate. Don't worry, it is super easy to setup and customize your error handling to your exact needs.
+不管怎样，Sanic带有一个算法，尝试使用HTML，JSON或文本错误作为相应答复。 别担心，设置和自定义您的错误处理符合您的具体需要是非常简单的。
 ````
 
-.. tab:: App Inspector
+.. 选项卡：应用查看器
 
 ````
 Check in on your live, running applications (whether local or remote).
@@ -303,7 +303,7 @@ sanic inspect migrations
 ```
 ````
 
-.. tab:: Extendable
+.. 标签：可扩展
 
 ```
 In addition to the tools that Sanic comes with, the officially supported [Sanic Extensions](./plugins/sanic-ext/getting-started.md) provides lots of extra goodies to make development easier.
@@ -318,7 +318,7 @@ In addition to the tools that Sanic comes with, the officially supported [Sanic 
 - Live **health monitor**
 ```
 
-.. tab:: Developer Experience
+.. 标签：开发者体验
 
 ```
 Sanic is **built for building**.

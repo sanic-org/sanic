@@ -1,1 +1,1 @@
-validation
+検証

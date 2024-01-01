@@ -1,16 +1,16 @@
 ---
-title: Autodiscovery
+title: 自动发现
 ---
 
-# Autodiscovery of Blueprints, Middleware, and Listeners
+# 自动发现蓝图、中程和侦听器
 
-> How do I autodiscover the components I am using to build my application?
+> 我如何自动发现我正在使用的组件来构建我的应用程序？
 
-One of the first problems someone faces when building an application, is _how_ to structure the project. Sanic makes heavy use of decorators to register route handlers, middleware, and listeners. And, after creating blueprints, they need to be mounted to the application.
+某人在构建应用程序时面临的第一个问题是_如何_构建项目。 Sanic大量使用装饰器注册路由处理器、中间人和听众。 在创建蓝图后，它们需要安装到应用程序上。
 
-A possible solution is a single file in which **everything** is imported and applied to the Sanic instance. Another is passing around the Sanic instance as a global variable. Both of these solutions have their drawbacks.
+可能的解决方案是一个 **每件事** 导入并应用到 Sanic 实例的单一文件。 另一个正在环绕着Sanic实例作为一个全球变量。 这两种解决办法都有其缺点。
 
-An alternative is autodiscovery. You point your application at modules (already imported, or strings), and let it wire everything up.
+另一种办法是自动发现。 您将您的应用程序指向模块 (已导入，或字符串)，并让它连接一切。
 
 ## `server.py`
 
@@ -93,7 +93,7 @@ def autodiscover(
         app.blueprint(bp)
 ```
 
-## `blueprints/level1.py`
+## `蓝图/level1.py`
 
 ```python
 from sanic import Blueprint
@@ -106,7 +106,7 @@ def print_something(app, loop):
     logger.debug("something @ level1")
 ```
 
-## `blueprints/one/two/level3.py`
+## “蓝图1e/2/level3.py”
 
 ```python
 from sanic import Blueprint
@@ -119,7 +119,7 @@ def print_something(app, loop):
     logger.debug("something @ level3")
 ```
 
-## `listeners/something.py`
+## `监听器/something.py`
 
 ```python
 from sanic import Sanic
@@ -148,14 +148,14 @@ def print_something(app, loop):
 ## `parent/child/nested.py`
 
 ```python
-from sanic import Blueprint
-from sanic.log import logger
+从sanic.log 导入蓝图
+从sanic.log 导入记录器
 
-nested = Blueprint("nested")
+嵌套= Blueprint("嵌套")
 
-@nested.after_server_start
+@nested.after _server_start
 def print_something(app, loop):
-    logger.debug("something @ nested")
+    logger.debug("some @ 嵌套")
 ```
 
 ***
@@ -182,8 +182,8 @@ generate with 'find . -type d -name "__pycache__" -exec rm -rf {} +; tree'
 ```
 
 ```sh
-source ./.venv/bin/activate # activate the python venv which sanic is installed in
-sanic sever -d # run this in the directory containing server.py
+源 ./.venv/bin/激活 # 激活安装在
+sanic sever -d # 中的 python venv 在包含服务器的目录中运行它。
 ```
 
 ```text

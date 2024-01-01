@@ -1,10 +1,10 @@
 # Handlers
 
-The next important building block are your _handlers_. These are also sometimes called "views".
+次に重要なビルディングブロックは _handlers_ です。 これらは"views"とも呼ばれます。
 
 In Sanic, a handler is any callable that takes at least a :class:`sanic.request.Request` instance as an argument, and returns either an :class:`sanic.response.HTTPResponse` instance, or a coroutine that does the same.
 
-.. column::
+.. 列::
 
 ```
 Huh? 😕
@@ -14,7 +14,7 @@ It is a **function**; either synchronous or asynchronous.
 The job of the handler is to respond to an endpoint and do something. This is where the majority of your business logic will go.
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -26,27 +26,27 @@ async def i_am_ALSO_a_handler(request):
 ```
 ````
 
-Two more important items to note:
+さらに2つの重要な注意事項:
 
-1. You almost _never_ will want to use :class:`sanic.response.HTTPresponse` directly. It is much simpler to use one of the [convenience methods](./response#methods).
+1. あなたは :class:`sanic.response.HTTPresponse` を直接使用したくないでしょう。 format@@0(./response#methods) のいずれかを使う方が簡単です。
 
    - `from sanic import json`
    - `from sanic import html`
    - `from sanic import redirect`
    - _etc_
-2. As we will see in [the streaming section](../advanced/streaming#response-streaming), you do not always need to return an object. If you use this lower-level API, you can control the flow of the response from within the handler, and a return object is not used.
+2. format@@0(../advanced/streaming#response-streaming)で見るように、オブジェクトを返す必要はありません。 この下位レベルの API を使用する場合は、ハンドラ内からのレスポンスのフローを制御することができ、戻り値オブジェクトは使用されません。
 
-.. tip:: Heads up
+.. tip:: Heads Up
 
 ```
-If you want to learn more about encapsulating your logic, checkout [class based views](../advanced/class-based-views.md). For now, we will continue forward with just function-based views.
+ロジックのカプセル化についてもっと知りたい場合は、[class based views](../advanced/class-based-views.md) をチェックしてください。今後は関数ベースのビューだけで進めていきます。
 ```
 
-### A simple function-based handler
+### シンプルな関数ベースのハンドラです
 
-The most common way to create a route handler is to decorate the function. It creates a visually simple identification of a route definition. We'll learn more about [routing soon](./routing.md).
+ルートハンドラを作成する最も一般的な方法は、関数を飾ることです。 ルート定義の視覚的に簡単な識別を作成します。 format@@0(./routing.md) の詳細について学びます。
 
-.. column::
+.. 列::
 
 ```
 Let's look at a practical example.
@@ -57,7 +57,7 @@ Let's look at a practical example.
 Mission accomplished 💪
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -71,9 +71,9 @@ async def foo_handler(request):
 
 ***
 
-## A word about _async_...
+## _async_についての単語。
 
-.. column::
+.. 列::
 
 ```
 It is entirely possible to write handlers that are synchronous.
@@ -86,18 +86,18 @@ Using four (4) worker processes and a common benchmarking tool:
 - Or, about **31.76** requests/second
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 @app.get("/sync")
 def sync_handler(request):
     time.sleep(0.1)
-    return text("Done.")
+    return text("Done")
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
 Just by changing to the asynchronous alternative `asyncio.sleep()`, we see an incredible change in performance. 🚀
@@ -113,24 +113,24 @@ Using the same four (4) worker processes:
     🤯
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
 @app.get("/async")
 async def async_handler(request):
     await asyncio.sleep(0.1)
-    return text("Done.")
+    return text("Done")
 ```
 ````
 
-Okay... this is a ridiculously overdramatic result. And any benchmark you see is inherently very biased. This example is meant to over-the-top show the benefit of `async/await` in the web world. Results will certainly vary. Tools like Sanic and other async Python libraries are not magic bullets that make things faster. They make them _more efficient_.
+わかりました... これは途方もなく過大な結果です どんなベンチマークでも本質的に偏っています この例では、ウェブの世界での `async/await` の利点を紹介します。 結果は確かに異なります。 Sanicや他の非同期Pythonライブラリのようなツールは、物事をより速くする魔法の弾丸ではありません。 これらは _more efficient_ にします。
 
-In our example, the asynchronous version is so much better because while one request is sleeping, it is able to start another one, and another one, and another one, and another one...
+この例では、1つのリクエストがスリープ状態になっているため、非同期バージョンが非常に優れています。 別のものと別のものと別のものと別のものを始めることができます
 
-But, this is the point! Sanic is fast because it takes the available resources and squeezes performance out of them. It can handle many requests concurrently, which means more requests per second.
+しかし、これはポイントである! Sanicは利用可能なリソースを取り出し、パフォーマンスを絞り出すため、高速です。 同時に多くのリクエストを処理することができます。つまり、1秒あたりのリクエストが多くなります。
 
-.. tip:: A common mistake!
+.. tip:: よくある間違い!
 
 ```
 Don't do this! You need to ping a website. What do you use? `pip install your-fav-request-library` 🙈
@@ -142,9 +142,9 @@ Sanic uses [httpx](https://www.python-httpx.org/) inside of its testing package 
 
 ***
 
-## A fully annotated handler
+## 完全に注釈を付けられたハンドラです
 
-For those that are using type annotations...
+型アノテーションを使用している人のために...
 
 ```python
 from sanic.response import HTTPResponse, text
@@ -152,20 +152,20 @@ from sanic.request import Request
 
 @app.get("/typed")
 async def typed_handler(request: Request) -> HTTPResponse:
-    return text("Done.")
+    return text("Done")
 ```
 
-## Naming your handlers
+## ハンドラーに名前を付けています
 
-All handlers are named automatically. This is useful for debugging, and for generating URLs in templates. When not specified, the name that will be used is the name of the function.
+すべてのハンドラは自動的に名前が付けられます。 これは、デバッグやテンプレート内の URL を生成する際に便利です。 指定しない場合、使用される名前は関数の名前です。
 
-.. column::
+.. 列::
 
 ```
-For example, this handler will be named `foo_handler`.
+例えば、このハンドラは `foo_handler` という名前になります。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -176,13 +176,13 @@ async def foo_handler(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-However, you can override this by passing the `name` argument to the decorator.
+しかし、デコレータに `name` 引数を渡すことで上書きできます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -193,15 +193,15 @@ async def foo_handler(request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-In fact, as you will, there may be times when you **MUST** supply a name. For example, if you use two decorators on the same function, you will need to supply a name for at least one of them.
+実際には、**注意** が名前を与えなければならないことがあります。 例えば、同じ関数に 2 つのデコレータを使用する場合、少なくとも 1 つの名前を指定する必要があります。
 
-If you do not, you will get an error and your app will not start. Names **must** be unique within your app.
+しないとエラーが発生し、アプリが起動しません。名前は **必ず**一意でなければなりません。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python

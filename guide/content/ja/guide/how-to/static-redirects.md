@@ -1,6 +1,6 @@
-# "Static" Redirects
+# 「静的」リダイレクト
 
-> How do I configure static redirects?
+> 静的リダイレクトを設定するには?
 
 ## `app.py`
 
@@ -107,6 +107,6 @@ body {
 
 ***
 
-Also, checkout some resources from the community:
+また、コミュニティからいくつかのリソースをチェックアウトします。
 
 - [Static Routing Example](https://github.com/Perzan/sanic-static-routing-example)

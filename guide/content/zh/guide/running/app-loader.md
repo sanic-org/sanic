@@ -1,18 +1,18 @@
 ---
-title: Dynamic Applications
+title: 动态应用程序
 ---
 
-# Dynamic Applications
+# 动态应用程序
 
-Running Sanic has been optimized to work with the CLI. If you have not read it yet, you should read [Running Sanic](./running.md#sanic-server) to become familiar with the options.
+正在运行的Sanic已被优化，以配合CLI。 如果你还没有阅读它，你应该阅读 [Running Sanic](./running.md#sanic-server) 来熟悉这些选项。
 
-.. column::
+.. 列:
 
 ```
-This includes running it as a global scope object...
+这包括将其作为全局范围对象运行...
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -28,13 +28,13 @@ async def handler(request: Request):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-...or, a factory function that creates the `Sanic` application object.
+...或者创建一个 `Sanic` 应用程序对象的工厂函数。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```sh
@@ -53,17 +53,17 @@ def create_app():
 ```
 ````
 
-**Sometimes, this is not enough ... 🤔**
+**有时候，这还不够... 🤔**
 
-Introduced in [v22.9](../release-notes/v22.9.md), Sanic has an `AppLoader` object that is responsible for creating an application in the various [worker processes](./manager.md#how-sanic-server-starts-processes). You can take advantage of this if you need to create a more dynamic startup experience for your application.
+引入于 [v22.9](../release-notes/v22.9.md)，萨尼克有一个`AppLoader` 对象，负责在各种[工人进程](./manager.md#how-sanic-server-starts-process)中创建一个应用程序。 如果你需要为你的应用程序创建一个更动态的启动体验，你可以利用这个机会。
 
-.. column::
+.. 列:
 
 ```
-An `AppLoader` can be passed a callable that returns a `Sanic` instance. That `AppLoader` could be used with the low-level application running API.
+一个 `AppLoader` 可以传递一个传唤函数返回一个 `Sanic` 实例。这个`AppLoader` 可以与运行 API 的低级别应用程序一起使用。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -95,4 +95,4 @@ python path/to/server.py MyTestAppName
 ```
 ````
 
-In the above example, the `AppLoader` is created with a `factory` that can be used to create copies of the same application across processes. When doing this, you should explicitly use the `Sanic.serve` pattern shown above so that the `AppLoader` that you create is not replaced.
+在上面的例子中，`AppLoader` 是用`factory`创建的，它可以用来在整个过程中创建同一应用程序的副本。 在这样做时，您应该明确使用上面显示的 `Sanic.serve` 模式，以便您创建的 `AppLoader` 不会被替换。

@@ -2,31 +2,31 @@
 title: Sanic Extensions - Jinja
 ---
 
-# Templating
+# テンプレート設定
 
-Sanic Extensions can easily help you integrate templates into your route handlers.
+Sanic Extensions は、テンプレートをルートハンドラに簡単に統合するのに役立ちます。
 
-## Dependencies
+## 依存関係
 
-**Currently, we only support [Jinja](https://github.com/pallets/jinja/).**
+**現在、 [Jinja](https://github.com/pallets/jinja/)のみサポートしています。**
 
-[Read the Jinja docs first](https://jinja.palletsprojects.com/en/3.1.x/) if you are unfamiliar with how to create templates.
+format@@0(https\://jinja.palletsprojects.com/en/3.1.x/) テンプレートを作成する方法に慣れていない場合は、format@@1を参照してください。
 
-Sanic Extensions will automatically setup and load Jinja for you if it is installed in your environment. Therefore, the only setup that you need to do is install Jinja:
+Sanic Extensionsは、環境にインストールされている場合、自動的にJinjaをセットアップしてロードします。 したがって、必要なセットアップはJinjaのインストールだけです。
 
 ```
 pip install Jinja2
 ```
 
-## Rendering a template from a file
+## ファイルからテンプレートをレンダリングする
 
-There are three (3) ways for you:
+あなたには3つの方法があります:
 
-1. Using a decorator to pre-load the template file
-2. Returning a rendered `HTTPResponse` object
-3. Hybrid pattern that creates a `LazyResponse`
+1. テンプレートファイルを事前にロードするデコレータを使用する
+2. レンダリングされた `HTTPResponse` オブジェクトを返す
+3. `LazyResponse`を作るハイブリッドパターン。
 
-Let's imagine you have a file called `./templates/foo.html`:
+`./templates/foo.html`というファイルがあるとしましょう。
 
 ```html
 <!DOCTYPE html>
@@ -48,17 +48,17 @@ Let's imagine you have a file called `./templates/foo.html`:
 </html>
 ```
 
-Let's see how you could render it with Sanic + Jinja.
+Sanic + Jinjaでどのようにレンダリングできるか見てみましょう。
 
 ### Option 1 - as a decorator
 
-.. column::
+.. 列::
 
 ```
-The benefit of this approach is that the templates can be predefined at startup time. This will mean that less fetching needs to happen in the handler, and should therefore be the fastest option.
+このアプローチの利点は、起動時にテンプレートをあらかじめ定義できることです。 これは、より少ないフェッチがハンドラで起こる必要があることを意味し、したがって最速のオプションであるべきです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -69,15 +69,15 @@ async def handler(request: Request):
 ```
 ````
 
-### Option 2 - as a return object
+### Option 2 - 戻り値オブジェクトとして
 
-.. column::
+.. 列::
 
 ```
-This is meant to mimic the `text`, `json`, `html`, `file`, etc pattern of core Sanic. It will allow the most customization to the response object since it has direct control of it. Just like in other `HTTPResponse` objects, you can control headers, cookies, etc.
+これはSanicの`text`、`json`、`html`、`file`などのパターンを模倣するものです。 それはそれを直接制御しているので、レスポンスオブジェクトにほとんどのカスタマイズを可能にする。 他の `HTTPResponse` オブジェクトと同様に、ヘッダー、クッキーなどを制御できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -93,13 +93,13 @@ async def handler(request: Request):
 
 ### Option 3 - hybrid/lazy
 
-.. column::
+.. 列::
 
 ```
-In this approach, the template is defined up front and not inside the handler (for performance). Then, the `render` function returns a `LazyResponse` that can be used to build a proper `HTTPResponse` inside the decorator.
+このアプローチでは、テンプレートはハンドラ内ではなく前面で定義されます(パフォーマンスのため)。 次に、`render` 関数はデコレータ内で適切な `HTTPResponse` を構築するために使用できる `LazyResponse` を返します。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -112,15 +112,15 @@ async def handler(request: Request):
 ```
 ````
 
-## Rendering a template from a string
+## 文字列からテンプレートをレンダリング
 
-.. column::
+.. 列::
 
 ```
-Sometimes you may want to write (or generate) your template inside of Python code and _not_ read it from an HTML file. In this case, you can still use the `render` function we saw above. Just use `template_source`.
+Pythonコードの中でテンプレートを書く(または生成する)ことを望むことがあり、HTMLファイルから_not_読み込みを望むことがあります。 この場合でも、上記で見た「render」関数を使うことができます。`template_source` を使うだけです。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -159,13 +159,13 @@ async def handler(request):
 .. note::
 
 ```
-In this example, we use `textwrap.dedent` to remove the whitespace in the beginning of each line of the multi-line string. It is not necessary, but just a nice touch to keep both the code and the generated source clean.
+この例では、複数行の文字列の先頭にある空白を削除するために `textwrap.dedent` を使用します。 それは必要ありませんが、コードと生成されたソースの両方をきれいに保つためにちょうどいいタッチです。
 ```
 
-## Development and auto-reload
+## 開発と自動再読み込み
 
-If auto-reload is turned on, then changes to your template files should trigger a reload of the server.
+自動再読み込みがオンになっている場合、テンプレートファイルへの変更によりサーバーの再読み込みが実行されます。
 
-## Configuration
+## 設定
 
-See `templating_enable_async` and `templating_path_to_templates` in [settings](./configuration.md#settings).
+[settings](./configuration.md#settings) の `templating_enable_async` と `templating_path_to_templates` を参照してください。

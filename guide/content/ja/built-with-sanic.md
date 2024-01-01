@@ -1,67 +1,67 @@
 ---
-title: Full Speed Ahead - How We Built This Site with Sanic
-layout: main
+title: 前方の全速度-私たちはどのように我々はサニックでこのサイトを構築しました
+layout: メイン
 ---
 
 .. attrs::
-:class: title
+:class: タイトル
 
 ```
-Full Speed Ahead:
+全速力:
 ```
 
 .. attrs::
 :class: subtitle
 
 ```
-How We Built This Site with Sanic
+どのように私たちはサニックでこのサイトを構築しました
 ```
 
-Welcome to our little corner of the Internet where we proudly say, "Yes, we built this with Sanic!" This isn't just a website; it's our playground, our test lab, our battlefield, and, well, our home.
+私たちが誇らしげに言うインターネットの小さなコーナーへようこそ、「はい、私たちはこれをSanicで構築しました!」と。 これは単なるウェブサイトではありません。私たちの遊び場、テストラボ、戦場、そして自宅です。
 
 ![](/assets/images/built-with-sanic.png)
 
-### The Story: "We Drink Our Own Champagne"
+### 物語: "我々は自分のシャンパンを飲む"
 
-We believe in Sanic so much that we decided to put it to the ultimate test—running our own website. It's like a chef eating at their own restaurant, only with less risk of food poisoning.
+私たちはSanicをあまりにも信じているので、私たち自身のウェブサイトを運営する究極のテストにしようと決めました。 食中毒のリスクが少ないだけで、自分のレストランでシェフが食事をするようなものです。
 
-Why? Because building a website or web application is hard. There are countless moving parts, a plethora of challenges, and the ever-present need for speed and reliability. We want to show you just one of the many ways you _could_ do it.
+なぜでしょう？ ウェブサイトやウェブアプリケーションを構築することは難しいので。 無数の可動部品、多くの挑戦、そして常に存在するスピードと信頼性の必要性があります。 私たちはあなたが_できる_多くの方法の一つをお見せしたいと思います。
 
-In this high-stakes digital kitchen, Sanic is our secret ingredient. By deploying our own website on Sanic, we're not just showcasing its capabilities; we're stress-testing them in the real world. This is our chance to walk the walk, proving that Sanic isn't just good on paper—it's a robust, high-performance framework that can handle everything from the smallest blog to the busiest e-commerce site.
+このハイステークスのデジタルキッチンでは、Sanicは私たちの秘密の食材です。 Sanicに自社のウェブサイトを導入することで、私たちはその機能を紹介するだけではなく、現実世界でストレステストを行っています。 これは、Sanicが紙に良いだけではないことを証明する私たちの歩くチャンスです。それは堅牢です。 最小のブログから最も忙しいeコマースサイトまであらゆるものを扱える高性能なフレームワークです
 
-So, here we are, sipping our own champagne, confident in the knowledge that if Sanic can run our site, it can power yours too. Cheers to coding at the speed of thought! 🥂
+だから、ここで私たちは、Sanicが私たちのサイトを運営することができれば、それもあなたの力になるという知識に自信を持って、私たち自身のシャンパンをすすります。 思考の速さでコーディングに乾杯! 🥂
 
-### The Setup: Digital Ocean, Ahoy!
+### セットアップ：デジタルオーシャン、アホイ！
 
-We launched our site on Digital Ocean's App Platform because we love high-performance cloud sailing. Think of it as having a Ferrari in the cloud—fast, sleek, but way easier to handle.
+私たちは高性能なクラウドセーリングが大好きなので、Digital OceanのApp Platformでサイトを立ち上げました。 フェラーリをクラウドに搭載していると考えてみてください。高速で洗練されていますが、扱いやすいです。
 
-Why go for simplicity? With a lean team and no DevOps gurus, we needed a no-fuss, straightforward solution. Digital Ocean gives us that smooth sailing platform-as-a-service (PaaS) experience. It’s perfect for our needs: easy setup, automatic deployments, and the kind of reliability that lets you sleep soundly.
+なぜシンプルになるのでしょうか？ リーンなチームで、DevOpsの指導者がいない私たちには、簡単で簡単なソリューションが必要でした。 Digital Oceanは、サービスとしてのスムーズなセーリングプラットフォーム(PaaS)を提供してくれます。 簡単なセットアップ、自動展開、そして健全に眠れるような信頼性など、当社のニーズに最適です。
 
-Our choice reflects our ethos: focus on your strengths and let the platform do the heavy lifting. For us, it means creating amazing web experiences with Sanic, supported by a deployment solution that's simple yet powerful. ⛵
+私たちの選択は私たちの精神を反映しています: あなたの強みに焦点を当て、プラットフォームは重い持ち上げを行いましょう. 私たちにとって、それはシンプルでありながら強力な展開ソリューションによってサポートされているSanicで素晴らしいWebエクスペリエンスを作成することを意味します。 ⛵
 
-### The Code: GitHub's Where It's At
+### コード：GitHubの場所
 
-All our code is out in the open, basking in the glory of public scrutiny on GitHub. Why hide the magic? It's right there, in full view, at [our GitHub repository](https://github.com/sanic-org/sanic/tree/main/guide). Go ahead, take a peek, fork it, play with it, break it (and then kindly fix it).
+私たちのコードはすべてオープンで、GitHubの公開審査の栄光を浴びています。 なぜ魔法を隠すのですか? 詳細は format@@0(https\://github.com/sanic-org/sanic/tree/main/guide) をご覧ください。 先に進み、覗き見を取る、フォーク、それで遊ぶ、それを壊す(そして親切にそれを修正する)。
 
-Open-source isn't just a buzzword for us; it's our ethos. It's about building something bigger than ourselves, together. Our code is a testament to collaborative innovation, a playground for development, and a real-life example of Sanic in action.
+オープンソースは単なる流行語ではありません私たちの精神です 私たち自身よりも大きなものを一緒に作ることです 私たちのコードは、共同でのイノベーション、開発のための遊び場、そして実際のSanicの実例を証明しています。
 
-Every line of code, every commit, reflects our journey with Sanic, showcasing how we leverage its speed and scalability. Your contributions, whether fixing a bug, suggesting a feature, or enhancing documentation, are what propel this project forward.
+コードのすべての行、すべてのコミットは、Sanicとの私たちの旅を反映しており、そのスピードとスケーラビリティをどのように活用しているかを示しています。 バグを修正したり、機能を提案したり、ドキュメントを強化したりしても、あなたの貢献はこのプロジェクトを前進させるものです。
 
-So, dive in, contribute your genius, and let's keep shaping the future of web development with Sanic. Together, we're not just coding – we're creating a community-driven powerhouse. 🚀
+では、ダイブイン、あなたの天才に貢献し、SanicとWeb開発の未来を形作っていきましょう。 一緒にコーディングするだけでなく、コミュニティ主導のパワーハウスを作っています。 🚀
 
-### The Invitation: Write, Code, Break, Fix!
+### 招待状：書き込み、コード、ブレイク、修正！
 
-- **Documentarians**: Love making complex stuff sound easy? Our docs are your canvas. Paint away in words! 🎨
+- **ドキュメンタリー作家**: 複雑なものを簡単に作る愛？ 私たちのドキュメントはあなたのキャンバスです。 言葉で絵を描いてみよう! 🎨
 
-- **Code Ninjas**: Find bugs? Squash 'em. Got ideas? Code 'em. Make pull requests rain! 🥷
+- **コードニンジャ**：バグを見つけますか？ Squash 'em. アイデアはありますか？ Code 'em. プルリクエストを雨にしましょう！ 🥷
 
-- **Bug Hunters**: If you find bugs, don't just stare. Let us know. We love a good bug hunt. 🐛
+- **バグハンター**: バグを見つけたら、じっと見つめるだけではありません。 お知らせください。 私たちは良い虫狩りが大好きです。 🐛
 
-### The Bottom Line
+### ボトムライン
 
-We built this site with Sanic to show off what it can do. It's fast, it's fun, and it's what we use. So, if things load swiftly, pat us on the back. If they don't, well, uh... we blame cosmic rays?
+私たちはSanicとこのサイトを構築し、それが何ができるかを示しました。 速くて楽しくて私たちが使うものです だから、物事が迅速にロードされる場合は、背面に私たちを軽く叩いてください。 そうでなければ、ええと... 宇宙線を責めるのか?
 
-Join us in making Sanic not just good, but "I-can't-believe-it's-not-butter" good!
+サニックを作るだけでなく、良いことにご参加ください, しかし、「私はできません-それは-バターではありません」良い!
 
-Cheers,
-The Sanic Team (who occasionally wear capes)
+乾杯、
+サニックチーム（時にはマントを着用）

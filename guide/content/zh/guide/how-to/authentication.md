@@ -1,37 +1,37 @@
-# Authentication
+# 认证
 
-> How do I control authentication and authorization?
+> 如何控制认证和授权？
 
-This is an _extremely_ complicated subject to cram into a few snippets. But, this should provide you with an idea on ways to tackle this problem. This example uses [JWTs](https://jwt.io/), but the concepts should be equally applicable to sessions or some other scheme.
+这是一个非常复杂的 _extremy_ ，要把它变成几个代码片段。 但是，这应该为你们提供一个解决这一问题的方法的想法。 此示例使用 [JWTs](https://jwt.io/)，但概念应该同样适用于会话或其他方案。
 
 ## `server.py`
 
 ```python
-from sanic import Sanic, text
+从 sanic import Sanic, text
 
 from auth import protected
 from login import login
 
 app = Sanic("AuthApp")
-app.config.SECRET = "KEEP_IT_SECRET_KEEP_IT_SAFE"
-app.blueprint(login)
+app.config.SECRET = “KEEP_IT_SECRET_KEEP_IT_SAFE”
+app. lueprint(login)
 
 @app.get("/secret")
 @protected
 async def secret(request):
-    return text("To go fast, you must be fast.")
+    return text("to go fast, you must be fas.")
 ```
 
 ## `login.py`
 
 ```python
-import jwt
-from sanic import Blueprint, text
+从 Sanic 导入蓝图导入jt
+文本
 
 login = Blueprint("login", url_prefix="/login")
 
-@login.post("/")
-async def do_login(request):
+@login。 ost("/")
+async def do_login(请求):
     token = jwt.encode({}, request.app.config.SECRET)
     return text(token)
 ```
@@ -74,43 +74,43 @@ def protected(wrapped):
     return decorator(wrapped)
 ```
 
-This decorator pattern is taken from the [decorators page](/en/guide/best-practices/decorators.md).
+这种装饰模式取自[装饰品页面](/en/guide/best practices/decorators.md)。
 
 ***
 
 ```bash
-$ curl localhost:9999/secret -i
-HTTP/1.1 401 Unauthorized
+$ curl localhost:99999/secret -i
+HTTP/1.1 401 未经授权的
 content-length: 21
 connection: keep-alive
-content-type: text/plain; charset=utf-8
+content-type: text/pla; charset=utf-8
 
-You are unauthorized.
-
-
-$ curl localhost:9999/login -X POST
-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.e30.rjxS7ztIGt5tpiRWS8BGLUqjQFca4QOetHcZTi061DE
+您未被授权。
 
 
-$ curl localhost:9999/secret -i -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.e30.rjxS7ztIGt5tpiRWS8BGLUqjQFca4QOetHcZTi061DE"
-HTTP/1.1 200 OK
-content-length: 29
-connection: keep-alive
-content-type: text/plain; charset=utf-8
-
-To go fast, you must be fast.
+$curl localhost:9999/log-X POST
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUZI1NiJ9。 30.rjxS7ztIGt5tpirWS8BGLUqjQFca4QOetHcZTi061DE
 
 
-$ curl localhost:9999/secret -i -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.e30.BAD"                                        
-HTTP/1.1 401 Unauthorized
-content-length: 21
-connection: keep-alive
-content-type: text/plain; charset=utf-8
+$ curl localhost:99999/secret -i -H "Authorization: Bearer eyJ0eXAioJKV1QiLCJhbGciOiJIUZI1NiJ9.e30.rjxS7ztIGt5tpirWS8BGLUqjQFca4QOetZTi061DE"
+HTTP/1。 200 OK
+内容长度：29
+连接：保持存活
+内容类型：text/pla；charset=utf-8
 
-You are unauthorized.
+要快速，您必须快速。
+
+
+$ curl localhost:9999/secret -i -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUZI1NiJ9. 30.BAD"                                        
+HTTP/1。 401 未经授权的
+内容长度：21
+连接：保持存活
+内容类型：text/plain；charset=utf-8
+
+您未经授权。
 ```
 
-Also, checkout some resources from the community:
+此外，结算社区的一些资源：
 
-- Awesome Sanic - [Authorization](https://github.com/mekicha/awesome-sanic/blob/master/README.md#authentication) & [Session](https://github.com/mekicha/awesome-sanic/blob/master/README.md#session)
-- [EuroPython 2020 - Overcoming access control in web APIs](https://www.youtube.com/watch?v=Uqgoj43ky6A)
+- 非常棒的 Sanic - [Authorization](https://github.com/mekicha/awesome-sanic/blob/master/README.md#认证) & [Session](https://github.com/mekicha/awesome-sanic/blob/master/README.md#session)
+- [EuroPython 2020 - overcoming access control in web API](https://www.youtube.com/watch?v=Uqgoj43ky6A)

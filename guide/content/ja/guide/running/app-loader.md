@@ -1,18 +1,18 @@
 ---
-title: Dynamic Applications
+title: 動的アプリケーション
 ---
 
-# Dynamic Applications
+# 動的アプリケーション
 
-Running Sanic has been optimized to work with the CLI. If you have not read it yet, you should read [Running Sanic](./running.md#sanic-server) to become familiar with the options.
+SanicはCLIで動作するように最適化されています。 まだ読んでいない場合は、format@@0(./running.md#sanic-server)を読んで、オプションに慣れるようにしてください。
 
-.. column::
+.. 列::
 
 ```
-This includes running it as a global scope object...
+これにはグローバルスコープオブジェクトとして実行することが含まれます...
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -28,13 +28,13 @@ async def handler(request: Request):
 ```
 ````
 
-.. column::
+.. 列::
 
 ```
-...or, a factory function that creates the `Sanic` application object.
+...または、`Sanic`アプリケーションオブジェクトを作成するファクトリ関数。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```sh
@@ -53,17 +53,17 @@ def create_app():
 ```
 ````
 
-**Sometimes, this is not enough ... 🤔**
+**時々、これは十分ではありません... 🤔**
 
-Introduced in [v22.9](../release-notes/v22.9.md), Sanic has an `AppLoader` object that is responsible for creating an application in the various [worker processes](./manager.md#how-sanic-server-starts-processes). You can take advantage of this if you need to create a more dynamic startup experience for your application.
+[v22.9](../release-notes/v22.9.md) で導入されたSanicは、さまざまな[worker processes](./manager.md#how-sanic-server-starts-processes)でアプリケーションを作成する `AppLoader` オブジェクトを持っています。 アプリケーションでより動的なスタートアップ体験を作成する必要がある場合は、これを利用できます。
 
-.. column::
+.. 列::
 
 ```
-An `AppLoader` can be passed a callable that returns a `Sanic` instance. That `AppLoader` could be used with the low-level application running API.
+`AppLoader`は、`Sanic`インスタンスを返す呼び出し可能なものを渡すことができます。その`AppLoader`は、APIを実行する低レベルのアプリケーションで使用できます。
 ```
 
-.. column::
+.. 列::
 
 ````
 ```python
@@ -95,4 +95,4 @@ python path/to/server.py MyTestAppName
 ```
 ````
 
-In the above example, the `AppLoader` is created with a `factory` that can be used to create copies of the same application across processes. When doing this, you should explicitly use the `Sanic.serve` pattern shown above so that the `AppLoader` that you create is not replaced.
+上記の例では、 `AppLoader` は `factory` で作成され、プロセス間で同じアプリケーションのコピーを作成できます。 これを行う場合は、上記の`Sanic.serve`パターンを使用して、作成した`AppLoader`が置き換えられないようにしてください。

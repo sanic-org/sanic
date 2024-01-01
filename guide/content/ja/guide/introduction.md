@@ -1,9 +1,9 @@
-# Introduction
+# はじめに
 
-Sanic is a Python 3.8+ web server and web framework that’s written to go fast. It allows the usage of the async/await syntax added in Python 3.5, which makes your code non-blocking and speedy.
+Sanic は Python 3.8+ のウェブサーバーであり、高速化のために書かれたウェブフレームワークです。 Python 3.5 で追加された async/await 構文を使用することができます。これにより、コードをノンブロッキングでスピーディーにすることができます。
 
 .. attrs::
-:class: introduction-table
+:class: 紹介テーブル
 
 ```
 |  |  |
@@ -15,21 +15,21 @@ Sanic is a Python 3.8+ web server and web framework that’s written to go fast.
 | Stats    | [![Monthly Downloads](https://img.shields.io/pypi/dm/sanic.svg)](https://pepy.tech/project/sanic) [![Weekly Downloads](https://img.shields.io/pypi/dw/sanic.svg)](https://pepy.tech/project/sanic) [![Conda downloads](https://img.shields.io/conda/dn/conda-forge/sanic.svg)](https://anaconda.org/conda-forge/sanic) |
 ```
 
-## What is it?
+## それは何ですか?
 
-First things first, before you jump in the water, you should know that Sanic is different than other frameworks.
+まず最初に、水に飛び込む前に、Sanicは他のフレームワークとは異なることを知っておくべきです。
 
-Right there in that first sentence there is a huge mistake because Sanic is _both_ a **framework** and a **web server**. In the deployment section we will talk a little bit more about this.
+最初の文には大きな間違いがあります。なぜなら、Sanic は **framework** と **web server** の両方であるからです。 展開セクションでは、これについてもう少し詳しく説明します。
 
-But, remember, out of the box Sanic comes with everything you need to write, deploy, and scale a production grade web application. 🚀
+しかし、Sanicには、プロダクショングレードのWebアプリケーションを作成、デプロイ、およびスケーリングするために必要なものがすべて揃っています。 🚀
 
-## Goal
+## 目標
 
-> To provide a simple way to get up and running a highly performant HTTP server that is easy to build, to expand, and ultimately to scale.
+> 構築しやすい高性能な HTTP サーバーを立ち上げて実行する簡単な方法を提供します。 拡大し最終的には拡大しました
 
-## Features
+## 特徴
 
-.. column::
+.. 列::
 
 ```
 ### Core
@@ -42,7 +42,7 @@ But, remember, out of the box Sanic comes with everything you need to write, dep
 - By the community, for the community
 ```
 
-.. column::
+.. 列::
 
 ```
 ### Sanic Extensions [[learn more](../plugins/sanic-ext/getting-started.md)]
@@ -56,16 +56,16 @@ But, remember, out of the box Sanic comes with everything you need to write, dep
 - Auto create `HEAD`, `OPTIONS`, and `TRACE` endpoints
 ```
 
-## Sponsor
+## スポンサー情報
 
-Check out [open collective](https://opencollective.com/sanic-org) to learn more about helping to fund Sanic.
+format@@0(https\://opencollective.com/sanic-org) をご覧ください。
 
-## Join the Community
+## コミュニティに参加する
 
-The main channel for discussion is at the [community forums](https://community.sanicframework.org/). There also is a [Discord Server](https://discord.gg/FARQzAEMAA) for live discussion and chat.
+ディスカッションの主なチャンネルは、format@@0(https\://community.sanicframework.org/)にあります。 ライブディスカッションやチャットのための[Discord Server](https://discord.gg/FARQzAEMAA)もあります。
 
-The Stackoverflow `[sanic]` tag is [actively monitored](https://stackoverflow.com/questions/tagged/sanic) by project maintainers.
+Stackoverflow `[sanic]` タグはプロジェクトメンテナーによってformat@@1(https\://stackoverflow\.com/questions/tagged/sanic)です。
 
-## Contribution
+## 貢献
 
-We are always happy to have new contributions. We have [marked issues good for anyone looking to get started](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner), and welcome [questions/answers/discussion on the forums](https://community.sanicframework.org/). Please take a look at our [Contribution guidelines](https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst).
+私たちは常に新しい貢献をしています。 We have [marked issues good for anyone looking to get started](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner), and welcome [questions/answers/discussion on the forums](https://community.sanicframework.org/). format@@0(https\://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst)をご覧ください。

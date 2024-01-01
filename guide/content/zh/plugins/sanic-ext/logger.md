@@ -1,38 +1,38 @@
 ---
-title: Sanic Extensions - Background logger
+title: Sanic 扩展-背景记录器
 ---
 
-# Background logger
+# 背景记录器
 
-The background logger requires both `sanic>=22.9` and `sanic-ext>=22.9`.
+背景记录器需要 `sanic>=22.9` 和 `sanic-ext>=22.9`。
 
-You can setup Sanic Extensions to log all of your messages from a background process. This requires that you not be in [single process mode](../../guide/deployment/manager.md#single-process-mode).
+您可以设置 Sanic 扩展来从后台进程中记录您所有的消息。 这要求您不要处于[单一进程模式](../../guide/deplement/manager.md#单一进程模式)。
 
-Logging can sometimes be an expensive operation. By pushing all logging off to a background process, you can potentially gain some performance benefits.
+日志记录有时可能是一个昂贵的操作。 通过将所有登录推出到后台流程，您可以获得一些性能效益。
 
-## Setup
+## 设置
 
-.. column::
+.. 列:
 
 ```
-Out of the box, the background logger is disabled. You will need to opt-in if you would like to use it.
+在方框之外，后台记录器已禁用。如果您想要使用它，您将需要选入它。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-app.config.LOGGING = True
+app.config.LOGING = True
 ```
 ````
 
-## How does it work
+## 如何工作
 
-When enabled, the extension will create a `multoprocessing.Queue`. It will remove all handlers on the [default Sanic loggers](../../guide/best-practices/logging.md) and replace them with a [`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler). When a message is logged, it will be pushed into the queue by the handler, and read by the background process to the log handlers that were originally in place. This means you can still configure logging as normal and it should "just work."
+启用时，扩展将创建 `multoprocessing.Queue` 。 它将移除[默认 Sanic loggers](../../guide/best practices/logging.md) 上的所有处理程序，并将其替换为 [`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler)。 当消息被记录时，它将被处理器推送到队列。 并通过后台进程读取原有的日志处理程序。 这意味着您仍然可以将日志配置为正常，它应该“只能工作”。
 
-## Configuration
+## 配置
 
-| Key                                                                                   | Type   | Default | Description                                             |
-| ------------------------------------------------------------------------------------- | ------ | ------- | ------------------------------------------------------- |
-| LOGGING                                                                               | `bool` | `False` | Whether to enable this extension.                       |
-| LOGGING_QUEUE_MAX_SIZE | `int`  | `4096`  | The max size of the queue before messages are rejected. |
+| 关键字                                                                                  | 类型     | 默认设置    | 描述             |
+| ------------------------------------------------------------------------------------ | ------ | ------- | -------------- |
+| 正在登录                                                                                 | `bool` | `False` | 是否启用此扩展。       |
+| LOGING_QUEUE_MAX_SIZE | `int`  | `4096`  | 拒绝消息之前队列的最大尺寸。 |

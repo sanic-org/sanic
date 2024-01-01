@@ -1,22 +1,22 @@
-# Exceptions
+# 例外
 
-## Using Sanic exceptions
+## 使用 Sanic 异常
 
-Sometimes you just need to tell Sanic to halt execution of a handler and send back a status code response. You can raise a `SanicException` for this and Sanic will do the rest for you.
+有时，你只需要告诉Sanic停止执行处理程序并发送状态代码回复。 你可以为此举出一个 'SanicException' ，萨尼克将为你做其他事情。
 
-You can pass an optional `status_code` argument. By default, a SanicException will return an internal server error 500 response.
+您可以通过一个可选的 `status_code` 参数。 默认情况下，一个 SanicException 将返回一个内部服务器错误500。
 
 ```python
-from sanic.exceptions import SanicException
+从 sanic.exception 导入SanicException
 
 @app.route("/youshallnotpass")
 async def no_no(request):
-        raise SanicException("Something went wrong.", status_code=501)
+        raising SanicException("出了错", status_code=501)
 ```
 
-Sanic provides a number of standard exceptions. They each automatically will raise the appropriate HTTP status code in your response. [Check the API reference](https://sanic.readthedocs.io/en/latest/sanic/api_reference.html#module-sanic.exceptions) for more details.
+Sanic提供了一些标准例外情况。 他们将自动在您的响应中提取适当的 HTTP 状态代码。 [请参阅API参考](https://sanic.readthedocs.io/enage/sanic/api_reference.html#module-sanic.exceptions) 了解更多详情。
 
-.. column::
+.. 列:
 
 ```
 The more common exceptions you _should_ implement yourself include:
@@ -28,7 +28,7 @@ The more common exceptions you _should_ implement yourself include:
 - `ServerError` (500)
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -44,93 +44,93 @@ async def login(request):
 ```
 ````
 
-## Exception properties
+## 异常属性
 
-All exceptions in Sanic derive from `SanicException`. That class has a few properties on it that assist the developer in consistently reporting their exceptions across an application.
+所有萨尼克例外情况都源于“SanicException”。 该类具有几个属性，可以帮助开发者始终如一地报告他们在应用程序中的异常情况。
 
 - `message`
 - `status_code`
-- `quiet`
+- 安静\`
 - `headers`
 - `context`
 - `extra`
 
-All of these properties can be passed to the exception when it is created, but the first three can also be used as class variables as we will see.
+所有这些属性都可以在创建时传递到异常。 但前三个也可以用作我们所看到的类变量。
 
-.. column::
+.. 列:
 
 ```
 ### `message`
 
-The `message` property obviously controls the message that will be displayed as with any other exception in Python. What is particularly useful is that you can set the `message` property on the class definition allowing for easy standardization of language across an application
+`message` 属性显然控制了将会像Python中任何其他异常一样显示的消息。 尤其有用的是，您可以在类定义中设置`message`属性，以便于所有应用程序的语言标准化
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 class CustomError(SanicException):
-    message = "Something bad happened"
+    message = "出了错误"
 
-raise CustomError
-# or
-raise CustomError("Override the default message with something else")
+raising Custom错误
+# 或
+raw customError("用其他东西覆盖默认消息")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### `status_code`
 
-This property is used to set the response code when the exception is raised. This can particularly be useful when creating custom 400 series exceptions that are usually in response to bad information coming from the client.
+这个属性用于设置异常时的响应代码。 这在创建习惯400系列异常时尤其有用，这些异常通常是为了对客户端提供的坏信息作出反应。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 class TeapotError(SanicException):
     status_code = 418
-    message = "Sorry, I cannot brew coffee"
+    message = “对不起，” 我不能酿造咖啡”
 
-raise TeapotError
-# or
-raise TeapotError(status_code=400)
+提高Teapot错误
+# 或
+提高TeapotError(status_code=400)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### `quiet`
 
-By default, exceptions will be output by Sanic to the `error_logger`. Sometimes this may not be desirable, especially if you are using exceptions to trigger events in exception handlers (see [the following section](./exceptions.md#handling)). You can suppress the log output using `quiet=True`.
+默认情况下，例外情况将由 Sanic 输出到 `error_logger` 。 有时这可能是不可取的，特别是如果你在异常处理程序中使用异常来触发事件(见以下章节) 。 异常.md#handling)。您可以使用 "quiot=True" 来抑制日志输出。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 class SilentError(SanicException):
-    message = "Something happened, but not shown in logs"
-    quiet = True
+    message = "发生了什么, 但未显示在日志中。
+    安静=True
 
-raise SilentError
-# or
-raise InvalidUsage("blah blah", quiet=True)
+引起静音错误
+# 或
+引起无效使用("blah blah", 安静=True)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-Sometimes while debugging you may want to globally ignore the `quiet=True` property. You can force Sanic to log out all exceptions regardless of this property using `NOISY_EXCEPTIONS`
+有时候在调试时，你可能想要全局忽略`quiet=True`属性。 您可以使用 `NOISY_EXCEPIONS`
 
-*Added in v21.12*
+强制从 v21.12中添加的 Sanic 注销所有异常，无论这个属性如何。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -138,129 +138,129 @@ app.config.NOISY_EXCEPTIONS = True
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### `headers`
 
-Using `SanicException` as a tool for creating responses is super powerful. This is in part because not only can you control the `status_code`, but you can also control reponse headers directly from the exception.
+使用 `SanicException` 作为创建响应的工具是超强大的。 这部分是因为你不仅可以控制 `status_code`，而且你也可以直接从异常中控制回复头部。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 class MyException(SanicException):
-    headers = {
+    headers =
       "X-Foo": "bar"
     }
 
-raise MyException
-# or
-raise InvalidUsage("blah blah", headers={
+raising MyException
+# 或
+raising InvalidUsage("blah blah", headers=leaders=
     "X-Foo": "bar"
 })
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### `extra`
+### `extran`
 
-See [contextual exceptions](./exceptions.md#contextual-exceptions)
+查看[contextual explitions](./exceptions.md#contextual-exceptions)
 
-*Added in v21.12*
+*添加于v21.12*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-raise SanicException(..., extra={"name": "Adam"})
+raising SanicException(..., extrade={"name": "Adam"})
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 ### `context`
 
-See [contextual exceptions](./exceptions.md#contextual-exceptions)
+见 [contextual explositions](./exceptions.md#contextual-异常)
 
-*Added in v21.12*
+*添加于v21.12*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-raise SanicException(..., context={"foo": "bar"})
+raising SanicException(..., context={"foo": "bar"})
 ```
 ````
 
-## Handling
+## 处理
 
-Sanic handles exceptions automatically by rendering an error page, so in many cases you don't need to handle them yourself. However, if you would like more control on what to do when an exception is raised, you can implement a handler yourself.
+通过渲染错误页自动处理异常，所以在许多情况下您不需要自己处理。 然而，如果你想要更多地控制在提出异常时做什么，你可以自己实现一个处理程序。
 
-Sanic provides a decorator for this, which applies to not only the Sanic standard exceptions, but **any** exception that your application might throw.
+Sanic为此提供了一个装饰器，它不仅适用于Sanic标准例外情况，而且**任何**你的应用程序可能丢弃的例外情况。
 
-.. column::
+.. 列:
 
 ```
-The easiest method to add a handler is to use `@app.exception()` and pass it one or more exceptions.
+添加处理程序的最简单方法是使用 `@app.expition()` 并传递一个或多个异常。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 from sanic.exceptions import NotFound
 
-@app.exception(NotFound, SomeCustomException)
+@app.exception(NotFound, Some CustomException)
 async def ignore_404s(request, exception):
-    return text("Yep, I totally found the page: {}".format(request.url))
+    return text("Yep, 我完全发现页面: {}".format (crequest.url))
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You can also create a catchall handler by catching `Exception`.
+你也可以通过捕捉"异常"来创建一个捕获器处理器。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.exception(Exception)
-async def catch_anything(request, exception):
+async def catch_any thing(request, exception):
     ...
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-You can also use `app.error_handler.add()` to add error handlers.
+您也可以使用 `app.error_handler.add()` 添加错误处理器。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-async def server_error_handler(request, exception):
-    return text("Oops, server error", status=500)
+async def server_error_handler(请求异常):
+    return text("Ops, server error", status=500)
 
 app.error_handler.add(Exception, server_error_handler)
 ```
 ````
 
-## Built-in error handling
+## 内置错误处理
 
-Sanic ships with three formats for exceptions: HTML, JSON, and text. You can see examples of them below in the [Fallback handler](#fallback-handler) section.
+有三种异常模式的神秘船只：HTML、JSON和文本。 你可以在下面的[回退处理程序](#回退处理程序)部分看到他们的例子。
 
-.. column::
+.. 列:
 
 ```
 You can control _per route_ which format to use with the `error_format` keyword argument.
@@ -268,19 +268,19 @@ You can control _per route_ which format to use with the `error_format` keyword 
 *Added in v21.9*
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-@app.request("/", error_format="text")
+@app.request("/", error_form="text")
 async def handler(request):
     ...
 ```
 ````
 
-## Custom error handling
+## 自定义错误处理
 
-In some cases, you might want to add some more error handling functionality to what is provided by default. In that case, you can subclass Sanic's default error handler as such:
+在某些情况下，您可能想要将一些更多的错误处理功能添加到默认提供的功能。 在这种情况下，你可以将亚类Sanic的默认错误处理程序作为这样：
 
 ```python
 from sanic.handlers import ErrorHandler
@@ -300,15 +300,15 @@ app.error_handler = CustomErrorHandler()
 
 ## Fallback handler
 
-Sanic comes with three fallback exception handlers:
+Sanic带有三个回退异常处理器：
 
 1. HTML
-2. Text
+2. 文本
 3. JSON
 
-These handlers present differing levels of detail depending upon whether your application is in [debug mode](/guide/deployment/development.md) or not.
+这些处理程序视应用程序是否处于[调试模式](/guide/deplement/development.md)而提供不同的详细程度。
 
-By default, Sanic will be in "auto" mode, which means that it will using the incoming request and potential matching handler to choose the appropriate response format. For example, when in a browser it should always provide an HTML error page. When using curl, you might see JSON or plain text.
+默认情况下，Sanic将处于“自动”模式， 这意味着它将使用传入的请求和潜在的匹配处理程序来选择适当的响应格式。 例如，在浏览器中，它应该始终提供一个 HTML 错误页面。 当使用curl时，您可能会看到JSON或纯文本。
 
 ### HTML
 
@@ -316,66 +316,66 @@ By default, Sanic will be in "auto" mode, which means that it will using the inc
 app.config.FALLBACK_ERROR_FORMAT = "html"
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.config.DEBUG = True
-```
+``
 
-![Error](/assets/images/error-display-html-debug.png)
+！[Error](/assets/images/error-display-html-debug.png)
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.config.DEBUG = False
-```
+``
 
-![Error](/assets/images/error-display-html-prod.png)
+！[Error](/assets/images/error-disply-html-prod.png)
 ````
 
-### Text
+### 文本
 
 ```python
-app.config.FALLBACK_ERROR_FORMAT = "text"
+app.config.FALLBACK_ERROR_FORMAT = “文本”
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 app.config.DEBUG = True
-```
+``
 
 ```sh
 curl localhost:8000/exc -i
-HTTP/1.1 500 Internal Server Error
-content-length: 620
-connection: keep-alive
-content-type: text/plain; charset=utf-8
+HTTP/1。 500 服务器内部错误
+内容长度：620
+连接：保持存活
+内容类型：text/plain； charset=utf-8
 
-⚠️ 500 — Internal Server Error
-==============================
-That time when that thing broke that other thing? That happened.
+:警告：500-内部服务器错误
+=================================
+那段时间当那个事情打破了那个其他事情吗？ 发生了这种情况。
 
-ServerError: That time when that thing broke that other thing? That happened. while handling path /exc
-Traceback of TestApp (most recent call last):
+服务器错误：那个时候那件事情打破了那个东西吗？那就发生了。 处理路径/exc
+追踪TestApp (最近一次通话时间):
 
-  ServerError: That time when that thing broke that other thing? That happened.
-    File /path/to/sanic/app.py, line 979, in handle_request
-    response = await response
+  服务器错误: 那个时候那个东西打破了那个其他东西？ 发生了这种情况。
+    文件 /path/to/sanic/app y, line 979, in handle_request
+    response = requiring response
 
-    File /path/to/server.py, line 16, in handler
+    file /path/to/server. y, line 16, in handler
     do_something(cause_error=True)
 
-    File /path/to/something.py, line 9, in do_something
-    raise ServerError(
+    files/path/to/something。 y, line 9, in do_some
+    raising ServerError(
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -401,7 +401,7 @@ That time when that thing broke that other thing? That happened.
 app.config.FALLBACK_ERROR_FORMAT = "json"
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -451,7 +451,7 @@ content-type: application/jso
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -474,53 +474,53 @@ content-type: application/json
 ```
 ````
 
-### Auto
+### 自动操作
 
-Sanic also provides an option for guessing which fallback option to use.
+Sanic还提供了一种猜测的选项，这种猜测可以使用后退选项。
 
 ```python
-app.config.FALLBACK_ERROR_FORMAT = "auto"
+app.config.FALLBACK_ERROR_FORMAT = "自动"
 ```
 
-## Contextual Exceptions
+## 上下文异常
 
-Default exception messages that simplify the ability to consistently raise exceptions throughout your application.
+默认异常消息简化了在整个应用程序中始终如一地提出异常的能力。
 
 ```python
 class TeapotError(SanicException):
     status_code = 418
-    message = "Sorry, I cannot brew coffee"
+    message = “对不起，我不能酿造咖啡”
 
-raise TeapotError
+rappot错误
 ```
 
-But this lacks two things:
+但这缺少两件事：
 
-1. A dynamic and predictable message format
-2. The ability to add additional context to an error message (more on this in a moment)
+1. 动态和可预测的信息格式
+2. 添加附加上下文到错误消息的能力 (暂时更多)
 
-_Added in v21.12_
+_添加于 v21.12_
 
-Using one of Sanic's exceptions, you have two options to provide additional details at runtime:
+使用 Sanic的一个异常，您有两个选项在运行时提供额外细节：
 
 ```python
-raise TeapotError(extra={"foo": "bar"}, context={"foo": "bar"})
+升起TeapotError(extrade={"foo": "bar"}, context={"foo": "bar"})
 ```
 
-What's the difference and when should you decide to use each?
+两者之间有什么区别，何时决定使用？
 
-- `extra` - The object itself will **never** be sent to a production client. It is meant for internal use only. What could it be used for?
-  - Generating (as we will see in a minute) a dynamic error message
-  - Providing runtime details to a logger
-  - Debug information (when in development mode, it is rendered)
-- `context` - This object is **always** sent to production clients. It is generally meant to be used to send additional details about the context of what happened. What could it be used for?
-  - Providing alternative values on a `BadRequest` validation issue
-  - Responding with helpful details for your customers to open a support ticket
-  - Displaying state information like current logged in user info
+- `extran` - 对象本身将**永远不**发送到生产客户端。 它仅供内部使用。 它可以用于什么？
+  - 正在生成一个动态错误消息 (我们将在一分钟后看到)
+  - 为记录器提供运行时间详情
+  - 调试信息(在开发模式中，它会提供)
+- `context` - 此对象总是\*\*总是发送给生产客户。 一般用来提供关于所发生情况的更多细节。 它可以用于什么？
+  - 在 `BadRequest` 验证问题上提供替代值
+  - 回答您的客户有帮助的详细信息来打开支持工单
+  - 显示当前登录用户信息等状态信息
 
-### Dynamic and predictable message using `extra`
+### 使用 "额外" 的动态和可预测消息
 
-Sanic exceptions can be raised using `extra` keyword arguments to provide additional information to a raised exception instance.
+可使用 `extran`关键字参数来提起无声异常，为一个引起的异常实例提供额外信息。
 
 ```python
 class TeapotError(SanicException):
@@ -528,14 +528,14 @@ class TeapotError(SanicException):
 
     @property
     def message(self):
-        return f"Sorry {self.extra['name']}, I cannot make you coffee"
+        return f"对不起{self.extr['name']}, 我不能让你咖啡”
 
-raise TeapotError(extra={"name": "Adam"})
+raising TeapotError(extranti={"name": "Adam"})
 ```
 
-The new feature allows the passing of `extra` meta to the exception instance, which can be particularly useful as in the above example to pass dynamic data into the message text. This `extra` info object **will be suppressed** when in `PRODUCTION` mode, but displayed in `DEVELOPMENT` mode.
+新功能允许将 `extran`meta 传递给异常实例。 这可能与上面的例子一样对将动态数据传递到电文文本中特别有用。 这个“额外”信息对象 **将在 `PRODUCTION` 模式下被抑制** ，但将以`DevelopMENT` 模式显示。
 
-.. column::
+.. 列:
 
 ```
 **DEVELOPMENT**
@@ -543,7 +543,7 @@ The new feature allows the passing of `extra` meta to the exception instance, wh
 ![image](~@assets/images/error-extra-debug.png)
 ```
 
-.. column::
+.. 列:
 
 ```
 **PRODUCTION**
@@ -551,17 +551,17 @@ The new feature allows the passing of `extra` meta to the exception instance, wh
 ![image](~@assets/images/error-extra-prod.png)
 ```
 
-### Additional `context` to an error message
+### 附加“context”到错误消息
 
-Sanic exceptions can also be raised with a `context` argument to pass intended information along to the user about what happened. This is particularly useful when creating microservices or an API intended to pass error messages in JSON format. In this use case, we want to have some context around the exception beyond just a parseable error message to return details to the client.
+还可以用`context`的参数来提出无声异常，将预定的信息传递给用户关于所发生事件的信息。 这在创建微型服务或旨在以 JSON 格式传递错误消息的 API 时特别有用。 在这种情况下，我们想要围绕例外的某些上下文，而不仅仅是一个可解析的错误信息来返回客户端。
 
 ```python
-raise TeapotError(context={"foo": "bar"})
+raised TeapotError(context={"foot": "bar"})
 ```
 
-This is information **that we want** to always be passed in the error (when it is available). Here is what it should look like:
+这是**我们想要**总是错误传递的信息(当它可用时)。 以下是它应该看起来的样子：
 
-.. column::
+.. 列:
 
 ````
 **PRODUCTION**
@@ -578,7 +578,7 @@ This is information **that we want** to always be passed in the error (when it i
 ```
 ````
 
-.. column::
+.. 列:
 
 ````
 **DEVELOPMENT**
@@ -617,20 +617,20 @@ This is information **that we want** to always be passed in the error (when it i
 ```
 ````
 
-## Error reporting
+## 错误报告
 
-Sanic has a [signal](../advanced/signals.md#built-in-signals) that allows you to hook into the exception reporting process. This is useful if you want to send exception information to a third party service like Sentry or Rollbar. This can be conveniently accomplished by attaching an error reporting handler as show below:
+Sanic 有一个 [signal](../advanced/signals.md#内置信号)，允许您绑定到异常报告过程。 如果您想要向 Sentry 或 Rollbar等第三方服务发送异常信息，这是有用的。 这可以通过附加错误报告处理程序来方便地完成，如下所示：
 
 ```python
 @app.report_exception
-async def catch_any_exception(app: Sanic, exception: Exception):
-print("Caught exception:", exception)
+async def catch_any_exception(app: Sanic, exception):
+print("捕捉异常:", 异常)
 ```
 
-.. note::
+.. 注：
 
 ```
-This handler will be dispatched into a background task and **IS NOT** intended for use to manipulate any response data. It is intended to be used for logging or reporting purposes only, and should not impact the ability of your application to return the error response to the client.
+此处理程序将被发送到一个后台任务中，**IS NOT** 将被用于操纵任何响应数据。 它仅用于伐木或报告目的。 并且不应影响您的应用程序返回错误响应客户端的能力。
 ```
 
-_Added in v23.6_
+_添加于 v23.6_

@@ -2,17 +2,17 @@
 
 ## 为什么要使用它？
 
-.. column::
+.. 列:
 
 ```
-### The problem
+### 问题
 
-A common pattern when designing an API is to have multiple functionality on the same endpoint that depends upon the HTTP method.
+设计一个 API 时常见的模式是在依赖HTTP 方法的同一个端点上具有多个功能。
 
-While both of these options work, they are not good design practices and may be hard to maintain over time as your project grows.
+虽然这两种选项都起作用，但它们并不是良好的设计做法，随着你的项目的发展，可能很难长期维持。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -41,15 +41,15 @@ async def bar(request):
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### The solution
+### 解析器
 
-Class-based views are simply classes that implement response behavior to requests. They provide a way to compartmentalize handling of different HTTP request types at the same endpoint.
+基于类的视图只是实现回应行为的类类。 它们为在同一端点将不同HTTP请求类型的处理分割开来提供了一条途径。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -71,25 +71,25 @@ app.add_route(FooBar.as_view(), "/foobar")
 
 ## 定义视图(Defining a view)
 
-A class-based view should subclass :class:`sanic.views.HTTPMethodView`. You can then implement class methods with the name of the corresponding HTTP method. If a request is received that has no defined method, a `405: Method not allowed` response will be generated.
+A class-based view should subclass :class:`sanic.views.HTTPMethodView`. 然后您可以执行具有相应的 HTTP 方法名称的类方法。 如果收到一个没有定义方法的请求，将生成一个 \`405: 方法不允许' 响应。
 
-.. column::
+.. 列:
 
 ```
-To register a class-based view on an endpoint, the `app.add_route` method is used. The first argument should be the defined class with the method `as_view` invoked, and the second should be the URL endpoint.
+要在端点注册一个基于类的视图，将使用 `app.add_route` 方法。 第一个参数应该是使用`as_view`方法的定义类，第二个参数应该是URL终点。
 
-The available methods are:
+可用的方法是：
 
 - get
-- post
-- put
-- patch
-- delete
-- head
-- options
+- 发表
+- 放置
+- 补丁
+- 删除
+- 首长
+- 选项
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -118,110 +118,110 @@ app.add_route(SimpleView.as_view(), "/")
 ```
 ````
 
-## Path parameters
+## 路径参数
 
-.. column::
+.. 列:
 
 ```
-You can use path parameters exactly as discussed in [the routing section](/guide/basics/routing.md).
+您可以使用路径参数就像[路由部分](/guide/basics/routing.md)中讨论过的路径参数。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 class NameView(HTTPMethodView):
 
   def get(self, request, name):
-    return text("Hello {}".format(name))
+    return text("Hello {}".format (name))
 
-app.add_route(NameView.as_view(), "/<name>")
+app.add_route(NameView.asp.as_view(), "/<name>")
 ```
 ````
 
-## Decorators
+## 装饰符
 
-As discussed in [the decorators section](/guide/best-practices/decorators.md), often you will need to add functionality to endpoints with the use of decorators. You have two options with CBV:
+正如在[装饰物部分](/guide/best practices/decorators.md)中所讨论的那样，您常常需要在终点中添加使用装饰物的功能。 您与 CBV 有两个选项：
 
-1. Apply to _all_ HTTP methods in the view
-2. Apply individually to HTTP methods in the view
+1. 应用于视图中的 _all_ HTTP 方法
+2. 单独应用于视图中的 HTTP 方法
 
-Let's see what the options look like:
+让我们看看这些选项是什么样子：
 
-.. column::
+.. 列:
 
 ```
-### Apply to all methods
+### 应用于所有方法
 
-If you want to add any decorators to the class, you can set the `decorators` class variable. These will be applied to the class when `as_view` is called.
+如果您想要将任何装饰符添加到类中，您可以设置 "装饰符" 类变量。 当调用`as_view`时，这些将应用于该类。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-class ViewWithDecorator(HTTPMethodView):
+class ViewWidDecorator(HTTPMethodView):
   decorators = [some_decorator_here]
 
-  def get(self, request, name):
-    return text("Hello I have a decorator")
+  def get(self, request, pass). 姓名:
+    退货文本("Hello I have a decorator")
 
-  def post(self, request, name):
-    return text("Hello I also have a decorator")
+  def post(self, 请求，名称：
+    return text("Hello I also a Decorator")
 
-app.add_route(ViewWithDecorator.as_view(), "/url")
+app dd_route(ViewWidDecorator.as_view(), "/url")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-### Apply to individual methods
+### 应用于个别方法
 
-But if you just want to decorate some methods and not all methods, you can as shown here.
+但是如果你只想装饰一些方法而不是所有方法，你可以如这里所示。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-class ViewWithSomeDecorator(HTTPMethodView):
+class Viewwitwithout Decorator(HTTPMethodView):
 
-    @staticmethod
+    @static方法
     @some_decorator_here
-    def get(request, name):
-        return text("Hello I have a decorator")
+    def get(request 姓名:
+        退货文本("Hello I have a decorator")
 
-    def post(self, request, name):
-        return text("Hello I do not have any decorators")
+    def post(self, 请求 姓名：
+        return text("Hello I no some decorators")
 
     @some_decorator_here
-    def patch(self, request, name):
-        return text("Hello I have a decorator")
+    def patch(self, 请求，名称：
+        返回文本("Hello I have a decorator")
 ```
 ````
 
-## Generating a URL
+## 正在生成 URL
 
-.. column::
+.. 列:
 
 ```
-This works just like [generating any other URL](/guide/basics/routing.md#generating-a-url), except that the class name is a part of the endpoint.
+这就像[生成任何其它URL](/guide/basics/routing.md#generating-a-url)一样，只是类名称是端点的一部分。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
 @app.route("/")
 def index(request):
-    url = app.url_for("SpecialClassView")
+    url = app. rl_for("SpecialClassView")
     return redirect(url)
 
 class SpecialClassView(HTTPMethodView):
-    def get(self, request):
-        return text("Hello from the Special Class View!")
+    def get(self, 请求:
+        返回文本("您好，来自特殊类视图!
 
-app.add_route(SpecialClassView.as_view(), "/special_class_view")
+应用。 dd_route(SpecialClassView.as_view), "/special_class_view")
 ```
 ````

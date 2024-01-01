@@ -1,6 +1,6 @@
-# "Static" Redirects
+# “静态”重定向
 
-> How do I configure static redirects?
+> 如何配置静态重定向？
 
 ## `app.py`
 
@@ -107,6 +107,6 @@ body {
 
 ***
 
-Also, checkout some resources from the community:
+此外，结算社区的一些资源：
 
-- [Static Routing Example](https://github.com/Perzan/sanic-static-routing-example)
+- [静态路由示例](https://github.com/Perzan/sanic-static-routing-example)

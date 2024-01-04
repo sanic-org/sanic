@@ -159,17 +159,15 @@ def _setup_system_signals(
     register_sys_signals: bool,
     loop: asyncio.AbstractEventLoop,
 ) -> None:  # no cov
-    # Ignore SIGINT when run_multiple
-    if run_multiple:
-        signal_func(SIGINT, SIG_IGN)
-        os.environ["SANIC_WORKER_PROCESS"] = "true"
-
+    signal_func(SIGINT, SIG_IGN)
+    signal_func(SIGTERM, SIG_IGN)
+    os.environ["SANIC_WORKER_PROCESS"] = "true"
     # Register signals for graceful termination
     if register_sys_signals:
         if OS_IS_WINDOWS:
             ctrlc_workaround_for_windows(app)
         else:
-            for _signal in [SIGTERM] if run_multiple else [SIGINT, SIGTERM]:
+            for _signal in [SIGINT, SIGTERM]:
                 loop.add_signal_handler(
                     _signal, partial(app.stop, terminate=False)
                 )
@@ -180,8 +178,6 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
     try:
         server_logger.info("Starting worker [%s]", pid)
         loop.run_forever()
-    except KeyboardInterrupt:
-        pass
     finally:
         server_logger.info("Stopping worker [%s]", pid)
 
@@ -193,6 +189,7 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
         loop.run_until_complete(after_stop())
         remove_unix_socket(unix)
         loop.close()
+        server_logger.info("Worker complete [%s]", pid)
 
 
 def _serve_http_1(
@@ -296,8 +293,11 @@ def _serve_http_1(
             else:
                 conn.abort()
 
+        app.set_serving(False)
+
     _setup_system_signals(app, run_multiple, register_sys_signals, loop)
     loop.run_until_complete(app._server_event("init", "after"))
+    app.set_serving(True)
     _run_server_forever(
         loop,
         partial(app._server_event, "shutdown", "before"),

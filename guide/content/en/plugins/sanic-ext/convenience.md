@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Convenience
+---
+
 # Convenience
 
 ## Fixed serializer

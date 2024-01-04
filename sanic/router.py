@@ -8,6 +8,7 @@ from uuid import UUID
 from sanic_routing import BaseRouter
 from sanic_routing.exceptions import NoMethod
 from sanic_routing.exceptions import NotFound as RoutingNotFound
+from sanic_routing.group import RouteGroup
 from sanic_routing.route import Route
 
 from sanic.constants import HTTP_METHODS
@@ -197,7 +198,7 @@ class Router(BaseRouter):
         return {route.parts: route for route in self.routes}
 
     @property
-    def routes_static(self) -> Dict[Tuple[str, ...], Route]:
+    def routes_static(self) -> Dict[Tuple[str, ...], RouteGroup]:
         """Return all static routes in the router.
 
         _In this context "static" routes do not refer to the `app.static()`
@@ -210,7 +211,7 @@ class Router(BaseRouter):
         return self.static_routes
 
     @property
-    def routes_dynamic(self) -> Dict[Tuple[str, ...], Route]:
+    def routes_dynamic(self) -> Dict[Tuple[str, ...], RouteGroup]:
         """Return all dynamic routes in the router.
 
         _Dynamic routes are routes that contain path parameters._
@@ -221,7 +222,7 @@ class Router(BaseRouter):
         return self.dynamic_routes
 
     @property
-    def routes_regex(self) -> Dict[Tuple[str, ...], Route]:
+    def routes_regex(self) -> Dict[Tuple[str, ...], RouteGroup]:
         """Return all regex routes in the router.
 
         _Regex routes are routes that contain path parameters with regex

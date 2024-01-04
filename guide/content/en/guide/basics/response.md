@@ -3,10 +3,10 @@
 All [handlers](./handlers.md) *usually* return a response object, and [middleware](./middleware.md) may optionally return a response object.
 
 To clarify that statement:
-- unless the handler is a streaming endpoint handling its own pattern for sending bytes to the client, the return value must be an instance of `sanic.HTTPResponse` (to learn more about this exception see [streaming responses](../advanced/streaming.md#response-streaming))
-- if a middleware returns a response object, that will be used instead of whatever the handler would do (see [middleware](./middleware.md) to learn more)
+- unless the handler is a streaming endpoint handling its own pattern for sending bytes to the client, the return value must be an instance of :class:`sanic.response.HTTPResponse` (to learn more about this exception see [streaming responses](../advanced/streaming.md#response-streaming)). In **most** use cases, you will need to return a response.
+- if a middleware does return a response object, that will be used instead of whatever the handler would do (see [middleware](./middleware.md) to learn more).
 
-A most basic handler would look like the following. The `HTTPResponse` object will allow you to set the status, body, and headers to be returned to the client.
+A most basic handler would look like the following. The :class:`sanic.response.HTTPResponse` object will allow you to set the status, body, and headers to be returned to the client.
 
 ```python
 from sanic import HTTPResponse, Sanic
@@ -22,7 +22,7 @@ However, usually it is easier to use one of the convenience methods discussed be
 
 ## Methods
 
-The easiest way to generate a response object is to use one of the nine (9) convenience methods.
+The easiest way to generate a response object is to use one of the convenience functions.
 
 ### Text
 
@@ -75,23 +75,24 @@ The easiest way to generate a response object is to use one of the nine (9) conv
         return json({"foo": "bar"})
     ```
 
-    By default, Sanic ships with [`ujson`](https://github.com/ultrajson/ultrajson) as its JSON encoder of choice. It is super simple to change this if you want.
+By default, Sanic ships with [`ujson`](https://github.com/ultrajson/ultrajson) as its JSON encoder of choice. If `ujson` is not installed, it will fall back to the standard library `json` module.
 
-    ```python
-    from orjson import dumps
+It is super simple to change this if you want.
 
-    json({"foo": "bar"}, dumps=dumps)
-    ```
+```python
+from sanic import json
+from orjson import dumps
 
-    If `ujson` is not installed, it will fall back to the standard library `json` module.
+json({"foo": "bar"}, dumps=dumps)
+```
 
-    You may additionally declare which implementation to use globally across your application at initialization:
+You may additionally declare which implementation to use globally across your application at initialization:
 
-    ```python
-    from orjson import dumps
+```python
+from orjson import dumps
 
-    app = Sanic(..., dumps=dumps)
-    ```
+app = Sanic(..., dumps=dumps)
+```
 
 ### File
 
@@ -110,17 +111,17 @@ The easiest way to generate a response object is to use one of the nine (9) conv
         return await file("/path/to/whatever.png")
     ```
 
-    Sanic will examine the file, and try and guess its mime type and use an appropriate value for the content type. You could be explicit, if you would like:
+Sanic will examine the file, and try and guess its mime type and use an appropriate value for the content type. You could be explicit, if you would like:
 
-    ```python
-    file("/path/to/whatever.png", mime_type="image/png")
-    ```
+```python
+file("/path/to/whatever.png", mime_type="image/png")
+```
 
-    You can also choose to override the file name:
+You can also choose to override the file name:
 
-    ```python
-    file("/path/to/whatever.png", filename="super-awesome-incredible.png")
-    ```
+```python
+file("/path/to/whatever.png", filename="super-awesome-incredible.png")
+```
 
 ### File Streaming
 
@@ -139,7 +140,7 @@ The easiest way to generate a response object is to use one of the nine (9) conv
         return await file_stream("/path/to/whatever.mp4")
     ```
 
-    Like the `file()` method, `file_stream()` will attempt to determine the mime type of the file.
+Like the `file()` method, `file_stream()` will attempt to determine the mime type of the file.
 
 
 
@@ -209,7 +210,7 @@ async def create_new(request):
 
 ## Returning JSON data
 
-Starting in v22.12, When you use the `sanic.json` convenience method, it will return a subclass of `HTTPResponse` called `JSONResponse`. This object will 
+Starting in v22.12, When you use the `sanic.json` convenience method, it will return a subclass of `HTTPResponse` called :class:`sanic.response.types.JSONResponse`. This object will 
 have several convenient methods available to modify common JSON body.
 
 ```python

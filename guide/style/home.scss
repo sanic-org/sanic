@@ -1,0 +1,77 @@
+@media screen and (min-width: 769px) {
+    .hero.is-large .hero-body {
+	padding: 18rem 6rem 3rem;
+    }
+}
+@media screen and (max-width: 769px) {
+    .hero {
+        height: 100vh;
+	margin-top: 15vh;
+
+        .hero-body {
+            padding: 3rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        & .title::after {
+            width: calc(100vw - 1.5rem);
+            background: url(/assets/images/logo-white.svg) no-repeat center center;
+            background-size: 100% auto;
+        }
+	.subtitle {
+	    margin-top: 1rem;
+	    font-size: 1.4rem;
+	}
+	.tagline {
+	    font-size: 1.1rem;
+	}
+    }
+}
+.home .tab-container {
+  display: flex;
+
+  .tabs {
+    flex-shrink: 0; // Prevent the tabs from shrinking
+    width: 200px; // Fixed width for the tabs
+    ul {
+      display: flex;
+      flex-direction: column;
+      border-bottom: none; // Remove the border between tabs
+    }
+    li {
+	display: block;
+	width: 100%;
+      a {
+        display: block;
+        padding: 0.5em 1em; // Adjust padding as needed
+        text-align: left; // Align text to the left
+      }
+    }
+  }
+
+  .tab-display {
+    flex-grow: 1; // Allow the content to grow as needed
+    min-width: 0; // Allows the flex item to shrink below its content size
+    padding-left: 20px; // Adjust the spacing between tabs and content as needed
+  }
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+
+    .tabs {
+      width: 100%; // Tabs take full width for mobile
+      ul {
+        display: block; // Vertical tabs
+        overflow-y: auto; // For scrollable tabs vertically
+      }
+      li {
+        display: block; // Keep tabs vertical
+      }
+    }
+
+    .tab-display {
+      padding-left: 0; // Reset padding for mobile view
+    }
+  }
+}

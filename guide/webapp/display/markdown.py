@@ -1,6 +1,8 @@
 import re
+
 from textwrap import dedent
 
+from html5tagger import HTML, Builder, E  # type: ignore
 from mistune import HTMLRenderer, create_markdown, escape
 from mistune.directives import RSTDirective, TableOfContents
 from mistune.util import safe_entity
@@ -8,12 +10,11 @@ from pygments import highlight
 from pygments.formatters import html
 from pygments.lexers import get_lexer_by_name
 
-from html5tagger import HTML, Builder, E  # type: ignore
-
 from .code_style import SanicCodeStyle
 from .plugins.attrs import Attributes
 from .plugins.columns import Column
 from .plugins.hook import Hook
+from .plugins.inline_directive import inline_directive
 from .plugins.mermaid import Mermaid
 from .plugins.notification import Notification
 from .plugins.span import span
@@ -51,14 +52,27 @@ class DocsRenderer(HTMLRenderer):
                 "a", {"href": f"#{ident}", "class": "anchor"}, "#"
             )
         return self._make_tag(
-            f"h{level}", {"id": ident, "class": f"is-size-{level}"}, text
+            f"h{level}",
+            {
+                "id": ident,
+                "class": (
+                    f"is-size-{level}-desktop " f"is-size-{level+2}-touch"
+                ),
+            },
+            text,
         )
 
     def link(self, text: str, url: str, title: str | None = None) -> str:
-        url = self.safe_url(url).removesuffix(".md")
-        if not url.endswith("/"):
+        url = self.safe_url(url).replace(".md", ".html")
+        url, anchor = url.split("#", 1) if "#" in url else (url, None)
+        if (
+            not url.endswith("/")
+            and not url.endswith(".html")
+            and not url.startswith("http")
+        ):
             url += ".html"
-
+        if anchor:
+            url += f"#{anchor}"
         attributes: dict[str, str] = {"href": url}
         if title:
             attributes["title"] = safe_entity(title)
@@ -89,6 +103,21 @@ class DocsRenderer(HTMLRenderer):
     def table(self, text: str, **attrs) -> str:
         attrs["class"] = "table is-fullwidth is-bordered"
         return self._make_tag("table", attrs, text)
+
+    def inline_directive(self, text: str, **attrs) -> str:
+        num_dots = text.count(".")
+        display = self.codespan(text)
+
+        if num_dots <= 1:
+            return display
+
+        module, *_ = text.rsplit(".", num_dots - 1)
+        href = f"/api/{module}.html"
+        return self._make_tag(
+            "a",
+            {"href": href, "class": "inline-directive"},
+            display,
+        )
 
     def _make_tag(
         self, tag: str, attributes: dict[str, str], text: str | None = None
@@ -126,6 +155,7 @@ _render_markdown = create_markdown(
         "mark",
         "table",
         span,
+        inline_directive,
     ],
 )
 

@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Health Monitor
+---
+
 # Health monitor
 
 The health monitor requires both `sanic>=22.9` and `sanic-ext>=22.9`.

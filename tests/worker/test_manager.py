@@ -8,6 +8,7 @@ from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
 from sanic.worker.constants import RestartOrder
 from sanic.worker.manager import WorkerManager
+from sanic.worker.process import Worker
 
 
 if not OS_IS_WINDOWS:
@@ -18,6 +19,17 @@ else:
 
 def fake_serve():
     ...
+
+
+@pytest.fixture
+def manager() -> WorkerManager:
+    p1 = Mock()
+    p1.pid = 1234
+    context = Mock()
+    context.Process.return_value = p1
+    pub = Mock()
+    manager = WorkerManager(1, fake_serve, {}, context, (pub, Mock()), {})
+    return manager
 
 
 def test_manager_no_workers():
@@ -94,25 +106,25 @@ def test_restart_all():
             call(
                 name="Sanic-Server-0-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
             call(
                 name="Sanic-Server-1-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
             call(
                 name="Sanic-Server-0-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
             call(
                 name="Sanic-Server-1-0",
                 target=fake_serve,
-                kwargs={"config": {}},
+                kwargs={},
                 daemon=True,
             ),
         ]
@@ -303,3 +315,130 @@ def test_scale(caplog):
 
     with pytest.raises(ValueError, match=r"Cannot scale to 0 workers\."):
         manager.scale(0)
+
+
+def test_manage_basic(manager: WorkerManager):
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 0
+    manager.manage("TEST", fake_serve, kwargs={"foo": "bar"})
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    worker_process = manager.durable["TEST"]
+
+    assert isinstance(worker_process, Worker)
+    assert worker_process.server_settings == {"foo": "bar"}
+    assert worker_process.restartable is False
+    assert worker_process.tracked is True
+    assert worker_process.auto_start is True
+    assert worker_process.num == 1
+
+
+def test_manage_transient(manager: WorkerManager):
+    manager.manage(
+        "TEST", fake_serve, kwargs={"foo": "bar"}, workers=3, transient=True
+    )
+    assert len(manager.transient) == 2
+    assert len(manager.durable) == 0
+
+    worker_process = manager.transient["TEST"]
+
+    assert isinstance(worker_process, Worker)
+    assert worker_process.restartable is True
+    assert worker_process.tracked is True
+    assert worker_process.auto_start is True
+    assert worker_process.num == 3
+
+
+def test_manage_restartable(manager: WorkerManager):
+    manager.manage(
+        "TEST",
+        fake_serve,
+        kwargs={"foo": "bar"},
+        restartable=True,
+        auto_start=False,
+    )
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    worker_process = manager.durable["TEST"]
+
+    assert isinstance(worker_process, Worker)
+    assert worker_process.restartable is True
+    assert worker_process.tracked is True
+    assert worker_process.auto_start is False
+
+
+def test_manage_untracked(manager: WorkerManager):
+    manager.manage("TEST", fake_serve, kwargs={"foo": "bar"}, tracked=False)
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    worker_process = manager.durable["TEST"]
+
+    assert isinstance(worker_process, Worker)
+    assert worker_process.restartable is False
+    assert worker_process.tracked is False
+    assert worker_process.auto_start is True
+
+
+def test_manage_duplicate_ident(manager: WorkerManager):
+    manager.manage("TEST", fake_serve, kwargs={"foo": "bar"})
+    message = "Worker TEST already exists"
+    with pytest.raises(ValueError, match=message):
+        manager.manage("TEST", fake_serve, kwargs={"foo": "bar"})
+
+
+def test_transient_not_restartable(manager: WorkerManager):
+    message = "Cannot create a transient worker that is not restartable"
+    with pytest.raises(ValueError, match=message):
+        manager.manage(
+            "TEST",
+            fake_serve,
+            kwargs={"foo": "bar"},
+            transient=True,
+            restartable=False,
+        )
+
+
+def test_remove_worker(manager: WorkerManager, caplog):
+    worker = manager.manage("TEST", fake_serve, kwargs={})
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    manager.remove_worker(worker)
+    message = "Worker TEST is tracked and cannot be removed."
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+    assert ("sanic.error", 40, message) in caplog.record_tuples
+
+
+def test_remove_untracked_worker(manager: WorkerManager, caplog):
+    caplog.set_level(20)
+    worker = manager.manage("TEST", fake_serve, kwargs={}, tracked=False)
+    worker.has_alive_processes = Mock(return_value=True)
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    manager.remove_worker(worker)
+    message = "Worker TEST has alive processes and cannot be removed."
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+    assert ("sanic.error", 40, message) in caplog.record_tuples
+
+    worker.has_alive_processes = Mock(return_value=False)
+    manager.remove_worker(worker)
+    message = "Removed worker TEST"
+
+    assert "Sanic-TEST-0" not in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 0
+    assert ("sanic.root", 20, message) in caplog.record_tuples

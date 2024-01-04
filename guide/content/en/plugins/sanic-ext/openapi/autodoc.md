@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Auto-documentation
+---
+
 # Auto-documentation
 
 To make documenting endpoints easier, Sanic Extensions will use a function's docstring to populate your documentation. 

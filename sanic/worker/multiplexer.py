@@ -1,6 +1,6 @@
 from multiprocessing.connection import Connection
 from os import environ, getpid
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 from sanic.log import Colors, logger
 from sanic.worker.process import ProcessState
@@ -38,6 +38,66 @@ class WorkerMultiplexer:
             **self._state._state[self.name],
             "state": ProcessState.ACKED.name,
         }
+
+    def manage(
+        self,
+        ident: str,
+        func: Callable[..., Any],
+        kwargs: Dict[str, Any],
+        transient: bool = False,
+        restartable: Optional[bool] = None,
+        tracked: bool = False,
+        auto_start: bool = True,
+        workers: int = 1,
+    ) -> None:
+        """Manages the initiation and monitoring of a worker process.
+
+        Args:
+            ident (str): A unique identifier for the worker process.
+            func (Callable[..., Any]): The function to be executed in the worker process.
+            kwargs (Dict[str, Any]): A dictionary of arguments to be passed to `func`.
+            transient (bool, optional): Flag to mark the process as transient. If `True`,
+                the Worker Manager will restart the process with any global restart
+                (e.g., auto-reload). Defaults to `False`.
+            restartable (Optional[bool], optional): Flag to mark the process as restartable. If `True`,
+                the Worker Manager can restart the process if prompted. Defaults to `None`.
+            tracked (bool, optional): Flag to indicate whether the process should be tracked
+                after its completion. Defaults to `False`.
+            auto_start (bool, optional): Flag to indicate whether the process should be started
+            workers (int, optional): The number of worker processes to run. Defaults to 1.
+
+        This method packages the provided arguments into a bundle and sends them back to the
+        main process to be managed by the Worker Manager.
+        """  # noqa: E501
+        bundle = (
+            ident,
+            func,
+            kwargs,
+            transient,
+            restartable,
+            tracked,
+            auto_start,
+            workers,
+        )
+        self._monitor_publisher.send(bundle)
+
+    def set_serving(self, serving: bool) -> None:
+        """Set the worker to serving.
+
+        Args:
+            serving (bool): Whether the worker is serving.
+        """
+        self._state._state[self.name] = {
+            **self._state._state[self.name],
+            "serving": serving,
+        }
+
+    def exit(self):
+        """Run cleanup at worker exit."""
+        try:
+            del self._state._state[self.name]
+        except ConnectionRefusedError:
+            logger.debug("Monitor process has already exited.")
 
     def restart(
         self,

@@ -62,7 +62,7 @@ class ContentRangeHandler(Range):
                 # this case represents `Content-Range: bytes -5`
                 self.start = self.total - self.end
                 self.end = self.total - 1
-        if self.start >= self.end:
+        if self.start > self.end:
             raise RangeNotSatisfiable(
                 "Invalid for Content Range parameters", self
             )

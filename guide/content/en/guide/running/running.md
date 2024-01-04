@@ -1,3 +1,7 @@
+---
+title: Running Sanic
+---
+
 # Running Sanic
 
 Sanic ships with its own internal web server. Under most circumstances, this is the preferred method for deployment. In addition, you can also deploy Sanic as an ASGI app bundled with an ASGI-able web server.

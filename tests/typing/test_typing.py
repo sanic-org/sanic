@@ -1,7 +1,6 @@
 # flake8: noqa: E501
 
 import subprocess
-import sys
 
 from pathlib import Path
 from typing import List, Tuple
@@ -112,7 +111,7 @@ def test_check_app_default(
                 assert note in output, output
             except AssertionError:
                 target = target.parent
-                if not target.exists():
+                if not target.exists() or target == target.parent:
                     raise
             else:
                 break

@@ -6,10 +6,12 @@ from socket import socket
 
 import pytest
 
-from sanic_testing.testing import HOST, PORT
+from sanic_testing.testing import HOST
 
 from sanic import Blueprint
 from sanic.exceptions import BadRequest, SanicException
+
+from .conftest import get_port
 
 
 AVAILABLE_LISTENERS = [
@@ -43,7 +45,9 @@ def start_stop_app(random_name_app, **run_kwargs):
         app.stop()
 
     try:
-        random_name_app.run(HOST, PORT, single_process=True, **run_kwargs)
+        random_name_app.run(
+            HOST, get_port(), single_process=True, **run_kwargs
+        )
     except KeyboardInterrupt:
         pass
 
@@ -104,7 +108,7 @@ def test_all_listeners_as_convenience(app):
 
 
 @pytest.mark.asyncio
-async def test_trigger_before_events_create_server(app):
+async def test_trigger_before_events_create_server(app, port):
     class MySanicDb:
         pass
 
@@ -113,7 +117,7 @@ async def test_trigger_before_events_create_server(app):
         app.ctx.db = MySanicDb()
 
     srv = await app.create_server(
-        debug=True, return_asyncio_server=True, port=PORT
+        debug=True, return_asyncio_server=True, port=port
     )
     await srv.startup()
     await srv.before_start()
@@ -198,13 +202,13 @@ def test_create_server_trigger_events(app):
 
 
 @pytest.mark.asyncio
-async def test_missing_startup_raises_exception(app):
+async def test_missing_startup_raises_exception(app, port):
     @app.listener("before_server_start")
     async def init_db(app, loop):
         ...
 
     srv = await app.create_server(
-        debug=True, return_asyncio_server=True, port=PORT
+        debug=True, return_asyncio_server=True, port=port
     )
 
     with pytest.raises(SanicException):

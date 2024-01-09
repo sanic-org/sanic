@@ -24,7 +24,7 @@ Logging can sometimes be an expensive operation. By pushing all logging off to a
 
 ## How does it work
 
-When enabled, the extension will create a `multoprocessing.Queue`. It will remove all handlers on the [default Sanic loggers](../../guide/best-practices/logging.md) and replace them with a [`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler). When a message is logged, it will be pushed into the queue by the handler, and read by the background process to the log handlers that were originally in place. This means you can still configure logging as normal and it should "just work."
+When enabled, the extension will create a `multiprocessing.Queue`. It will remove all handlers on the [default Sanic loggers](../../guide/best-practices/logging.md) and replace them with a [`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler). When a message is logged, it will be pushed into the queue by the handler, and read by the background process to the log handlers that were originally in place. This means you can still configure logging as normal and it should "just work."
 
 ## Configuration
 

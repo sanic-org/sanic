@@ -9,7 +9,7 @@ from asyncio import sleep
 
 import pytest
 
-from sanic_testing.testing import HOST, PORT
+from sanic_testing.testing import HOST
 
 from sanic import Blueprint, text
 from sanic.compat import use_context
@@ -25,7 +25,7 @@ from sanic.log import logger
     sys.platform not in ("linux", "darwin"),
     reason="This test requires fork context",
 )
-def test_multiprocessing(app):
+def test_multiprocessing(app, port):
     """Tests that the number of children we produce is correct"""
     # Selects a number at random so we can spot check
     num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
@@ -43,7 +43,7 @@ def test_multiprocessing(app):
     signal.signal(signal.SIGALRM, stop_on_alarm)
     signal.alarm(2)
     with use_context("fork"):
-        app.run(HOST, 4120, workers=num_workers, debug=True)
+        app.run(HOST, port, workers=num_workers, debug=True)
 
     assert len(process_list) == num_workers + 1
 
@@ -56,7 +56,7 @@ def test_multiprocessing(app):
     sys.platform not in ("linux", "darwin"),
     reason="This test requires fork context",
 )
-def test_multiprocessing_with_blueprint(app):
+def test_multiprocessing_with_blueprint(app: object, port) -> object:
     # Selects a number at random so we can spot check
     num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
     process_list = set()
@@ -76,7 +76,7 @@ def test_multiprocessing_with_blueprint(app):
     bp = Blueprint("test_text")
     app.blueprint(bp)
     with use_context("fork"):
-        app.run(HOST, 4121, workers=num_workers, debug=True)
+        app.run(HOST, port, workers=num_workers, debug=True)
 
     assert len(process_list) == num_workers + 1
 
@@ -93,7 +93,7 @@ def stop(app):
 
 # Multiprocessing on Windows requires app to be able to be pickled
 @pytest.mark.parametrize("protocol", [3, 4])
-def test_pickle_app(app, protocol):
+def test_pickle_app(app, protocol, port):
     app.route("/")(handler)
     app.after_server_start(stop)
     app.router.reset()
@@ -102,11 +102,11 @@ def test_pickle_app(app, protocol):
     del app
     up_p_app = pickle.loads(p_app)
     assert up_p_app
-    up_p_app.run(single_process=True)
+    up_p_app.run(single_process=True, port=port)
 
 
 @pytest.mark.parametrize("protocol", [3, 4])
-def test_pickle_app_with_bp(app, protocol):
+def test_pickle_app_with_bp(app, protocol, port):
     bp = Blueprint("test_text")
     bp.route("/")(handler)
     bp.after_server_start(stop)
@@ -117,7 +117,7 @@ def test_pickle_app_with_bp(app, protocol):
     del app
     up_p_app = pickle.loads(p_app)
     assert up_p_app
-    up_p_app.run(single_process=True)
+    up_p_app.run(single_process=True, port=port)
 
 
 @pytest.mark.parametrize("protocol", [3, 4])
@@ -138,7 +138,7 @@ def test_pickle_app_with_static(app, protocol):
     sys.platform not in ("linux", "darwin"),
     reason="This test requires fork context",
 )
-def test_main_process_event(app, caplog):
+def test_main_process_event(app, caplog, port):
     # Selects a number at random so we can spot check
     num_workers = random.choice(range(2, multiprocessing.cpu_count() * 2 + 1))
 
@@ -162,7 +162,7 @@ def test_main_process_event(app, caplog):
 
     with use_context("fork"):
         with caplog.at_level(logging.INFO):
-            app.run(HOST, PORT, workers=num_workers)
+            app.run(HOST, port, workers=num_workers)
 
     assert (
         caplog.record_tuples.count(("sanic.root", 20, "main_process_start"))

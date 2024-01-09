@@ -16,8 +16,6 @@ from tests.client import RawClient
 parent_dir = Path(__file__).parent
 localhost_dir = parent_dir / "certs/localhost"
 
-PORT = 1234
-
 
 @pytest.fixture
 def test_app(app: Sanic):
@@ -36,8 +34,8 @@ def test_app(app: Sanic):
 
 
 @pytest.fixture
-def runner(test_app: Sanic):
-    client = ReusableClient(test_app, port=PORT)
+def runner(test_app: Sanic, port):
+    client = ReusableClient(test_app, port=port)
     client.run()
     yield client
     client.stop()

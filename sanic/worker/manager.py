@@ -452,7 +452,7 @@ class WorkerManager:
             elif message == "__TERMINATE__":
                 self._handle_terminate()
                 return MonitorCycle.BREAK
-            elif isinstance(message, tuple) and len(message) == 7:
+            elif isinstance(message, tuple) and len(message) == 8:
                 self._handle_manage(*message)  # type: ignore
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):

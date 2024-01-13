@@ -75,7 +75,7 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     },
 )
 """
-Defult logging configuration
+Default logging configuration
 """
 
 

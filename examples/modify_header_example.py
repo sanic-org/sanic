@@ -18,7 +18,7 @@ def handle_request(request):
 
 
 @app.route("/unauthorized")
-def handle_request(request):
+def handle_unauthorized_request(request):
     return response.json(
         {"message": "You are not authorized"},
         headers={"X-Served-By": "sanic"},

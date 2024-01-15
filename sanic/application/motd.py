@@ -91,6 +91,14 @@ class MOTDTTY(MOTD):
             self.value_width = min(
                 max(map(len, self.data.values())), self.max_value_width
             )
+        if self.extra:
+            self.key_width = max(
+                self.key_width, max(map(len, self.extra.keys()))
+            )
+            self.value_width = min(
+                max((*map(len, self.extra.values()), self.value_width)),
+                self.max_value_width,
+            )
         self.logo_lines = self.logo.split("\n") if self.logo else []
         self.logo_line_length = 24
         self.centering_length = (
@@ -131,7 +139,7 @@ class MOTDTTY(MOTD):
         self._render_data(lines, self.data, 0)
         if self.extra:
             logo_part = self._get_logo_part(len(lines) - 4)
-            lines.append(f"| {logo_part} ├{display_filler}┤")
+            lines.append(f"│ {logo_part} ├{display_filler}┤")
             self._render_data(lines, self.extra, len(lines) - 4)
 
         self._render_fill(lines)

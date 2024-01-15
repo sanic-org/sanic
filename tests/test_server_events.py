@@ -8,6 +8,7 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
+from sanic import Blueprint
 from sanic.exceptions import BadRequest, SanicException
 
 
@@ -221,3 +222,51 @@ def test_reload_listeners_attached(app):
 
     assert len(app.listeners.get("reload_process_start")) == 2
     assert len(app.listeners.get("reload_process_stop")) == 2
+
+
+def test_priority_ordering(app):
+    output = []
+    bp = Blueprint("bp")
+
+    @app.before_server_start
+    async def first(app):
+        output.append("first")
+
+    @app.listener("before_server_start", priority=2)
+    async def second(app):
+        output.append("second")
+
+    @app.before_server_start(priority=3)
+    async def third(app):
+        output.append("third")
+
+    @bp.before_server_start
+    async def bp_first(app):
+        output.append("bp_first")
+
+    @bp.listener("before_server_start", priority=2)
+    async def bp_second(app):
+        output.append("bp_second")
+
+    @bp.before_server_start(priority=3)
+    async def bp_third(app):
+        output.append("bp_third")
+
+    @app.before_server_start
+    async def fourth(app):
+        output.append("fourth")
+
+    app.blueprint(bp)
+    start_stop_app(app)
+
+    # The order of the listeners is:
+    # priority descending, app before bp, definition order ascending
+    assert output == [
+        "third",
+        "bp_third",
+        "second",
+        "bp_second",
+        "first",
+        "fourth",
+        "bp_first",
+    ]

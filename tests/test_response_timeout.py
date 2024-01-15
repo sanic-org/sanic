@@ -49,8 +49,8 @@ def response_handler_cancelled_app():
 
     @app.exception(asyncio.CancelledError)
     def handler_cancelled(request, exception):
-        # If we get a CancelledError, it means sanic has already sent a response,
-        # we should not ever have to handle a CancelledError.
+        # If we get a CancelledError, it means sanic has already sent a
+        # response, we should not ever have to handle a CancelledError.
         response_handler_cancelled_app.ctx.flag = True
         return text("App received CancelledError!", 500)
         # The client will never receive this response, because the socket

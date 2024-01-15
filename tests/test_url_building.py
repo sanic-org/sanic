@@ -35,8 +35,8 @@ URL_FOR_ARGS4 = dict(
 URL_FOR_VALUE4 = f"http://{test_host}:{test_port}/myurl?arg1=v1#anchor"
 
 
-def _generate_handlers_from_names(app, l):
-    for name in l:
+def _generate_handlers_from_names(app, names):
+    for name in names:
         # this is the easiest way to generate functions with dynamic names
         exec(
             f'@app.route(name)\ndef {name}(request):\n\treturn text("{name}")'
@@ -123,7 +123,7 @@ def test_fails_url_build_if_param_not_passed(app):
     fail_args = list(string.ascii_lowercase)
     fail_args.pop()
 
-    fail_kwargs = {l: l for l in fail_args}
+    fail_kwargs = {fail_arg: fail_arg for fail_arg in fail_args}
 
     with pytest.raises(URLBuildError) as e:
         app.url_for("fail", **fail_kwargs)
@@ -216,7 +216,8 @@ def test_fails_with_number_message(app):
         app.url_for("fail", **failing_kwargs)
         e.match(
             'Value "foo" for parameter `some_number` '
-            r"does not match pattern for type `float`: ^-?(?:\d+(?:\.\d*)?|\.\d+)$"
+            r"does not match pattern for type "
+            r"`float`: ^-?(?:\d+(?:\.\d*)?|\.\d+)$"
         )
 
 
@@ -230,7 +231,7 @@ def test_passes_with_negative_number_message(app, number):
     u = app.url_for("good", possibly_neg=number)
     assert u == f"/path/{number}/another-word", u
     request, response = app.test_client.get(u)
-    # For ``number``, it has been cast to a float - so a ``3`` becomes a ``3.0``
+    # For ``number``,it has been cast to a float - so a ``3`` becomes a ``3.0``
     assert response.text == f"this should pass with `{float(number)}`"
 
 

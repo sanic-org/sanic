@@ -2510,7 +2510,10 @@ class Sanic(
         """
         if environ.get("SANIC_WORKER_PROCESS") or not self._inspector:
             raise SanicException(
-                "Can only access the inspector from the main process"
+                "Can only access the inspector from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._inspector
 
@@ -2545,6 +2548,9 @@ class Sanic(
 
         if environ.get("SANIC_WORKER_PROCESS") or not self._manager:
             raise SanicException(
-                "Can only access the manager from the main process"
+                "Can only access the manager from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._manager

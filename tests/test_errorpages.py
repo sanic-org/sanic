@@ -471,7 +471,8 @@ def test_config_fallback_bad_value(app):
             "",
             "html",
             "text/*,*/plain",
-            "The client accepts text/*, using 'html' from FALLBACK_ERROR_FORMAT",
+            "The client accepts text/*, using 'html' from"
+            " FALLBACK_ERROR_FORMAT",
         ),
         (
             "",

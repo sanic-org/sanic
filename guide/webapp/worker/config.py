@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from msgspec import yaml
+
 from webapp.display.layouts.models import GeneralConfig, MenuItem
 
 

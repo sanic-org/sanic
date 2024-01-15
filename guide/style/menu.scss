@@ -45,6 +45,17 @@ $menu-width: 360px;
             }
         }
     }
+    &::after {
+	content: '';
+	display: block;
+	position: absolute;
+	top: -$burger-size / 2;
+	left: -$burger-size / 4;
+	width: $burger-size * 1.5;
+	height: $burger-size * 1.5;
+	background: var(--menu-background);
+	z-index: -1;
+    }
 }
 .menu {
     background-color: var(--menu-background);

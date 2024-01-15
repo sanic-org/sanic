@@ -22,7 +22,7 @@ async def test(request):
 
 
 @app.route("/sync", methods=["GET", "POST"])
-def test(request):
+def test_json_response(request):
     return json({"test": True})
 
 
@@ -37,7 +37,7 @@ def exception(request):
 
 
 @app.route("/exception/async")
-async def test(request):
+async def test_server_error(request):
     raise ServerError("asunk")
 
 
@@ -67,9 +67,16 @@ app.run(host="0.0.0.0", port=sys.argv[1])
 #     sanic.conn = []
 #     sanic.redis = []
 #     for x in range(10):
-#         sanic.conn.append(await asyncpg.connect(user='postgres', password='zomgdev', database='postgres', host='192.168.99.100'))
+#         sanic.conn.append(await asyncpg.connect(
+#           user='postgres',
+#           password='zomgdev',
+#           database='postgres',
+#           host='192.168.99.100'
+#         ))
 #     for n in range(30):
-#         connection = await asyncio_redis.Connection.create(host='192.168.99.100', port=6379)
+#         connection = await asyncio_redis.Connection.create(
+#           host='192.168.99.100', port=6379
+#         )
 #         sanic.redis.append(connection)
 
 
@@ -90,7 +97,9 @@ app.run(host="0.0.0.0", port=sys.argv[1])
 #     try:
 #         values = await app.redis[r].get('my_key')
 #     except asyncio_redis.exceptions.ConnectionLostError:
-#         app.redis[r] = await asyncio_redis.Connection.create(host='127.0.0.1', port=6379)
+#         app.redis[r] = await asyncio_redis.Connection.create(
+#           host='127.0.0.1', port=6379
+#         )
 #         values = await app.redis[r].get('my_key')
 
 #     r += 1

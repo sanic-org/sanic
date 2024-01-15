@@ -8,8 +8,8 @@ import pytest
 
 from sanic_testing.testing import HOST, PORT
 
-from sanic.exceptions import BadRequest, SanicException
 from sanic import Blueprint
+from sanic.exceptions import BadRequest, SanicException
 
 
 AVAILABLE_LISTENERS = [
@@ -112,7 +112,9 @@ async def test_trigger_before_events_create_server(app):
     async def init_db(app, loop):
         app.ctx.db = MySanicDb()
 
-    srv = await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
+    srv = await app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
     await srv.startup()
     await srv.before_start()
 
@@ -169,7 +171,9 @@ def test_create_server_trigger_events(app):
     with closing(socket()) as sock:
         sock.bind(("127.0.0.1", 0))
 
-        serv_coro = app.create_server(return_asyncio_server=True, sock=sock, debug=True)
+        serv_coro = app.create_server(
+            return_asyncio_server=True, sock=sock, debug=True
+        )
         serv_task = asyncio.ensure_future(serv_coro, loop=loop)
         server = loop.run_until_complete(serv_task)
         loop.run_until_complete(server.startup())
@@ -199,7 +203,9 @@ async def test_missing_startup_raises_exception(app):
     async def init_db(app, loop):
         ...
 
-    srv = await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
+    srv = await app.create_server(
+        debug=True, return_asyncio_server=True, port=PORT
+    )
 
     with pytest.raises(SanicException):
         await srv.before_start()

@@ -1,8 +1,4 @@
-import asyncio
-
 from asyncio import CancelledError
-
-import pytest
 
 from sanic import Request, Sanic, json
 

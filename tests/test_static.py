@@ -581,7 +581,10 @@ async def test_resource_type_default_error(app, static_file_directory):
     app.static("/static", static_file_directory)
     app.static("/file", get_file_path(static_file_directory, "test.file"))
 
-    message = r"Duplicate route names detected: test_resource_type_default_error\.static"
+    message = (
+        r"Duplicate route names "
+        r"detected: test_resource_type_default_error\.static"
+    )
     with pytest.raises(ServerError, match=message):
         await app._startup()
 

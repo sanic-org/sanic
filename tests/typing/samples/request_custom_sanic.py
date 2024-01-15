@@ -15,5 +15,5 @@ app = Sanic("test", config=CustomConfig())
 async def handler(
     request: Request[Sanic[CustomConfig, SimpleNamespace], SimpleNamespace],
 ):
-    reveal_type(request.ctx)
-    reveal_type(request.app)
+    reveal_type(request.ctx)  # noqa
+    reveal_type(request.app)  # noqa

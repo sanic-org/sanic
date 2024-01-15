@@ -3,8 +3,6 @@ import os
 import sys
 import timeit
 
-import asyncpg
-
 from sanic.response import json
 
 

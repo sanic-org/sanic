@@ -7,4 +7,4 @@ class CustomConfig(Config):
 
 
 app = Sanic("test", config=CustomConfig())
-reveal_type(app)
+reveal_type(app)  # noqa

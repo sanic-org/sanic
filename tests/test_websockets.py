@@ -5,7 +5,7 @@ from unittest.mock import Mock, call
 
 import pytest
 
-from websockets.frames import CTRL_OPCODES, DATA_OPCODES, Frame
+from websockets.frames import CTRL_OPCODES, DATA_OPCODES, OP_TEXT, Frame
 
 from sanic.exceptions import ServerError
 from sanic.server.websockets.frame import WebsocketFrameAssembler
@@ -210,17 +210,14 @@ async def test_ws_frame_put_message_complete(opcode):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("opcode", DATA_OPCODES)
 async def test_ws_frame_put_message_into_queue(opcode):
+    foo = "foo" if (opcode == OP_TEXT) else b"foo"
     assembler = WebsocketFrameAssembler(Mock())
     assembler.chunks_queue = AsyncMock(spec=Queue)
     assembler.message_fetched = AsyncMock()
     assembler.message_fetched.is_set = Mock(return_value=False)
-
     await assembler.put(Frame(opcode, b"foo"))
 
-    assembler.chunks_queue.put.has_calls(
-        call(b"foo"),
-        call(None),
-    )
+    assert assembler.chunks_queue.put.call_args_list == [call(foo), call(None)]
 
 
 @pytest.mark.asyncio

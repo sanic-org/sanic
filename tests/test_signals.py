@@ -1,7 +1,6 @@
 import asyncio
 
 from enum import Enum
-from inspect import isawaitable
 from itertools import count
 
 import pytest
@@ -28,7 +27,9 @@ def test_add_signal_method_handler(app):
     class TestSanic(Sanic):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.add_signal(self.after_routing_signal_handler, "http.routing.after")
+            self.add_signal(
+                self.after_routing_signal_handler, "http.routing.after"
+            )
 
         def after_routing_signal_handler(self, *args, **kwargs):
             nonlocal counter
@@ -96,11 +97,11 @@ async def test_dispatch_signal_triggers_correct_event(app):
     # Check for https://github.com/sanic-org/sanic/issues/2826
 
     @app.signal("foo.bar.baz")
-    def sync_signal(*args):
+    def sync_signal_baz(*args):
         pass
 
     @app.signal("foo.bar.spam")
-    def sync_signal(*args):
+    def sync_signal_spam(*args):
         pass
 
     app.signal_router.finalize()
@@ -291,7 +292,9 @@ async def test_dispatch_signal_to_event_with_requirements(app):
 
     app.signal_router.finalize()
 
-    event_task = asyncio.create_task(app.event("foo.bar.baz", condition={"one": "two"}))
+    event_task = asyncio.create_task(
+        app.event("foo.bar.baz", condition={"one": "two"})
+    )
     await app.dispatch("foo.bar.baz")
     await asyncio.sleep(0)
     assert not event_task.done()
@@ -512,7 +515,7 @@ async def test_dispatch_simple_signal_triggers(app):
 
 
 @pytest.mark.asyncio
-async def test_dispatch_simple_signal_triggers_dynamic(app):
+async def test_dispatch_simple_signal_triggers_dynamic_foo(app):
     counter = 0
 
     @app.signal("<foo:int>")
@@ -528,7 +531,7 @@ async def test_dispatch_simple_signal_triggers_dynamic(app):
 
 
 @pytest.mark.asyncio
-async def test_dispatch_simple_signal_triggers(app):
+async def test_dispatch_simple_signal_triggers_foo_bar(app):
     counter = 0
 
     @app.signal("foo.bar.<baz:int>")
@@ -684,7 +687,9 @@ async def test_report_exception(app: Sanic):
 
     registered_signal_handlers = [
         handler
-        for handler, *_ in app.signal_router.get(Event.SERVER_EXCEPTION_REPORT.value)
+        for handler, *_ in app.signal_router.get(
+            Event.SERVER_EXCEPTION_REPORT.value
+        )
     ]
 
     assert catch_any_exception in registered_signal_handlers

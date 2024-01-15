@@ -199,9 +199,7 @@ app.py
 As shown in the code above, when you create a group of blueprints you can extend the URL prefix of all the blueprints in the group by passing the `url_prefix` argument to the `Blueprint.group` method. This is useful for creating a mock directory structure for your API.
 
 
-.. new:: NEW in v23.6
-
-    In addition, there is a `name_prefix` argument that can be used to make blueprints reusable and composable. The is specifically necessary when applying a single blueprint to multiple groups. By doing this, the blueprint will be registered with a unique name for each group, which allows the blueprint to be registered multiple times and have its routes each properly named with a unique identifier.
+In addition, there is a `name_prefix` argument that can be used to make blueprints reusable and composable. The is specifically necessary when applying a single blueprint to multiple groups. By doing this, the blueprint will be registered with a unique name for each group, which allows the blueprint to be registered multiple times and have its routes each properly named with a unique identifier.
 
 .. column::
 

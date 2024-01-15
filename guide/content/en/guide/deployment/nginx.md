@@ -96,7 +96,7 @@ server {
     proxy_http_version 1.1;
     proxy_request_buffering off;
     proxy_buffering off;
-    proxy_set_header forwarded by=\"_$hostname\";$for_addr;proto=$scheme;host=\"$http_host\";
+    proxy_set_header forwarded 'by=\"_$hostname\";$for_addr;proto=$scheme;host=\"$http_host\"';
     # Allow websockets and keep-alive (avoid connection: close)
     proxy_set_header connection "upgrade";
     proxy_set_header upgrade $http_upgrade;

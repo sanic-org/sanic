@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from msgspec import Struct
+
 from webapp.display.page import Page
 
 

@@ -650,11 +650,9 @@ def test_websocket_route_invalid_handler(app):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("url", ["/ws", "ws"])
+@pytest.mark.parametrize("url", ["/ws", "/ws/"])
 async def test_websocket_route_asgi(app, url):
-    @app.after_server_start
-    async def setup_ev(app, _):
-        app.ctx.ev = asyncio.Event()
+    app.ctx.ev = asyncio.Event()
 
     @app.websocket(url)
     async def handler(request, ws):
@@ -665,7 +663,7 @@ async def test_websocket_route_asgi(app, url):
         return json({"set": request.app.ctx.ev.is_set()})
 
     _, response = await app.asgi_client.websocket(url)
-    _, response = await app.asgi_client.get("/")
+    _, response = await app.asgi_client.get("/ev")
     assert response.json["set"]
 
 
@@ -756,7 +754,7 @@ def test_double_stack_route(app):
 
 
 @pytest.mark.asyncio
-async def test_websocket_route_asgi(app):
+async def test_websocket_route_asgi_when_first_and_second_set(app):
     ev = asyncio.Event()
 
     @app.websocket("/test/1", name="test1")
@@ -1129,7 +1127,7 @@ def test_route_invalid_host(app):
 
 
 def test_route_with_regex_group(app):
-    @app.route("/path/to/<ext:file\.(txt)>")
+    @app.route(r"/path/to/<ext:file\.(txt)>")
     async def handler(request, ext):
         return text(ext)
 
@@ -1160,7 +1158,7 @@ def test_route_with_regex_named_group_invalid(app):
 
 
 def test_route_with_regex_group_ambiguous(app):
-    @app.route("/path/to/<ext:file(?:\.)(txt)>")
+    @app.route(r"/path/to/<ext:file(?:\.)(txt)>")
     async def handler(request, ext):
         return text(ext)
 
@@ -1169,7 +1167,7 @@ def test_route_with_regex_group_ambiguous(app):
 
     assert e.match(
         re.escape(
-            "Could not compile pattern file(?:\.)(txt). Try using a named "
+            r"Could not compile pattern file(?:\.)(txt). Try using a named "
             "group instead: '(?P<ext>your_matching_group)'"
         )
     )

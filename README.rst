@@ -15,14 +15,14 @@ Sanic | Build fast. Run fast.
     * - Docs
       - | |UserGuide| |Documentation|
     * - Package
-      - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style black|
+      - | |PyPI| |PyPI version| |Wheel| |Supported implementations| |Code style ruff|
     * - Support
       - | |Forums| |Discord| |Awesome|
     * - Stats
       - | |Monthly Downloads| |Weekly Downloads| |Conda downloads|
 
 .. |UserGuide| image:: https://img.shields.io/badge/user%20guide-sanic-ff0068
-   :target: https://sanicframework.org/
+   :target: https://sanic.dev/
 .. |Forums| image:: https://img.shields.io/badge/forums-community-ff0068.svg
    :target: https://community.sanicframework.org/
 .. |Discord| image:: https://img.shields.io/discord/812221182594121728?logo=discord&label=Discord&color=5865F2
@@ -35,8 +35,8 @@ Sanic | Build fast. Run fast.
    :target: https://pypi.python.org/pypi/sanic/
 .. |PyPI version| image:: https://img.shields.io/pypi/pyversions/sanic.svg
    :target: https://pypi.python.org/pypi/sanic/
-.. |Code style black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+.. |Code style ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg
+    :target: https://docs.astral.sh/ruff/
 .. |Wheel| image:: https://img.shields.io/pypi/wheel/sanic.svg
     :alt: PyPI Wheel
     :target: https://pypi.python.org/pypi/sanic
@@ -55,10 +55,6 @@ Sanic | Build fast. Run fast.
 .. |Conda downloads| image:: https://img.shields.io/conda/dn/conda-forge/sanic.svg
     :alt: Downloads
     :target: https://anaconda.org/conda-forge/sanic
-.. |Linode| image:: https://www.linode.com/wp-content/uploads/2021/01/Linode-Logo-Black.svg
-    :alt: Linode
-    :target: https://www.linode.com
-    :width: 200px
 
 .. end-badges
 
@@ -77,9 +73,6 @@ Sponsor
 
 Check out `open collective <https://opencollective.com/sanic-org>`_ to learn more about helping to fund Sanic.
 
-Thanks to `Linode <https://www.linode.com>`_ for their contribution towards the development and community of Sanic.
-
-|Linode|
 
 Installation
 ------------
@@ -144,12 +137,7 @@ Minimum Python version is 3.8. If you need Python 3.7 support, please use v22.12
 Documentation
 -------------
 
-`User Guide <https://sanic.dev>`__ and `API Documentation <http://sanic.readthedocs.io/>`__.
-
-Changelog
----------
-
-`Release Changelogs <https://sanic.readthedocs.io/en/stable/sanic/changelog.html>`__.
+User Guide, Changelog, and API Documentation can be found at `sanic.dev <https://sanic.dev>`__.
 
 
 Questions and Discussion

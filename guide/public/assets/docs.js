@@ -202,6 +202,22 @@ function afterSwap(e) {
 	document.title = newTitle;
     }
 }
+function beforeRequest() {
+    console.log("beforeRequest")
+    document.querySelector(".loading-bar").classList.add("is-loading");
+    this.requestStartTime = new Date().getTime();
+}
+function afterRequest() {
+    const currentTime = new Date().getTime();
+    const elapsedTime = currentTime - this.requestStartTime;
+    const delay = Math.max(0, 1000 - elapsedTime);
+    setTimeout(() => {
+	console.log("afterRequest")
+	document.querySelector(".loading-bar").classList.remove("is-loading");
+    }, delay);
+}
 document.addEventListener("DOMContentLoaded", init);
 document.body.addEventListener("htmx:afterSwap", afterSwap);
 document.addEventListener("scroll", scrollHandler);
+document.body.addEventListener("htmx:beforeRequest", beforeRequest);
+document.body.addEventListener("htmx:afterRequest", afterRequest);

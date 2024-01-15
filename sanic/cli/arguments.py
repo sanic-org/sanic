@@ -93,6 +93,10 @@ class ApplicationGroup(Group):
                 "a directory\n(module arg should be a path)"
             ),
         )
+        self.add_bool_arguments(
+            "--repl",
+            help="Run the server with an interactive shell session",
+        )
 
 
 class HTTPVersionGroup(Group):

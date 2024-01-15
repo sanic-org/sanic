@@ -610,7 +610,7 @@ def test_multiple_responses(
 
     @app.get("/4")
     async def handler4(request: Request):
-        response = await request.respond(headers={"one": "one"})
+        await request.respond(headers={"one": "one"})
         return json({"foo": "bar"}, headers={"one": "two"})
 
     @app.get("/5")
@@ -639,11 +639,6 @@ def test_multiple_responses(
         "The response object returned by the route handler "
         "will not be sent to client. The request has already "
         "been responded to."
-    )
-
-    error_msg3 = (
-        "Response stream was ended, no more "
-        "response data is allowed to be sent."
     )
 
     with caplog.at_level(ERROR):
@@ -769,7 +764,7 @@ def test_file_response_headers(
     assert (
         "cache-control" in headers
         and f"max-age={test_max_age}" in headers.get("cache-control")
-        and f"public" in headers.get("cache-control")
+        and "public" in headers.get("cache-control")
     )
     assert (
         "expires" in headers
@@ -800,14 +795,14 @@ def test_file_response_headers(
 
     _, response = app.test_client.get(f"/files/no_cache/{file_name}")
     headers = response.headers
-    assert "cache-control" in headers and f"no-cache" == headers.get(
+    assert "cache-control" in headers and "no-cache" == headers.get(
         "cache-control"
     )
     assert response.status == 200
 
     _, response = app.test_client.get(f"/files/no_store/{file_name}")
     headers = response.headers
-    assert "cache-control" in headers and f"no-store" == headers.get(
+    assert "cache-control" in headers and "no-store" == headers.get(
         "cache-control"
     )
     assert response.status == 200
@@ -895,7 +890,7 @@ def test_file_validating_invalid_header(
 @pytest.mark.parametrize(
     "file_name", ["test.file", "decode me.txt", "python.png"]
 )
-def test_file_validating_304_response(
+def test_file_validating_304_response_file_route(
     app: Sanic, file_name: str, static_file_directory: str
 ):
     @app.route("/files/<filename>", methods=["GET"])

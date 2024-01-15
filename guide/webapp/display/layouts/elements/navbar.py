@@ -1,7 +1,7 @@
-from webapp.display.layouts.models import MenuItem
-
 from html5tagger import Builder, E  # type: ignore
+
 from sanic import Request
+from webapp.display.layouts.models import MenuItem
 
 
 def do_navbar(builder: Builder, request: Request) -> None:

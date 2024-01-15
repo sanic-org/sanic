@@ -4,8 +4,10 @@ from contextlib import contextmanager
 from typing import Generator
 
 from html5tagger import Builder, E
+
 from sanic import Request
 from webapp.display.layouts.elements.footer import do_footer
+
 from .base import BaseLayout
 
 

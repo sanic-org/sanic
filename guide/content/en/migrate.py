@@ -1,8 +1,10 @@
 import re
+
 from pathlib import Path
 from textwrap import indent
 
 from emoji import EMOJI
+
 
 COLUMN_PATTERN = re.compile(r"---:1\s*(.*?)\s*:--:1\s*(.*?)\s*:---", re.DOTALL)
 PYTHON_HIGHLIGHT_PATTERN = re.compile(r"```python\{+.*?\}", re.DOTALL)

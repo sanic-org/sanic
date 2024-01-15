@@ -355,3 +355,35 @@ h3 + .code-block { margin-top: 1rem; }
     }
   }
 }
+
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: transparent;
+  z-index: 9999;
+
+  &.is-loading {
+    background-color: $primary;
+    animation: pulsingLoading 1s linear infinite;
+  }
+}
+
+@keyframes pulsingLoading {
+  0%, 100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleX(0.25);
+    opacity: 0.5;
+  }
+}
+
+.changelog {
+    .ol, .ul, .list {
+	.li, .list-item { padding: 0; }
+    }
+}

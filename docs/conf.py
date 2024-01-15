@@ -19,7 +19,7 @@ import sys
 root_directory = os.path.dirname(os.getcwd())
 sys.path.insert(0, root_directory)
 
-import sanic
+import sanic  #  noqa
 
 
 # -- General configuration ------------------------------------------------
@@ -167,3 +167,9 @@ autodoc_default_options = {
 html_theme_options = {
     "style_external_links": False,
 }
+
+rst_prolog = """.. warning::
+    These documents are **OUTDATED** as of 2023-12-31.
+
+    Please refer to the latest version of the documentation at `sanic.dev <https://sanic.dev>`__.
+"""

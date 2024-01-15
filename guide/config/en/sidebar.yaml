@@ -145,6 +145,10 @@ root:
       items:
           - label: "2023"
             items:
+                - label: Sanic 23.12
+                  path: release-notes/2023/v23.12.html
+                - label: Sanic 23.9
+                  path: release-notes/2023/v23.9.html
                 - label: Sanic 23.6
                   path: release-notes/2023/v23.6.html
                 - label: Sanic 23.3
@@ -169,6 +173,8 @@ root:
                   path: release-notes/2021/v21.6.html
                 - label: Sanic 21.3
                   path: release-notes/2021/v21.3.html
+          - label: Changelog
+            path: release-notes/changelog.html
     - label: Organization
       items:
           - label: Contributing

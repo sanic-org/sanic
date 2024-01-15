@@ -2,6 +2,7 @@ import re
 
 from mistune.markdown import Markdown
 
+
 DIRECTIVE_PATTERN = r":(?:class|func|meth|attr|exc|mod|data|const|obj|keyword|option|cmdoption|envvar):`(?P<ref>sanic\.[^`]+)`"  # noqa: E501
 
 

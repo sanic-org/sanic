@@ -1112,3 +1112,43 @@ def test_remove_double_slashes_defined_on_register(app: Sanic):
     app.router.finalize()
 
     assert app.router.routes[0].path == "foo/"
+
+
+def test_blueprint_copy_returns_blueprint_with_the_name_of_original_blueprint(
+    app: Sanic,
+):
+    # arrange
+    bp = Blueprint("bp")
+
+    # act
+    actual = bp.copy("new_bp_name")
+
+    # assert
+    assert bp.name == actual.copied_from
+
+
+def test_blueprint_copy_returns_blueprint_with_overwritten_properties(
+    app: Sanic,
+):
+    # arrange
+    bp = Blueprint("bp")
+    to_override_attrs = expected = dict(
+        url_prefix="v2",
+        version="v2",
+        version_prefix="v2",
+        allow_route_overwrite=True,
+        strict_slashes=True,
+    )
+
+    # act
+    actual = bp.copy(
+        "new_bp_name",
+        **to_override_attrs,
+    )
+
+    # assert
+    assert all(
+        value == getattr(actual, key)
+        for key, value in expected.items()
+        if hasattr(actual, key)
+    )

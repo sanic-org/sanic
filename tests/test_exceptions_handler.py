@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from bs4 import BeautifulSoup
-from pytest import LogCaptureFixture, MonkeyPatch, WarningsRecorder
+from pytest import LogCaptureFixture, MonkeyPatch
 
 from sanic import Sanic, handlers
 from sanic.exceptions import BadRequest, Forbidden, NotFound, ServerError
@@ -169,7 +169,7 @@ def test_exception_handler_lookup(exception_handler_app: Sanic):
         pass
 
     try:
-        ModuleNotFoundError
+        ModuleNotFoundError  # noqa: F823
     except Exception:
 
         class ModuleNotFoundError(ImportError):

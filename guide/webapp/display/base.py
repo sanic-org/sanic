@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from html5tagger import Builder, Document, E  # type: ignore
+from html5tagger import Builder, Document  # type: ignore
 
 
 class BaseRenderer:

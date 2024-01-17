@@ -708,7 +708,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 context (`route.ctx`).
 
         Returns:
-            tuple: Tuple of routes, decorated function.
+            RouteHandler: Object decorated with route method.
         """
         return self.route(
             uri=uri,

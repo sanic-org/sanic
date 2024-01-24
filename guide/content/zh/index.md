@@ -76,7 +76,7 @@ features:
 :class: is-size-3 ml-6
 
 ```
-**和一些 {span:has-text-primary:you wouldn't believe}.**
+**还有一些{span:has-text-primary:您甚至不敢相信的}。**
 ```
 
 .. tab:: 生产级别（Production-grade）

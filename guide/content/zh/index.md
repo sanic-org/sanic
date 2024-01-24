@@ -1,22 +1,22 @@
 ---
-title: 闪电般快速的异步 Python 网络框架
+title: 闪电般快速的异步 Python Web 框架
 layout: 首页
 features:
   - title: 简单轻便
-    details: 智能默认和没有博客的直观API允许您直接建立您的应用程序。
-  - title: 无意见和灵活的
-    details: 构建你想要构建的方式而不让你的工具约束你。
-  - title: 性能和可缩放
-    details: 以速度和可伸缩性作为主要关切事项。 它已经准备好为无论大小的网络应用程序供电。
-  - title: 生产已准备好
-    details: 在盒子中，它被捆绑在一个网络服务器上，可以为您的网络应用程序提供电力。
-  - title: 受数以百万计的信任的
-    details: Sanic 是 PyPI 最受欢迎的框架之一，是启用异步的顶部框架
-  - title: 社区驱动的
-    details: 该项目由社区为社区维护和管理。
+    details: 开箱即用，直观无臃肿且具有智能默认设置的框架 API 可以使您直接构建应用程序
+  - title: 灵巧无束
+    details: 按照您的意愿进行自由创建，不会对您造成任何约束
+  - title: 易于拓展
+    details: 关注应用的速度和可伸缩性 随时为大大小小的网络应用程序提供支持
+  - title: 生产环境预备
+    details: Sanic 不仅是一个框架，也是一个服务器，它可以随时为您编写的 Web 应用程序提供部署服务
+  - title: 备受信赖
+    details: Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步 Web 框架
+  - title: 社区驱动
+    details: 从社区来，到社区去，拥有大量的活跃贡献者
 ---
 
-### :hig_voltag: lightning-fast asynchronous Python web Framework
+### :hig_voltag: 闪电般快速的异步 Python Web 框架
 
 .. attrs::
 :class: columns is-multiline mt-6
@@ -25,44 +25,44 @@ features:
 .. attrs::
     :class: column is-4
 
-    #### Simple and lightweight
+    #### 简单轻便
 
-    Intuitive API with smart defaults and no bloat allows you to get straight to work building your app.
-
-.. attrs::
-    :class: column is-4
-
-    #### Unopinionated and flexible
-
-    Build the way you want to build without letting your tooling constrain you.
+    开箱即用，直观无臃肿且具有智能默认设置的框架 API 可以使您直接构建应用程序
 
 .. attrs::
     :class: column is-4
 
-    #### Performant and scalable
+    #### 灵巧无束
 
-    Built from the ground up with speed and scalability as a main concern. It is ready to power web applications big and small.
-
-.. attrs::
-    :class: column is-4
-
-    #### Production ready
-
-    Out of the box, it comes bundled with a web server ready to power your web applications.
+    按照您的意愿进行自由创建，不会对您造成任何约束
 
 .. attrs::
     :class: column is-4
 
-    #### Trusted by millions
+    #### 易于拓展
 
-    Sanic is one of the overall most popular frameworks on PyPI, and the top async enabled framework
+    关注应用的速度和可伸缩性，可随时为大大小小的网络应用程序提供支持
 
 .. attrs::
     :class: column is-4
 
-    #### Community driven
+    #### 生产环境预备
 
-    The project is maintained and run by the community for the community.
+    Sanic 不仅是一个框架，也是一个服务器，它可以随时为您编写的 Web 应用程序提供部署服务
+
+.. attrs::
+    :class: column is-4
+
+    #### 备受信赖
+
+    Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步 Web 框架
+
+.. attrs::
+    :class: column is-4
+
+    #### 社区驱动
+
+    从社区来，到社区去，拥有大量的活跃贡献者
 ```
 
 .. attrs::
@@ -79,12 +79,12 @@ features:
 **和一些 {span:has-text-primary:you wouldn't believe}.**
 ```
 
-.. 标签：生产等级
+.. tab:: 生产级别（Production-grade）
 
 ````
-After installing, Sanic has all the tools you need for a scalable, production-grade server—out of the box!
+在安装后，Sanic 将为您提供开箱即用的可扩展生产级服务器所需的所有工具！
 
-Including [full TLS support](/en/guide/how-to/tls).
+甚至包括[完整的 TLS 支持](/zh/guide/how-to/tls)。
 
 ```python
 from sanic import Sanic
@@ -110,7 +110,7 @@ sanic path.to.server:app
 ```
 ````
 
-.. 标签：TLS服务器
+.. tab:: TLS 服务器（TLS server）
 
 ````
 启用 TLS 来运行Sanic与传递文件路径一样简单...
@@ -131,10 +131,11 @@ sanic 路径。 o.server:app --dev --auto-tls
 ```
 ````
 
-.. 标签：Websockets
+.. tab:: Websockets
 
 ````
-Up and running with websockets in no time using the [websockets](https://websockets.readthedocs.io) package.
+通过 [websockets](https://websockets.readthedocs.io) 库，可以马上实现的 WebSockets。
+
 ```python
 from sanic import Request, Websocket
 
@@ -145,17 +146,17 @@ async def feed(request: Request, ws: Websocket):
 ```
 ````
 
-.. 标签：静态文件
+.. tab:: 静态文件（Static files）
 
 ````
-服务静态文件当然是直观和容易的。只需命名一个端点和一个应该服务的文件或目录。
+建立静态文件服务当然是既直观又容易。只需要给一个端点以及一个需要被服务的文件或目录命名即可。
 
 ```python
 app.static("/", "/path/to/index.html")
-应用。 tatic("/uploads/", "/path/to/uploads/")
+app.static("/uploads/", "/path/to/uploads/")
 ```
 
-此外，服务目录还有两个额外功能：自动服务索引，自动服务于文件浏览器。
+此外，为目录提供服务还有两个附加功能：自动提供索引和自动提供文件浏览器。
 
 Sanic 可以自动将 `index.html` (或任何其他命名文件) 作为目录或其子目录中的索引页。
 
@@ -163,17 +164,17 @@ Sanic 可以自动将 `index.html` (或任何其他命名文件) 作为目录或
 app.static(
     "/uploads/",
     "/path/to/uploads/",
-    index="索引。
-()
+    index="index.html"
+)
 ```
 
-And/or 设置Sanic 以显示文件浏览器。
+之后，设置 Sanic 以显示文件浏览器。
 
 
-！[image](/assets/images/directory-view.png)
+![image](/assets/images/directory-view.png)
 
 ```python
-app tatic(
+app.static(
     "/uploads/",
     "/path/to/uploads/",
     directory_view=True
@@ -181,10 +182,10 @@ app tatic(
 ```
 ````
 
-.. tab：生命周期：
+.. tab:: 生命周期（Lifecycle）
 
 ````
-Beginning or ending a route with functionality is as simple as adding a decorator.
+添加一个装饰器，就能够应用一个在请求开始或是响应结束时的功能性的路由。
 
 ```python
 @app.on_request
@@ -196,7 +197,7 @@ async def custom_banner(request, response):
     response.headers["X-Foo"] = request.ctx.foo
 ```
 
-Same with server events.
+服务器事件（server events）也是一样的。
 
 ```python
 @app.before_server_start
@@ -208,14 +209,14 @@ async def setup_db(app):
     await app.ctx.db_pool.shutdown()
 ```
 
-But, Sanic also allows you to tie into a bunch of built-in events (called signals), or create and dispatch your own.
+除此之外，Sanic 还允许您绑定一系列内置事件（称为信号），或创建和调度自己的事件。
 
 ```python
-@app.signal("http.lifecycle.complete")  # built-in
+@app.signal("http.lifecycle.complete")  # 内建
 async def my_signal_handler(conn_info):
     print("Connection has been closed")
 
-@app.signal("something.happened.ohmy")  # custom
+@app.signal("something.happened.ohmy")  # 定制
 async def my_signal_handler():
     print("something happened")
 
@@ -223,38 +224,38 @@ await app.dispatch("something.happened.ohmy")
 ```
 ````
 
-.. 标签：智能错误处理
+.. tab:: 智能错误处理（Smart error handling）
 
 ````
-提升错误会直观地导致正确的 HTTP 错误：
-
-``python
-raising sanic.exception。 ootFound # 自动响应HTTP 404
-``
-
-或是你自己：
+出错后，会出现直观且准确的 HTTP 错误：
 
 ```python
-xceptions import SanicException
+raise sanic.exceptions.NotFound  # 自动响应 HTTP 404
+```
+
+或是实现您自己的：
+
+```python
+from sanic.exceptions import SanicException
 
 class TeapotError(SanicException):
     status_code = 418
-    message = “对不起，” 我不能酿造咖啡”
+    message = "抱歉，我不能煮咖啡Orz"
 
-提高Teapot错误
+raise TeapotError
 ```
 
-当发生错误时， Sanic美丽的 DEV 模式错误页面将帮助您快速钻到漏洞。
+如果出现错误，Sanic 美观的开发模式错误页面将帮助您快速定位到错误所在。
 
-！[image](../assets/images/error-div-zero.png)
+![image](../assets/images/error-div-by-zero.png)
 
-不管怎样，Sanic带有一个算法，尝试使用HTML，JSON或文本错误作为相应答复。 别担心，设置和自定义您的错误处理符合您的具体需要是非常简单的。
+无论如何，Sanic 自带的算法都会根据情况尝试响应 HTML、JSON 或基于文本的错误。不要担心，根据您的具体需求设置和自定义错误处理非常简单。
 ````
 
-.. 选项卡：应用查看器
+.. tab:: 应用查看器（App Inspector）
 
 ````
-Check in on your live, running applications (whether local or remote).
+不管是在本地还是在远程，Sanic 都可以检查你正在运行的应用。
 ```sh
 sanic inspect      
 
@@ -290,45 +291,45 @@ Sanic-Inspector-0
     starts: 1
 ```
 
-And, issue commands like `reload`, `shutdown`, `scale`...
+并且可以使用像是 `reload`, `shutdown`, `scale` 的命令...
 
 ```sh
 sanic inspect scale 4
 ```
 
-... or even create your own!
+... 甚至是创建你自己的！
 
 ```sh
 sanic inspect migrations
 ```
 ````
 
-.. 标签：可扩展
+.. tab:: 可扩展（Extendable）
 
 ```
-In addition to the tools that Sanic comes with, the officially supported [Sanic Extensions](./plugins/sanic-ext/getting-started.md) provides lots of extra goodies to make development easier.
+除了 Sanic 自带的工具外，官方支持的 [Sanic 扩展](./plugins/sanic-ext/getting-started.md) 还提供了许多额外的好东西，使您的开发更加轻松。
 
-- **CORS** protection
-- Template rendering with **Jinja**
-- **Dependency injection** into route handlers
-- OpenAPI documentation with **Redoc** and/or **Swagger**
-- Predefined, endpoint-specific response **serializers**
-- Request query arguments and body input **validation**
-- **Auto create** HEAD, OPTIONS, and TRACE endpoints
-- Live **health monitor**
+- **CORS** 保护
+- 使用 **Jinja** 进行模板渲染
+- 将其他对象通过 **Dependency injection** （依赖注入）到路由处理程序中
+- 使用 **Redoc** 和/或 **Swagger** 编写 OpenAPI 文档
+- 预定义的特定端点响应**序列化器**（serializers）
+- 请求查询参数和正文输入的**验证器**（validation）
+- **自动创建** HEAD、OPTIONS 和 TRACE 端点（auto create）
+- 实时**健康监控**（health monitor）
 ```
 
-.. 标签：开发者体验
+.. tab:: 开发体验（Developer Experience）
 
 ```
-Sanic is **built for building**.
+Sanic **为构建而生**。
 
-From the moment it is installed, Sanic includes helpful tools to help the developer get their job done.
+从安装的那一刻起，Sanic 就包含帮助开发人员完成工作的有用工具。
 
-- **One server** - Develop locally in DEV mode on the same server that will run your PRODUCTION application
-- **Auto reload** - Reload running applications every time you save a Python file, but also auto-reload **on any arbitrary directory** like HTML template directories
-- **Debugging tools** - Super helpful (and beautiful) [error pages](/en/guide/best-practices/exceptions) that help you traverse the trace stack easily
-- **Auto TLS** - Running a localhost website with `https` can be difficult, [Sanic makes it easy](/en/guide/how-to/tls)
-- **Streamlined testing** - Built-in testing capabilities, making it easier for developers to create and run tests, ensuring the quality and reliability of their services
-- **Modern Python** - Thoughtful use of type hints to help the developer IDE experience
+- **单个服务器** - 在将运行生产应用程序的同一服务器上以开发模式进行本地开发
+- **自动重载** - 每次保存 Python 文件时重载正在运行的应用程序，也可在**任意目录**下自动重载，如 HTML 模板目录。
+- **调试工具** - 超级有用（而且漂亮）的[错误页面](/zh/guide/best-practices/exceptions)，帮助你轻松遍历跟踪堆栈
+- **自动 TLS** - 使用 "https" 运行本地主机网站可能很困难，但是 [Sanic 让它变得简单](/zh/guide/how-to/tls)
+- **简化测试** - 内置测试功能，使开发人员更容易创建和运行测试，确保服务的质量和可靠性
+- **现代 Python**- 体贴地使用类型提示，帮助开发人员获得集成开发环境体验
 ```

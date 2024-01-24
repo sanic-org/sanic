@@ -1,8 +1,8 @@
 ---
-title: 闪电快异步的 Python web 框架
+title: 闪电般快速的异步 Python 网络框架
 layout: 首页
 features:
-  - title: 简单和轻量度
+  - title: 简单轻便
     details: 智能默认和没有博客的直观API允许您直接建立您的应用程序。
   - title: 无意见和灵活的
     details: 构建你想要构建的方式而不让你的工具约束你。

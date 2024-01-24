@@ -1,32 +1,32 @@
 ---
-title: 需要一些帮助吗？
-layout: 主要的
+title: 需要帮助吗？
+layout: 主界面
 ---
 
-# 需要一些帮助吗？
+# 需要帮助吗？
 
-作为一个活跃的开发者社区，我们努力相互支持。 如果您需要一些帮助，请尝试以下一种：
+作为活跃的开发者社区，我们尽力相互支持。 如果您需要帮助，请尝试以下中的一种：
 
-.. 列:
+.. column::
 
 ```
 ### Discord :speech_cloon:
 
-最好在[Discord服务器]上开启快速答案和在线聊天
+快速答案与在线聊天的最好出处
 
-`#sanic-support` 频道(https://discord.gg/FARQzAEMAA)
+[Discord 服务器]的 `#sanic-support` 频道(https://discord.gg/FARQzAEMAA)
 ```
 
-.. 列:
+.. column::
 
 ```
 ### 社区论坛 👥
 
-最好分享代码片段和更长时间的支持查询
+分享代码片段或是请求更长时间的支持最好在这里
 
-"Questions and Help" categories on the [Forums](https://community.sanicframework.org/c/questions-and-help/6)
+[论坛](https://community.sanicframework.org/c/questions-and-help/6)上的「问题与帮助」（Questions and Help）
 ```
 
 ***
 
-我们还积极监视[堆栈溢出](https://stackoverflow.com/questions/tagged/sanic)上的\`[sanic]'标签。
+我们还积极监视 [Stack Overflow](https://stackoverflow.com/questions/tagged/sanic) 上的\`[sanic]'标签。

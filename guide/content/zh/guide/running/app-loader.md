@@ -1,18 +1,18 @@
 ---
-title: 动态应用程序
+title: 动态应用
 ---
 
-# 动态应用程序
+# 动态应用（Dynamic Applications）
 
-正在运行的Sanic已被优化，以配合CLI。 如果你还没有阅读它，你应该阅读 [Running Sanic](./running.md#sanic-server) 来熟悉这些选项。
+我们优化了通过命令行来运行 Sanic 应用的过程。 如果您还不了解的话，最好在读这篇文章前去看一下 [运行 Sanic](./running.md#sanic-server) 以获取一些详细的信息。
 
-.. 列:
+.. column::
 
 ```
-这包括将其作为全局范围对象运行...
+既可以指定全局变量来启动应用：
 ```
 
-.. 列:
+.. column::
 
 ````
 ```sh
@@ -28,13 +28,13 @@ async def handler(request: Request):
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-...或者创建一个 `Sanic` 应用程序对象的工厂函数。
+也可以指定某创建 Sanic 对象的工厂函数来启动：
 ```
 
-.. 列:
+.. column::
 
 ````
 ```sh
@@ -53,17 +53,17 @@ def create_app():
 ```
 ````
 
-**有时候，这还不够... 🤔**
+**但有些时候，这还不够... 🤔**
 
-引入于 [v22.9](../release-notes/v22.9.md)，萨尼克有一个`AppLoader` 对象，负责在各种[工人进程](./manager.md#how-sanic-server-starts-process)中创建一个应用程序。 如果你需要为你的应用程序创建一个更动态的启动体验，你可以利用这个机会。
+在 [v22.9](../release-notes/v22.9.md) 的版本中，Sanic 添加了负责在各个[工作进程](./manager.md#how-sanic-server-starts-process)中创建一个应用程序的 `AppLoader` 。 如果你需要更加「动态」的运行体验，那可以用一下它。
 
-.. 列:
+.. column::
 
 ```
-一个 `AppLoader` 可以传递一个传唤函数返回一个 `Sanic` 实例。这个`AppLoader` 可以与运行 API 的低级别应用程序一起使用。
+我们可以将一个能够返回 `Sanic` 实例的工厂函数给 `AppLoader` 。`AppLoader` 可以和更底层的运行应用的 API 一起使用。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -95,4 +95,4 @@ python path/to/server.py MyTestAppName
 ```
 ````
 
-在上面的例子中，`AppLoader` 是用`factory`创建的，它可以用来在整个过程中创建同一应用程序的副本。 在这样做时，您应该明确使用上面显示的 `Sanic.serve` 模式，以便您创建的 `AppLoader` 不会被替换。
+在这个例子中，`AppLoader` 与 `factory` 传入的可用于在不同进程中创建同一应用的拷贝的函数一起被创建。 然后您需要显式地使用 `Sanic.serve` ，这样您的 `AppLoader` 就不会被自动生成的应用替换。

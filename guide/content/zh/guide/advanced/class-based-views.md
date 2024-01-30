@@ -5,11 +5,11 @@
 .. 列:
 
 ```
-### 问题
+### 问题所在
 
-设计一个 API 时常见的模式是在依赖HTTP 方法的同一个端点上具有多个功能。
+设计 API 时的常见思路是在根据 HTTP 请求方法的不同而产生不同响应的同一端点上实现多种功能。
 
-虽然这两种选项都起作用，但它们并不是良好的设计做法，随着你的项目的发展，可能很难长期维持。
+虽然这两种选项都可以，但它们并不是良好的设计思维，随着你的项目的发展，可能很难长期维护。
 ```
 
 .. 列:
@@ -44,9 +44,9 @@ async def bar(request):
 .. 列:
 
 ```
-### 解析器
+### 解决方案
 
-基于类的视图只是实现回应行为的类类。 它们为在同一端点将不同HTTP请求类型的处理分割开来提供了一条途径。
+基于类的视图只是实现请求响应行为的类。 它们提供了一种在同一端点划分不同 HTTP 请求类型的处理方法。
 ```
 
 .. 列:
@@ -69,24 +69,24 @@ app.add_route(FooBar.as_view(), "/foobar")
 ```
 ````
 
-## 定义视图(Defining a view)
+## 定义一个视图
 
-A class-based view should subclass :class:`sanic.views.HTTPMethodView`. 然后您可以执行具有相应的 HTTP 方法名称的类方法。 如果收到一个没有定义方法的请求，将生成一个 \`405: 方法不允许' 响应。
+基于类的视图应当继承 :class:`sanic.views.HTTPMethodView`。 然后，您可以使用相应 HTTP 方法的名称来实现类方法。 如果收到一个没有定义方法的请求，将生成一个 \`405: Method not allowed' 响应。
 
 .. 列:
 
 ```
-要在端点注册一个基于类的视图，将使用 `app.add_route` 方法。 第一个参数应该是使用`as_view`方法的定义类，第二个参数应该是URL终点。
+要在一个 URL 端点注册一个基于类的视图，需要使用 `app.add_route` 方法。 第一个参数应该是实现了`as_view`方法的定义类，第二个参数应该是 URL 端点。
 
 可用的方法是：
 
 - get
-- 发表
-- 放置
-- 补丁
-- 删除
-- 首长
-- 选项
+- post
+- put
+- patch
+- delete
+- head
+- options
 ```
 
 .. 列:
@@ -101,7 +101,7 @@ class SimpleView(HTTPMethodView):
   def get(self, request):
       return text("I am get method")
 
-  # You can also use async syntax
+  # 也支持 async 语法
   async def post(self, request):
       return text("I am post method")
 
@@ -123,7 +123,7 @@ app.add_route(SimpleView.as_view(), "/")
 .. 列:
 
 ```
-您可以使用路径参数就像[路由部分](/guide/basics/routing.md)中讨论过的路径参数。
+您可以完全按照[路由部分](/guide/basics/routing.md)中讨论的方式使用路径参数。
 ```
 
 .. 列:
@@ -139,11 +139,11 @@ app.add_route(NameView.asp.as_view(), "/<name>")
 ```
 ````
 
-## 装饰符
+## 装饰器
 
-正如在[装饰物部分](/guide/best practices/decorators.md)中所讨论的那样，您常常需要在终点中添加使用装饰物的功能。 您与 CBV 有两个选项：
+正如[装饰器部分](/guide/best-practices/decorators.md)中所讨论的，您通常需要使用装饰器向端点添加功能。 您与 CBV 有两个选项：
 
-1. 应用于视图中的 _all_ HTTP 方法
+1. 应用于视图中的 _全部_ HTTP 方法
 2. 单独应用于视图中的 HTTP 方法
 
 让我们看看这些选项是什么样子：

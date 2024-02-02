@@ -5,47 +5,41 @@
 ## `app.py`
 
 ```python
-### SETUP ###
+### 设置 ###
 import typing
 import sanic, sanic.response
 
-# Create the Sanic app
+# 创建 Sanic app
 app = sanic.Sanic(__name__)
 
-# This dictionary represents your "static"
-# redirects. For example, these values
-# could be pulled from a configuration file.
+# 该目录代表你的 "static" 目录重定向。
+# 举个例子，这些值可以从配置文件中提取。
 REDIRECTS = {
-    '/':'/hello_world',                     # Redirect '/' to '/hello_world'
-    '/hello_world':'/hello_world.html'      # Redirect '/hello_world' to 'hello_world.html'
+    '/':'/hello_world',                     # 重定向 '/' 到 '/hello_world'
+    '/hello_world':'/hello_world.html'      #重定向 '/hello_world' 到 'hello_world.html'
 }
 
-# This function will return another function
-# that will return the configured value
-# regardless of the arguments passed to it.
+# 这个函数会返回另一个（已配置值）的函数，而且不受已传参数的限制。
 def get_static_function(value:typing.Any) -> typing.Callable[..., typing.Any]:
     return lambda *_, **__: value
 
-### ROUTING ###
-# Iterate through the redirects
+### 路由 ###
+# 遍历重定向
 for src, dest in REDIRECTS.items():                            
-    # Create the redirect response object         
+    # 创建重定向响应对象         
     response:sanic.HTTPResponse = sanic.response.redirect(dest)
 
-    # Create the handler function. Typically,
-    # only a sanic.Request object is passed
-    # to the function. This object will be 
-    # ignored.
+    # 创建处理函数，通常，仅将 sanic.Request 对象传递给该函数。 该对象将被忽略。
     handler = get_static_function(response)
 
-    # Route the src path to the handler
+    # 路由src到处理函数
     app.route(src)(handler)
 
-# Route some file and client resources
+# 随便路由一些文件和client资源
 app.static('/files/', 'files')
 app.static('/', 'client')
 
-### RUN ###
+### 运行 ###
 if __name__ == '__main__':
     app.run(
         '127.0.0.1',

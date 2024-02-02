@@ -973,8 +973,7 @@ _当前LTS版本_
   参数
 - [#1866](https://github.com/sanic-org/sanic/pull/1866) 添加`sanic`
   作为入口点命令
-- [#1880](https://github.com/sanic-org/sanic/pull/1880) Add handler
-  names for websockets for url_for usage
+- [#1880](https://github.com/sanic-org/sanic/pull/1880) 为url_for用途的websockets添加处理函数名
 
 **错误修复**
 
@@ -983,9 +982,8 @@ _当前LTS版本_
 - [#1842](https://github.com/sanic-org/sanic/pull/1842) 修复静态
   _处理程序拾取错误
 - [#1827](https://github.com/sanic-org/sanic/pull/1827) 在 OSX py38 和 Windows 上修复读取器
-- [#1848](https://github.com/sanic-org/sanic/pull/1848) 反向
-  named_response_midlware execution order，以匹配正常的响应Order
-  中间件执行顺序
+- [#1848](https://github.com/sanic-org/sanic/pull/1848) 反转
+  named_response_midlware 的执行顺序，以匹配正常的响应中间件执行顺序
 - [#1853](https://github.com/sanic-org/sanic/pull/1853) Fix pickle
   error when attempting to pickle an application which contains
   websocket routes

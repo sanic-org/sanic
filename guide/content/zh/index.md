@@ -3,17 +3,17 @@ title: 闪电般快速的异步 Python Web 框架
 layout: 首页
 features:
   - title: 简单轻便
-    details: 开箱即用，直观无臃肿且具有智能默认设置的框架 API 可以使您直接构建应用程序
+    details: 直观的 API 具有智能默认设置且无臃肿，让您可以直接开始构建应用程序。
   - title: 灵巧无束
-    details: 按照您的意愿进行自由创建，不会对您造成任何约束
+    details: 按照您的意愿进行自由开发，而不是让工具约束你
   - title: 易于拓展
     details: 关注应用的速度和可伸缩性 随时为大大小小的网络应用程序提供支持
-  - title: 生产环境预备
-    details: Sanic 不仅是一个框架，也是一个服务器，它可以随时为您编写的 Web 应用程序提供部署服务
+  - title: 生产就绪
+    details: 开箱即用，Sanic 配有一个 Web 服务器组件，并随时准备驱动您的 Web 应用
   - title: 备受信赖
-    details: Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步 Web 框架
+    details: Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步兼容 Web 框架
   - title: 社区驱动
-    details: 从社区来，到社区去，拥有大量的活跃贡献者
+    details: 从社区来，到社区去。Sanic 由社区维护和管理
 ---
 
 ### :hig_voltag: 闪电般快速的异步 Python Web 框架
@@ -113,21 +113,21 @@ sanic path.to.server:app
 .. tab:: TLS 服务器（TLS server）
 
 ````
-启用 TLS 来运行Sanic与传递文件路径一样简单...
+在启用 TLS 的情况下运行 Sanic 就像向其传递文件路径一样简单......
 ```sh
 sanic path.to.server:app --cert=/path/to/bundle。 rt --key=/path/to/privkey.pem
 ``
 
-... 或包含`fullchain.pem` 和 `privkey.pem`
+... 或是包含`fullchain.pem` 和 `privkey.pem`的目录
 
 ```sh
 sanic path.to. erver:app --tls=/path/to/certs
 ```
 
-**甚至更好地**，正在开发中。 让Sanic处理设置本地TLS证书，以便您可以通过 TLS 访问 [https://localhost:8443](https://localhost:8443)
+**甚至更好地**，在开发中，让Sanic处理设置本地TLS证书，以便您可以通过 TLS 访问 [https://localhost:8443](https://localhost:8443)
 
 ```sh
-sanic 路径。 o.server:app --dev --auto-tls
+sanic path.to.server:app --dev --auto-tls
 ```
 ````
 

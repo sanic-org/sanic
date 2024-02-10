@@ -102,6 +102,13 @@ def test_terminate(monitor_publisher: Mock, m: WorkerMultiplexer):
     monitor_publisher.send.assert_called_once_with("__TERMINATE__")
 
 
+def test_terminate_worker(monitor_publisher: Mock, m: WorkerMultiplexer):
+    m.terminate_worker("foo,bar")
+    monitor_publisher.send.assert_called_once_with(
+        "__TERMINATE_WORKER__:foo,bar"
+    )
+
+
 def test_scale(monitor_publisher: Mock, m: WorkerMultiplexer):
     m.scale(99)
     monitor_publisher.send.assert_called_once_with("__SCALE__:99")

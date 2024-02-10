@@ -50,7 +50,7 @@ def test_terminate(os_mock: Mock):
 
 
 @patch("sanic.worker.process.os")
-def test_shutown(os_mock: Mock):
+def test_shutdown(os_mock: Mock):
     process = Mock()
     process.pid = 1234
     process.is_alive.return_value = True
@@ -410,6 +410,22 @@ def test_remove_worker(manager: WorkerManager, caplog):
 
     manager.remove_worker(worker)
     message = "Worker TEST is tracked and cannot be removed."
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+    assert ("sanic.error", 40, message) in caplog.record_tuples
+
+
+def test_terminate_durable_worker(manager: WorkerManager, caplog):
+    worker = manager.manage("TEST", fake_serve, kwargs={})
+
+    assert "Sanic-TEST-0" in worker.worker_state
+    assert len(manager.transient) == 1
+    assert len(manager.durable) == 1
+
+    manager.terminate_durable_worker("WRONG")
+    message = "Durable worker termination failed because WRONG not found."
 
     assert "Sanic-TEST-0" in worker.worker_state
     assert len(manager.transient) == 1

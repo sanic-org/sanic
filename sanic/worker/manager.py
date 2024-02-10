@@ -408,6 +408,23 @@ class WorkerManager:
         logger.info("Removed worker %s", worker.ident)
         del worker
 
+    def terminate_durable_worker(self, ident: str) -> None:
+        """Terminate a durable worker and its processes.
+
+        Args:
+            ident (str): The name of the durable process to terminate.
+        """
+        worker = self.durable.get(ident)
+        if not worker:
+            error_logger.error(
+                f"Durable worker termination failed because {ident} not found."
+            )
+            return
+        for process in worker.processes:
+            process.terminate()
+        self.remove_worker(worker)
+        logger.info("Terminated durable worker %s", ident)
+
     @property
     def pid(self):
         """Get the process ID of the main process."""
@@ -452,7 +469,14 @@ class WorkerManager:
             elif message == "__TERMINATE__":
                 self._handle_terminate()
                 return MonitorCycle.BREAK
-            elif isinstance(message, tuple) and len(message) == 7:
+            elif isinstance(message, str) and message.startswith(
+                "__TERMINATE_WORKER__"
+            ):
+                self._handle_terminate_worker(
+                    *message.split(":")[1].split(",")
+                )
+                return MonitorCycle.CONTINUE
+            elif isinstance(message, tuple) and len(message) == 8:
                 self._handle_manage(*message)  # type: ignore
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
@@ -465,6 +489,10 @@ class WorkerManager:
 
     def _handle_terminate(self) -> None:
         self.shutdown()
+
+    def _handle_terminate_worker(self, *args) -> None:
+        for ident in args:
+            self.terminate_durable_worker(ident)
 
     def _handle_message(self, message: str) -> Optional[MonitorCycle]:
         logger.debug(

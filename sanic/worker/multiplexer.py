@@ -146,6 +146,14 @@ class WorkerMultiplexer:
         message = "__TERMINATE_EARLY__" if early else "__TERMINATE__"
         self._monitor_publisher.send(message)
 
+    def terminate_worker(self, ident: str):
+        """Terminate a worker.
+
+        Args:
+            name (str): The name of the worker to terminate.
+        """
+        self._monitor_publisher.send(f"__TERMINATE_WORKER__:{ident}")
+
     @property
     def pid(self) -> int:
         """The process ID of the worker."""

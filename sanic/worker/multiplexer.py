@@ -150,7 +150,7 @@ class WorkerMultiplexer:
         """Terminate a worker.
 
         Args:
-            name (str): The name of the worker to terminate.
+            ident (str): The name of the worker to terminate.
         """
         self._monitor_publisher.send(f"__TERMINATE_WORKER__:{ident}")
 

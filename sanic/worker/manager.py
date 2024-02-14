@@ -417,7 +417,7 @@ class WorkerManager:
         worker = self.durable.get(ident)
         if not worker:
             error_logger.error(
-                f"Durable worker termination failed because {ident} not found."
+                "Durable worker termination failed (%s not found).", worker
             )
             return
         for process in worker.processes:

@@ -22,7 +22,7 @@ layout: 主界面
 ```
 ### 社区论坛 👥
 
-分享代码片段或是请求更长时间的支持最好在这里
+分享代码片段 或者 想要持久的咨询支持 建议发布在这里
 
 [论坛](https://community.sanicframework.org/c/questions-and-help/6)上的「问题与帮助」（Questions and Help）
 ```

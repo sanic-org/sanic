@@ -1,6 +1,6 @@
 # 介绍(Introduction)
 
-Sanic 是 Python 的 3.8+ 网页服务器和网页框架，它写得更快。 它允许使用 Python 3.5中添加的异步/等待语法，这使您的代码不受阻挡和快速。
+Sanic 是 Python3.8+ Web 服务器和 Web 框架，旨在提高性能。 它允许使用 Python3.5 中添加的 <code>async</code>/<code>await</code> 异步语法，这使得您的代码有效地避免阻塞从而达到提升响应速度的目的。
 
 .. attrs::
 :class: introduction-table
@@ -17,55 +17,55 @@ Sanic 是 Python 的 3.8+ 网页服务器和网页框架，它写得更快。 �
 
 ## 什么是？
 
-首先，在你跳进水面之前，你应该知道Sanic与其他框架不同。
+首先，在入坑之前， 您应该知道 Sanic 框架和其他的框架相比是与众不同的。
 
-就在第一句中，因为Sanic 是 _both_a **framework** 和 **web server** 。 我们将在部署部分更多地谈论这个问题。
+Sanic 不仅仅是一个**框架（framework）**，更是一个**服务器（web server）** 我们将在部署（deployment ）章节更多地谈论这个问题。
 
-但请记住，Sanic 从盒子中带有你需要写、部署和缩放生产级网页应用程序的一切。 🚀
+但是，请记住，Sanic 具备开箱即用的功能，它可以用于编写，部署和扩展生产级 Web 应用程序。 🚀
 
 ## 目标
 
-> 提供一个简单的方式来启动和运行一个易于构建的高性能的 HTTP 服务器， 扩大并最终扩大规模。
+> 提供一种简单且快速，集创建和启动于一体的方法，来实现一个易于修改和拓展的 HTTP 服务器
 
-## 功能
+## 功能(Features)
 
-.. 列:
-
-```
-### Core
-
-- Built in, **_fast_** web server
-- Production ready
-- Highly scalable
-- ASGI compliant
-- Simple and intuitive API design
-- By the community, for the community
-```
-
-.. 列:
+.. column::
 
 ```
-### Sanic Extensions [[learn more](../plugins/sanic-ext/getting-started.md)]
+### 核心(Core)
 
-- CORS protection
-- Template rendering with Jinja
-- Dependency injection into route handlers
-- OpenAPI documentation with Redoc and/or Swagger
-- Predefined, endpoint-specific response serializers
-- Request query arguments and body input validation
-- Auto create `HEAD`, `OPTIONS`, and `TRACE` endpoints
+- 内置高性能的web server
+- 生产就绪
+- 高度可扩展性
+- 遵循 ASGI 规范
+- 简单直观的API设计
+- 由社区强力驱动
+```
+
+.. column::
+
+```
+### 扩展(Sanic Extensions) [[learn more](../plugins/sanic-ext/getting-started.md)]
+
+- **CORS** 保护
+- 使用 **Jinja** 进行模板渲染
+- 将其他对象通过 **Dependency injection** （依赖注入）到路由处理程序中
+- 使用 **Redoc** 和/或 **Swagger** 编写 OpenAPI 文档
+- 预先定义好的**序列化函数**(eg `json` `text`)、作用于不同的路由入口（serializers）
+- 请求查询参数和正文输入的**验证器**（validation）
+- **自动创建** HEAD、OPTIONS 和 TRACE 入口（auto create）
 ```
 
 ## 赞助商
 
-查看[打开集体](https://opencollective.com/sanic-org)来了解更多关于帮助融资Sanic的信息。
+[点击这里](https://opencollective.com/sanic-org)来了解更多关于帮助融资Sanic的信息。
 
 ## 加入社区
 
 讨论的主要渠道是[社区论坛](https://community.sanicframework.org/)。 还有一个 [Discord 服务器](https://discord.gg/RARQzAEMAA) 进行现场讨论和聊天。
 
-Stackoverflow \`[sanic]' 标签由项目维护者[积极监视](https://stackoverflow.com/questions/tagged/sanic)。
+Stackoverflow \`[sanic]' 标签由项目维护者[积极关注](https://stackoverflow.com/questions/tagged/sanic)。
 
 ## 贡献
 
-我们总是乐于得到新的捐助。 我们有[标记的问题对任何想要开始的人来说都是好的](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)，欢迎[questions/answers/discussion on on the forums](https://community.sanicframework.org/)。 请查看我们的[贡献指南](https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst)。
+我们非常欢迎新的贡献者加入。 我们[有很清晰的issue标记对于那些想要快速上手的人](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)，欢迎[ 在社区上提问/回答/讨论](https://community.sanicframework.org/)。 请查看我们的[贡献指南](https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst)。

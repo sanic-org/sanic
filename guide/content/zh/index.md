@@ -5,13 +5,13 @@ features:
   - title: 简单轻便
     details: 直观的 API 具有智能默认设置且无臃肿，让您可以直接开始构建应用程序。
   - title: 灵巧无束
-    details: 按照您的意愿进行自由开发，而不是让工具约束你
+    details: 按照您的意愿进行自由创建，不会对您造成任何约束
   - title: 易于拓展
     details: 关注应用的速度和可伸缩性 随时为大大小小的网络应用程序提供支持
   - title: 生产就绪
-    details: 开箱即用，Sanic 配有一个 Web 服务器组件，并随时准备驱动您的 Web 应用
+    details: 开箱即用，Sanic 不仅是一个框架，也是一个服务器，并随时准备驱动您的 Web 应用
   - title: 备受信赖
-    details: Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步兼容 Web 框架
+    details: Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步 Web 框架
   - title: 社区驱动
     details: 从社区来，到社区去。Sanic 由社区维护和管理
 ---
@@ -27,7 +27,7 @@ features:
 
     #### 简单轻便
 
-    开箱即用，直观无臃肿且具有智能默认设置的框架 API 可以使您直接构建应用程序
+    直观的 API 具有智能默认设置且无臃肿，让您可以直接开始构建应用程序。
 
 .. attrs::
     :class: column is-4
@@ -46,9 +46,9 @@ features:
 .. attrs::
     :class: column is-4
 
-    #### 生产环境预备
+    #### 生产就绪
 
-    Sanic 不仅是一个框架，也是一个服务器，它可以随时为您编写的 Web 应用程序提供部署服务
+    开箱即用，Sanic 不仅是一个框架，也是一个服务器，并随时准备驱动您的 Web 应用
 
 .. attrs::
     :class: column is-4
@@ -62,21 +62,21 @@ features:
 
     #### 社区驱动
 
-    从社区来，到社区去，拥有大量的活跃贡献者
+    从社区来，到社区去。Sanic 由社区维护和管理
 ```
 
 .. attrs::
 :class: is-size-3 mt-6
 
 ```
-**使用您所期望的功能和工具。**
+**有你所期待的功能和工具。**
 ```
 
 .. attrs::
 :class: is-size-3 ml-6
 
 ```
-**还有一些{span:has-text-primary:您甚至不敢相信的}。**
+**还有一些{span:has-text-primary:意料之外的惊喜}。**
 ```
 
 .. tab:: 生产级别（Production-grade）
@@ -113,18 +113,18 @@ sanic path.to.server:app
 .. tab:: TLS 服务器（TLS server）
 
 ````
-在启用 TLS 的情况下运行 Sanic 就像向其传递文件路径一样简单......
+使用 带 TLS 的 Sanic 就像向其设置文件路径一样简单......
 ```sh
 sanic path.to.server:app --cert=/path/to/bundle。 rt --key=/path/to/privkey.pem
 ``
 
-... 或是包含`fullchain.pem` 和 `privkey.pem`的目录
+... 或是包含`fullchain.pem` 和 `privkey.pem`的目录文件夹
 
 ```sh
 sanic path.to. erver:app --tls=/path/to/certs
 ```
 
-**甚至更好地**，在开发中，让Sanic处理设置本地TLS证书，以便您可以通过 TLS 访问 [https://localhost:8443](https://localhost:8443)
+**除此之外**，在开发中，让Sanic处理设置本地TLS证书，以便您可以通过 TLS 访问 [https://localhost:8443](https://localhost:8443)
 
 ```sh
 sanic path.to.server:app --dev --auto-tls
@@ -134,7 +134,7 @@ sanic path.to.server:app --dev --auto-tls
 .. tab:: Websockets
 
 ````
-通过 [websockets](https://websockets.readthedocs.io) 库，可以马上实现的 WebSockets。
+得益于 [websockets](https://websockets.readthedocs.io) 库，可以无缝实现的 WebSockets。
 
 ```python
 from sanic import Request, Websocket
@@ -149,7 +149,7 @@ async def feed(request: Request, ws: Websocket):
 .. tab:: 静态文件（Static files）
 
 ````
-建立静态文件服务当然是既直观又容易。只需要给一个端点以及一个需要被服务的文件或目录命名即可。
+建立静态文件服务当然是既直观又容易。只需配置一个入口并且指定一个文件或一个目录文件夹即可。
 
 ```python
 app.static("/", "/path/to/index.html")
@@ -185,7 +185,7 @@ app.static(
 .. tab:: 生命周期（Lifecycle）
 
 ````
-添加一个装饰器，就能够应用一个在请求开始或是响应结束时的功能性的路由。
+添加一个装饰器，就能在应用生命周期开始或结束时插入自定义的处理函数
 
 ```python
 @app.on_request
@@ -209,14 +209,14 @@ async def setup_db(app):
     await app.ctx.db_pool.shutdown()
 ```
 
-除此之外，Sanic 还允许您绑定一系列内置事件（称为信号），或创建和调度自己的事件。
+除此之外，Sanic 还允许您绑定一系列官方内置事件（称为信号），或创建和调度自己的事件。
 
 ```python
-@app.signal("http.lifecycle.complete")  # 内建
+@app.signal("http.lifecycle.complete")  # built-in (官方内置的)
 async def my_signal_handler(conn_info):
     print("Connection has been closed")
 
-@app.signal("something.happened.ohmy")  # 定制
+@app.signal("something.happened.ohmy")  # custom (自定义的)
 async def my_signal_handler():
     print("something happened")
 
@@ -227,20 +227,20 @@ await app.dispatch("something.happened.ohmy")
 .. tab:: 智能错误处理（Smart error handling）
 
 ````
-出错后，会出现直观且准确的 HTTP 错误：
+出错后，会出现直观且合适的 HTTP 错误：
 
 ```python
-raise sanic.exceptions.NotFound  # 自动响应 HTTP 404
+raise sanic.exceptions.NotFound # Automatically responds with HTTP 404
 ```
 
-或是实现您自己的：
+或是实现您自己的错误处理方法：
 
 ```python
 from sanic.exceptions import SanicException
 
 class TeapotError(SanicException):
     status_code = 418
-    message = "抱歉，我不能煮咖啡Orz"
+    message = "Sorry, I cannot brew coffee"
 
 raise TeapotError
 ```
@@ -249,7 +249,7 @@ raise TeapotError
 
 ![image](../assets/images/error-div-by-zero.png)
 
-无论如何，Sanic 自带的算法都会根据情况尝试响应 HTML、JSON 或基于文本的错误。不要担心，根据您的具体需求设置和自定义错误处理非常简单。
+无论如何，Sanic 自带的算法都会根据情况尝试响应 HTML、JSON 或 text-based 的错误。不要担心，您可以根据您的具体需求，非常简单的设置和自定义错误处理的方法。
 ````
 
 .. tab:: 应用查看器（App Inspector）
@@ -313,9 +313,9 @@ sanic inspect migrations
 - 使用 **Jinja** 进行模板渲染
 - 将其他对象通过 **Dependency injection** （依赖注入）到路由处理程序中
 - 使用 **Redoc** 和/或 **Swagger** 编写 OpenAPI 文档
-- 预定义的特定端点响应**序列化器**（serializers）
+- 预先定义好的**序列化函数**(eg `json`  `text`)、作用于不同的路由入口（serializers）
 - 请求查询参数和正文输入的**验证器**（validation）
-- **自动创建** HEAD、OPTIONS 和 TRACE 端点（auto create）
+- **自动创建** HEAD、OPTIONS 和 TRACE 入口（auto create）
 - 实时**健康监控**（health monitor）
 ```
 

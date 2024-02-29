@@ -1,47 +1,46 @@
-# 正在开始
+# 快速上手
 
-在我们开始之前，请确保您正在运行 Python 3.8或更高版本。 目前，Sanic正在与 Python 版本 3.8 - 3.11一起工作。
+在我们开始之前，请确保您正在运行 Python 3.8或更高版本。 目前，Sanic可以运行在Python 版本 3.8 - 3.11上。
 
 ## 安装
 
 ```sh
-pip 安装sanic
+pip install sanic
 ```
 
-## 您好，全局应用程序
+## Hello, world 应用案例
 
-.. 列:
+.. column::
 
 ```
-If you have ever used one of the many decorator based frameworks, this probably looks somewhat familiar to you.
+如果你之前有使用过基于装饰器的web应用，那么Sanic的语法可能对你来说会很亲切。
 
 
+.. 注意:: 
 
-.. note:: 
-
-    If you are coming from Flask or another framework, there are a few important things to point out. Remember, Sanic aims for performance, flexibility, and ease of use. These guiding principles have tangible impact on the API and how it works.
+    如果您来自 Flask 或其他框架，有一些重要的事情需要指出。 请记住，Sanic 的目标是性能(performance)、灵活性(flexibility) 和易用性(ease of use)。 这些指导原则对 API 及其工作方式产生了切实的影响。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-from sanic importing Sanic
+from sanic import Sanic
 from sanic.response import text
 
 app = Sanic("MyHelloWorldApp")
 
-@app. et("/")
+@app.get("/")
 async def hello_world(request):
     return text("Hello, world.")
 ```
 ````
 
-### 重要的注意事项
+### 重要提示
 
-- 每个请求处理程序都可以同步(`def hello_world`)，也可以同步(`async def hello_world`)。 除非你有明确的理由，否则总是使用 "async"。
-- "request" 对象始终是你处理器的第一个参数。 其它框架在要导入的上下文变量中传递这一点。 在 "async" 世界中 这种情况不会很好地发挥作用，因此更容易(更干净和业绩更好)对此加以明确说明。
-- 您**必须** 使用响应类型。 其他框架允许您有一个返回值，如：`return "Hello, world."` 或者 `return {"foo": "bar"}`。 但是，为了进行这种隐性的呼叫，链中的某个地方需要花费宝贵的时间来确定你的意思。 因此，萨尼克以牺牲这个容易为代价，决定要求明确呼叫。
+- 每一个请求响应函数都可以使用同步方式（`def hello_world`）和异步方式（`async def hello_world`）进行声明。 除非您有一个明确的需求和完善的使用方法，否则的话，请尽量使用 async 来声明响应函数。
+- `request` 对象始终是响应函数的第一个参数。 其他框架在需要导入的上下文变量中进行传递。 在 `async`的世界里，如果使用隐式传递，那么它将无法完美的运行，更何况还要兼顾简洁且高效的表现形式。
+- 您 必须 使用 <code>Response</code> 或继承自 <code>Response</code> 的类作为响应类型。 在许多其他框架中，它们允许您使用诸如 `return "Hello World"` 或者 `return {"foo":"bar"}` 的方式来进行返回， 但是为了执行这类隐式调用，需要在响应流程中的某个位置花费大量的时间来确定您到底想要表达什么意思。 因此，在Sanic的返回语句中，需要明确的指定返回的数据类型（eg `return json({"foo":"bar"})` 或 `return text("Hello world")`）
 
 ### 正在运行
 

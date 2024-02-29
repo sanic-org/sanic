@@ -6,15 +6,15 @@ title: Sanic 应用程序
 
 请参阅API文档： [sanic.app](/api/sanic.app)
 
-## 实例
+## 实例(Instance)
 
-.. 列:
+.. column::
 
 ```
-The most basic building block is the :class:`sanic.app.Sanic` instance. It is not required, but the custom is to instantiate this in a file called `server.py`.
+最基本的构建块是 :class: `sanic.app.Sanic` 实例。这不是必需的，但习惯是在名为 `server.py` 的文件中实例化它。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -26,17 +26,17 @@ app = Sanic("MyHelloWorldApp")
 ```
 ````
 
-## 应用程序上下文：
+## 应用上下文(Application context)
 
-大多数应用程序将需要在代码库的不同部分之间共享/再利用数据或物体。 Sanic 帮助在应用程序实例上提供 `ctx` 对象。 它是开发者附加应用整个生命周期中应该存在的任何对象或数据的可用空间。
+大多数应用程序都需要跨代码库的不同部分共享/重用数据或对象。 Sanic 帮助在应用程序实例上提供 `ctx` 对象。 它是开发者附加应用整个生命周期中应该存在的任何对象或数据的可用空间。
 
-.. 列:
+.. column::
 
 ```
 最常见的模式是将数据库实例附加到应用程序中。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -48,10 +48,10 @@ app.ctx.db = Database()
 .. 列:
 
 ```
-While the previous example will work and is illustrative, it is typically considered best practice to attach objects in one of the two application startup [listeners](./listeners).
+虽然前面的示例可以工作并且具有说明性，但通常将对象在应用的开始或结束的生命周期里添加是比较合适的
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -63,15 +63,15 @@ async def attach_db(app, loop):
 ```
 ````
 
-## 应用程序注册表
+## App 注册表(App Registry)
 
-.. 列:
+.. column::
 
 ```
 当您实例化一个 Sanic 实例时，它可以稍后从 Sanic 应用程序注册表中检索。 例如，如果您需要从无法访问的地方访问您的 Sanic 实例，这可能是有用的。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -80,14 +80,14 @@ from sanic import Sanic
 
 app = Sanic("my_awesome_server")
 
-# 路径/to/some where_else.py
+# ./path/to/somewhere_else.py
 from sanic import Sanic
 
 app = Sanic.get_app("my_awesome_server")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 If you call `Sanic.get_app("non-existing")` on an app that does not exist, it will raise :class:`sanic.exceptions.SanicException` by default. You can, instead, force the method to return a new instance of Sanic with that name.

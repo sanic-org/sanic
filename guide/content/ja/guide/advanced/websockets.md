@@ -51,15 +51,15 @@ from sanic import Request, Websocket
 @app.websocket("/feed")
 async def feed(request: Request, ws: Websocket):
     while True:
-        data = "hello!"
-        print("Sending: " + data)
+        data = "こんにちは！"
+        print("送信中: " + data)
         await ws.send(data)
         data = await ws.recv()
-        print("Received: " + data)
+        print("受信: " + data)
 ```
 ````
 
-.. 列::
+.. column::
 
 ```
 forループ内の`Websocket`オブジェクトを繰り返すだけで、ループを簡素化できます。
@@ -67,7 +67,7 @@ forループ内の`Websocket`オブジェクトを繰り返すだけで、ルー
 *v22.9*に追加されました
 ```
 
-.. 列::
+.. column::
 
 ````
 ```python

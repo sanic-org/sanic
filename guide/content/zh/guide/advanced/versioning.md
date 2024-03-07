@@ -25,7 +25,7 @@ Adding a version will add a `/v{version}` url prefix to your endpoints.
 # /v1/text
 @app.route("/text", version=1)
 def handle_request(request):
-    return response. ext("Hello world! 版本 1")
+    return response. ext("Hello world! Version 1")
 
 # /v2/text
 @app.route("/text", version=2)
@@ -60,55 +60,49 @@ def handle_request(request):
 .. 列:
 
 ```
-In order to simplify the management of the versioned blueprints, you can provide a version number in the blueprint
-group. The same will be inherited to all the blueprint grouped under it if the blueprints don't already override the
-same information with a value specified while creating a blueprint instance.
+为了简化版本化蓝图的管理，您可以在蓝图中提供版本号组。如果蓝图还没有覆盖，那么同样的将被继承到分组在它下面的所有蓝图与创建蓝图实例时指定的值相同的信息。
 
-When using blueprint groups for managing the versions, the following order is followed to apply the Version prefix to
-the routes being registered.
+当使用蓝图组来管理版本时，遵循以下顺序将Version前缀应用于正在注册的路由。
 
-1. Route Level configuration
-2. Blueprint level configuration
-3. Blueprint Group level configuration
-
-If we find a more pointed versioning specification, we will pick that over the more generic versioning specification
-provided under the Blueprint or Blueprint Group
+1. 路由级别配置
+2. 蓝图级配置
+3. 组级配置
 ```
 
 .. 列:
 
 ````
 ```python
-从 sanic.blueprints 导入蓝图A.format@@1 esponse import json
+from sanic.blueprints import Blueprint
+from sanic.response import json
 
 bp1 = Blueprint(
     name="blueprint-1",
     url_prefix="/bp1",
-    version=1。 5 ,
+    version=1.25,
 )
 bp2 = Blueprint(
     name="blueprint-2",
     url_prefix="/bp2",
 
-
-group = Blueprint. 路由(
+group = Blueprint.group(
     [bp1, bp2],
     url_prefix="/bp-group",
     version="v2",
 )
 
-# GET /v1。 5/bp-group/bp1/endpoint-1
-@bp1。 et("/endpoint-1")
+# GET /v1.25/bp-group/bp1/endpoint-1
+@bp1.get("/endpoint-1")
 async def handle_endpoint_1_bp1(request):
-    return json({"Source": "bluprint-1/endpoint-1"})
+    return json({"Source": "blueprint-1/endpoint-1"})
 
 # GET /v2/bp-group/bp2/endpoint-2
-@bp2. et("/endpoint-1")
+@bp2.get("/endpoint-1")
 async def handle_endpoint_1_bp2(request):
     return json({"Source": "blueprint-2/endpoint-1"})
 
 # GET /v1/bp-group/bp2/endpoint-2
-@bp2. et("/endpoint-2", version=1)
+@bp2.get("/endpoint-2", version=1)
 async def handle_endpoint_2_bp2(request):
     return json({"Source": "blueprint-2/endpoint-2"})
 ```

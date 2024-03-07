@@ -38,27 +38,27 @@ app.register_middleware(add_cors_headers, "response")
 ## `cors.py`
 
 ```python
-从输入导入Iterable
+from typing import Iterable
 
-def _add_cors_headers(响应) 方法: Iterable[str]) -> 无:
+def _add_cors_headers(response, methods: Iterable[str]) -> None:
     allow_methods = list(set(methods))
-    如果"OPTIONS" 不在allow_methods:
-        allow_methods. pend("OPTIONS")
-    headers = 哇，
-        "Access-Control-Allow-Methods"：","。 oin(allow_methods),
-        "Access-Control-Allow-origin": mydomain. om,
+    if "OPTIONS" not in allow_methods:
+        allow_methods.append("OPTIONS")
+    headers = {
+        "Access-Control-Allow-Methods": ",".join(allow_methods),
+        "Access-Control-Allow-Origin": "mydomain.com",
         "Access-Control-Allow-Credentials": "true",
-        “Access Control-Allow-Headers”: (
-            "original, 内容类型，接受，"
+        "Access-Control-Allow-Headers": (
+            "origin, content-type, accept, "
             "authorization, x-xsrf-token, x-request-id"
-        ,
+        ),
     }
-    响应。 eaders.extend(headers)
+    response.headers.extend(headers)
 
 def add_cors_headers(request, response):
-    if request. ethod != "OPTIONS":
-        methods = [方法是请求的。 退出.methods]
-        _add_cors_headers(响应, 方法)
+    if request.method != "OPTIONS":
+        methods = [method for method in request.route.methods]
+        _add_cors_headers(response, methods)
 ```
 
 ## `options.py`
@@ -135,4 +135,4 @@ connection: keep-alive
 
 此外，结算社区的一些资源：
 
-- [极好的卫生](https://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)
+- [很棒的Sanic](https://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)

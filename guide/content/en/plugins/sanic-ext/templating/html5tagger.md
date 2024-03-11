@@ -4,4 +4,4 @@ title: Sanic Extensions - html5tagger
 
 # Coming soon
 
-See [GitHub])(https://github.com/sanic-org/html5tagger/)
+See [sanic-org/html5tagger on GitHub](https://github.com/sanic-org/html5tagger/)

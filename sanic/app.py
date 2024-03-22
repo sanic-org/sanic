@@ -223,6 +223,7 @@ class Sanic(
         "strict_slashes",
         "websocket_enabled",
         "websocket_tasks",
+        "generate_name",
     )
 
     _app_registry: ClassVar[Dict[str, "Sanic"]] = {}
@@ -247,6 +248,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
+        generate_name: bool = False,
     ) -> None:
         ...
 
@@ -269,6 +271,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
+        generate_name: bool = False,
     ) -> None:
         ...
 
@@ -291,6 +294,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
+        generate_name: bool = False,
     ) -> None:
         ...
 
@@ -313,6 +317,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
+        generate_name: bool = False,
     ) -> None:
         ...
 
@@ -334,6 +339,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
+        generate_name: bool = False,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -390,6 +396,7 @@ class Sanic(
         self.strict_slashes: bool = strict_slashes
         self.websocket_enabled: bool = False
         self.websocket_tasks: Set[Future[Any]] = set()
+        self.generate_name = generate_name
 
         # Register alternative method names
         self.go_fast = self.run

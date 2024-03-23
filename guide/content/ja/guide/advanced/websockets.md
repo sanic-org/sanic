@@ -35,11 +35,11 @@ async def feed(request: Request, ws: Websocket):
 .. 列::
 
 ```
-Typically, a websocket handler will want to hold open a loop.
+一般的に、ウェブソケットハンドラはループを開いたままにします。
 
-It can then use the `send()` and `recv()` methods on the second object injected into the handler.
+そして、ハンドラに注入された 2 番目のオブジェクトの `send()` メソッドと `recv()` メソッドを使用します。
 
-This example is a simple endpoint that echos back to the client messages that it receives.
+この例は、受信したメッセージをクライアントにエコーバックする単純なエンドポイントです。
 ```
 
 .. 列::

@@ -29,7 +29,7 @@ except ImportError:  # websockets >= 11.0
 
 from websockets.typing import Data
 
-from sanic.log import error_logger, logger
+from sanic.log import websockets_logger
 from sanic.server.protocols.base_protocol import SanicProtocol
 
 from ...exceptions import ServerError, WebsocketClosed
@@ -103,22 +103,22 @@ class WebsocketImplProtocol:
         if not self.can_pause:
             return False
         if self.pause_frame_fut:
-            logger.debug("Websocket connection already paused.")
+            websockets_logger.debug("Websocket connection already paused.")
             return False
         if (not self.loop) or (not self.io_proto):
             return False
         if self.io_proto.transport:
             self.io_proto.transport.pause_reading()
         self.pause_frame_fut = self.loop.create_future()
-        logger.debug("Websocket connection paused.")
+        websockets_logger.debug("Websocket connection paused.")
         return True
 
     def resume_frames(self):
         if not self.pause_frame_fut:
-            logger.debug("Websocket connection not paused.")
+            websockets_logger.debug("Websocket connection not paused.")
             return False
         if (not self.loop) or (not self.io_proto):
-            logger.debug(
+            websockets_logger.debug(
                 "Websocket attempting to resume reading frames, "
                 "but connection is gone."
             )
@@ -127,7 +127,7 @@ class WebsocketImplProtocol:
             self.io_proto.transport.resume_reading()
         self.pause_frame_fut.set_result(None)
         self.pause_frame_fut = None
-        logger.debug("Websocket connection unpaused.")
+        websockets_logger.debug("Websocket connection unpaused.")
         return True
 
     async def connection_made(
@@ -249,7 +249,7 @@ class WebsocketImplProtocol:
                     try:
                         await asyncio.wait_for(ping_waiter, self.ping_timeout)
                     except asyncio.TimeoutError:
-                        error_logger.warning(
+                        websockets_logger.warning(
                             "Websocket timed out waiting for pong"
                         )
                         self.fail_connection(1011)
@@ -257,14 +257,18 @@ class WebsocketImplProtocol:
         except asyncio.CancelledError:
             # It is expected for this task to be cancelled during during
             # normal operation, when the connection is closed.
-            logger.debug("Websocket keepalive ping task was cancelled.")
+            websockets_logger.debug(
+                "Websocket keepalive ping task was cancelled."
+            )
         except (ConnectionClosed, WebsocketClosed):
-            logger.debug("Websocket closed. Keepalive ping task exiting.")
+            websockets_logger.debug(
+                "Websocket closed. Keepalive ping task exiting."
+            )
         except Exception as e:
-            error_logger.warning(
+            websockets_logger.warning(
                 "Unexpected exception in websocket keepalive ping task."
             )
-            logger.debug(str(e))
+            websockets_logger.debug(str(e))
 
     def _force_disconnect(self) -> bool:
         """
@@ -395,13 +399,13 @@ class WebsocketImplProtocol:
             if self.data_finished_fut:
                 try:
                     await self.data_finished_fut
-                    logger.debug(
+                    websockets_logger.debug(
                         "Websocket task finished. Closing the connection."
                     )
                 except asyncio.CancelledError:
                     # Cancelled error is called when data phase is cancelled
                     # if an error occurred or the client closed the connection
-                    logger.debug(
+                    websockets_logger.debug(
                         "Websocket handler cancelled. Closing the connection."
                     )
 
@@ -416,7 +420,9 @@ class WebsocketImplProtocol:
                 and self.io_proto.transport
                 and self.io_proto.transport.can_write_eof()
             ):
-                logger.debug("Websocket half-closing TCP connection")
+                websockets_logger.debug(
+                    "Websocket half-closing TCP connection"
+                )
                 self.io_proto.transport.write_eof()
                 if self.connection_lost_waiter:
                     if await self.wait_for_connection_lost(timeout=0):
@@ -455,7 +461,7 @@ class WebsocketImplProtocol:
                 ):
                     # Connection aborted before the timeout expired.
                     return
-                error_logger.warning(
+                websockets_logger.warning(
                     "Timeout waiting for TCP connection to close. Aborting"
                 )
                 if self.io_proto and self.io_proto.transport:

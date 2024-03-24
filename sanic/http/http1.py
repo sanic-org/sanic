@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from sanic.response import BaseHTTPResponse
 
 from asyncio import CancelledError, sleep
+from time import perf_counter
 
 from sanic.compat import Header
 from sanic.exceptions import (
@@ -70,6 +71,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         "response_size",
         "response_bytes_left",
         "upgrade_websocket",
+        "perft0",
     ]
 
     def __init__(self, protocol):
@@ -94,6 +96,7 @@ class Http(Stream, metaclass=TouchUpMeta):
         self.response: BaseHTTPResponse = None
         self.upgrade_websocket = False
         self.url = None
+        self.perft0 = None
 
     def __bool__(self):
         """Test if request handling is in progress"""
@@ -115,6 +118,7 @@ class Http(Stream, metaclass=TouchUpMeta):
                 await self.http1_request_header()
 
                 self.stage = Stage.HANDLER
+                self.perft0 = perf_counter()
                 self.request.conn_info = self.protocol.conn_info
                 await self.protocol.request_handler(self.request)
 
@@ -459,16 +463,20 @@ class Http(Stream, metaclass=TouchUpMeta):
         req, res = self.request, self.response
         extra = {
             "status": getattr(res, "status", 0),
-            "byte": getattr(
-                self, "response_bytes_left", getattr(self, "response_size", -1)
-            ),
-            "host": "UNKNOWN",
+            "byte": res.headers.get("content-length", 0)
+            if res.headers.get("transfer-encoding") != "chunked"
+            else "chunked",
+            "host": f"{id(self.protocol.transport):X}"[-5:-1] + "unx",
             "request": "nil",
+            "duration": (
+                f" {1000 * (perf_counter() - self.perft0):.1f}ms"
+                if self.perft0 is not None
+                else ""
+            ),
         }
-        if req is not None:
-            if req.remote_addr or req.ip:
-                extra["host"] = f"{req.remote_addr or req.ip}:{req.port}"
-            extra["request"] = f"{req.method} {req.url}"
+        if ip := req.client_ip:
+            extra["host"] = f"{ip}:{req.port}"
+        extra["request"] = f"{req.method} {req.url}"
         access_logger.info("", extra=extra)
 
     # Request methods

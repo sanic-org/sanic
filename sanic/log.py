@@ -1,4 +1,6 @@
 import logging
+import os
+import re
 import sys
 
 from enum import Enum
@@ -7,6 +9,8 @@ from warnings import warn
 
 from sanic.helpers import is_atty
 
+
+controlre = re.compile(r"\033\[[0-9;]*\w")
 
 # Python 3.11 changed the way Enum formatting works for mixed-in types.
 if sys.version_info < (3, 11, 0):
@@ -17,6 +21,18 @@ if sys.version_info < (3, 11, 0):
 else:
     if not TYPE_CHECKING:
         from enum import StrEnum
+
+
+class Colors(StrEnum):  # no cov
+    END = "\033[0m"
+    BOLD = "\033[1m"
+    BLUE = "\033[34m"
+    GREEN = "\033[32m"
+    PURPLE = "\033[35m"
+    RED = "\033[31m"
+    SANIC = "\033[38;2;255;13;104m"
+    YELLOW = "\033[01;33m"
+    GREY = "\033[1;30m"
 
 
 LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
@@ -62,13 +78,12 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
     },
     formatters={
         "generic": {
-            "format": "%(asctime)s [%(process)s] [%(levelname)s] %(message)s",
+            "format": f"{Colors.GREY}[%(process)s]{Colors.END}{Colors.BOLD}%(levelname)s:{Colors.END}\033[1000D\033[15C %(message)s",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },
         "access": {
-            "format": "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: "
-            + "%(request)s %(message)s %(status)s %(byte)s",
+            "format": f"{Colors.GREY}%(host)s {Colors.BLUE}%(request)s{Colors.END} %(message)s\033[1000C\033[39D\033[K %(status)s %(byte)s{Colors.GREY}%(duration)s{Colors.END}",
             "datefmt": "[%Y-%m-%d %H:%M:%S %z]",
             "class": "logging.Formatter",
         },
@@ -78,16 +93,17 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
 Defult logging configuration
 """
 
-
-class Colors(StrEnum):  # no cov
-    END = "\033[0m"
-    BOLD = "\033[1m"
-    BLUE = "\033[34m"
-    GREEN = "\033[32m"
-    PURPLE = "\033[35m"
-    RED = "\033[31m"
-    SANIC = "\033[38;2;255;13;104m"
-    YELLOW = "\033[01;33m"
+for handler in LOGGING_CONFIG_DEFAULTS["handlers"].values():
+    stream = handler["stream"]
+    formatter = LOGGING_CONFIG_DEFAULTS["formatters"][handler["formatter"]]
+    # Replace %(process)s PID with a prettified name
+    process = (
+        os.environ.get("SANIC_WORKER_NAME", "").replace("Sanic", "") or "Sanic"
+    )
+    formatter["format"] = formatter["format"].replace("%(process)s", process)
+    # Strip control codes if not on terminal
+    if not stream.isatty():
+        formatter["format"] = controlre.sub("", formatter["format"])
 
 
 class VerbosityFilter(logging.Filter):
@@ -122,7 +138,14 @@ server_logger = logging.getLogger("sanic.server")  # no cov
 """
 Logger used by Sanic for server related messages
 """
-logger.addFilter(_verbosity_filter)
+server_logger.addFilter(_verbosity_filter)
+
+websockets_logger = logging.getLogger("sanic.websockets")  # no cov
+"""
+Logger used by Sanic for websockets module and protocol related messages
+"""
+websockets_logger.addFilter(_verbosity_filter)
+websockets_logger.setLevel(logging.WARNING)  # Too noisy on debug/info
 
 
 def deprecation(message: str, version: float):  # no cov

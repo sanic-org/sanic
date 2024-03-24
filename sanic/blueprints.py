@@ -7,7 +7,6 @@ from collections import defaultdict
 from collections.abc import MutableSequence
 from copy import deepcopy
 from functools import partial, wraps
-from inspect import isfunction
 from itertools import chain
 from types import SimpleNamespace
 from typing import (
@@ -59,7 +58,7 @@ def lazy(func, as_decorator=True):
         kwargs["apply"] = False
         pass_handler = None
 
-        if args and isfunction(args[0]):
+        if args and callable(args[0]):
             as_decorator = False
 
         def wrapper(handler):

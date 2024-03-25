@@ -1,3 +1,4 @@
+import sys
 from ast import Attribute, Await, Expr, NodeTransformer
 from typing import Any, List
 
@@ -67,7 +68,7 @@ class RemoveDispatch(NodeTransformer):
 
         if isinstance(func, Attribute) and func.attr == "dispatch":
             event = args[0]
-            if hasattr(event, "value"):
+            if hasattr(event, "value") if sys.version_info >= (3, 12) else hasattr(event, "s"):
                 event_name = getattr(event, "value", event.s)
                 if self._not_registered(event_name):
                     logger.debug(

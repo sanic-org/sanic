@@ -9,15 +9,15 @@ class BaseMixin(metaclass=SanicMeta):
     name: str
     strict_slashes: Optional[bool]
 
-    def _generate_name(self, *objects, route_generate=False, methods=None, uri=None) -> str:
+    def _generate_name(self, *objects, unique_route_name_generate=False, methods=None, uri=None) -> str:
         name = None
-        named_route = False
+        _named_route = False
 
         for obj in objects:
             if obj:
                 if isinstance(obj, str):
                     name = obj
-                    named_route = True
+                    _named_route = True
                     break
 
                 try:
@@ -34,12 +34,12 @@ class BaseMixin(metaclass=SanicMeta):
             raise ValueError("Could not generate a name for handler")
 
         if not name.startswith(f"{self.name}."):
-            if route_generate and not named_route:
+            if unique_route_name_generate and not _named_route:
                 if methods:
-                    methods = "_".join(methods)
+                    methods = "-".join(methods)
                     name = f"{name}_{methods}"
                 if uri:
-                    # uri = uri.replace("/", "/")
+                    uri = uri.replace("/", "S")
                     name = f"{name}_{uri}"
             name = f"{self.name}.{name}"
 

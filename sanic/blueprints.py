@@ -117,6 +117,7 @@ class Blueprint(BaseSanic):
         "version",
         "version_prefix",
         "websocket_routes",
+        "unique_route_name_generate",
     )
 
     def __init__(
@@ -127,6 +128,7 @@ class Blueprint(BaseSanic):
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
+        unique_route_name_generate: bool = False,
     ):
         super().__init__(name=name)
         self.reset()
@@ -142,6 +144,7 @@ class Blueprint(BaseSanic):
         )
         self.version = version
         self.version_prefix = version_prefix
+        self.unique_route_name_generate = unique_route_name_generate
 
     def __repr__(self) -> str:
         args = ", ".join(

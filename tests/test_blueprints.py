@@ -308,6 +308,39 @@ def test_bp_with_host_list(app: Sanic):
     assert "test_bp_with_host_list.test_bp_host.handler2" in route_names
 
 
+def test_bp_with_auto_name_generate(app: Sanic):
+    bp = Blueprint(
+        "test_bp_host",
+        url_prefix="/test1",
+        host=["example.com", "sub.example.com"],
+        unique_route_name_generate=True,
+    )
+
+    @bp.route("/")
+    def handler1(request):
+        return text("Hello")
+
+    @bp.route("/", host=["sub1.example.com"])
+    def handler2(request):
+        return text("Hello subdomain!")
+
+    @bp.route("/route_multiple_method", methods=["GET", "POST"])
+    def handler3(request):
+        return text("Hello subdomain!")
+
+    @bp.route("/route_with_name", methods=["GET", "POST"], name="handler3")
+    def handler3(request):
+        return text("Hello subdomain!")
+
+    app.blueprint(bp)
+
+    route_names = [r.name for r in app.router.routes]
+    assert "test_bp_with_auto_name_generate.test_bp_host.handler1_GET_S" in route_names
+    assert "test_bp_with_auto_name_generate.test_bp_host.handler2_GET_S" in route_names
+    assert "test_bp_with_auto_name_generate.test_bp_host.handler3_GET-POST_Sroute_multiple_method" in route_names
+    assert "test_bp_with_auto_name_generate.test_bp_host.handler3" in route_names
+
+
 def test_several_bp_with_host_list(app: Sanic):
     bp = Blueprint(
         "test_text",

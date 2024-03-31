@@ -43,7 +43,9 @@ class WorkerProcess:
         self.worker_state = worker_state
         self.restartable = restartable
         if self.name not in self.worker_state:
-            self.worker_state[self.name] = {"server": self.SERVER_LABEL in self.name}
+            self.worker_state[self.name] = {
+                "server": self.SERVER_LABEL in self.name
+            }
         self.spawn()
 
     def set_state(self, state: ProcessState, force=False):
@@ -121,7 +123,9 @@ class WorkerProcess:
         else:
             self._old_process = self._current_process
         if self._add_config():
-            self.kwargs.update({"config": {k.upper(): v for k, v in kwargs.items()}})
+            self.kwargs.update(
+                {"config": {k.upper(): v for k, v in kwargs.items()}}
+            )
         try:
             self.spawn()
             self.start()
@@ -216,7 +220,8 @@ class WorkerProcess:
     def _add_config(self) -> bool:
         sig = signature(self.target)
         if "config" in sig.parameters or any(
-            param.kind == param.VAR_KEYWORD for param in sig.parameters.values()
+            param.kind == param.VAR_KEYWORD
+            for param in sig.parameters.values()
         ):
             return True
         return False
@@ -259,7 +264,9 @@ class Worker:
             # implementations do. We can safely ignore as it is a typing
             # issue in the standard lib.
             factory=self.context.Process,  # type: ignore
-            name="-".join([self.WORKER_PREFIX, self.name, str(len(self.processes))]),
+            name="-".join(
+                [self.WORKER_PREFIX, self.name, str(len(self.processes))]
+            ),
             ident=self.ident,
             target=self.serve,
             kwargs={**self.server_settings},

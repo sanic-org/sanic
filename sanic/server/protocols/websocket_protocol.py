@@ -175,7 +175,6 @@ class WebSocketProtocol(HttpProtocol):
     def log_websocket(self, message):
         if not self.access_log or not self.websocket_url:
             return
-        req = self._http.request if self._http else None
         status = ""
         close = ""
         try:

@@ -1,0 +1,56 @@
+import sys
+
+from typing import Any, Dict
+
+
+LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
+    version=1,
+    disable_existing_loggers=False,
+    loggers={
+        "sanic.root": {"level": "INFO", "handlers": ["console"]},
+        "sanic.error": {
+            "level": "INFO",
+            "handlers": ["error_console"],
+            "propagate": True,
+            "qualname": "sanic.error",
+        },
+        "sanic.access": {
+            "level": "INFO",
+            "handlers": ["access_console"],
+            "propagate": True,
+            "qualname": "sanic.access",
+        },
+        "sanic.server": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": True,
+            "qualname": "sanic.server",
+        },
+    },
+    handlers={
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "generic",
+            "stream": sys.stdout,
+        },
+        "error_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "generic",
+            "stream": sys.stderr,
+        },
+        "access_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "access",
+            "stream": sys.stdout,
+        },
+    },
+    formatters={
+        "generic": {"class": "sanic.logging.formatter.SanicAutoFormatter"},
+        "access": {
+            "class": "sanic.logging.formatter.SanicAutoAccessFormatter"
+        },
+    },
+)
+"""
+Defult logging configuration
+"""

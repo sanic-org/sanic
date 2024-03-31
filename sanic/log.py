@@ -98,7 +98,7 @@ for handler in LOGGING_CONFIG_DEFAULTS["handlers"].values():
     formatter = LOGGING_CONFIG_DEFAULTS["formatters"][handler["formatter"]]
     # Replace %(process)s PID with a prettified name
     process = (
-        os.environ.get("SANIC_WORKER_NAME", "").replace("Sanic", "") or "Sanic"
+        os.environ.get("SANIC_WORKER_IDENTIFIER", "").replace("Sanic", "") or "Main"
     )
     formatter["format"] = formatter["format"].replace("%(process)s", process)
     # Strip control codes if not on terminal

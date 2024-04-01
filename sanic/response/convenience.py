@@ -283,9 +283,9 @@ async def file(
         if _range:
             await f.seek(_range.start)
             out_stream = await f.read(_range.size)
-            headers[
-                "Content-Range"
-            ] = f"bytes {_range.start}-{_range.end}/{_range.total}"
+            headers["Content-Range"] = (
+                f"bytes {_range.start}-{_range.end}/{_range.total}"
+            )
             status = 206
         else:
             out_stream = await f.read()

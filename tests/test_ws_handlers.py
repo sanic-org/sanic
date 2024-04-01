@@ -138,7 +138,7 @@ def test_request_url(
     )
     assert ws_proxy.client_sent == ["test 1", "test 2", ""]
     assert ws_proxy.client_received[0] == ws_proxy.client_received[1]
-    if proxy:
+    if proxy == "servername":
         assert ws_proxy.client_received[0] == "wss://example.com/ws"
         assert ws_proxy.client_received[1] == "wss://example.com/ws"
     else:

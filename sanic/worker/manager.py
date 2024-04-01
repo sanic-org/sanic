@@ -125,7 +125,9 @@ class WorkerManager:
             raise ValueError(f"Worker {name} already exists")
         restartable = restartable if restartable is not None else transient
         if transient and not restartable:
-            raise ValueError("Cannot create a transient worker that is not restartable")
+            raise ValueError(
+                "Cannot create a transient worker that is not restartable"
+            )
         container = self.transient if transient else self.durable
         worker = Worker(
             ident or name,
@@ -257,7 +259,9 @@ class WorkerManager:
 
         change = num_worker - self.num_server
         if change == 0:
-            logger.info(f"No change needed. There are already {num_worker} workers.")
+            logger.info(
+                f"No change needed. There are already {num_worker} workers."
+            )
             return
 
         logger.info(f"Scaling from {self.num_server} to {num_worker} workers")
@@ -397,7 +401,8 @@ class WorkerManager:
             return
         if worker.has_alive_processes():
             error_logger.error(
-                f"Worker {worker.name} has alive processes and cannot be " "removed."
+                f"Worker {worker.name} has alive processes and cannot be "
+                "removed."
             )
             return
         self.transient.pop(worker.name, None)
@@ -457,7 +462,9 @@ class WorkerManager:
                 self._handle_manage(*message)  # type: ignore
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
-                error_logger.error("Monitor received an invalid message: %s", message)
+                error_logger.error(
+                    "Monitor received an invalid message: %s", message
+                )
                 return MonitorCycle.CONTINUE
             return self._handle_message(message)
         return None

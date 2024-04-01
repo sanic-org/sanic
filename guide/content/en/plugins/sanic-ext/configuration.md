@@ -223,7 +223,7 @@ However, there are a few more configuration options that should be considered.
 
 - **Type**: `str`
 - **Default**: `"/swagger-config"`
-- **Description**: Path to serve the Swagger configurtaion
+- **Description**: Path to serve the Swagger configuration
 
 ### `oas_uri_to_json`
 

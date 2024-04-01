@@ -19,6 +19,31 @@ else:
 
 
 class Colors(StrEnum):  # no cov
+    """
+    Colors for log messages. If the output is not a TTY, the colors will be
+    disabled.
+
+    Can be used like this:
+
+    .. code-block:: python
+
+        from sanic.log import logger, Colors
+
+        logger.info(f"{Colors.GREEN}This is a green message{Colors.END}")
+
+
+    Attributes:
+        END: Reset the color
+        BOLD: Bold text
+        BLUE: Blue text
+        GREEN: Green text
+        PURPLE: Purple text
+        RED: Red text
+        SANIC: Sanic pink
+        YELLOW: Yellow text
+        GREY: Grey text
+    """
+
     END = "\033[0m" if is_atty() else ""
     BOLD = "\033[1m" if is_atty() else ""
     BLUE = "\033[34m" if is_atty() else ""

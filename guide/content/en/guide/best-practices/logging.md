@@ -191,3 +191,7 @@ Sanic provides additional parameters to the access logger.
 | `status`              | `response`                            | `int`    |
 | `byte`                | `len(response.body)`                  | `int`    |
 | `duration`            | <calculated>                          | `float`  |
+
+## Legacy logging
+
+Many logging changes were introduced in Sanic 24.3. The main changes were related to logging formats. If you prefer the legacy logging format, you can use the `sanic.logging.formatter.LegacyFormatter` and `sanic.logging.formatter.LegacyAccessFormatter` formatters.

@@ -15,6 +15,14 @@ CONTROL_LIMIT_END = "\033[1000C\033[{right}D\033[K"
 
 
 class AutoFormatter(logging.Formatter):
+    """
+    Automatically sets up the formatter based on the environment.
+
+    It will switch between the Debug and Production formatters based upon
+    how the environment is set up. Additionally, it will automatically
+    detect if the output is a TTY and colorize the output accordingly.
+    """
+
     SETUP = False
     ATTY = is_atty()
     IDENT = os.environ.get("SANIC_WORKER_IDENTIFIER", "Main ")
@@ -59,6 +67,13 @@ class AutoFormatter(logging.Formatter):
 
 
 class DebugFormatter(AutoFormatter):
+    """
+    The DebugFormatter is used for development and debugging purposes.
+
+    It can be used directly, or it will be automatically selected if the
+    environment is set up for development and is using the AutoFormatter.
+    """
+
     IDENT_LIMIT = 5
     MESSAGE_START = 13
 
@@ -69,6 +84,13 @@ class DebugFormatter(AutoFormatter):
 
 
 class ProdFormatter(AutoFormatter):
+    """
+    The ProdFormatter is used for production environments.
+
+    It can be used directly, or it will be automatically selected if the
+    environment is set up for production and is using the AutoFormatter.
+    """
+
     IDENT_LIMIT = 5
     MESSAGE_START = 42
     PREFIX_FORMAT = (
@@ -78,6 +100,26 @@ class ProdFormatter(AutoFormatter):
 
 
 class LegacyFormatter(AutoFormatter):
+    """
+    The LegacyFormatter is used if you want to use the old style of logging.
+
+    You can use it as follows, typically in conjunction with the
+    LegacyAccessFormatter:
+
+    .. code-block:: python
+
+        from sanic.log import LOGGING_CONFIG_DEFAULTS
+
+        LOGGING_CONFIG_DEFAULTS["formatters"] = {
+            "generic": {
+                "class": "sanic.logging.formatter.LegacyFormatter"
+            },
+            "access": {
+                "class": "sanic.logging.formatter.LegacyAccessFormatter"
+            },
+        }
+    """
+
     PREFIX_FORMAT = "%(asctime)s [%(process)s] [%(levelname)s] "
     DATE_FORMAT = "[%Y-%m-%d %H:%M:%S %z]"
 
@@ -106,6 +148,26 @@ class AutoAccessFormatter(AutoFormatter):
 
 
 class LegacyAccessFormatter(AutoAccessFormatter):
+    """
+    The LegacyFormatter is used if you want to use the old style of logging.
+
+    You can use it as follows, typically in conjunction with the
+    LegacyFormatter:
+
+    .. code-block:: python
+
+        from sanic.log import LOGGING_CONFIG_DEFAULTS
+
+        LOGGING_CONFIG_DEFAULTS["formatters"] = {
+            "generic": {
+                "class": "sanic.logging.formatter.LegacyFormatter"
+            },
+            "access": {
+                "class": "sanic.logging.formatter.LegacyAccessFormatter"
+            },
+        }
+    """
+
     PREFIX_FORMAT = "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: "
     MESSAGE_FORMAT = "%(request)s %(message)s %(status)s %(byte)s"
 

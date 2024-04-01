@@ -57,8 +57,7 @@ def test_websocket_bp_route_name(app, name, expected):
     bp = Blueprint("test_bp", url_prefix="/bp")
 
     @bp.get("/main")
-    async def main(request):
-        ...
+    async def main(request): ...
 
     @bp.websocket("/route")
     async def test_route(request, ws):
@@ -97,8 +96,7 @@ def test_websocket_bp_route_name(app, name, expected):
 )
 def test_trailing_slash_url_for(app, path, strict, expected):
     @app.route(path, strict_slashes=strict)
-    def handler(*_):
-        ...
+    def handler(*_): ...
 
     url = app.url_for("handler")
     assert url == expected

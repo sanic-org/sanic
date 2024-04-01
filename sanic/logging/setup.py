@@ -4,10 +4,10 @@ from typing import Type
 
 from sanic.log import (
     access_logger,
+    error_logger,
     logger,
     server_logger,
     websockets_logger,
-    error_logger,
 )
 from sanic.logging.formatter import (
     SanicAutoAccessFormatter,

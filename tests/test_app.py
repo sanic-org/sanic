@@ -433,8 +433,7 @@ def test_bad_custom_config():
 
 
 def test_custom_config():
-    class CustomConfig(Config):
-        ...
+    class CustomConfig(Config): ...
 
     config = CustomConfig()
     app = Sanic("custom", config=config)
@@ -443,8 +442,7 @@ def test_custom_config():
 
 
 def test_custom_context():
-    class CustomContext:
-        ...
+    class CustomContext: ...
 
     ctx = CustomContext()
     app = Sanic("custom", ctx=ctx)

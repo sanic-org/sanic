@@ -549,7 +549,7 @@ def test_guess_mime_logging(
         r.message for r in caplog.records if r.funcName == "guess_mime"
     ]
 
-    assert logmsg == expected
+    assert logmsg == f"Error Page: {expected}"
 
 
 @pytest.mark.parametrize(

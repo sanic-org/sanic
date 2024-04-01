@@ -19,16 +19,11 @@ from sanic.logging.formatter import (
 )
 
 
-_setup_logging = False
-
-
 def setup_logging(debug: bool) -> None:
-    global _setup_logging
-
-    if _setup_logging:
+    if SanicAutoFormatter.SETUP:
         return
 
-    _setup_logging = True
+    SanicAutoFormatter.SETUP = True
     for lggr in (logger, server_logger, error_logger, websockets_logger):
         _auto_format(
             lggr,

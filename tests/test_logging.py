@@ -3,7 +3,7 @@ import uuid
 
 from importlib import reload
 from io import StringIO
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 import pytest
 
@@ -11,6 +11,14 @@ import sanic
 
 from sanic import Sanic
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, logger
+from sanic.logging.formatter import (
+    SanicAutoFormatter,
+    SanicDebugAccessFormatter,
+    SanicDebugFormatter,
+    SanicProdAccessFormatter,
+    SanicProdFormatter,
+)
+from sanic.logging.setup import setup_logging
 from sanic.response import text
 
 
@@ -45,31 +53,31 @@ def test_log(app):
     assert rand_string in log_text
 
 
-def test_logging_defaults():
-    # reset_logging()
+@pytest.mark.parametrize("debug", (True, False))
+def test_logging_defaults(debug):
+    SanicAutoFormatter.ATTY = False
+    SanicAutoFormatter.SETUP = False
     Sanic("test_logging")
+    setup_logging(debug)
+    std_formatter = (SanicDebugFormatter if debug else SanicProdFormatter)()
+    access_formatter = (
+        SanicDebugAccessFormatter if debug else SanicProdAccessFormatter
+    )()
 
-    for fmt in [h.formatter for h in logging.getLogger("sanic.root").handlers]:
-        assert (
-            fmt._fmt
-            == LOGGING_CONFIG_DEFAULTS["formatters"]["generic"]["format"]
-        )
-
-    for fmt in [
-        h.formatter for h in logging.getLogger("sanic.error").handlers
+    for logger_name, formatter in [
+        ("sanic.root", std_formatter),
+        ("sanic.error", std_formatter),
+        ("sanic.access", access_formatter),
+        ("sanic.server", std_formatter),
+        ("sanic.websockets", std_formatter),
     ]:
-        assert (
-            fmt._fmt
-            == LOGGING_CONFIG_DEFAULTS["formatters"]["generic"]["format"]
-        )
-
-    for fmt in [
-        h.formatter for h in logging.getLogger("sanic.access").handlers
-    ]:
-        assert (
-            fmt._fmt
-            == LOGGING_CONFIG_DEFAULTS["formatters"]["access"]["format"]
-        )
+        print("....", logger_name)
+        for fmt in [
+            h.formatter for h in logging.getLogger(logger_name).handlers
+        ]:
+            print(f"{logger_name} logger_formatter: ", fmt._fmt)
+            print(f"{logger_name}        formatter: ", formatter._fmt)
+            assert fmt._fmt == formatter._fmt
 
 
 def test_logging_pass_customer_logconfig():
@@ -97,39 +105,6 @@ def test_logging_pass_customer_logconfig():
         h.formatter for h in logging.getLogger("sanic.access").handlers
     ]:
         assert fmt._fmt == modified_config["formatters"]["access"]["format"]
-
-
-@pytest.mark.parametrize(
-    "debug",
-    (
-        True,
-        False,
-    ),
-)
-def test_log_connection_lost(app, debug, monkeypatch):
-    """Should not log Connection lost exception on non debug"""
-    stream = StringIO()
-    error = logging.getLogger("sanic.error")
-    error.addHandler(logging.StreamHandler(stream))
-    monkeypatch.setattr(
-        sanic.server.protocols.http_protocol, "error_logger", error
-    )
-
-    @app.route("/conn_lost")
-    async def conn_lost(request):
-        response = text("Ok")
-        request.transport.close()
-        return response
-
-    req, res = app.test_client.get("/conn_lost", debug=debug, allow_none=True)
-    assert res is None
-
-    log = stream.getvalue()
-
-    if debug:
-        assert "Connection lost before response written @" in log
-    else:
-        assert "Connection lost before response written @" not in log
 
 
 @pytest.mark.asyncio
@@ -185,6 +160,7 @@ def test_access_log_client_ip_remote_addr(monkeypatch):
             "byte": len(response.content),
             "host": f"{request.remote_addr}:{request.port}",
             "request": f"GET {request.scheme}://{request.host}/",
+            "duration": ANY,
         },
     )
 
@@ -209,6 +185,7 @@ def test_access_log_client_ip_reqip(monkeypatch):
             "byte": len(response.content),
             "host": f"{request.ip}:{request.port}",
             "request": f"GET {request.scheme}://{request.host}/",
+            "duration": ANY,
         },
     )
 

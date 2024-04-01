@@ -15,6 +15,7 @@ CONTROL_LIMIT_END = "\033[1000C\033[{right}D\033[K"
 
 
 class SanicAutoFormatter(logging.Formatter):
+    SETUP = False
     ATTY = is_atty()
     IDENT = os.environ.get("SANIC_WORKER_IDENTIFIER", "Main ")
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S %z"

@@ -51,8 +51,8 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
-        self.websocket_url: str | None = None
-        self.websocket_peer: str | None = None
+        self.websocket_url: Optional[str] = None
+        self.websocket_peer: Optional[str] = None
 
     def connection_lost(self, exc):
         if self.websocket is not None:
@@ -117,12 +117,7 @@ class WebSocketProtocol(HttpProtocol):
                 # but ServerProtocol needs a list
                 subprotocols = cast(
                     Optional[Sequence[Subprotocol]],
-                    list(
-                        [
-                            Subprotocol(subprotocol)
-                            for subprotocol in subprotocols
-                        ]
-                    ),
+                    list([Subprotocol(subprotocol) for subprotocol in subprotocols]),
                 )
             ws_proto = ServerProtocol(
                 max_size=self.websocket_max_size,
@@ -160,12 +155,11 @@ class WebSocketProtocol(HttpProtocol):
         )
         loop = (
             request.transport.loop
-            if hasattr(request, "transport")
-            and hasattr(request.transport, "loop")
+            if hasattr(request, "transport") and hasattr(request.transport, "loop")
             else None
         )
         await self.websocket.connection_made(self, loop=loop)
-        self.websocket_url = self._http.request.url
+        self.websocket_url = "foobar"  # self._http.request.url
         self.websocket_peer = f"{id(self):X}"[-5:-1] + "unx"
         if ip := self._http.request.client_ip:
             self.websocket_peer = f"{ip}:{self._http.request.port}"

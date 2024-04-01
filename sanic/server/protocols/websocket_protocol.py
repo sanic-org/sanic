@@ -1,12 +1,12 @@
 from typing import Optional, Sequence, cast
 
 
-try:  # websockets < 11.0
-    from websockets.connection import State
-    from websockets.server import ServerConnection as ServerProtocol
-except ImportError:  # websockets >= 11.0
+try:  # websockets >= 11.0
     from websockets.protocol import State  # type: ignore
     from websockets.server import ServerProtocol  # type: ignore
+except ImportError:  # websockets < 11.0
+    from websockets.connection import State
+    from websockets.server import ServerConnection as ServerProtocol
 
 from websockets import http11
 from websockets.datastructures import Headers as WSHeaders

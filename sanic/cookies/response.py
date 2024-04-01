@@ -33,7 +33,7 @@ SAMESITE_VALUES = ("strict", "lax", "none")
 
 LEGAL_CHARS = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
 UNESCAPED_CHARS = LEGAL_CHARS + " ()/<=>?@[]{}"
-TRANSLATOR = {ch: f"\\{ch:03o}" for ch in bytes(range(32)) + b'";\\\x7F'}
+TRANSLATOR = {ch: f"\\{ch:03o}" for ch in bytes(range(32)) + b'";\\\x7f'}
 
 
 def _quote(str):  # no cov

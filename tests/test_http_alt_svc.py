@@ -12,11 +12,9 @@ from tests.client import RawClient
 parent_dir = Path(__file__).parent
 localhost_dir = parent_dir / "certs/localhost"
 
-PORT = 12344
-
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported in 3.7")
-def test_http1_response_has_alt_svc():
+def test_http1_response_has_alt_svc(port):
     Sanic._app_registry.clear()
     app = Sanic("TestAltSvc")
     app.config.TOUCHUP = True
@@ -55,12 +53,12 @@ def test_http1_response_has_alt_svc():
             "cert": localhost_dir / "fullchain.pem",
             "key": localhost_dir / "privkey.pem",
         },
-        port=PORT,
+        port=port,
     )
     app.prepare(
         version=1,
-        port=PORT,
+        port=port,
     )
     Sanic.serve_single(app)
 
-    assert f'alt-svc: h3=":{PORT}"\r\n'.encode() in response
+    assert f'alt-svc: h3=":{port}"\r\n'.encode() in response

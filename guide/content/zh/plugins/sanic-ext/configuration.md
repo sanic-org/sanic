@@ -237,7 +237,7 @@ app.config.OAS_URL_PREFIX = "/apidocs"
 
 - **类型**: `str`
 - **Default**: `"/swagger-config"`
-- **描述**：服务的 Swagger 配置路径
+- **描述**：为 Swagger 配置服务的路径
 
 ### `oas_uri_to_json`
 

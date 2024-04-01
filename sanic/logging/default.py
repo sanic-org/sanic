@@ -51,10 +51,8 @@ LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
         },
     },
     formatters={
-        "generic": {"class": "sanic.logging.formatter.SanicAutoFormatter"},
-        "access": {
-            "class": "sanic.logging.formatter.SanicAutoAccessFormatter"
-        },
+        "generic": {"class": "sanic.logging.formatter.AutoFormatter"},
+        "access": {"class": "sanic.logging.formatter.AutoAccessFormatter"},
     },
 )
 """

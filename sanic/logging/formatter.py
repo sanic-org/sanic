@@ -14,13 +14,13 @@ CONTROL_LIMIT_START = "\033[1000D\033[{start}C\033[K"
 CONTROL_LIMIT_END = "\033[1000C\033[{right}D\033[K"
 
 
-class SanicAutoFormatter(logging.Formatter):
+class AutoFormatter(logging.Formatter):
     SETUP = False
     ATTY = is_atty()
     IDENT = os.environ.get("SANIC_WORKER_IDENTIFIER", "Main ")
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S %z"
     PREFIX_FORMAT = (
-        f"{Colors.GREY}%(ident)s{{limit}}{Colors.END} %(levelname)s: {{start}}"
+        f"{Colors.GREY}%(ident)s{{limit}}|{Colors.END}%(levelname)s: {{start}}"
     )
     MESSAGE_FORMAT = "%(message)s"
     IDENT_LIMIT = -1
@@ -58,7 +58,7 @@ class SanicAutoFormatter(logging.Formatter):
         return fmt
 
 
-class SanicDebugFormatter(SanicAutoFormatter):
+class DebugFormatter(AutoFormatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 13
 
@@ -68,21 +68,21 @@ class SanicDebugFormatter(SanicAutoFormatter):
         super()._set_levelname(record)
 
 
-class SanicProdFormatter(SanicAutoFormatter):
+class ProdFormatter(AutoFormatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 42
     PREFIX_FORMAT = (
-        f"{Colors.GREY}%(ident)s{{limit}}|%(asctime)s{Colors.END} "
+        f"{Colors.GREY}%(ident)s{{limit}}|%(asctime)s|{Colors.END}"
         "%(levelname)s: {start}"
     )
 
 
-class SanicLegacyFormatter(SanicAutoFormatter):
+class LegacyFormatter(AutoFormatter):
     PREFIX_FORMAT = "%(asctime)s [%(process)s] [%(levelname)s] "
     DATE_FORMAT = "[%Y-%m-%d %H:%M:%S %z]"
 
 
-class SanicAutoAccessFormatter(SanicAutoFormatter):
+class AutoAccessFormatter(AutoFormatter):
     MESSAGE_FORMAT = (
         f"%(asctime)s {Colors.PURPLE}%(host)s "
         f"{Colors.BLUE + Colors.BOLD}%(request)s{Colors.END} "
@@ -105,18 +105,18 @@ class SanicAutoAccessFormatter(SanicAutoFormatter):
             record.levelname = f"{Colors.SANIC}ACCESS{Colors.END}"
 
 
-class SanicLegacyAccessFormatter(SanicAutoAccessFormatter):
+class LegacyAccessFormatter(AutoAccessFormatter):
     PREFIX_FORMAT = "%(asctime)s - (%(name)s)[%(levelname)s][%(host)s]: "
     MESSAGE_FORMAT = "%(request)s %(message)s %(status)s %(byte)s"
 
 
-class SanicDebugAccessFormatter(SanicAutoAccessFormatter):
+class DebugAccessFormatter(AutoAccessFormatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 16
     DATE_FORMAT = "%H:%M:%S"
 
 
-class SanicProdAccessFormatter(SanicAutoAccessFormatter):
+class ProdAccessFormatter(AutoAccessFormatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 42
     PREFIX_FORMAT = (

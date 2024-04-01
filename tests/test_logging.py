@@ -12,11 +12,11 @@ import sanic
 from sanic import Sanic
 from sanic.log import LOGGING_CONFIG_DEFAULTS, Colors, logger
 from sanic.logging.formatter import (
-    SanicAutoFormatter,
-    SanicDebugAccessFormatter,
-    SanicDebugFormatter,
-    SanicProdAccessFormatter,
-    SanicProdFormatter,
+    AutoFormatter,
+    DebugAccessFormatter,
+    DebugFormatter,
+    ProdAccessFormatter,
+    ProdFormatter,
 )
 from sanic.logging.setup import setup_logging
 from sanic.response import text
@@ -55,13 +55,13 @@ def test_log(app):
 
 @pytest.mark.parametrize("debug", (True, False))
 def test_logging_defaults(debug):
-    SanicAutoFormatter.ATTY = False
-    SanicAutoFormatter.SETUP = False
+    AutoFormatter.ATTY = False
+    AutoFormatter.SETUP = False
     Sanic("test_logging")
     setup_logging(debug)
-    std_formatter = (SanicDebugFormatter if debug else SanicProdFormatter)()
+    std_formatter = (DebugFormatter if debug else ProdFormatter)()
     access_formatter = (
-        SanicDebugAccessFormatter if debug else SanicProdAccessFormatter
+        DebugAccessFormatter if debug else ProdAccessFormatter
     )()
 
     for logger_name, formatter in [

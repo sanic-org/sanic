@@ -10,37 +10,37 @@ from sanic.log import (
     websockets_logger,
 )
 from sanic.logging.formatter import (
-    SanicAutoAccessFormatter,
-    SanicAutoFormatter,
-    SanicDebugAccessFormatter,
-    SanicDebugFormatter,
-    SanicProdAccessFormatter,
-    SanicProdFormatter,
+    AutoAccessFormatter,
+    AutoFormatter,
+    DebugAccessFormatter,
+    DebugFormatter,
+    ProdAccessFormatter,
+    ProdFormatter,
 )
 
 
 def setup_logging(debug: bool) -> None:
-    if SanicAutoFormatter.SETUP:
+    if AutoFormatter.SETUP:
         return
 
-    SanicAutoFormatter.SETUP = True
+    AutoFormatter.SETUP = True
     for lggr in (logger, server_logger, error_logger, websockets_logger):
         _auto_format(
             lggr,
-            SanicAutoFormatter,
-            SanicDebugFormatter if debug else SanicProdFormatter,
+            AutoFormatter,
+            DebugFormatter if debug else ProdFormatter,
         )
     _auto_format(
         access_logger,
-        SanicAutoAccessFormatter,
-        SanicDebugAccessFormatter if debug else SanicProdAccessFormatter,
+        AutoAccessFormatter,
+        DebugAccessFormatter if debug else ProdAccessFormatter,
     )
 
 
 def _auto_format(
     logger: logging.Logger,
-    auto_class: Type[SanicAutoFormatter],
-    formatter_class: Type[SanicAutoFormatter],
+    auto_class: Type[AutoFormatter],
+    formatter_class: Type[AutoFormatter],
 ) -> None:
     for handler in logger.handlers:
         if type(handler.formatter) is auto_class:

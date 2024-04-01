@@ -8,7 +8,7 @@ from sanic.request.parameters import RequestParameters
 
 
 COOKIE_NAME_RESERVED_CHARS = re.compile(
-    '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'
+    '[\x00-\x1f\x7f-\xff()<>@,;:\\\\"/[\\]?={} \x09]'
 )
 OCTAL_PATTERN = re.compile(r"\\[0-3][0-7][0-7]")
 QUOTE_PATTERN = re.compile(r"[\\].")

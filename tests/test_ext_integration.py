@@ -22,20 +22,20 @@ def stoppable_app(app):
     return app
 
 
-def test_ext_is_loaded(stoppable_app: Sanic, mock_sanic_ext):
-    stoppable_app.run(single_process=True)
+def test_ext_is_loaded(stoppable_app: Sanic, mock_sanic_ext, port):
+    stoppable_app.run(single_process=True, port=port)
     mock_sanic_ext.Extend.assert_called_once_with(stoppable_app)
 
 
-def test_ext_is_not_loaded(stoppable_app: Sanic, mock_sanic_ext):
+def test_ext_is_not_loaded(stoppable_app: Sanic, mock_sanic_ext, port):
     stoppable_app.config.AUTO_EXTEND = False
-    stoppable_app.run(single_process=True)
+    stoppable_app.run(single_process=True, port=port)
     mock_sanic_ext.Extend.assert_not_called()
 
 
-def test_extend_with_args(stoppable_app: Sanic, mock_sanic_ext):
+def test_extend_with_args(stoppable_app: Sanic, mock_sanic_ext, port):
     stoppable_app.extend(built_in_extensions=False)
-    stoppable_app.run(single_process=True)
+    stoppable_app.run(single_process=True, port=port)
     mock_sanic_ext.Extend.assert_called_once_with(
         stoppable_app, built_in_extensions=False, config=None, extensions=None
     )
@@ -70,7 +70,7 @@ def test_fail_if_not_loaded(app: Sanic):
 
 
 def test_can_access_app_ext_while_running(
-    app: Sanic, mock_sanic_ext, ext_instance
+    app: Sanic, mock_sanic_ext, ext_instance, port
 ):
     class IceCream:
         flavor: str
@@ -80,5 +80,5 @@ def test_can_access_app_ext_while_running(
         app.ext.injection(IceCream)
         app.stop()
 
-    app.run(single_process=True)
+    app.run(single_process=True, port=port)
     ext_instance.injection.assert_called_with(IceCream)

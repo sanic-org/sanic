@@ -40,8 +40,7 @@ class ListenerMixin(metaclass=SanicMeta):
         apply: bool = ...,
         *,
         priority: int = 0,
-    ) -> ListenerType[Sanic]:
-        ...
+    ) -> ListenerType[Sanic]: ...
 
     @overload
     def listener(
@@ -51,8 +50,7 @@ class ListenerMixin(metaclass=SanicMeta):
         apply: bool = ...,
         *,
         priority: int = 0,
-    ) -> Callable[[ListenerType[Sanic]], ListenerType[Sanic]]:
-        ...
+    ) -> Callable[[ListenerType[Sanic]], ListenerType[Sanic]]: ...
 
     def listener(
         self,

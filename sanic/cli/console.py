@@ -59,8 +59,7 @@ class REPLProtocol(TransportProtocol):
         response.stream = self
         return response
 
-    async def send(self, data, end_stream):
-        ...
+    async def send(self, data, end_stream): ...
 
 
 class Result(NamedTuple):

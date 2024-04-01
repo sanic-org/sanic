@@ -26,8 +26,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
         apply: bool = True,
         *,
         priority: int = 0,
-    ) -> MiddlewareType:
-        ...
+    ) -> MiddlewareType: ...
 
     @overload
     def middleware(
@@ -37,8 +36,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
         apply: bool = True,
         *,
         priority: int = 0,
-    ) -> Callable[[MiddlewareType], MiddlewareType]:
-        ...
+    ) -> Callable[[MiddlewareType], MiddlewareType]: ...
 
     def middleware(
         self,

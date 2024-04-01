@@ -237,7 +237,7 @@ app.config.OAS_URL_PREFIX = "/apidocs"
 
 - **タイプ**: `str`
 - **Default**: `"/swagger-config"`
-- **説明**: Swagger configurtaion を提供するパス
+- **説明**: Swagger 設定を提供するパス
 
 ### `oas_uri_to_json`
 

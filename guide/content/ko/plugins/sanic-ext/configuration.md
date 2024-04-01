@@ -237,7 +237,7 @@ Be very careful if you place `*` here. Do not do this unless you know what you a
 
 - **Type**: `str`
 - **Default**: `"/swagger-config"`
-- **Description**: Path to serve the Swagger configurtaion
+- **Description**: Path to serve the Swagger configuration
 
 ### `oas_uri_to_json`
 

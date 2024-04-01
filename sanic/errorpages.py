@@ -12,6 +12,7 @@ Setting ``app.config.FALLBACK_ERROR_FORMAT = "auto"`` will enable a switch that
 will attempt to provide an appropriate response format based upon the
 request type.
 """
+
 from __future__ import annotations
 
 import sys

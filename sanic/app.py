@@ -248,8 +248,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -270,8 +269,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -292,8 +290,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -314,8 +311,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(
         self,
@@ -381,7 +377,7 @@ class Sanic(
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[Middleware]] = {}
         self.named_response_middleware: Dict[str, Deque[Middleware]] = {}
-        self.request_class: Type[Request] = request_class or Request
+        self.request_class = request_class or Request
         self.request_middleware: Deque[Middleware] = deque()
         self.response_middleware: Deque[Middleware] = deque()
         self.router: Router = router or Router()
@@ -662,8 +658,7 @@ class Sanic(
         fail_not_found: bool = True,
         inline: Literal[True],
         reverse: bool = False,
-    ) -> Coroutine[Any, Any, Awaitable[Any]]:
-        ...
+    ) -> Coroutine[Any, Any, Awaitable[Any]]: ...
 
     @overload
     def dispatch(
@@ -675,8 +670,7 @@ class Sanic(
         fail_not_found: bool = True,
         inline: Literal[False] = False,
         reverse: bool = False,
-    ) -> Coroutine[Any, Any, Awaitable[Task]]:
-        ...
+    ) -> Coroutine[Any, Any, Awaitable[Task]]: ...
 
     def dispatch(
         self,
@@ -1779,18 +1773,19 @@ class Sanic(
             return None
 
     @overload
-    def get_task(self, name: str, *, raise_exception: Literal[True]) -> Task:
-        ...
+    def get_task(
+        self, name: str, *, raise_exception: Literal[True]
+    ) -> Task: ...
 
     @overload
     def get_task(
         self, name: str, *, raise_exception: Literal[False]
-    ) -> Optional[Task]:
-        ...
+    ) -> Optional[Task]: ...
 
     @overload
-    def get_task(self, name: str, *, raise_exception: bool) -> Optional[Task]:
-        ...
+    def get_task(
+        self, name: str, *, raise_exception: bool
+    ) -> Optional[Task]: ...
 
     def get_task(
         self, name: str, *, raise_exception: bool = True

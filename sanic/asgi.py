@@ -166,7 +166,7 @@ class ASGIApp:
             # All servers send them separately
             url_bytes = b"%b?%b" % (url_bytes, query)
 
-        request_class = sanic_app.request_class or Request
+        request_class = sanic_app.request_class or Request  # type: ignore
         instance.request = request_class(
             url_bytes,
             headers,

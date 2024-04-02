@@ -16,13 +16,8 @@ from sanic.response import text
 
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 
-PORT = 42001  # test_keep_alive_timeout_reuse doesn't work with random port
 MAX_LOOPS = 15
 port_counter = count()
-
-
-def get_port():
-    return next(port_counter) + PORT
 
 
 keep_alive_timeout_app_reuse = Sanic("test_ka_timeout_reuse")
@@ -66,13 +61,12 @@ def get_ctx(request):
     bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
     reason="Not testable with current client",
 )
-def test_keep_alive_timeout_reuse():
+def test_keep_alive_timeout_reuse(port):
     """If the server keep-alive timeout and client keep-alive timeout are
     both longer than the delay, the client _and_ server will successfully
     reuse the existing connection."""
     loops = 0
     while True:
-        port = get_port()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         client = ReusableClient(
@@ -107,13 +101,12 @@ def test_keep_alive_timeout_reuse():
     or platform.system() != "Linux",
     reason="Not testable with current client",
 )
-def test_keep_alive_client_timeout():
+def test_keep_alive_client_timeout(port):
     """If the server keep-alive timeout is longer than the client
     keep-alive timeout, client will try to create a new connection here."""
     loops = 0
     while True:
         try:
-            port = get_port()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             client = ReusableClient(
@@ -145,7 +138,7 @@ def test_keep_alive_client_timeout():
     bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
     reason="Not testable with current client",
 )
-def test_keep_alive_server_timeout():
+def test_keep_alive_server_timeout(port):
     """If the client keep-alive timeout is longer than the server
     keep-alive timeout, the client will either a 'Connection reset' error
     _or_ a new connection. Depending on how the event-loop handles the
@@ -153,7 +146,6 @@ def test_keep_alive_server_timeout():
     loops = 0
     while True:
         try:
-            port = get_port()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             client = ReusableClient(
@@ -186,11 +178,10 @@ def test_keep_alive_server_timeout():
     bool(environ.get("SANIC_NO_UVLOOP")) or OS_IS_WINDOWS,
     reason="Not testable with current client",
 )
-def test_keep_alive_connection_context():
+def test_keep_alive_connection_context(port):
     loops = 0
     while True:
         try:
-            port = get_port()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             client = ReusableClient(

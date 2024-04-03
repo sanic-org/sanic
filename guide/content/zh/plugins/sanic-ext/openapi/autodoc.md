@@ -1,17 +1,17 @@
 ---
-title: Sanic 扩展 - 自动文档
+title: Sanic 扩展 - 自动生成文档
 ---
 
 # 自动文档
 
-要使文档端点变得更容易，Sanic 扩展将使用函数的 docstring 来填充您的文档。
+要使得创建API文档页面变得更容易，Sanic 扩展可以使用函数的 docstring 来自动化填充您的文档。
 
 ## 摘要和说明
 
 .. 列:
 
 ```
-函数的 docstring 将用于创建摘要和描述。 从这里的例子中你可以看到， docstring 已被解析成第一行作为总结。 和字符串的其余部分作为描述。
+函数的 docstring 将用于创建摘要和描述。 从这里的例子中你可以看到， docstring 已被解析成：第一行作为总结，字符串的其余部分作为描述。
 ```
 
 .. 列:
@@ -48,7 +48,7 @@ async def handler(request, something: str):
 ```
 ````
 
-## 操作级别 YAML
+## 操作级别的 YAML
 
 .. 列:
 

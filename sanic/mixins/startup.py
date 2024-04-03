@@ -666,7 +666,7 @@ class StartupMixin(metaclass=SanicMeta):
         if not self.state.is_debug:
             self.state.mode = Mode.DEBUG if debug else Mode.PRODUCTION
 
-        setup_logging(self.state.is_debug)
+        setup_logging(self.state.is_debug, self.config.NO_COLOR)
 
         if isinstance(version, int):
             version = HTTP(version)

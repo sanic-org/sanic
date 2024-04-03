@@ -1,4 +1,5 @@
 import logging
+import os
 
 from typing import Type
 
@@ -19,10 +20,13 @@ from sanic.logging.formatter import (
 )
 
 
-def setup_logging(debug: bool) -> None:
+def setup_logging(debug: bool, no_color: bool = False) -> None:
     if AutoFormatter.SETUP:
         return
 
+    if no_color:
+        os.environ["SANIC_NO_COLOR"] = str(no_color)
+        AutoFormatter.NO_COLOR = no_color
     AutoFormatter.SETUP = True
     for lggr in (logger, server_logger, error_logger, websockets_logger):
         _auto_format(

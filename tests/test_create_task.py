@@ -56,8 +56,7 @@ def test_create_task_with_app_arg(app):
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Not supported in 3.7")
 def test_create_named_task(app, port):
-    async def dummy():
-        ...
+    async def dummy(): ...
 
     @app.before_server_start
     async def setup(app, _):

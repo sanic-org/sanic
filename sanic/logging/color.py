@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 from enum import Enum
@@ -16,6 +17,9 @@ if sys.version_info < (3, 11, 0):
 else:
     if not TYPE_CHECKING:
         from enum import StrEnum
+
+
+COLORIZE = is_atty() and not os.environ.get("SANIC_NO_COLOR")
 
 
 class Colors(StrEnum):  # no cov
@@ -44,21 +48,20 @@ class Colors(StrEnum):  # no cov
         GREY: Grey text
     """
 
-    END = "\033[0m" if is_atty() else ""
-    BOLD = "\033[1m" if is_atty() else ""
-    BLUE = "\033[34m" if is_atty() else ""
-    GREEN = "\033[32m" if is_atty() else ""
-    PURPLE = "\033[35m" if is_atty() else ""
-    CYAN = "\033[36m" if is_atty() else ""
-    RED = "\033[31m" if is_atty() else ""
-    SANIC = "\033[38;2;255;13;104m" if is_atty() else ""
-    YELLOW = "\033[33m" if is_atty() else ""
-    GREY = "\033[38;5;240m" if is_atty() else ""
+    END = "\033[0m" if COLORIZE else ""
+    BOLD = "\033[1m" if COLORIZE else ""
+    BLUE = "\033[34m" if COLORIZE else ""
+    GREEN = "\033[32m" if COLORIZE else ""
+    PURPLE = "\033[35m" if COLORIZE else ""
+    CYAN = "\033[36m" if COLORIZE else ""
+    RED = "\033[31m" if COLORIZE else ""
+    YELLOW = "\033[33m" if COLORIZE else ""
+    GREY = "\033[38;5;240m" if COLORIZE else ""
+    SANIC = "\033[38;2;255;13;104m" if COLORIZE else ""
 
 
 LEVEL_COLORS = {
     logging.DEBUG: Colors.BLUE,
-    # logging.INFO: Colors.GREEN,
     logging.WARNING: Colors.YELLOW,
     logging.ERROR: Colors.RED,
     logging.CRITICAL: Colors.RED + Colors.BOLD,

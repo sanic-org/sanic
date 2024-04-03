@@ -30,6 +30,7 @@ class AutoFormatter(logging.Formatter):
 
     SETUP = False
     ATTY = is_atty()
+    NO_COLOR = os.environ.get("SANIC_NO_COLOR", "false").lower() == "true"
     IDENT = os.environ.get("SANIC_WORKER_IDENTIFIER", "Main ") or "Main "
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S %z"
     IDENT_LIMIT = 5
@@ -59,7 +60,11 @@ class AutoFormatter(logging.Formatter):
         return super().format(record)
 
     def _set_levelname(self, record: logging.LogRecord) -> None:
-        if self.ATTY and (color := LEVEL_COLORS.get(record.levelno)):
+        if (
+            self.ATTY
+            and not self.NO_COLOR
+            and (color := LEVEL_COLORS.get(record.levelno))
+        ):
             record.levelname = f"{color}{record.levelname}{c.END}"
 
     def _make_format(self) -> str:
@@ -67,7 +72,7 @@ class AutoFormatter(logging.Formatter):
         start = CONTROL_LIMIT_START.format(start=self.MESSAGE_START)
         base_format = self.PREFIX_FORMAT + self.MESSAGE_FORMAT
         fmt = base_format.format(limit=limit, start=start)
-        if not self.ATTY:
+        if not self.ATTY or self.NO_COLOR:
             return CONTROL_RE.sub("", fmt)
         return fmt
 

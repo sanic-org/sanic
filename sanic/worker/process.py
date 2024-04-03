@@ -76,6 +76,7 @@ class WorkerProcess:
                 "starts": 1,
             }
         del os.environ["SANIC_WORKER_NAME"]
+        del os.environ["SANIC_WORKER_IDENTIFIER"]
 
     def join(self):
         self.set_state(ProcessState.JOINED)

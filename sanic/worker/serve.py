@@ -59,7 +59,7 @@ def worker_serve(
 
         app.refresh(passthru)
         app.setup_loop()
-        setup_logging(app.state.is_debug)
+        setup_logging(app.state.is_debug, app.config.NO_COLOR)
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

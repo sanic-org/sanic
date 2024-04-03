@@ -5,13 +5,18 @@ import os
 import re
 
 from sanic.helpers import is_atty
-from sanic.logging.color import LEVEL_COLORS, Colors
+from sanic.logging.color import LEVEL_COLORS
+from sanic.logging.color import Colors as c
 
 
 CONTROL_RE = re.compile(r"\033\[[0-9;]*\w")
 CONTROL_LIMIT_IDENT = "\033[1000D\033[{limit}C"
 CONTROL_LIMIT_START = "\033[1000D\033[{start}C\033[K"
 CONTROL_LIMIT_END = "\033[1000C\033[{right}D\033[K"
+EXCEPTION_LINE_RE = re.compile(r"^(?P<exc>.*?): (?P<message>.*)$")
+FILE_LINE_RE = re.compile(
+    r"File \"(?P<path>.*?)\", line (?P<line_num>\d+), in (?P<location>.*)"
+)
 
 
 class AutoFormatter(logging.Formatter):
@@ -25,14 +30,15 @@ class AutoFormatter(logging.Formatter):
 
     SETUP = False
     ATTY = is_atty()
-    IDENT = os.environ.get("SANIC_WORKER_IDENTIFIER", "Main ")
+    IDENT = os.environ.get("SANIC_WORKER_IDENTIFIER", "Main ") or "Main "
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S %z"
+    IDENT_LIMIT = 5
+    MESSAGE_START = 42
     PREFIX_FORMAT = (
-        f"{Colors.GREY}%(ident)s{{limit}}|{Colors.END}%(levelname)s: {{start}}"
+        f"{c.GREY}%(ident)s{{limit}} %(asctime)s {c.END}"
+        "%(levelname)s: {start}"
     )
     MESSAGE_FORMAT = "%(message)s"
-    IDENT_LIMIT = -1
-    MESSAGE_START = 11
 
     def __init__(self, *args) -> None:
         args_list = list(args)
@@ -54,7 +60,7 @@ class AutoFormatter(logging.Formatter):
 
     def _set_levelname(self, record: logging.LogRecord) -> None:
         if self.ATTY and (color := LEVEL_COLORS.get(record.levelno)):
-            record.levelname = f"{color}{record.levelname}{Colors.END}"
+            record.levelname = f"{color}{record.levelname}{c.END}"
 
     def _make_format(self) -> str:
         limit = CONTROL_LIMIT_IDENT.format(limit=self.IDENT_LIMIT)
@@ -75,12 +81,51 @@ class DebugFormatter(AutoFormatter):
     """
 
     IDENT_LIMIT = 5
-    MESSAGE_START = 13
+    MESSAGE_START = 23
+    DATE_FORMAT = "%H:%M:%S"
 
     def _set_levelname(self, record: logging.LogRecord) -> None:
         if len(record.levelname) > 5:
             record.levelname = record.levelname[:4]
         super()._set_levelname(record)
+
+    def formatException(self, ei):
+        colored_traceback = []
+        lines = super().formatException(ei).splitlines()
+        for idx, line in enumerate(lines):
+            if line.startswith("  File"):
+                line = self._color_file_line(line)
+            elif line.startswith("    "):
+                line = self._color_code_line(line)
+            elif (
+                "Error" in line or "Exception" in line or len(lines) - 1 == idx
+            ):
+                line = self._color_exception_line(line)
+            colored_traceback.append(line)
+        return "\n".join(colored_traceback)
+
+    def _color_exception_line(self, line: str) -> str:
+        match = EXCEPTION_LINE_RE.match(line)
+        if not match:
+            return line
+        exc = match.group("exc")
+        message = match.group("message")
+        return f"{c.SANIC}{c.BOLD}{exc}{c.END}: " f"{c.BOLD}{message}{c.END}"
+
+    def _color_file_line(self, line: str) -> str:
+        match = FILE_LINE_RE.search(line)
+        if not match:
+            return line
+        path = match.group("path")
+        line_num = match.group("line_num")
+        location = match.group("location")
+        return (
+            f'  File "{path}", line {c.CYAN}{c.BOLD}{line_num}{c.END}, '
+            f"in {c.BLUE}{c.BOLD}{location}{c.END}"
+        )
+
+    def _color_code_line(self, line: str) -> str:
+        return f"{c.YELLOW}{line}{c.END}"
 
 
 class ProdFormatter(AutoFormatter):
@@ -90,13 +135,6 @@ class ProdFormatter(AutoFormatter):
     It can be used directly, or it will be automatically selected if the
     environment is set up for production and is using the AutoFormatter.
     """
-
-    IDENT_LIMIT = 5
-    MESSAGE_START = 42
-    PREFIX_FORMAT = (
-        f"{Colors.GREY}%(ident)s{{limit}}|%(asctime)s|{Colors.END}"
-        "%(levelname)s: {start}"
-    )
 
 
 class LegacyFormatter(AutoFormatter):
@@ -126,9 +164,9 @@ class LegacyFormatter(AutoFormatter):
 
 class AutoAccessFormatter(AutoFormatter):
     MESSAGE_FORMAT = (
-        f"%(asctime)s {Colors.PURPLE}%(host)s "
-        f"{Colors.BLUE + Colors.BOLD}%(request)s{Colors.END} "
-        f"%(right)s%(status)s %(byte)s {Colors.GREY}%(duration)s{Colors.END}"
+        f"{c.PURPLE}%(host)s "
+        f"{c.BLUE + c.BOLD}%(request)s{c.END} "
+        f"%(right)s%(status)s %(byte)s {c.GREY}%(duration)s{c.END}"
     )
 
     def format(self, record: logging.LogRecord) -> str:
@@ -144,7 +182,7 @@ class AutoAccessFormatter(AutoFormatter):
 
     def _set_levelname(self, record: logging.LogRecord) -> None:
         if self.ATTY and record.levelno == logging.INFO:
-            record.levelname = f"{Colors.SANIC}ACCESS{Colors.END}"
+            record.levelname = f"{c.SANIC}ACCESS{c.END}"
 
 
 class LegacyAccessFormatter(AutoAccessFormatter):
@@ -174,7 +212,7 @@ class LegacyAccessFormatter(AutoAccessFormatter):
 
 class DebugAccessFormatter(AutoAccessFormatter):
     IDENT_LIMIT = 5
-    MESSAGE_START = 16
+    MESSAGE_START = 23
     DATE_FORMAT = "%H:%M:%S"
 
 
@@ -182,11 +220,11 @@ class ProdAccessFormatter(AutoAccessFormatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 42
     PREFIX_FORMAT = (
-        f"{Colors.GREY}%(ident)s{{limit}}|%(asctime)s{Colors.END} "
+        f"{c.GREY}%(ident)s{{limit}}|%(asctime)s{c.END} "
         f"%(levelname)s: {{start}}"
     )
     MESSAGE_FORMAT = (
-        f"{Colors.PURPLE}%(host)s {Colors.BLUE + Colors.BOLD}"
-        f"%(request)s{Colors.END} "
-        f"%(right)s%(status)s %(byte)s {Colors.GREY}%(duration)s{Colors.END}"
+        f"{c.PURPLE}%(host)s {c.BLUE + c.BOLD}"
+        f"%(request)s{c.END} "
+        f"%(right)s%(status)s %(byte)s {c.GREY}%(duration)s{c.END}"
     )

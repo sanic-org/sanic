@@ -95,8 +95,11 @@ class DebugFormatter(AutoFormatter):
         super()._set_levelname(record)
 
     def formatException(self, ei):
+        orig = super().formatException(ei)
+        if not self.ATTY or self.NO_COLOR:
+            return orig
         colored_traceback = []
-        lines = super().formatException(ei).splitlines()
+        lines = orig.splitlines()
         for idx, line in enumerate(lines):
             if line.startswith("  File"):
                 line = self._color_file_line(line)

@@ -238,3 +238,48 @@ def test_colors_enum_format():
     assert f"{Colors.RED}" == Colors.RED.value
     assert f"{Colors.SANIC}" == Colors.SANIC.value
     assert f"{Colors.YELLOW}" == Colors.YELLOW.value
+
+
+@pytest.mark.parametrize(
+    "atty,no_color,expected",
+    [
+        (True, False, True),
+        (False, False, False),
+        (True, True, False),
+        (False, True, False),
+    ],
+)
+def test_debug_formatter_formatException(atty, no_color, expected):
+    formatter = DebugFormatter()
+    formatter.ATTY = atty
+    formatter.NO_COLOR = no_color
+
+    try:
+        1 / 0
+    except Exception as e:
+        exc_info = (type(e), e, e.__traceback__)
+
+    output = formatter.formatException(exc_info)
+    lines = output.splitlines()
+
+    assert len(lines) == 4
+    assert ("\033" in output) is expected
+    assert (f"{Colors.CYAN}{Colors.BOLD}" in lines[1]) is expected
+    assert (
+        lines[1].endswith(
+            f"{Colors.BLUE}{Colors.BOLD}test_debug_formatter_formatException{Colors.END}"
+        )
+        is expected
+    )
+    assert (
+        lines[1].endswith("test_debug_formatter_formatException")
+        is not expected
+    )
+    assert (lines[2] == f"{Colors.YELLOW}    1 / 0{Colors.END}") is expected
+    assert (lines[2] == "    1 / 0") is not expected
+    assert (
+        lines[3]
+        == f"{Colors.SANIC}{Colors.BOLD}ZeroDivisionError{Colors.END}: "
+        f"{Colors.BOLD}division by zero{Colors.END}"
+    ) is expected
+    assert (lines[3] == "ZeroDivisionError: division by zero") is not expected

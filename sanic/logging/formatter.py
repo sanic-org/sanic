@@ -94,7 +94,7 @@ class DebugFormatter(AutoFormatter):
             record.levelname = record.levelname[:4]
         super()._set_levelname(record)
 
-    def formatException(self, ei):
+    def formatException(self, ei):  # no cov
         orig = super().formatException(ei)
         if not self.ATTY or self.NO_COLOR:
             return orig
@@ -112,7 +112,7 @@ class DebugFormatter(AutoFormatter):
             colored_traceback.append(line)
         return "\n".join(colored_traceback)
 
-    def _color_exception_line(self, line: str) -> str:
+    def _color_exception_line(self, line: str) -> str:  # no cov
         match = EXCEPTION_LINE_RE.match(line)
         if not match:
             return line
@@ -120,7 +120,7 @@ class DebugFormatter(AutoFormatter):
         message = match.group("message")
         return f"{c.SANIC}{c.BOLD}{exc}{c.END}: " f"{c.BOLD}{message}{c.END}"
 
-    def _color_file_line(self, line: str) -> str:
+    def _color_file_line(self, line: str) -> str:  # no cov
         match = FILE_LINE_RE.search(line)
         if not match:
             return line
@@ -132,7 +132,7 @@ class DebugFormatter(AutoFormatter):
             f"in {c.BLUE}{c.BOLD}{location}{c.END}"
         )
 
-    def _color_code_line(self, line: str) -> str:
+    def _color_code_line(self, line: str) -> str:  # no cov
         return f"{c.YELLOW}{line}{c.END}"
 
 

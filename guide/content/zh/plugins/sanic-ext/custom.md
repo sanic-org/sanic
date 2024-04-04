@@ -6,7 +6,7 @@ title: Sanic 扩展 - 自定义
 
 可以创建您自己的自定义扩展。
 
-22.9版本添加了 `Extend.register` [method](#extension-preregistration)。 这使得在应用程序中添加自定义支出变得极为容易。
+22.9版本添加了 `Extend.register` [method](#extension-preregistration)。 这使得向应用程序添加自定义扩展变得非常容易。
 
 ## 扩展的解析度
 

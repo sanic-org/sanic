@@ -2,14 +2,14 @@
 
 查看 API 文档： [sanic.request](/api/sanic.request)
 
-The :class:`sanic.request.Request` instance contains **a lot** of helpful information available on its parameters. 详情请参阅[API 文档](https://sanic.readthedocs.io/)。
+:class: `sanic.request.Request` 实例包含了许多有用的信息，这些信息可以在其参数中获得。 详情请参阅[API 文档](https://sanic.readthedocs.io/)。
 
-As we saw in the section on [handlers](./handlers), the first argument in a route handler is usually the :class:`sanic.request.Request` object. 因为Sanic 是一个异步框架，处理程序将运行在一个[asyncio.Task\`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)内，并将由事件循环进行安排。 这意味着处理程序将在一个孤立的环境中执行，而请求对象将是该处理程序的唯一任务。
+正如我们在 [handlers](./handlers) 部分中所看到的，路由处理器的第一个参数通常是 :class:`sanic.request.Request` 对象。 因为Sanic是一个异步框架，处理器将在一个 [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) 内运行，并由事件循环调度。 这意味着处理器将在一个隔离的上下文中执行，并且请求对象对于该处理器是唯一的。
 
 .. 列:
 
 ```
-根据惯例，这个论点叫做`request`，但你可以给它命名你想要的。 参数的名称不重要。以下两个处理程序都是有效的。
+按照惯例，参数被命名为`request`，但您可以根据需要随意命名。参数的名称并不重要。以下两个处理器的写法都是有效的。
 ```
 
 .. 列:
@@ -31,7 +31,7 @@ async def atypical_use_case(req):
 .. 列:
 
 ```
-注释请求对象是超级简单。
+注释请求对象超级简单。
     
 ```
 
@@ -51,14 +51,15 @@ async def typed_handler(request: Request):
 .. tip::
 
 ```
-为方便起见，假定您正在使用一个现代的 IDE，您应该利用类型注释来帮助代码完成和文档。 这在使用 "request" 对象时特别有用，因为它有 **MANY** 属性和方法。
-    
-要查看可用属性和方法的完整清单，请参阅[API 文档](/api/sanic.request)。
+为了您的方便，假设您正在使用现代的集成开发环境（IDE），您应该利用类型注解来帮助代码自动完成和文档编写。这在使用request对象时尤为有用，因为它具有**许多**属性和方法。
+
+要查看可用属性和方法的完整列表，请参阅[API文档]
+(/api/sanic.request)。
 ```
 
 ## 正文内容
 
-`Request`对象允许您以几种不同方式访问请求主体的内容。
+`Request`对象允许您以几种不同的方式访问请求体的内容。
 
 ### JSON
 
@@ -82,7 +83,7 @@ $ curl localhost:8000 -d '{"foo": "bar"}'
 ```
 ````
 
-### 原始文件
+### 原始数据
 
 .. 列:
 

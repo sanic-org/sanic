@@ -265,10 +265,10 @@ def test_debug_formatter_formatException(atty, no_color, expected):
 
     assert len(lines) == 5 if sys.version_info >= (3, 11) else 4
     assert ("\033" in output) is expected
-    assert (f"{Colors.CYAN}{Colors.BOLD}" in lines[1]) is expected
+    assert ("\033[36m\033[1m" in lines[1]) is expected
     assert (
         lines[1].endswith(
-            f"{Colors.BLUE}{Colors.BOLD}test_debug_formatter_formatException{Colors.END}"
+            "\033[34m\033[1mtest_debug_formatter_formatException\033[0m"
         )
         is expected
     )
@@ -276,11 +276,10 @@ def test_debug_formatter_formatException(atty, no_color, expected):
         lines[1].endswith("test_debug_formatter_formatException")
         is not expected
     )
-    assert (lines[2] == f"{Colors.YELLOW}    1 / 0{Colors.END}") is expected
+    assert (lines[2] == "\033[33m    1 / 0\033[0m") is expected
     assert (lines[2] == "    1 / 0") is not expected
     assert (
-        lines[-1]
-        == f"{Colors.SANIC}{Colors.BOLD}ZeroDivisionError{Colors.END}: "
-        f"{Colors.BOLD}division by zero{Colors.END}"
+        lines[-1] == "\033[38;2;255;13;104m\033[1mZeroDivisionError\033[0m: "
+        "\033[1mdivision by zero\033[0m"
     ) is expected
     assert (lines[-1] == "ZeroDivisionError: division by zero") is not expected

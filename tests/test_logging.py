@@ -1,4 +1,5 @@
 import logging
+import sys
 import uuid
 
 from importlib import reload
@@ -262,7 +263,7 @@ def test_debug_formatter_formatException(atty, no_color, expected):
     output = formatter.formatException(exc_info)
     lines = output.splitlines()
 
-    assert len(lines) == 4
+    assert len(lines) == 5 if sys.version_info >= (3, 11) else 4
     assert ("\033" in output) is expected
     assert (f"{Colors.CYAN}{Colors.BOLD}" in lines[1]) is expected
     assert (
@@ -278,8 +279,8 @@ def test_debug_formatter_formatException(atty, no_color, expected):
     assert (lines[2] == f"{Colors.YELLOW}    1 / 0{Colors.END}") is expected
     assert (lines[2] == "    1 / 0") is not expected
     assert (
-        lines[3]
+        lines[-1]
         == f"{Colors.SANIC}{Colors.BOLD}ZeroDivisionError{Colors.END}: "
         f"{Colors.BOLD}division by zero{Colors.END}"
     ) is expected
-    assert (lines[3] == "ZeroDivisionError: division by zero") is not expected
+    assert (lines[-1] == "ZeroDivisionError: division by zero") is not expected

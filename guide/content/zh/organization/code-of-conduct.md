@@ -53,7 +53,7 @@ further defined and clarified by project maintainers.
 
 ## 执行
 
-可能是通过联系项目团队Adam\@sanicframework.org报告的滥用、骚扰或其他令人无法接受的行为。 所有
+可能是通过联系项目团队Adam@sanicframework.org报告的滥用、骚扰或其他令人无法接受的行为。 所有
 申诉都将得到审查和调查，结果将产生
 被认为是必要和适合当时情况的答复。 项目组负责
 对事件报告者保密。
@@ -69,5 +69,4 @@ members of the project's leadership.
 [http://contributor-covenant.org/version/1/4][version]
 
 [homepage]: http://contributor-Covenant.org
-
 [version]: http://contributor-covenant.org/version/1/4/

@@ -99,7 +99,7 @@ body {
 
 ![lake](/assets/images/grottoes.jpg)
 
-***
+---
 
 此外，结算社区的一些资源：
 

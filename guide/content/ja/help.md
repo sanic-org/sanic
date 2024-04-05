@@ -27,6 +27,6 @@ Best place to turn for quick answers and live chat
 `Questions and Help` category on the [Forums](https://community.sanicframework.org/c/questions-and-help/6)
 ```
 
-***
+---
 
 [Stack Overflow](https://stackoverflow.com/questions/tagged/sanic)の`[sanic]`タグも積極的に監視しています。

@@ -76,7 +76,7 @@ def protected(wrapped):
 
 这种装饰模式取自[装饰品页面](/en/guide/best practices/decorators.md)。
 
-***
+---
 
 ```bash
 $ curl localhost:99999/secret -i

@@ -76,7 +76,7 @@ def protected(wrapped):
 
 This decorator pattern is taken from the [decorators page](/en/guide/best-practices/decorators.md).
 
-***
+---
 
 ```bash
 $ curl localhost:9999/secret -i

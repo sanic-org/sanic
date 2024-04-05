@@ -27,6 +27,6 @@ layout: 主界面
 [论坛](https://community.sanicframework.org/c/questions-and-help/6)上的「问题与帮助」（Questions and Help）
 ```
 
-***
+---
 
 我们还积极监视 [Stack Overflow](https://stackoverflow.com/questions/tagged/sanic) 上的\`[sanic]'标签。

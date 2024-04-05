@@ -69,7 +69,7 @@ async def foo_handler(request):
 ```
 ````
 
-***
+---
 
 ## A word about _async_...
 
@@ -140,7 +140,7 @@ Instead, try using a client that is `async/await` capable. Your server will than
 Sanic uses [httpx](https://www.python-httpx.org/) inside of its testing package (sanic-testing) 😉.
 ```
 
-***
+---
 
 ## A fully annotated handler
 

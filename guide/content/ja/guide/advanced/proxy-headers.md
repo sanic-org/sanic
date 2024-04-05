@@ -78,7 +78,7 @@ async def forwarded(request):
     )
 ```
 
-***
+---
 
 ##### 例1
 
@@ -121,7 +121,7 @@ app.config.REAL_IP_HEADER = "x-real-ip"
 ```
 ````
 
-***
+---
 
 ##### 例2
 
@@ -166,7 +166,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例3
 
@@ -209,7 +209,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例4
 
@@ -247,7 +247,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例5
 
@@ -287,7 +287,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例6
 
@@ -328,7 +328,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例7
 
@@ -369,7 +369,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例8
 
@@ -409,7 +409,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例9
 
@@ -449,7 +449,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例10
 
@@ -489,7 +489,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例11
 
@@ -532,7 +532,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-***
+---
 
 ##### 例12
 

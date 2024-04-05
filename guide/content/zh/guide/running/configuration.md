@@ -242,40 +242,40 @@ app = Sanic(..., config=Config(converters=[UUID]))
 
 ## 内置值
 
-| **变量**                                                                                 | **默认**    | **描述**                                                                          |
-| -------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------- |
-| ACCESS_LOG                                                        | 真的        | 禁用或启用访问日志                                                                       |
-| AUTO_EXTEND                                                       | 真的        | 控制 [Sanic Extensions](../../plugins/sanic-ext/getting-started.md) 是否会在现有虚拟环境中加载 |
-| AUTO_RELOAD                                                       | 真的        | 控制文件更改时应用程序是否会自动重新加载                                                            |
-| EVENT_AUTOREGISTER                                                | 真的        | 当`True`使用`app.event()`方法在不存在的信号上将自动创建它，而不会引起异常                                  |
-| FALLBACK_ERROR_FORMAT                        | .html     | 未捕获和处理异常时的错误响应格式                                                                |
-| FORWARDED_FOR_HEADER                         | X-转发-输入   | 包含客户端和代理IP的 "X-Forwarded-for" HTTP 头名称                                          |
-| FORWARDED_SECRET                                                  | 无         | 用于安全识别特定代理服务器(见下文)                                           |
-| GRACEFUL_SHUTDOWN_TIMEOUT                    | 15.0      | 强制关闭非空闲连接等待多长时间 (秒)                                          |
-| INSPECTO                                                                               | 错误        | 是否启用检查器                                                                         |
-| INSPECTOR_HOST                                                    | 本地主机      | 检查专员的主机                                                                         |
-| INSPECTOR_PORT                                                    | 6457      | 检查员的端口                                                                          |
-| INSPECTOR_TLS_TITLE                          | -         | 检查员的TLS密钥                                                                       |
-| INSPECTOR_TLS_CERT                           | *         | 检查员的TLS证书                                                                       |
-| INSPECTOR_API_KEY                            | -         | 检查员的 API 密钥                                                                     |
-| KEEP_ALIVEUT                                                      | 120       | 保持TCP连接打开多长时间(秒)                                             |
-| KEEP_ALIVE                                                        | 真的        | False 时禁用保持生命值                                                                  |
-| MOTD                                                                                   | 真的        | 启动时是否显示 MOTD (当天消息)                                          |
-| MOTD_DISPLAY                                                      | {}        | Key/value 对应显示额外的任意数据                                                           |
-| NOISY_EXCEPTIONS                                                  | 错误        | 强制所有“安静”异常被记录                                                                   |
-| PROXIES _COUNT                                                    | 无         | 在应用程序前面的代理服务器数量 (例如，nginx；见下方)                               |
-| VIP_HEADER                                                        | 无         | 包含真实客户端IP的 "X-Real-IP" HTTP 头名称                                                 |
-| 注册                                                                                     | 真的        | 是否启用应用注册                                                                        |
-| REQUEST_BUFFER_SIZE                          | 65536     | 请求暂停前请求缓冲区大小，默认是 64 Kib                                                         |
-| REQUEST_HEADER                                                    | X-请求-ID   | 包含请求/关联ID的 "X-Request-ID" HTTP 头名称                                              |
-| REQUEST_MAX_SIZE                             | 100000000 | 请求的大小可能是 (bytes), 默认是 100 megabytes                          |
-| REQUEST_MAX_HEADER_SIZE | 8192      | 请求头可能有多大(字节)，默认值为8192字节                                      |
-| REQUEST_TIMEOUT                                                   | 60        | 到达请求可能需要多长时间(秒)                                              |
-| 重置_TIMEOUT                                                        | 60        | 处理过程可能需要多长时间(秒)                                              |
-| USE_UVLOOP                                                        | 真的        | 是否覆盖循环策略使用 `uvloop` 。 只支持 `app.run` 。                                           |
-| WEBSOCKET_MAX_SIZE                           | 2^20      | 收到消息的最大大小(字节)                                                |
-| WEBSOCKET_INTERVAL                                                | 20        | 每个ping_interval 秒都会发送一个Ping 帧。                             |
-| WEBSOCKET_PING_TIMEOUT                       | 20        | 当Pong在ping_timeout秒后未收到时，连接将被关闭                            |
+| **变量**                                                                                 | **默认**                | **描述**                                                                          |
+| -------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------- |
+| ACCESS_LOG                                                        | 真的                    | 禁用或启用访问日志                                                                       |
+| AUTO_EXTEND                                                       | 真的                    | 控制 [Sanic Extensions](../../plugins/sanic-ext/getting-started.md) 是否会在现有虚拟环境中加载 |
+| AUTO_RELOAD                                                       | 真的                    | 控制文件更改时应用程序是否会自动重新加载                                                            |
+| EVENT_AUTOREGISTER                                                | 真的                    | 当`True`使用`app.event()`方法在不存在的信号上将自动创建它，而不会引起异常                                  |
+| FALLBACK_ERROR_FORMAT                        | .html | 未捕获和处理异常时的错误响应格式                                                                |
+| FORWARDED_FOR_HEADER                         | X-转发-输入               | 包含客户端和代理IP的 "X-Forwarded-for" HTTP 头名称                                          |
+| FORWARDED_SECRET                                                  | 无                     | 用于安全识别特定代理服务器(见下文)                                           |
+| GRACEFUL_SHUTDOWN_TIMEOUT                    | 15.0  | 强制关闭非空闲连接等待多长时间 (秒)                                          |
+| INSPECTO                                                                               | 错误                    | 是否启用检查器                                                                         |
+| INSPECTOR_HOST                                                    | 本地主机                  | 检查专员的主机                                                                         |
+| INSPECTOR_PORT                                                    | 6457                  | 检查员的端口                                                                          |
+| INSPECTOR_TLS_TITLE                          | -                     | 检查员的TLS密钥                                                                       |
+| INSPECTOR_TLS_CERT                           | *                     | 检查员的TLS证书                                                                       |
+| INSPECTOR_API_KEY                            | -                     | 检查员的 API 密钥                                                                     |
+| KEEP_ALIVEUT                                                      | 120                   | 保持TCP连接打开多长时间(秒)                                             |
+| KEEP_ALIVE                                                        | 真的                    | False 时禁用保持生命值                                                                  |
+| MOTD                                                                                   | 真的                    | 启动时是否显示 MOTD (当天消息)                                          |
+| MOTD_DISPLAY                                                      | {}                    | Key/value 对应显示额外的任意数据                                                           |
+| NOISY_EXCEPTIONS                                                  | 错误                    | 强制所有“安静”异常被记录                                                                   |
+| PROXIES _COUNT                                                    | 无                     | 在应用程序前面的代理服务器数量 (例如，nginx；见下方)                               |
+| VIP_HEADER                                                        | 无                     | 包含真实客户端IP的 "X-Real-IP" HTTP 头名称                                                 |
+| 注册                                                                                     | 真的                    | 是否启用应用注册                                                                        |
+| REQUEST_BUFFER_SIZE                          | 65536                 | 请求暂停前请求缓冲区大小，默认是 64 Kib                                                         |
+| REQUEST_HEADER                                                    | X-请求-ID               | 包含请求/关联ID的 "X-Request-ID" HTTP 头名称                                              |
+| REQUEST_MAX_SIZE                             | 100000000             | 请求的大小可能是 (bytes), 默认是 100 megabytes                          |
+| REQUEST_MAX_HEADER_SIZE | 8192                  | 请求头可能有多大(字节)，默认值为8192字节                                      |
+| REQUEST_TIMEOUT                                                   | 60                    | 到达请求可能需要多长时间(秒)                                              |
+| 重置_TIMEOUT                                                        | 60                    | 处理过程可能需要多长时间(秒)                                              |
+| USE_UVLOOP                                                        | 真的                    | 是否覆盖循环策略使用 `uvloop` 。 只支持 `app.run` 。                                           |
+| WEBSOCKET_MAX_SIZE                           | 2^20                  | 收到消息的最大大小(字节)                                                |
+| WEBSOCKET_INTERVAL                                                | 20                    | 每个ping_interval 秒都会发送一个Ping 帧。                             |
+| WEBSOCKET_PING_TIMEOUT                       | 20                    | 当Pong在ping_timeout秒后未收到时，连接将被关闭                            |
 
 .. tip:: FYI
 

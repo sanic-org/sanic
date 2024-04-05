@@ -109,7 +109,7 @@ def setup_options(app: Sanic, _):
     app.router.finalize()
 ```
 
-***
+---
 
 ```
 $ curl localhost:9999/ -i

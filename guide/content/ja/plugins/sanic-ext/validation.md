@@ -10,7 +10,7 @@ Webアプリケーションの最も一般的に実装されている機能の1�
 
 ### Dataclassの検証
 
-format@@0(https\://docs.python.org/3/library/dataclasses.html)の導入により、Pythonは定義されたスキーマを満たすオブジェクトを簡単に作成できました。 しかし、標準ライブラリは型チェック検証のみをサポートしており、実行時の検証ではありません。 Sanic Extensionsは、 `dataclasses`を使って受信するリクエストに対して実行時の検証を行う機能を追加します。 `pydantic`または`attrs`のいずれかがインストールされている場合は、それらのライブラリのいずれかを使用することもできます。
+format@@0(https://docs.python.org/3/library/dataclasses.html)の導入により、Pythonは定義されたスキーマを満たすオブジェクトを簡単に作成できました。 しかし、標準ライブラリは型チェック検証のみをサポートしており、実行時の検証ではありません。 Sanic Extensionsは、 `dataclasses`を使って受信するリクエストに対して実行時の検証を行う機能を追加します。 `pydantic`または`attrs`のいずれかがインストールされている場合は、それらのライブラリのいずれかを使用することもできます。
 
 .. 列::
 

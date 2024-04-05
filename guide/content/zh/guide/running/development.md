@@ -272,7 +272,7 @@ sanic path.to:app --dev --no-repl
 
 ## 自动TLS证书
 
-当在 `DEBUG` 模式下运行时，您可以要求Sanic 处理本地主机临时TLS 证书的设置。 如果您想要访问 'https\://' 本地发展环境，这将是很有帮助的。
+当在 `DEBUG` 模式下运行时，您可以要求Sanic 处理本地主机临时TLS 证书的设置。 如果您想要访问 'https://' 本地发展环境，这将是很有帮助的。
 
 此功能由 [mkcert](https://github.com/FiloSottile/mkcert) 或 [trustme](https://github.com/python-trio/trustme) 提供。 两者都是好的选择，但也有一些差异。 `Trustme` 是一个 Python 库，可以安装在 `pip` 里的环境。 这使得可以轻松地处理Envrionment，但在运行 HTTP/3 服务器时是不兼容的。 `mkcert`可能是一个更多的安装过程，但可以安装本地CA并使其更容易使用。
 

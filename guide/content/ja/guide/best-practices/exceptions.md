@@ -14,7 +14,7 @@ async def no_no(request):
         raise SanicException("Something went wrong .", status_code=501)
 ```
 
-Sanicは多くの標準的な例外を提供します。 それぞれが自動的にレスポンス内に適切なHTTPステータスコードを発生させます。 詳細については、format@@0(https\://sanic.readthedocs.io/en/latest/sanic/api_reference.html#module-sanic.exceptions) を参照してください。
+Sanicは多くの標準的な例外を提供します。 それぞれが自動的にレスポンス内に適切なHTTPステータスコードを発生させます。 詳細については、format@@0(https://sanic.readthedocs.io/en/latest/sanic/api_reference.html#module-sanic.exceptions) を参照してください。
 
 .. 列::
 

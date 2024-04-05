@@ -470,7 +470,7 @@ openapi.exclude(bp=some_blueprint)
 
 ## Pydanticとの統合
 
-Pydanticモデルはformat@@0(https\://pydantic-docs.helpmanual.io/usage/schema/)を生成する機能を持っています。
+Pydanticモデルはformat@@0(https://pydantic-docs.helpmanual.io/usage/schema/)を生成する機能を持っています。
 
 .. 列::
 

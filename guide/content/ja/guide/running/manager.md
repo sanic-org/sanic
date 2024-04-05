@@ -564,7 +564,7 @@ Sanicが何をしようとしているのかを説明する前に、`start_metho
 
 `fork` と `forkserver` メソッドは Unix システムでのみ使用でき、`spawn` は Windows で利用できる唯一のメソッドです。 選択肢がある Unix システムでは、`fork` は一般的にデフォルトのシステムメソッドです。
 
-これらのメソッドの違いについては、format@@0(https\://docs.python.org/3/library/multiprocessing.html#context-and-start-methods)を参照してください。 ただし、重要なことは、基本的に親プロセスのメモリ全体を子プロセスにコピーすることです。 `spawn` は新しいプロセスを作成し、そのプロセスにアプリケーションをロードします。 CLIを使っていない場合は、`__name__ == "__main__"`ブロックの中に、Sanic `run` を入れ子にする必要があります。
+これらのメソッドの違いについては、format@@0(https://docs.python.org/3/library/multiprocessing.html#context-and-start-methods)を参照してください。 ただし、重要なことは、基本的に親プロセスのメモリ全体を子プロセスにコピーすることです。 `spawn` は新しいプロセスを作成し、そのプロセスにアプリケーションをロードします。 CLIを使っていない場合は、`__name__ == "__main__"`ブロックの中に、Sanic `run` を入れ子にする必要があります。
 
 ### サニックメソッドと開始方法
 

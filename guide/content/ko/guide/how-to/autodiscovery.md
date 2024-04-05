@@ -158,7 +158,7 @@ def print_something(app, loop):
     logger.debug("something @ nested")
 ```
 
-***
+---
 
 ```text
 here is the dir tree

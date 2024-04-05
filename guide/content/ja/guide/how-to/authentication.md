@@ -76,7 +76,7 @@ def protected(wrapped):
 
 このデコレータパターンは format@@0(/ja/guide/best-practices/decorators.md) から取得されます。
 
-***
+---
 
 ```bash
 $ curl localhost:9999/secret -i

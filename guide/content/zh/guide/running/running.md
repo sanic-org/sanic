@@ -311,29 +311,29 @@ elif __name__ == "__main__":
 
 要使用低级别的 `run` API，在定义一个 `sanic.Sanic` 实例后，我们可以使用以下关键词参数来调用运行方法：
 
-|                     参数                    |       默认设置      | 描述                                                                     |
-| :---------------------------------------: | :-------------: | :--------------------------------------------------------------------- |
-|                   **主机**                  |  `"127.0.0.1"`  | 服务器主机地址已开启。                                                            |
-|                   **端口**                  |      `8000`     | 服务器端口已开启。                                                              |
-|                  **unix**                 |       `无`       | 服务器主机的 Unix 套接字名称 (而不是TCP)。                         |
-|                  **dev**                  |     `False`     | 等于`debug=True`和`auto_reload=True`。                                     |
-|                 **debug**                 |     `False`     | 启用调试输出 (慢速服务器)。                                     |
-|                  **ssl**                  |       `无`       | SSLContext for SSL 加密 (s)。                          |
-|                  **sock**                 |       `无`       | Socket 让服务器接受连接。                                                       |
-|                **Workers**                |       `1`       | 要生成的工序数量。 无法快速使用。                                                      |
-|                   **循环**                  |       `无`       | 一个异步兼容的事件循环。 如果没有具体说明，Sanic将创建自己的事件循环。                                 |
+|                     参数                    |       默认设置      | 描述                                                                                     |
+| :---------------------------------------: | :-------------: | :------------------------------------------------------------------------------------- |
+|                   **主机**                  |  `"127.0.0.1"`  | 服务器主机地址已开启。                                                                            |
+|                   **端口**                  |      `8000`     | 服务器端口已开启。                                                                              |
+|                  **unix**                 |       `无`       | 服务器主机的 Unix 套接字名称 (而不是TCP)。                                         |
+|                  **dev**                  |     `False`     | 等于`debug=True`和`auto_reload=True`。                                                     |
+|                 **debug**                 |     `False`     | 启用调试输出 (慢速服务器)。                                                     |
+|                  **ssl**                  |       `无`       | SSLContext for SSL 加密 (s)。                                          |
+|                  **sock**                 |       `无`       | Socket 让服务器接受连接。                                                                       |
+|                **Workers**                |       `1`       | 要生成的工序数量。 无法快速使用。                                                                      |
+|                   **循环**                  |       `无`       | 一个异步兼容的事件循环。 如果没有具体说明，Sanic将创建自己的事件循环。                                                 |
 |                **protocol**               |  `HttpProtocol` | asyncio.protocol的子类。                                                   |
 |                   **版本**                  | `HTTPVERSION_1` | 要使用的 HTTP 版本 (`HTTP.VERSION_1` 或 `HTTP.VERSION_3`). |
-|    **access_log**    |      `True`     | 启用处理请求的日志 (大大减慢服务器)。                                |
-|    **auto_reload**   |       `无`       | 启用源目录自动重新加载。                                                           |
-|    **reload_dir**    |       `无`       | 自动读取加载器应该监视的目录路径或路径列表。                                                 |
-| **noisy_exceptions** |       `无`       | 是否设置全局噪音异常。 没有表示离开为默认值。                                                |
-|                  **motd**                 |      `True`     | 是否显示启动消息。                                                              |
-|   **motd_display**   |       `无`       | 在启动消息中显示额外的密钥/值信息                                                      |
-|                  **fast**                 |     `False`     | 是否最大化工人工序。  无法与工人一起使用。                                                 |
-|                  **详细化**                  |       `0`       | 日志的详细级别。 最大值为 2。                                                       |
-|      **自动_tls**      |     `False`     | 是否为本地开发自动创建TLS证书。 不是生产的。                                               |
-|                  **单独处理**                 |     `False`     | 是否在一个过程中运行 Sanic。                                                      |
+|    **access_log**    |      `True`     | 启用处理请求的日志 (大大减慢服务器)。                                                |
+|    **auto_reload**   |       `无`       | 启用源目录自动重新加载。                                                                           |
+|    **reload_dir**    |       `无`       | 自动读取加载器应该监视的目录路径或路径列表。                                                                 |
+| **noisy_exceptions** |       `无`       | 是否设置全局噪音异常。 没有表示离开为默认值。                                                                |
+|                  **motd**                 |      `True`     | 是否显示启动消息。                                                                              |
+|   **motd_display**   |       `无`       | 在启动消息中显示额外的密钥/值信息                                                                      |
+|                  **fast**                 |     `False`     | 是否最大化工人工序。  无法与工人一起使用。                                                                 |
+|                  **详细化**                  |       `0`       | 日志的详细级别。 最大值为 2。                                                                       |
+|      **自动_tls**      |     `False`     | 是否为本地开发自动创建TLS证书。 不是生产的。                                                               |
+|                  **单独处理**                 |     `False`     | 是否在一个过程中运行 Sanic。                                                                      |
 
 .. 列:
 
@@ -473,7 +473,7 @@ app.run(version=3)
 ```
 ````
 
-要同时运行一个 HTTP/3 和 HTTP/1.1 服务器，您可以使用 v22.3 引入的 [application multi-servve](../release-notes/v22.3.html#application-multi-servve)。 这将自动添加一个 [Alt-Svc](https\://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ Alt-Svc) 头到您的 HTTP/1.1 请求让客户端知道它也是可用的 HTTP/3。
+要同时运行一个 HTTP/3 和 HTTP/1.1 服务器，您可以使用 v22.3 引入的 [application multi-servve](../release-notes/v22.3.html#application-multi-servve)。 这将自动添加一个 [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ Alt-Svc) 头到您的 HTTP/1.1 请求让客户端知道它也是可用的 HTTP/3。
 
 .. 列:
 
@@ -524,7 +524,7 @@ uvicorn myapp:app
 使用ASGI时要注意的几件事：
 
 1. 当使用 Sanic 网络服务器时，websockets 将使用 `websockets` 软件包运行。 在 ASGI 模式下，没有必要使用这个软件包，因为websockets 是在 ASGI 服务器上管理的。
-2. ASGI 生命周期协议 https\://asgi.readthedocs.io/en/latest/specs/lifespan.html，只支持两个服务器事件：启动和关机。 萨里语有四个：启动前、启动后、关闭前和关机。 因此，以ASGI模式， 启动和关闭事件将连续运行，而不是围绕服务器进程开始和结束(因为现在是由 ASGI 服务器控制的)。 因此，最好使用 `after _server_start` 和 `previ_server_stop` 。
+2. ASGI 生命周期协议 https://asgi.readthedocs.io/en/latest/specs/lifespan.html，只支持两个服务器事件：启动和关机。 萨里语有四个：启动前、启动后、关闭前和关机。 因此，以ASGI模式， 启动和关闭事件将连续运行，而不是围绕服务器进程开始和结束(因为现在是由 ASGI 服务器控制的)。 因此，最好使用 `after _server_start` 和 `previ_server_stop` 。
 
 ### 特里奥文
 
@@ -538,7 +538,7 @@ Sanic在Trio上运行时有实验支持：
 
 [Gunicorn](http://gunicorn.org/) ("Green Unicorn") 是一个基于UNIX的操作系统的 WSGI HTTP 服务器。 这是一个基于 Ruby Unicorn项目的前叉工人模型。
 
-若要与 Gunicorn一起运行 Sanic 应用程序，您需要使用 [uvicorn]的适配器(https\://www\.uvicorn.org/)。 确保uvicorn已经安装并运行它与 `uvicorn.workers.UvicornWorker` for Gunicorn worker-class参数：
+若要与 Gunicorn一起运行 Sanic 应用程序，您需要使用 [uvicorn]的适配器(https://www.uvicorn.org/)。 确保uvicorn已经安装并运行它与 `uvicorn.workers.UvicornWorker` for Gunicorn worker-class参数：
 
 ```sh
 gunicorn myapp:app --binding 0.0.0:1337 --worker-classuvicorn.workers.UvicornWorker

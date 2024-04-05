@@ -256,7 +256,7 @@ _当時の状況により、v.23.9はスキップされました。 _
   - `request.is_safe`
   - `request.is_idempotent`
   - `request.is_cacheable`
-  - _参照_ format@@0(https\://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) _これらが適用される時の詳細_
+  - _参照_ format@@0(https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) _これらが適用される時の詳細_
 - [#2522](https://github.com/sanic-org/sanic/pull/2522) ASGIに常にサーバーの場所を表示する
 - [#2526](https://github.com/sanic-org/sanic/pull/2526) 適切な場合に304を返すための静的ファイルのキャッシュ管理のサポート
 - [#2533](https://github.com/sanic-org/sanic/pull/2533) リファクタリング`_static_request_handler`
@@ -351,7 +351,7 @@ _当時の状況により、v.23.9はスキップされました。 _
 ### 特徴
 
 - [#2347](https://github.com/sanic-org/sanic/pull/2347) マルチアプリケーション・サーバー用 API
-  - 🚨 _BREAKING CHANGE_: 古い `sanic.worker.GunicornWorker` が \*\*削除されました。 Sanic を `gunicorn` で実行するには、`uvicorn` format@@0(https\://www\.uvicorn.org/#running-with-gunicorn) で実行する必要があります。
+  - 🚨 _BREAKING CHANGE_: 古い `sanic.worker.GunicornWorker` が \*\*削除されました。 Sanic を `gunicorn` で実行するには、`uvicorn` format@@0(https://www.uvicorn.org/#running-with-gunicorn) で実行する必要があります。
   - 🧁 _SIDE EFFECT_: 名前付きバックグラウンドタスクがPython 3.7 でもサポートされるようになりました
 - [#2357](https://github.com/sanic-org/sanic/pull/2357) `Request.credentials` として `Authorization` ヘッダーを解析
 - [#2361](https://github.com/sanic-org/sanic/pull/2361) 設定オプションを追加して、アプリケーションの起動時に`Touchup`ステップをスキップします
@@ -453,7 +453,7 @@ _当時の状況により、v.23.9はスキップされました。 _
   - `sanic.exceptions.abort`
   - `sanic.views.CompositionView`
   - `sanic.response.StreamingHTTPResponse`
-    - _注意:_ `stream()` レスポンスメソッド (呼び出し可能なストリーミング関数を渡す) は廃止され、v22.6 で削除されます。 新しいスタイルのすべてのストリーミング応答をアップグレードする必要があります: https\://sanicframework.org/ja/guide/advanced/streaming.html#response-stream
+    - _注意:_ `stream()` レスポンスメソッド (呼び出し可能なストリーミング関数を渡す) は廃止され、v22.6 で削除されます。 新しいスタイルのすべてのストリーミング応答をアップグレードする必要があります: https://sanicframework.org/ja/guide/advanced/streaming.html#response-stream
 - [#2320](https://github.com/sanic-org/sanic/pull/2320) Configからエラーハンドラ設定用アプリインスタンスを削除します
 
 ### 開発者のインフラストラクチャ
@@ -792,7 +792,7 @@ Notes
   名が存在しない\"静的\"ルートに`url_for`で\"name\" キーワードを使用する
   ```
 - 名前付きの param を使用せずに複数の `app.static()` を持つことはできません
-- ファイルルート上で`url_for`の"filename" キーワードを使用する
+- ファイルルート上で`url_for`の\"filename\" キーワードを使用する
 - ルートデフの`unquote` (自動ではありません)
 - `routes_all`はタプルです
 - ハンドラの引数はkwargのみです
@@ -983,7 +983,7 @@ Notes
 - [#1776](https://github.com/sanic-org/sanic/pull/1776)
   ホストパラメータのリストに関するバグ修正
 - [#1842](https://github.com/sanic-org/sanic/pull/1842) Fix static
-  _handler pickling error
+  \_handler pickling error
 - [#1827](https://github.com/sanic-org/sanic/pull/1827) OSX py38 と Windows のリローダー
   を修正
 - [#1848](https://github.com/sanic-org/sanic/pull/1848) Reverse
@@ -1005,7 +1005,7 @@ Notes
 - [#1857](https://github.com/sanic-org/sanic/pull/1857) Adjust
   websockets version to setup.py
 - [#1869](https://github.com/sanic-org/sanic/pull/1869) Wrap
-  run()の"protocol" 型アノテーションオプション[]
+  run()の\"protocol\" 型アノテーションオプション\[\]
 
 **ドキュメントの改善**
 
@@ -1322,7 +1322,7 @@ December 2020, and therefore passing Python\'s official support version
 - [#1477](https://github.com/sanic-org/sanic/pull/1477) README.md で文法
   を修正
 - [#1489](https://github.com/sanic-org/sanic/pull/1489) Added
-  "databases" to the extensions list
+  \"databases\" to the extensions list
 - [#1483](https://github.com/sanic-org/sanic/pull/1483) 拡張リストに
   sanic-zipkinを追加する
 - [#1487](https://github.com/sanic-org/sanic/pull/1487)
@@ -1385,9 +1385,9 @@ PyPI ではリリースされません。
   - Windowsや他のプラットフォームでコンテンツの長さが一致しない問題を修正
   - 固定ファイルの範囲ヘッダーの処理を修正 (#1402)
   - ロガーを修正して動作させます(#1397)
-  - マルチプロセッシングテストでpikcle->pickle型を修正
+  - マルチプロセッシングテストでpikcle-\>pickle型を修正
   - ブループリント内の名前付きタプルの
-    "name" セクションで渡された文字列をブループリントモジュール属性名の
+    \"name\" セクションで渡された文字列をブループリントモジュール属性名の
     名に合わせて変更します。 This allows
     blueprints to be pickled and unpickled, without errors, which
     is a requirement of running Sanic in multiprocessing mode in
@@ -1403,7 +1403,7 @@ PyPI ではリリースされません。
 **0.8.3**
 
 - 変更点:
-  - 所有権を組織に変更しました 'sanic-org'
+  - 所有権を組織に変更しました \'sanic-org\'
 
 **0.8.0**
 
@@ -1443,7 +1443,7 @@ PyPI ではリリースされません。
   - ドキュメントの更新/修正 (複数の投稿者)
 - 修正:
   - 修正: Linux で auto_reload (Ashley Sommer)
-  - 修正:aiohttp >= 3.3.0 (Ashley Sommer)
+  - 修正:aiohttp \>= 3.3.0 (Ashley Sommer)
   - 修正: windows ではデフォルトで auto_reload を無効にする (abuckenheimer)
   - 修正 (1143): gunicorn (hqy) でアクセスログをオフにする
   - Fix (1268): ファイル応答のステータスコードをサポート (Cosmo Borsky)
@@ -1455,13 +1455,13 @@ PyPI ではリリースされません。
   - 修正 (1231): メモリリーク - 常にリソースをリリース (フィリップXu)
   - Fix (1221): トランスポートが存在する場合はリクエストを真にする (Raphael
     Deem)
-  - aiohttp>=3.1.0（Ashley Sommer）のテストに失敗する問題を修正
+  - aiohttp\>=3.1.0（Ashley Sommer）のテストに失敗する問題を修正
   - try_everything の例を修正 (PyManiacGR, kot83)
   - Fix (1158): デバッグモードで auto_reload がデフォルト(Raphel Deem)
   - Fix (11136): ErrorHandler.response ハンドラの呼び出しが制限されています
     (Julien Castiaux)
   - 修正: raw requires bytes-like object (cloudship)
-  - Fix (1120): passing a list in to a route decorator's host arg
+  - Fix (1120): passing a list in to a route decorator\'s host arg
     (Timothy Ebiuwhe)
   - 修正: マルチパート/フォームデータパーサのバグ(DirkGuijt)
   - Fix: Exception for missing parameter when value is null

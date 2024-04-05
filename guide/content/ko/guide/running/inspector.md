@@ -81,11 +81,11 @@ Remember, the Inspector is not running on your Sanic application. It is a sepera
 
 The Inspector comes with the following built-in commands.
 
-| CLI Command        | HTTP Action                        | Description                                                              |
-| ------------------ | ---------------------------------- | ------------------------------------------------------------------------ |
-| `inspect`          | `GET /`                            | Display basic details about the running application.                     |
-| `inspect reload`   | `POST /reload`                     | Trigger a reload of all server workers.                                  |
-| `inspect shutdown` | `POST /shutdown`                   | Trigger a shutdown of all processes.                                     |
+| CLI Command        | HTTP Action                        | Description                                                                                              |
+| ------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `inspect`          | `GET /`                            | Display basic details about the running application.                                     |
+| `inspect reload`   | `POST /reload`                     | Trigger a reload of all server workers.                                                  |
+| `inspect shutdown` | `POST /shutdown`                   | Trigger a shutdown of all processes.                                                     |
 | `inspect scale N`  | `POST /scale`<br>`{"replicas": N}` | Scale the number of workers. Where `N` is the target number of replicas. |
 
 ## Custom Commands

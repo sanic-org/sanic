@@ -311,29 +311,29 @@ elif __name__ == "__main__":
 
 To use the low-level `run` API, after defining an instance of `sanic.Sanic`, we can call the run method with the following keyword arguments:
 
-|                 Parameter                 |      Default     | Description                                                                               |
-| :---------------------------------------: | :--------------: | :---------------------------------------------------------------------------------------- |
-|                  **host**                 |   `"127.0.0.1"`  | Address to host the server on.                                                            |
-|                  **port**                 |      `8000`      | Port to host the server on.                                                               |
-|                  **unix**                 |      `None`      | Unix socket name to host the server on (instead of TCP).               |
-|                  **dev**                  |      `False`     | Equivalent to `debug=True` and `auto_reload=True`.                                        |
-|                 **debug**                 |      `False`     | Enables debug output (slows server).                                   |
-|                  **ssl**                  |      `None`      | SSLContext for SSL encryption of worker(s).                            |
-|                  **sock**                 |      `None`      | Socket for the server to accept connections from.                                         |
+|                 Parameter                 |      Default     | Description                                                                                                               |
+| :---------------------------------------: | :--------------: | :------------------------------------------------------------------------------------------------------------------------ |
+|                  **host**                 |   `"127.0.0.1"`  | Address to host the server on.                                                                            |
+|                  **port**                 |      `8000`      | Port to host the server on.                                                                               |
+|                  **unix**                 |      `None`      | Unix socket name to host the server on (instead of TCP).                               |
+|                  **dev**                  |      `False`     | Equivalent to `debug=True` and `auto_reload=True`.                                                        |
+|                 **debug**                 |      `False`     | Enables debug output (slows server).                                                   |
+|                  **ssl**                  |      `None`      | SSLContext for SSL encryption of worker(s).                                            |
+|                  **sock**                 |      `None`      | Socket for the server to accept connections from.                                                         |
 |                **workers**                |        `1`       | Number of worker processes to spawn. Cannot be used with fast.                            |
 |                  **loop**                 |      `None`      | An asyncio-compatible event loop. If none is specified, Sanic creates its own event loop. |
 |                **protocol**               |  `HttpProtocol`  | Subclass of asyncio.protocol.                                                             |
-|                **version**                | `HTTP.VERSION_1` | The HTTP version to use (`HTTP.VERSION_1` or `HTTP.VERSION_3`).        |
-|    **access_log**    |      `True`      | Enables log on handling requests (significantly slows server).         |
-|    **auto_reload**   |      `None`      | Enables auto-reload on the source directory.                                              |
-|    **reload_dir**    |      `None`      | A path or list of paths to directories the auto-reloader should watch.                    |
+|                **version**                | `HTTP.VERSION_1` | The HTTP version to use (`HTTP.VERSION_1` or `HTTP.VERSION_3`).                        |
+|    **access_log**    |      `True`      | Enables log on handling requests (significantly slows server).                         |
+|    **auto_reload**   |      `None`      | Enables auto-reload on the source directory.                                                              |
+|    **reload_dir**    |      `None`      | A path or list of paths to directories the auto-reloader should watch.                                    |
 | **noisy_exceptions** |      `None`      | Whether to set noisy exceptions globally. None means leave as default.                    |
-|                  **motd**                 |      `True`      | Whether to display the startup message.                                                   |
-|   **motd_display**   |      `None`      | A dict with extra key/value information to display in the startup message                 |
+|                  **motd**                 |      `True`      | Whether to display the startup message.                                                                   |
+|   **motd_display**   |      `None`      | A dict with extra key/value information to display in the startup message                                                 |
 |                  **fast**                 |      `False`     | Whether to maximize worker processes.  Cannot be used with workers.                       |
 |               **verbosity**               |        `0`       | Level of logging detail. Max is 2.                                                        |
 |     **auto_tls**     |      `False`     | Whether to auto-create a TLS certificate for local development. Not for production.       |
-|  **single_process**  |      `False`     | Whether to run Sanic in a single process.                                                 |
+|  **single_process**  |      `False`     | Whether to run Sanic in a single process.                                                                 |
 
 .. column::
 
@@ -524,7 +524,7 @@ hypercorn myapp:app
 A couple things to note when using ASGI:
 
 1. When using the Sanic webserver, websockets will run using the `websockets` package. In ASGI mode, there is no need for this package since websockets are managed in the ASGI server.
-2. The ASGI lifespan protocol https\://asgi.readthedocs.io/en/latest/specs/lifespan.html, supports only two server events: startup and shutdown. Sanic has four: before startup, after startup, before shutdown, and after shutdown. Therefore, in ASGI mode, the startup and shutdown events will run consecutively and not actually around the server process beginning and ending (since that is now controlled by the ASGI server). Therefore, it is best to use `after_server_start` and `before_server_stop`.
+2. The ASGI lifespan protocol https://asgi.readthedocs.io/en/latest/specs/lifespan.html, supports only two server events: startup and shutdown. Sanic has four: before startup, after startup, before shutdown, and after shutdown. Therefore, in ASGI mode, the startup and shutdown events will run consecutively and not actually around the server process beginning and ending (since that is now controlled by the ASGI server). Therefore, it is best to use `after_server_start` and `before_server_stop`.
 
 ### Trio
 

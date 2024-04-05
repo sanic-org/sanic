@@ -68,7 +68,7 @@ Response Cookieは辞書の値のように設定でき、次のパラメータ�
 - `secure_prefix: bool` - Cookieに`__Secure-`プレフィックスを追加するかどうか。
 - `partitioned: bool` - クッキーをパーティションとしてマークするかどうか。
 
-これらの値の意味と使用状況をよりよく理解するためには、format@@0(https\://developer.mozilla.org/en-US/docs/Web/HTTP/Cookie)のformat@@1(https\://developer.mozilla.org/docs/Web/HTTP/Cookie)を読むと便利かもしれません。
+これらの値の意味と使用状況をよりよく理解するためには、format@@0(https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookie)のformat@@1(https://developer.mozilla.org/docs/Web/HTTP/Cookie)を読むと便利かもしれません。
 
 .. tip:: FYI
 

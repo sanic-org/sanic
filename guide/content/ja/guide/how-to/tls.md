@@ -188,7 +188,7 @@ async def runner(app, app_server):
 
 ## ドメイン名の証明書を取得する
 
-format@@0(https\://letsencrypt.org/)から無料で証明書を取得できます。 パッケージマネージャーから [certbot](https://certbot.eff.org/) をインストールし、証明書を要求します。
+format@@0(https://letsencrypt.org/)から無料で証明書を取得できます。 パッケージマネージャーから [certbot](https://certbot.eff.org/) をインストールし、証明書を要求します。
 
 ```sh
 sudo certbot certonly --key-type ecdsa --preferred-chain "ISRG Root X1" -d example.com -d www.example.com

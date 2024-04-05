@@ -100,7 +100,7 @@ async def handler(request):
     return text('OK')
 ```
 
-[MDN Docs](https\://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST
 
 ### PUT
 
@@ -469,14 +469,14 @@ async def handler(request, foo: str, ext: str):
 ```
 ````
 
-| 定義                                 | 例           | ファイル名    | 拡張         |
-| ---------------------------------- | ----------- | -------- | ---------- |
-| \<file:ext>                        | page.txt    | `"page"` | `"txt"`    |
-| \<file:ext=jpg>                    | cat.jpg     | `"cat"`  | `"jpg"`    |
-| \<file:ext=jpg\|png\|gif\|svg>     | cat.jpg     | `"cat"`  | `"jpg"`    |
-| \<file=int:ext>                    | 123.txt     | `123`    | `"txt"`    |
-| \<file=int:ext=jpg\|png\|gif\|svg> | 123.svg     | `123`    | `"svg"`    |
-| \<file=float:ext=tar.gz>           | 3.14.tar.gz | `3.14`   | `"tar.gz"` |
+| 定義                                                       | 例                                                           | ファイル名    | 拡張         |
+| -------------------------------------------------------- | ----------------------------------------------------------- | -------- | ---------- |
+| \file:ext                                | page.txt                                    | `"page"` | `"txt"`    |
+| \file:ext=jpg                            | cat.jpg                                     | `"cat"`  | `"jpg"`    |
+| \file:ext=jpg\\\|png\\\|gif\\\|svg | cat.jpg                                     | `"cat"`  | `"jpg"`    |
+| \<file=int:ext>                          | 123.txt                                     | `123`    | `"txt"`    |
+| \<file=int:ext=jpg\\|png\\|gif\\|svg> | 123.svg                                     | `123`    | `"svg"`    |
+| \<file=float:ext=tar.gz> | 3.14.tar.gz | `3.14`   | `"tar.gz"` |
 
 ファイル拡張子は、特別なパラメータタイプ`ext`を使用して一致させることができます。 これは、ファイル名として他のタイプのパラメータを指定することができる特別な形式を使用します。 上の表に示されているように、1つまたは複数の特定の拡張子を指定します。
 
@@ -542,7 +542,7 @@ app.route(r"/image/<img_id:(?P<img_id>\d+)\.jpg>")
 @app.get(r"/<foo:(?P<bar>\d+).jpg>")  # NOT OK
 ```
 
-format@@0(https\://docs.python.org/3/library/re.html) を参照してください。
+format@@0(https://docs.python.org/3/library/re.html) を参照してください。
 
 ## URLの生成
 

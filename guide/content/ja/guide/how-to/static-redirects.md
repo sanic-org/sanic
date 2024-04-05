@@ -105,7 +105,7 @@ body {
 
 ![lake](/assets/images/grottoes.jpg)
 
-***
+---
 
 また、コミュニティからいくつかのリソースをチェックアウトします。
 

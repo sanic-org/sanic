@@ -13,7 +13,7 @@ You can setup Sanic Extensions to monitor the health of your worker processes. T
 .. column::
 
 ```
-Out of the box, the health monitor is disabled. You will need to opt-in if you would like to use it.
+Out of the box, the health monitor is disabled. You will need to opt-in and enable the endpoint if you would like to use it.
 ```
 
 .. column::
@@ -21,6 +21,7 @@ Out of the box, the health monitor is disabled. You will need to opt-in if you w
 ````
 ```python
 app.config.HEALTH = True
+app.config.HEALTH_ENDPOINT = True
 ```
 ````
 
@@ -68,8 +69,8 @@ $ curl http://localhost:8000/__health__
 
 ## Configuration
 
-| Key                                                                               | Type   | Default         | Description                                                                 |
-| --------------------------------------------------------------------------------- | ------ | --------------- | --------------------------------------------------------------------------- |
+| Key                                                                               | Type   | Default         | Description                                                                                 |
+| --------------------------------------------------------------------------------- | ------ | --------------- | ------------------------------------------------------------------------------------------- |
 | HEALTH                                                                            | `bool` | `False`         | Whether to enable this extension.                                           |
 | HEALTH_ENDPOINT                                              | `bool` | `False`         | Whether to enable the diagnostics endpoint.                                 |
 | HEALTH_MAX_MISSES                       | `int`  | `3`             | The number of consecutive misses before a worker process is restarted.      |

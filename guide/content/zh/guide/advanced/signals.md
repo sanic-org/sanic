@@ -118,28 +118,28 @@ async def my_signal_handler(conn_info):
 
 这些信号是现有的信号，以及处理者的论据和附加条件（如有）。
 
-| 事件名称                       | 参数                             | 条件                                                                                                  |
-| -------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `http.routing.before`      | 请求                             |                                                                                                     |
-| `http.routing.after `      | 请求, 路由, kwargs, 处理程序           |                                                                                                     |
-| `http.handler.befor`       | 请求                             |                                                                                                     |
-| `http.handler.after `      | 请求                             |                                                                                                     |
-| `http.lifecycle.begin`     | conn_info |                                                                                                     |
-| `http.lifecycle.read_head` | 头部                             |                                                                                                     |
-| `http.lifecycle.request`   | 请求                             |                                                                                                     |
-| `http.lifecycle.handle`    | 请求                             |                                                                                                     |
-| `http.lifecycle.read_body` | 正文内容                           |                                                                                                     |
-| `http.lifecycle.excition`  | 请求异常                           |                                                                                                     |
-| `http.lifecycle.response`  | 请求回复                           |                                                                                                     |
-| `http.lifecycle.send`      | 数据                             |                                                                                                     |
-| `http.lifecycle.complete`  | conn_info |                                                                                                     |
+| 事件名称                       | 参数                             | 条件                                                                                                                                  |
+| -------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `http.routing.before`      | 请求                             |                                                                                                                                     |
+| `http.routing.after `      | 请求, 路由, kwargs, 处理程序           |                                                                                                                                     |
+| `http.handler.befor`       | 请求                             |                                                                                                                                     |
+| `http.handler.after `      | 请求                             |                                                                                                                                     |
+| `http.lifecycle.begin`     | conn_info |                                                                                                                                     |
+| `http.lifecycle.read_head` | 头部                             |                                                                                                                                     |
+| `http.lifecycle.request`   | 请求                             |                                                                                                                                     |
+| `http.lifecycle.handle`    | 请求                             |                                                                                                                                     |
+| `http.lifecycle.read_body` | 正文内容                           |                                                                                                                                     |
+| `http.lifecycle.excition`  | 请求异常                           |                                                                                                                                     |
+| `http.lifecycle.response`  | 请求回复                           |                                                                                                                                     |
+| `http.lifecycle.send`      | 数据                             |                                                                                                                                     |
+| `http.lifecycle.complete`  | conn_info |                                                                                                                                     |
 | `http.midleware.before`    | 请求回复                           | \`{"attach_to": "request"}" 或 "{"attach_to": "response"}" |
 | `http.midleware.after `    | 请求回复                           | \`{"attach_to": "request"}" 或 "{"attach_to": "response"}" |
-| `server.exception.report`  | 应用，异常                          |                                                                                                     |
-| `server.init.before`       | 应用，循环                          |                                                                                                     |
-| `server.init.after `       | 应用，循环                          |                                                                                                     |
-| `server.shutdown.before`   | 应用，循环                          |                                                                                                     |
-| `server.shutdown.after `   | 应用，循环                          |                                                                                                     |
+| `server.exception.report`  | 应用，异常                          |                                                                                                                                     |
+| `server.init.before`       | 应用，循环                          |                                                                                                                                     |
+| `server.init.after `       | 应用，循环                          |                                                                                                                                     |
+| `server.shutdown.before`   | 应用，循环                          |                                                                                                                                     |
+| `server.shutdown.after `   | 应用，循环                          |                                                                                                                                     |
 
 22.9版本增加了`http.handler.before`和`http.handler.after`。
 

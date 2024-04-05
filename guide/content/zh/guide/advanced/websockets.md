@@ -1,6 +1,6 @@
 # Websockets
 
-Sanic 提供了一个易于使用的 [websockets]顶部的摘要(https\://websockets.readthedocs.io/en/stable/)。
+Sanic 提供了一个易于使用的 [websockets]顶部的摘要(https://websockets.readthedocs.io/en/stable/)。
 
 ## 路由
 

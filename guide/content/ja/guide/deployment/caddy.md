@@ -71,4 +71,4 @@ app.example.com {
 }
 ```
 
-詳細については、format@@0(https\://caddyserver.com/docs/)を参照してください。
+詳細については、format@@0(https://caddyserver.com/docs/)を参照してください。

@@ -52,7 +52,7 @@ further defined and clarified by project maintainers.
 
 ## Enforcement
 
-adam\@sanicframework.org のプロジェクト チームに連絡することで、虐待、嫌がらせ、またはその他の受け入れられない行動のインスタンスが
+adam@sanicframework.org のプロジェクト チームに連絡することで、虐待、嫌がらせ、またはその他の受け入れられない行動のインスタンスが
 報告される可能性があります。
 のすべての苦情は審査され調査され、
 が状況に対して必要かつ適切であると判断される対応となります。 The project team is
@@ -68,5 +68,4 @@ obligated to maintain confidentiality with regard to the reporter of an incident
 で利用できる [Contributor Covenant][version] から適用されます。
 
 [homepage]: http://contributor-covenant.org
-
 [version]: http://contributor-covenant.org/version/1/4/

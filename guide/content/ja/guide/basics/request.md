@@ -2,7 +2,7 @@
 
 API ドキュメント: [sanic.request](/api/sanic.request) を参照してください。
 
-:class:`sanic.request.Request`インスタンスには、パラメータで入手可能な役立つ情報がたくさん含まれています。 詳細については、format@@0(https\://sanic.readthedocs.io/)を参照してください。
+:class:`sanic.request.Request`インスタンスには、パラメータで入手可能な役立つ情報がたくさん含まれています。 詳細については、format@@0(https://sanic.readthedocs.io/)を参照してください。
 
 [handlers](./handlers) のセクションで見たとおり、ルートハンドラの最初の引数は通常、 :class:`sanic.request.Request` オブジェクトです。 Sanic は非同期フレームワークなので、ハンドラは[`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)の中で実行され、イベントループによってスケジュールされます。 これは、ハンドラが分離されたコンテキストで実行され、リクエストオブジェクトはそのハンドラのタスクに固有であることを意味します。
 

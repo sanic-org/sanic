@@ -130,7 +130,7 @@ _在 v22.12中添加_
 
 ## 使用工人流程之间的共享环境
 
-Python 提供了几种方法用于[交换对象](https\://docs.python.org/3/library/multiprocessing.html#exchanging-objects-between en-processes)、 [synchronizing](https\://docs.python.org/3/library/multiprocessing.html#synization-between process)和[sharing state](https://docs.python.org/3/library/multiprocessing.html#sharing-state-honen-processes) 之间的流程。 这通常涉及来自`multiprocessing` 和 `ctypes` 模块的对象。
+Python 提供了几种方法用于[交换对象](https://docs.python.org/3/library/multiprocessing.html#exchanging-objects-between en-processes)、 [synchronizing](https://docs.python.org/3/library/multiprocessing.html#synization-between process)和[sharing state](https://docs.python.org/3/library/multiprocessing.html#sharing-state-honen-processes) 之间的流程。 这通常涉及来自`multiprocessing` 和 `ctypes` 模块的对象。
 
 如果你熟悉这些对象以及如何与它们合作， 你会很乐意知道， Sanic 提供了一个 API 用于在你的工序之间分享这些物体。 如果你不熟悉， 鼓励您阅读以上链接的 Python 文档，然后尝试一些示例，然后执行共享环境。
 

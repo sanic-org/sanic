@@ -10,7 +10,7 @@ Sanic Extensions は、テンプレートをルートハンドラに簡単に統
 
 **現在、 [Jinja](https://github.com/pallets/jinja/)のみサポートしています。**
 
-format@@0(https\://jinja.palletsprojects.com/en/3.1.x/) テンプレートを作成する方法に慣れていない場合は、format@@1を参照してください。
+format@@0(https://jinja.palletsprojects.com/en/3.1.x/) テンプレートを作成する方法に慣れていない場合は、format@@1を参照してください。
 
 Sanic Extensionsは、環境にインストールされている場合、自動的にJinjaをセットアップしてロードします。 したがって、必要なセットアップはJinjaのインストールだけです。
 

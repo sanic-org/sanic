@@ -32,7 +32,7 @@ When enabled, the extension will create a `multoprocessing.Queue`. It will remov
 
 ## Configuration
 
-| Key                                                                                   | Type   | Default | Description                                             |
-| ------------------------------------------------------------------------------------- | ------ | ------- | ------------------------------------------------------- |
+| Key                                                                                   | Type   | Default | Description                                                             |
+| ------------------------------------------------------------------------------------- | ------ | ------- | ----------------------------------------------------------------------- |
 | LOGGING                                                                               | `bool` | `False` | Whether to enable this extension.                       |
 | LOGGING_QUEUE_MAX_SIZE | `int`  | `4096`  | The max size of the queue before messages are rejected. |

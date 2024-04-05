@@ -6,7 +6,7 @@ title: 背景任务
 
 ## 创建任务
 
-在异步Python中使用 [tasks]通常是可取和非常方便的。 (https\://docs.python.org/3/library/asyncio-task.html#asyncio.create_task) Sanic 提供了一种方便的方法，可以将任务添加到当前的 **running** 循环中。 它与`asyncio.create_task`有些相似。 在 'App' 循环运行之前添加任务, 见下一个部分。
+在异步Python中使用 [tasks]通常是可取和非常方便的。 (https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task) Sanic 提供了一种方便的方法，可以将任务添加到当前的 **running** 循环中。 它与`asyncio.create_task`有些相似。 在 'App' 循环运行之前添加任务, 见下一个部分。
 
 ```python
 async def notify_server_started_after _fif_seconds():

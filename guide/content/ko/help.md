@@ -27,6 +27,6 @@ Good for sharing snippets of code and longer support queries
 `Questions and Help` category on the [Forums](https://community.sanicframework.org/c/questions-and-help/6)
 ```
 
-***
+---
 
 We also actively monitor the `[sanic]` tag on [Stack Overflow](https://stackoverflow.com/questions/tagged/sanic).

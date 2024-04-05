@@ -2,7 +2,7 @@
 
 ご興味をお持ちいただきありがとうございます! Sanicは常に貢献者を探しています。 貢献するコードが不快であれば、ソース・ファイルにdocstringを追加したり、[Sanic User Guide](https://github) を手伝ってください。 om/sanic-org/sanic-guide: ドキュメントまたは実装例を提供することにより、当然のことです!
 
-我々は,性別,性的指向,障害,民族性,宗教その他の個人的特性にかかわらず,すべての人に友好的で安全で歓迎的な環境を提供することにコミットしている。 format@@0(https\://github.com/sanic-org/sanic/blob/master/CONDUCT.md) は行動の標準を設定します。
+我々は,性別,性的指向,障害,民族性,宗教その他の個人的特性にかかわらず,すべての人に友好的で安全で歓迎的な環境を提供することにコミットしている。 format@@0(https://github.com/sanic-org/sanic/blob/master/CONDUCT.md) は行動の標準を設定します。
 
 ## インストール
 
@@ -142,7 +142,7 @@ Sanicはコードの一貫性を維持するために、以下のツールを使
 きれいにする
 ```
 
-詳細については、format@@0(https\://tox.readthedocs.io/en/latest/index.html)を参照してください。
+詳細については、format@@0(https://tox.readthedocs.io/en/latest/index.html)を参照してください。
 
 ## プルリクエスト
 
@@ -154,7 +154,7 @@ Sanicはコードの一貫性を維持するために、以下のツールを使
 4. すべてのプルリクエストは `isort` と `black` 要件に一致する必要があります。
 5. 免除が与えられない限り、全てのプルリクエストは **PROPERLY** 型に注釈を付ける必要があります。
 6. すべてのプルリクエストは、既存のコードと一致している必要があります。
-7. 任意の一般的なインターフェイスから何かを削除/変更することにした場合、非推奨メッセージは format@@0(https\://sanicframework.org/ja/guide/project/polices.html#deprecation )に従って同行する必要があります。
+7. 任意の一般的なインターフェイスから何かを削除/変更することにした場合、非推奨メッセージは format@@0(https://sanicframework.org/ja/guide/project/polices.html#deprecation )に従って同行する必要があります。
 8. 新しい機能を実装する場合は、少なくとも1つの単位テストが必要です。
 9. 例は次のいずれかでなければなりません:
    - Sanicの使い方の例

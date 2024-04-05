@@ -109,7 +109,7 @@ def setup_options(app: Sanic, _):
     app.router.finalize()
 ```
 
-***
+---
 
 ```
 $ curl localhost:9999/ -i
@@ -135,4 +135,4 @@ connection: keep-alive
 
 また、コミュニティからいくつかのリソースをチェックアウトします。
 
-- format@@0(https\://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)
+- format@@0(https://github.com/mekicha/awesome-sanic/blob/master/README.md#frontend)

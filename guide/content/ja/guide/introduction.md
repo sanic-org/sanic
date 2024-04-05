@@ -58,14 +58,14 @@ Sanic は Python 3.8+ のウェブサーバーであり、高速化のために�
 
 ## スポンサー情報
 
-format@@0(https\://opencollective.com/sanic-org) をご覧ください。
+format@@0(https://opencollective.com/sanic-org) をご覧ください。
 
 ## コミュニティに参加する
 
-ディスカッションの主なチャンネルは、format@@0(https\://community.sanicframework.org/)にあります。 ライブディスカッションやチャットのための[Discord Server](https://discord.gg/FARQzAEMAA)もあります。
+ディスカッションの主なチャンネルは、format@@0(https://community.sanicframework.org/)にあります。 ライブディスカッションやチャットのための[Discord Server](https://discord.gg/FARQzAEMAA)もあります。
 
-Stackoverflow `[sanic]` タグはプロジェクトメンテナーによってformat@@1(https\://stackoverflow\.com/questions/tagged/sanic)です。
+Stackoverflow `[sanic]` タグはプロジェクトメンテナーによってformat@@1(https://stackoverflow.com/questions/tagged/sanic)です。
 
 ## 貢献
 
-私たちは常に新しい貢献をしています。 We have [marked issues good for anyone looking to get started](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner), and welcome [questions/answers/discussion on the forums](https://community.sanicframework.org/). format@@0(https\://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst)をご覧ください。
+私たちは常に新しい貢献をしています。 We have [marked issues good for anyone looking to get started](https://github.com/sanic-org/sanic/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner), and welcome [questions/answers/discussion on the forums](https://community.sanicframework.org/). format@@0(https://github.com/sanic-org/sanic/blob/master/CONTRIBUTING.rst)をご覧ください。

@@ -320,7 +320,7 @@ result
 
 ## 一般的なタイプ
 
-format@@0(https\://docs.python.org/3/library/typing.html#typing.Generic)を使用するときは、気をつけてください。 Sanicの依存性注入が機能する方法は、型の定義全体に一致することです。 したがって、`Foo` は `Foo[str] ` と同じではありません。 型が推測されるので、format@@0(#the-higher-level-api-using-dependency) を使用しようとすると、これは特に難しいことがあります。
+format@@0(https://docs.python.org/3/library/typing.html#typing.Generic)を使用するときは、気をつけてください。 Sanicの依存性注入が機能する方法は、型の定義全体に一致することです。 したがって、`Foo` は `Foo[str] ` と同じではありません。 型が推測されるので、format@@0(#the-higher-level-api-using-dependency) を使用しようとすると、これは特に難しいことがあります。
 
 .. 列::
 

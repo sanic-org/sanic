@@ -242,40 +242,40 @@ app = Sanic(..., config=Config(converters=[UUID]))
 
 ## Builtin values
 
-| **Variable**                                                                           | **Default**     | **Description**                                                                                                                       |
-| -------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| ACCESS_LOG                                                        | True            | Disable or enable access log                                                                                                          |
-| AUTO_EXTEND                                                       | True            | Control whether [Sanic Extensions](../../plugins/sanic-ext/getting-started.md) will load if it is in the existing virtual environment |
-| AUTO_RELOAD                                                       | True            | Control whether the application will automatically reload when a file changes                                                         |
-| EVENT_AUTOREGISTER                                                | True            | When `True` using the `app.event()` method on a non-existing signal will automatically create it and not raise an exception           |
-| FALLBACK_ERROR_FORMAT                        | html            | Format of error response if an exception is not caught and handled                                                                    |
-| FORWARDED_FOR_HEADER                         | X-Forwarded-For | The name of "X-Forwarded-For" HTTP header that contains client and proxy ip                                                           |
-| FORWARDED_SECRET                                                  | None            | Used to securely identify a specific proxy server (see below)                                                      |
-| GRACEFUL_SHUTDOWN_TIMEOUT                    | 15.0            | How long to wait to force close non-idle connection (sec)                                                          |
-| INSPECTOR                                                                              | False           | Whether to enable the Inspector                                                                                                       |
-| INSPECTOR_HOST                                                    | localhost       | The host for the Inspector                                                                                                            |
-| INSPECTOR_PORT                                                    | 6457            | The port for the Inspector                                                                                                            |
-| INSPECTOR_TLS_KEY                            | -               | The TLS key for the Inspector                                                                                                         |
-| INSPECTOR_TLS_CERT                           | *               | The TLS certificate for the Inspector                                                                                                 |
-| INSPECTOR_API_KEY                            | -               | The API key for the Inspector                                                                                                         |
-| KEEP_ALIVE_TIMEOUT                           | 120             | How long to hold a TCP connection open (sec)                                                                       |
-| KEEP_ALIVE                                                        | True            | Disables keep-alive when False                                                                                                        |
-| MOTD                                                                                   | True            | Whether to display the MOTD (message of the day) at startup                                                        |
-| MOTD_DISPLAY                                                      | {}              | Key/value pairs to display additional, arbitrary data in the MOTD                                                                     |
-| NOISY_EXCEPTIONS                                                  | False           | Force all `quiet` exceptions to be logged                                                                                             |
-| PROXIES_COUNT                                                     | None            | The number of proxy servers in front of the app (e.g. nginx; see below)                                            |
-| REAL_IP_HEADER                               | None            | The name of "X-Real-IP" HTTP header that contains real client ip                                                                      |
-| REGISTER                                                                               | True            | Whether the app registry should be enabled                                                                                            |
-| REQUEST_BUFFER_SIZE                          | 65536           | Request buffer size before request is paused, default is 64 Kib                                                                       |
-| REQUEST_ID_HEADER                            | X-Request-ID    | The name of "X-Request-ID" HTTP header that contains request/correlation ID                                                           |
-| REQUEST_MAX_SIZE                             | 100000000       | How big a request may be (bytes), default is 100 megabytes                                                         |
-| REQUEST_MAX_HEADER_SIZE | 8192            | How big a request header may be (bytes), default is 8192 bytes                                                     |
-| REQUEST_TIMEOUT                                                   | 60              | How long a request can take to arrive (sec)                                                                        |
-| RESPONSE_TIMEOUT                                                  | 60              | How long a response can take to process (sec)                                                                      |
-| USE_UVLOOP                                                        | True            | Whether to override the loop policy to use `uvloop`. Supported only with `app.run`.                                                   |
-| WEBSOCKET_MAX_SIZE                           | 2^20            | Maximum size for incoming messages (bytes)                                                                         |
-| WEBSOCKET_PING_INTERVAL                      | 20              | A Ping frame is sent every ping_interval seconds.                                                                |
-| WEBSOCKET_PING_TIMEOUT                       | 20              | Connection is closed when Pong is not received after ping_timeout seconds                                        |
+| **Variable**                                                                           | **Default**          | **Description**                                                                                                                       |
+| -------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| ACCESS_LOG                                                        | True                 | Disable or enable access log                                                                                                          |
+| AUTO_EXTEND                                                       | True                 | Control whether [Sanic Extensions](../../plugins/sanic-ext/getting-started.md) will load if it is in the existing virtual environment |
+| AUTO_RELOAD                                                       | True                 | Control whether the application will automatically reload when a file changes                                                         |
+| EVENT_AUTOREGISTER                                                | True                 | When `True` using the `app.event()` method on a non-existing signal will automatically create it and not raise an exception           |
+| FALLBACK_ERROR_FORMAT                        | html                 | Format of error response if an exception is not caught and handled                                                                    |
+| FORWARDED_FOR_HEADER                         | X-Forwarded-For      | The name of "X-Forwarded-For" HTTP header that contains client and proxy ip                                                           |
+| FORWARDED_SECRET                                                  | None                 | Used to securely identify a specific proxy server (see below)                                                      |
+| GRACEFUL_SHUTDOWN_TIMEOUT                    | 15.0 | How long to wait to force close non-idle connection (sec)                                                          |
+| INSPECTOR                                                                              | False                | Whether to enable the Inspector                                                                                                       |
+| INSPECTOR_HOST                                                    | localhost            | The host for the Inspector                                                                                                            |
+| INSPECTOR_PORT                                                    | 6457                 | The port for the Inspector                                                                                                            |
+| INSPECTOR_TLS_KEY                            | -                    | The TLS key for the Inspector                                                                                                         |
+| INSPECTOR_TLS_CERT                           | *                    | The TLS certificate for the Inspector                                                                                                 |
+| INSPECTOR_API_KEY                            | -                    | The API key for the Inspector                                                                                                         |
+| KEEP_ALIVE_TIMEOUT                           | 120                  | How long to hold a TCP connection open (sec)                                                                       |
+| KEEP_ALIVE                                                        | True                 | Disables keep-alive when False                                                                                                        |
+| MOTD                                                                                   | True                 | Whether to display the MOTD (message of the day) at startup                                                        |
+| MOTD_DISPLAY                                                      | {}                   | Key/value pairs to display additional, arbitrary data in the MOTD                                                                     |
+| NOISY_EXCEPTIONS                                                  | False                | Force all `quiet` exceptions to be logged                                                                                             |
+| PROXIES_COUNT                                                     | None                 | The number of proxy servers in front of the app (e.g. nginx; see below)            |
+| REAL_IP_HEADER                               | None                 | The name of "X-Real-IP" HTTP header that contains real client ip                                                                      |
+| REGISTER                                                                               | True                 | Whether the app registry should be enabled                                                                                            |
+| REQUEST_BUFFER_SIZE                          | 65536                | Request buffer size before request is paused, default is 64 Kib                                                                       |
+| REQUEST_ID_HEADER                            | X-Request-ID         | The name of "X-Request-ID" HTTP header that contains request/correlation ID                                                           |
+| REQUEST_MAX_SIZE                             | 100000000            | How big a request may be (bytes), default is 100 megabytes                                                         |
+| REQUEST_MAX_HEADER_SIZE | 8192                 | How big a request header may be (bytes), default is 8192 bytes                                                     |
+| REQUEST_TIMEOUT                                                   | 60                   | How long a request can take to arrive (sec)                                                                        |
+| RESPONSE_TIMEOUT                                                  | 60                   | How long a response can take to process (sec)                                                                      |
+| USE_UVLOOP                                                        | True                 | Whether to override the loop policy to use `uvloop`. Supported only with `app.run`.                   |
+| WEBSOCKET_MAX_SIZE                           | 2^20                 | Maximum size for incoming messages (bytes)                                                                         |
+| WEBSOCKET_PING_INTERVAL                      | 20                   | A Ping frame is sent every ping_interval seconds.                                                |
+| WEBSOCKET_PING_TIMEOUT                       | 20                   | Connection is closed when Pong is not received after ping_timeout seconds                                        |
 
 .. tip:: FYI
 

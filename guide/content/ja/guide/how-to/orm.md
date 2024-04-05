@@ -15,7 +15,7 @@ Sanicアプリケーションへの統合はかなり簡単です:
 
 ## Mayim
 
-Mayimはformat@@0(https\://ahopkins.github.io/mayim/guide/extensions.html#sanic)と一緒に出荷します。 確かに拡張機能なしで Mayim を実行することは可能ですが、すべての format@@0(https\://sanic )を処理するために推奨されています。 ev/ja/guide/basics/listeners.html) and [dependency injections](https://sanic.dev/en/plugins/sanic-ext/injection.html)
+Mayimはformat@@0(https://ahopkins.github.io/mayim/guide/extensions.html#sanic)と一緒に出荷します。 確かに拡張機能なしで Mayim を実行することは可能ですが、すべての format@@0(https://sanic )を処理するために推奨されています。 ev/ja/guide/basics/listeners.html) and [dependency injections](https://sanic.dev/en/plugins/sanic-ext/injection.html)
 
 .. 列::
 

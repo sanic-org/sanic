@@ -69,7 +69,7 @@ async def foo_handler(request):
 ```
 ````
 
-***
+---
 
 ## _async_についての単語。
 
@@ -140,7 +140,7 @@ Instead, try using a client that is `async/await` capable. Your server will than
 Sanic uses [httpx](https://www.python-httpx.org/) inside of its testing package (sanic-testing) 😉.
 ```
 
-***
+---
 
 ## 完全に注釈を付けられたハンドラです
 

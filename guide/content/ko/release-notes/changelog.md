@@ -453,7 +453,7 @@ _Current LTS version_
   - `sanic.exceptions.abort`
   - `sanic.views.CompositionView`
   - `sanic.response.StreamingHTTPResponse`
-    - _NOTE:_ the `stream()` response method (where you pass a callable streaming function) has been deprecated and will be removed in v22.6. You should upgrade all streaming responses to the new style: https\://sanicframework.org/en/guide/advanced/streaming.html#response-streaming
+    - _NOTE:_ the `stream()` response method (where you pass a callable streaming function) has been deprecated and will be removed in v22.6. You should upgrade all streaming responses to the new style: https://sanicframework.org/en/guide/advanced/streaming.html#response-streaming
 - [#2320](https://github.com/sanic-org/sanic/pull/2320) Remove app instance from Config for error handler setting
 
 ### Developer infrastructure
@@ -789,10 +789,10 @@ Notes
   - `@app.on_request`
   - `@app.on_response`
 - Fixes `Allow` header that did not include `HEAD`
-- Using "name" keyword in `url_for` for a "static" route where
+- Using \"name\" keyword in `url_for` for a \"static\" route where
   name does not exist
 - Cannot have multiple `app.static()` without using the named param
-- Using "filename" keyword in `url_for` on a file route
+- Using \"filename\" keyword in `url_for` on a file route
 - `unquote` in route def (not automatic)
 - `routes_all` is tuples
 - Handler arguments are kwarg only
@@ -982,7 +982,7 @@ Notes
 - [#1776](https://github.com/sanic-org/sanic/pull/1776) Bug fix for
   host parameter issue with lists
 - [#1842](https://github.com/sanic-org/sanic/pull/1842) Fix static
-  _handler pickling error
+  \_handler pickling error
 - [#1827](https://github.com/sanic-org/sanic/pull/1827) Fix reloader
   on OSX py38 and Windows
 - [#1848](https://github.com/sanic-org/sanic/pull/1848) Reverse
@@ -1004,7 +1004,7 @@ Notes
 - [#1857](https://github.com/sanic-org/sanic/pull/1857) Adjust
   websockets version to setup.py
 - [#1869](https://github.com/sanic-org/sanic/pull/1869) Wrap
-  run()'s "protocol" type annotation in Optional[]
+  run()\'s \"protocol\" type annotation in Optional\[\]
 
 **Improved Documentation**
 
@@ -1321,7 +1321,7 @@ December 2020, and therefore passing Python\'s official support version
 - [#1477](https://github.com/sanic-org/sanic/pull/1477) Fix grammar
   in README.md
 - [#1489](https://github.com/sanic-org/sanic/pull/1489) Added
-  "databases" to the extensions list
+  \"databases\" to the extensions list
 - [#1483](https://github.com/sanic-org/sanic/pull/1483) Add
   sanic-zipkin to extensions list
 - [#1487](https://github.com/sanic-org/sanic/pull/1487) Removed link
@@ -1384,9 +1384,9 @@ PyPI
   - Fix content length mismatch in windows and other platform
   - Fix Range header handling for static files (#1402)
   - Fix the logger and make it work (#1397)
-  - Fix type pikcle->pickle in multiprocessing test
+  - Fix type pikcle-\>pickle in multiprocessing test
   - Fix pickling blueprints Change the string passed in the
-    "name" section of the namedtuples in Blueprint to match the
+    \"name\" section of the namedtuples in Blueprint to match the
     name of the Blueprint module attribute name. This allows
     blueprints to be pickled and unpickled, without errors, which
     is a requirement of running Sanic in multiprocessing mode in
@@ -1402,7 +1402,7 @@ PyPI
 **0.8.3**
 
 - Changes:
-  - Ownership changed to org 'sanic-org'
+  - Ownership changed to org \'sanic-org\'
 
 **0.8.0**
 
@@ -1442,7 +1442,7 @@ PyPI
   - Documentation updates/fixups (multiple contributors)
 - Fixes:
   - Fix: auto_reload in Linux (Ashley Sommer)
-  - Fix: broken tests for aiohttp >= 3.3.0 (Ashley Sommer)
+  - Fix: broken tests for aiohttp \>= 3.3.0 (Ashley Sommer)
   - Fix: disable auto_reload by default on windows (abuckenheimer)
   - Fix (1143): Turn off access log with gunicorn (hqy)
   - Fix (1268): Support status code for file response (Cosmo Borsky)
@@ -1454,13 +1454,13 @@ PyPI
   - Fix (1231): memory leak - always release resource (Phillip Xu)
   - Fix (1221): make request truthy if transport exists (Raphael
     Deem)
-  - Fix failing tests for aiohttp>=3.1.0 (Ashley Sommer)
+  - Fix failing tests for aiohttp\>=3.1.0 (Ashley Sommer)
   - Fix try_everything examples (PyManiacGR, kot83)
   - Fix (1158): default to auto_reload in debug mode (Raphael Deem)
   - Fix (1136): ErrorHandler.response handler call too restrictive
     (Julien Castiaux)
   - Fix: raw requires bytes-like object (cloudship)
-  - Fix (1120): passing a list in to a route decorator's host arg
+  - Fix (1120): passing a list in to a route decorator\'s host arg
     (Timothy Ebiuwhe)
   - Fix: Bug in multipart/form-data parser (DirkGuijt)
   - Fix: Exception for missing parameter when value is null

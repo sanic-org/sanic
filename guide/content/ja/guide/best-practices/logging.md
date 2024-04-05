@@ -1,6 +1,6 @@
 # ログ
 
-Sanicはformat@@0(https\://docs.python.org/3/howto/logging.html)に基づいてリクエストの異なるタイプのログ(アクセスログ、エラーログ)を行うことができます。 新しい設定を作成したい場合は、Pythonロギングに関する基本的な知識を持っている必要があります。
+Sanicはformat@@0(https://docs.python.org/3/howto/logging.html)に基づいてリクエストの異なるタイプのログ(アクセスログ、エラーログ)を行うことができます。 新しい設定を作成したい場合は、Pythonロギングに関する基本的な知識を持っている必要があります。
 
 ## クイックスタート
 

@@ -105,7 +105,7 @@ body {
 
 ![lake](/assets/images/grottoes.jpg)
 
-***
+---
 
 Also, checkout some resources from the community:
 

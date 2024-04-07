@@ -640,8 +640,7 @@ def test_websocket_route_invalid_handler(app):
     with pytest.raises(ValueError) as e:
 
         @app.websocket("/")
-        async def handler():
-            ...
+        async def handler(): ...
 
     assert e.match(
         r"Required parameter `request` and/or `ws` missing in the "
@@ -1254,8 +1253,7 @@ def test_added_bad_route_kwargs(app):
     with pytest.raises(TypeError, match=message):
 
         @app.route("/", foo="foo", bar=99)
-        async def handler(request: Request):
-            ...
+        async def handler(request: Request): ...
 
 
 @pytest.mark.asyncio

@@ -8,6 +8,7 @@ Run with xdist params:
 
     $ pytest examples/pytest_xdist.py -n 8  # 8 workers
 """
+
 import re
 
 import pytest

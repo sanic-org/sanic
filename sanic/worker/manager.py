@@ -53,7 +53,7 @@ class WorkerManager:
     """
 
     THRESHOLD = WorkerProcess.THRESHOLD
-    MAIN_IDENT = "Sanic-Main"
+    MAIN_NAME = "Sanic-Main"
 
     def __init__(
         self,
@@ -71,7 +71,7 @@ class WorkerManager:
         self.restarter = Restarter()
         self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
-        self.worker_state[self.MAIN_IDENT] = {"pid": self.pid}
+        self.worker_state[self.MAIN_NAME] = {"pid": self.pid}
         self._shutting_down = False
         self._serve = serve
         self._server_settings = server_settings
@@ -88,7 +88,7 @@ class WorkerManager:
 
     def manage(
         self,
-        ident: str,
+        name: str,
         func: Callable[..., Any],
         kwargs: Dict[str, Any],
         transient: bool = False,
@@ -96,11 +96,12 @@ class WorkerManager:
         tracked: bool = True,
         auto_start: bool = True,
         workers: int = 1,
+        ident: str = "",
     ) -> Worker:
         """Instruct Sanic to manage a custom process.
 
         Args:
-            ident (str): A name for the worker process
+            name (str): A name for the worker process
             func (Callable[..., Any]): The function to call in the background process
             kwargs (Dict[str, Any]): Arguments to pass to the function
             transient (bool, optional): Whether to mark the process as transient. If `True`
@@ -114,13 +115,14 @@ class WorkerManager:
                 defaults to `True`
             auto_start (bool, optional): Whether to start the process immediately, defaults to `True`
             workers (int, optional): The number of worker processes to run. Defaults to `1`.
-
+            ident (str, optional): The identifier for the worker. If not provided, the name
+                passed will be used. Defaults to `""`.
 
         Returns:
             Worker: The Worker instance
         """  # noqa: E501
-        if ident in self.transient or ident in self.durable:
-            raise ValueError(f"Worker {ident} already exists")
+        if name in self.transient or name in self.durable:
+            raise ValueError(f"Worker {name} already exists")
         restartable = restartable if restartable is not None else transient
         if transient and not restartable:
             raise ValueError(
@@ -128,7 +130,8 @@ class WorkerManager:
             )
         container = self.transient if transient else self.durable
         worker = Worker(
-            ident,
+            ident or name,
+            name,
             func,
             kwargs,
             self.context,
@@ -138,7 +141,7 @@ class WorkerManager:
             tracked,
             auto_start,
         )
-        container[worker.ident] = worker
+        container[worker.name] = worker
         return worker
 
     def create_server(self) -> Worker:
@@ -154,20 +157,21 @@ class WorkerManager:
             self._server_settings,
             transient=True,
             restartable=True,
+            ident=f"{WorkerProcess.SERVER_IDENTIFIER}{server_number:2}",
         )
 
-    def shutdown_server(self, ident: Optional[str] = None) -> None:
+    def shutdown_server(self, name: Optional[str] = None) -> None:
         """Shutdown a server process.
 
         Args:
-            ident (Optional[str], optional): The name of the server process to shutdown.
+            name (Optional[str], optional): The name of the server process to shutdown.
                 If `None` then a random server will be chosen. Defaults to `None`.
         """  # noqa: E501
-        if not ident:
+        if not name:
             servers = [
                 worker
                 for worker in self.transient.values()
-                if worker.ident.startswith(WorkerProcess.SERVER_LABEL)
+                if worker.name.startswith(WorkerProcess.SERVER_LABEL)
             ]
             if not servers:
                 error_logger.error(
@@ -176,12 +180,12 @@ class WorkerManager:
                 return
             worker = choice(servers)  # nosec B311
         else:
-            worker = self.transient[ident]
+            worker = self.transient[name]
 
         for process in worker.processes:
             process.terminate()
 
-        del self.transient[worker.ident]
+        del self.transient[worker.name]
 
     def run(self):
         """Run the worker manager."""
@@ -392,20 +396,20 @@ class WorkerManager:
     def remove_worker(self, worker: Worker) -> None:
         if worker.tracked:
             error_logger.error(
-                f"Worker {worker.ident} is tracked and cannot be removed."
+                f"Worker {worker.name} is tracked and cannot be removed."
             )
             return
         if worker.has_alive_processes():
             error_logger.error(
-                f"Worker {worker.ident} has alive processes and cannot be "
+                f"Worker {worker.name} has alive processes and cannot be "
                 "removed."
             )
             return
-        self.transient.pop(worker.ident, None)
-        self.durable.pop(worker.ident, None)
+        self.transient.pop(worker.name, None)
+        self.durable.pop(worker.name, None)
         for process in worker.processes:
             self.worker_state.pop(process.name, None)
-        logger.info("Removed worker %s", worker.ident)
+        logger.info("Removed worker %s", worker.name)
         del worker
 
     @property
@@ -452,7 +456,9 @@ class WorkerManager:
             elif message == "__TERMINATE__":
                 self._handle_terminate()
                 return MonitorCycle.BREAK
-            elif isinstance(message, tuple) and len(message) == 7:
+            elif isinstance(message, tuple) and (
+                len(message) == 7 or len(message) == 8
+            ):
                 self._handle_manage(*message)  # type: ignore
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
@@ -499,7 +505,7 @@ class WorkerManager:
 
     def _handle_manage(
         self,
-        ident: str,
+        name: str,
         func: Callable[..., Any],
         kwargs: Dict[str, Any],
         transient: bool,
@@ -510,7 +516,7 @@ class WorkerManager:
     ) -> None:
         try:
             worker = self.manage(
-                ident,
+                name,
                 func,
                 kwargs,
                 transient=transient,
@@ -520,7 +526,7 @@ class WorkerManager:
                 workers=workers,
             )
         except Exception:
-            error_logger.exception("Failed to manage worker %s", ident)
+            error_logger.exception("Failed to manage worker %s", name)
         else:
             if not auto_start:
                 return

@@ -45,7 +45,7 @@ app.ctx.db = Database()
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 虽然前面的示例可以工作并且具有说明性，但通常将对象在应用的开始或结束的生命周期里添加是比较合适的
@@ -63,7 +63,7 @@ async def attach_db(app, loop):
 ```
 ````
 
-## App 注册表(App Registry)
+## App 注册(App Registry)
 
 .. column::
 
@@ -90,45 +90,45 @@ app = Sanic.get_app("my_awesome_server")
 .. column::
 
 ```
-If you call `Sanic.get_app("non-existing")` on an app that does not exist, it will raise :class:`sanic.exceptions.SanicException` by default. You can, instead, force the method to return a new instance of Sanic with that name.
+如果您在不存在的应用程序上调用 Sanic.get_app("non-existing") ，默认情况下它将引发 :class:`sanic.exceptions.SanicException`。但是，您也可以强制该方法返回具有该名称的 Sanic 的新实例。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 app = Sanic.get_app(
-    "不存在",
+    "non-existing",
     force_create=True,
 )
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-如果有 **只有** 个Sanic 实例注册，那么调用 `Sanic.get_app()` 但没有参数将返回这个实例
+如果有 **只有** 一个Sanic 实例注册，那么调用 `Sanic.get_app()` 但没有参数将返回这个实例
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-Sanic("我唯一的应用")
+Sanic("My only app")
 
 app = Sanic.get_app()
 ```
 ````
 
-## 配置
+## 配置(Configuration)
 
 .. 列:
 
 ```
-Sanic 持有`Sanic` 实例的 `config` 属性中的配置。配置可以像字典一样使用 do-notation **OR** 进行修改。
+Sanic 将所有的配置文件存储在`Sanic`实例的`config`属性当中，你可以通过`.`点的方式或者直接把`Sanic.config`当作一个数组去修改配置
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -137,7 +137,7 @@ app = Sanic('myapp')
 app.config.DB_NAME = 'appdb'
 app.config['DB_USER'] = 'appuser'
 
-db_setting= {
+db_settings = {
     'DB_HOST': 'localhost',
     'DB_NAME': 'appdb',
     'DB_USER': 'appuser'
@@ -146,54 +146,54 @@ app.config.update(db_settings)
 ```
 ````
 
-.. 注：浮动通知
+.. note:: 注意一下
 
 ````
-config key _should_ 是上层的，但这主要是通过公约进行的，小写将大部分时间起作用。
+通常来说，Config 的键应该是大写的，但是多数情况下，小写也能正常工作
 ```python
-app.config.GOD = "yay!"
-app.config.bad = "board"
+app.config.GOOD = "yay!"
+app.config.bad = "boo"
 ```
 ````
 
-稍后会有很多[更详细的配置](../running/configuration.md)。
+这里有更多关于配置的使用方法[更详细的配置](../running/configuration.md)。
 
-## 工厂模式
+## 工厂模式(Factory pattern)
 
-Many of the examples in these docs will show the instantiation of the :class:`sanic.app.Sanic` instance in a file called `server.py` in the "global scope" (i.e. not inside a function). 这是非常简单的“hello world”风格应用程序的常见模式，但使用工厂模式往往是有益的。
+文档中大多数案例都是在`server.py`的顶层（不是在一个函数中）实例化Sanic这个对象 :class:`sanic.app.Sanic`  这是非常简单的“hello world”风格应用程序的常见形式，但使用工厂模式往往具有更高的扩展性。
 
 "工厂" 只是一个函数返回你想要使用的对象的实例。 这允许您抽象对象的实例化, 但也可能使它更容易隔离应用程序实例。
 
-.. 列:
+.. column::
 
 ```
 超级简单的出厂模式看起来像这样：
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 # ./path/to/server.py
-从.path.to.config 从.path.to.some中导入 Sanic
-中导入MyConfig
-lueprint导入bp
+from sanic import Sanic
+from .path.to.config import MyConfig
+from .path.to.some.blueprint import bp
 
 
 def create_app(config=MyConfig) -> Sanic:
     app = Sanic("MyApp", config=config)
-    app. lueprint(bp)
+    app.blueprint(bp)
     return app
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 当我们稍后开始运行 Sanic时，你会知道Sanic CLI 可以检测到这种模式并使用它来运行你的应用程序。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```sh
@@ -201,29 +201,29 @@ sanic path.to.server:create_app
 ```
 ````
 
-## 自定义
+## 自定义(Customization)
 
 Sanic 应用程序实例可以通过各种不同的实例实例为您的应用程序需要量身定制的。
 
 详情请查看[API 文档](/api/sanic.app)。
 
-### 自定义配置
+### 自定义配置(Custom configuration)
 
-.. 列:
+.. column::
 
 ```
-This simplest form of custom configuration would be to pass your own object directly into that Sanic application instance
+这种最简单的自定义配置形式是将您自己的对象直接传递到该 Sanic 应用程序实例中
 
-If you create a custom configuration object, it is *highly* recommended that you subclass the :class:`sanic.config.Config` option to inherit its behavior. You could use this option for adding properties, or your own set of custom logic.
+如果您创建自定义配置对象，*强烈*建议您对 :class:`sanic.config.Config` 选项进行子类化以继承其行为。 您可以使用此选项添加属性或您自己的一组自定义逻辑。
 
-*Added in v21.6*
+*在 v21.6 中添加*
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-from sanic.config 导入配置
+from sanic.config import Config
 
 class MyConfig(Config):
     FOO = "bar"
@@ -232,13 +232,13 @@ app = Sanic(..., config=MyConfig())
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 此功能的一个有用例子是如果您想使用一个格式不同于 [supported]的配置文件 (. /running/configuration.md#using-sanicupdateconfig)。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -274,17 +274,17 @@ app = Sanic(toml_config.APP_NAME, config=toml_config)
 ```
 ````
 
-### 自定义环境
+### 自定义上下文
 
-.. 列:
+.. column::
 
 ```
-By default, the application context is a [`SimpleNamespace()`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) that allows you to set any properties you want on it. However, you also have the option of passing any object whatsoever instead.
+默认情况下，应用程序上下文是一个 [`SimpleNamespace()`](https://docs.python.org/3/library/types.html#types.SimpleNamespace)，它允许您设置您想要的任何属性。 但是，您也可以选择传递任何对象。
 
-*Added in v21.6*
+*在 v21.6 中添加*
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -305,72 +305,72 @@ app = Sanic(..., ctx=MyContext())
 
 ### 自定义请求
 
-.. 列:
+.. column::
 
 ```
-有时有你自己的 `Request` 类并告诉Sanic 使用它而不是默认值是有帮助的。 一个例子是如果您想修改默认“请求”。 d`生成器。
+有时拥有自己的“Request”类会很有帮助，并告诉 Sanic 使用它而不是默认的。 一个例子是，如果您想修改默认的“request.id”生成器。
 
 
 
-... 注意：重要的
+.. note:: Important
 
-    必须记住，您正在通过 *class* 而不是类的实例。
+重要的是要记住，您传递的是 *class* 而不是该类的实例。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-导入时间
+import time
 
-from sanic import Request, Sanic, 文本
+from sanic import Request, Sanic, text
 
-class NanoSecondRequest(请求):
-    @classmethodology
+class NanoSecondRequest(Request):
+    @classmethod
     def generate_id(*_):
-        返回时间 ime_ns()
+        return time.time_ns()
 
 app = Sanic(..., request_class=NanoSecondRequest)
 
 @app.get("/")
 async def handler(request):
-    retext(str(request.id))
+    return text(str(request.id))
 ```
 ````
 
-### 自定义错误处理程序
+### 自定义错误响应函数(Custom error handler)
 
-.. 列:
+.. column::
 
 ```
-查看[异常处理](../best practices/exceptions.md#custom-error-handling)
+查看[异常处理](../best practices/exceptions.md#custom-error-handling) 获取更多信息
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-来自病原体。 andlers 导入 ErrorHandler
+from sanic.handlers import ErrorHandler
 
 class CustomErrorHandler(ErrorHandler):
-    def default(自己，请求，请求) 异常:
-        '' 处理错误, 没有分配给'''
-        # 你自定义错误处理逻辑。 ..
-        return super().default(请求，异常)
+    def default(self, request, exception):
+        ''' handles errors that have no error handlers assigned '''
+        # You custom error handling logic...
+        return super().default(request, exception)
 
 app = Sanic(..., error_handler=CustomErrorHandler())
 ```
 ````
 
-### 自定义转储函数
+### 自定义dumps函数
 
-.. 列:
+.. column::
 
 ```
 有时可能需要或需要提供一个自定义函数来序列一个 JSON 数据对象。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -381,13 +381,13 @@ app = Sanic(__name__, dumps=dumps)
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 或者，或许使用另一个库或创建您自己的库。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -397,9 +397,9 @@ app = Sanic("MyApp", dumps=dumps)
 ```
 ````
 
-### 自定义负载函数
+### 自定义loads函数
 
-.. 列:
+.. column::
 
 ```
 类似于“dumps”，您也可以为反序列化数据提供自定义函数。
@@ -407,11 +407,11 @@ app = Sanic("MyApp", dumps=dumps)
 *添加于v22.9*
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-from orjson import load
+from orjson import loads
 
 app = Sanic("MyApp", loads=loads)
 ```
@@ -427,42 +427,42 @@ sanic.app.Sanic[sanic.config.Config, types.SimpleNamespace]
 
 它指的是两种一般类型：
 
-1. 第一个是配置对象的类型。 It defaults to :class:`sanic.config.Config`, but can be any subclass of that.
+1. 第一个是配置对象的类型。 它默认为 :class: `sanic.config.Config`，但可以是它的任何子类。
 2. 第二种是应用程序上下文的类型。 它默认了 [`SimpleNamespace()`](https://docs.python.org/3/library/types.html#types.SimpleNamespace)，但上面显示的 **任何对象** 。
 
 让我们看看如何改变类型的一些例子。
 
-.. 列:
+.. column::
 
 ```
-Consider this example where we pass a custom subclass of :class:`sanic.config.Config` and a custom context object.
+考虑这个示例，其中我们传递了 :class:`sanic.config.Config` 的自定义子类和自定义上下文对象。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-从病原体导入Sanic
-onfig importing config
+from sanic import Sanic
+from sanic.config import Config
 
-clusive Config(Config):
+class CustomConfig(Config):
     pass
 
-appp = Sanic("test", config=CustomConfig())
-reenal_type(app) # N: 公开类型是 "sanic" pp.Sanic[main.CustomConfig, types.SimpleNamespace]"
+app = Sanic("test", config=CustomConfig())
+reveal_type(app) # N: Revealed type is "sanic.app.Sanic[main.CustomConfig, types.SimpleNamespace]"
 ```
 ```
 sanic.app.Sanic[main.CustomConfig, types.SimpleNamespace]
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 同样，当传递自定义上下文对象时，类型将会改变以反映这一点。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -479,13 +479,13 @@ sanic.app.Sanic[sanic.config.Config, main.Foo]
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 当然，您可以将配置和上下文设置为自定义类型。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -520,21 +520,21 @@ MyApp = TypeAlias("MyApp", Sanic[Config, MyContext])
 
 ```python
 # ./path/to/listeners.py
-from myapp.types importing MyApp
+from myapp.types import MyApp
 
 def add_listeners(app: MyApp):
-    @app. efor_server_start
+    @app.before_server_start
     async def before_server_start(app: MyApp):
-        # 使用您完全输入的应用程序实例
-        正在等待应用。 tx.db.connect()
+        # do something with your fully typed app instance
+        await app.ctx.db.connect()
 ```
 
 ```python
 # ./path/to/server.py
-从 myapp.types 导入 MyApp
-从myapp.context 从myapp 导入 MyContext
-onfig importer MyConfig
-from myapp.listeners importing add_listeners
+from myapp.types import MyApp
+from myapp.context import MyContext
+from myapp.config import MyConfig
+from myapp.listeners import add_listeners
 
 app = Sanic("myapp", config=MyConfig(), ctx=MyContext())
 add_listeners(app)
@@ -542,7 +542,7 @@ add_listeners(app)
 
 _添加于 v23.6_
 
-### 自定义已输入请求
+### 自定义request请求
 
 Sanic还允许您自定义请求对象的类型。 如果您想要将自定义属性添加到请求对象，这是有用的， 或者能够访问您输入的应用程序实例的自定义属性。
 
@@ -562,7 +562,7 @@ sanic.request.Request[
 
 让我们看看如何改变类型的一些例子。
 
-.. 列:
+.. column::
 
 ```
 扩展到上面的完整示例，在这个示例中有一个自定义应用程序实例的类型别名， 我们还可以创建一个自定义请求类型，以便我们可以访问这些类型的注释。
@@ -570,7 +570,7 @@ sanic.request.Request[
 当然，您不需要输入别名才能工作。 我们只是在这里显示它们来削减显示的代码数量。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -586,7 +586,7 @@ def add_routes(app: MyApp):
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 也许您有一个生成自定义上下文对象的自定义请求对象。 您可以输入注解来正确访问这些属性，如这里所示。

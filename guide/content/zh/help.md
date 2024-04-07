@@ -10,11 +10,11 @@ layout: 主界面
 .. column::
 
 ```
-### Discord :speech_cloon:
+### Discord 💬
 
-快速答案与在线聊天的最好出处
+快速获取答案与在线聊天的最好去处
 
-[Discord 服务器]的 `#sanic-support` 频道(https://discord.gg/FARQzAEMAA)
+[Discord 聊天室](https://discord.gg/FARQzAEMAA) 的 `#sanic-support` 频道
 ```
 
 .. column::

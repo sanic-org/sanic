@@ -25,7 +25,7 @@ def test_request_cookies():
     assert c.getlist("abc") == ["xyz"]
     assert c.getlist("") == ["bare", "bare2"]
     assert (
-        c.getlist("bare") == None
+        c.getlist("bare") is None
     )  # [] might be sensible but we got None for now
 
 

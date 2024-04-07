@@ -6,10 +6,12 @@ from socket import socket
 
 import pytest
 
-from sanic_testing.testing import HOST, PORT
+from sanic_testing.testing import HOST
 
-from sanic.exceptions import BadRequest, SanicException
 from sanic import Blueprint
+from sanic.exceptions import BadRequest, SanicException
+
+from .conftest import get_port
 
 
 AVAILABLE_LISTENERS = [
@@ -43,7 +45,9 @@ def start_stop_app(random_name_app, **run_kwargs):
         app.stop()
 
     try:
-        random_name_app.run(HOST, PORT, single_process=True, **run_kwargs)
+        random_name_app.run(
+            HOST, get_port(), single_process=True, **run_kwargs
+        )
     except KeyboardInterrupt:
         pass
 
@@ -104,7 +108,7 @@ def test_all_listeners_as_convenience(app):
 
 
 @pytest.mark.asyncio
-async def test_trigger_before_events_create_server(app):
+async def test_trigger_before_events_create_server(app, port):
     class MySanicDb:
         pass
 
@@ -112,7 +116,9 @@ async def test_trigger_before_events_create_server(app):
     async def init_db(app, loop):
         app.ctx.db = MySanicDb()
 
-    srv = await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
+    srv = await app.create_server(
+        debug=True, return_asyncio_server=True, port=port
+    )
     await srv.startup()
     await srv.before_start()
 
@@ -169,7 +175,9 @@ def test_create_server_trigger_events(app):
     with closing(socket()) as sock:
         sock.bind(("127.0.0.1", 0))
 
-        serv_coro = app.create_server(return_asyncio_server=True, sock=sock, debug=True)
+        serv_coro = app.create_server(
+            return_asyncio_server=True, sock=sock, debug=True
+        )
         serv_task = asyncio.ensure_future(serv_coro, loop=loop)
         server = loop.run_until_complete(serv_task)
         loop.run_until_complete(server.startup())
@@ -194,20 +202,20 @@ def test_create_server_trigger_events(app):
 
 
 @pytest.mark.asyncio
-async def test_missing_startup_raises_exception(app):
+async def test_missing_startup_raises_exception(app, port):
     @app.listener("before_server_start")
-    async def init_db(app, loop):
-        ...
+    async def init_db(app, loop): ...
 
-    srv = await app.create_server(debug=True, return_asyncio_server=True, port=PORT)
+    srv = await app.create_server(
+        debug=True, return_asyncio_server=True, port=port
+    )
 
     with pytest.raises(SanicException):
         await srv.before_start()
 
 
 def test_reload_listeners_attached(app):
-    async def dummy(*_):
-        ...
+    async def dummy(*_): ...
 
     app.reload_process_start(dummy)
     app.reload_process_stop(dummy)

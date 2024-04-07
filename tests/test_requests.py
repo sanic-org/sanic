@@ -501,7 +501,8 @@ def test_standard_forwarded(app):
     headers = {
         "Forwarded": (
             'for=1.1.1.1, for=injected;host="'
-            ', for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret'
+            ', for="[::2]";proto=https;host=me.tld;'
+            'path="/app/";secret=mySecret'
             ",for=broken;;secret=b0rked"
             ", for=127.0.0.3;scheme=http;port=1234"
         ),
@@ -616,7 +617,8 @@ async def test_standard_forwarded_asgi(app):
     headers = {
         "Forwarded": (
             'for=1.1.1.1, for=injected;host="'
-            ', for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret'
+            ', for="[::2]";proto=https;host=me.tld;'
+            'path="/app/";secret=mySecret'
             ",for=broken;;secret=b0rked"
             ", for=127.0.0.3;scheme=http;port=1234"
         ),
@@ -1250,7 +1252,8 @@ async def test_request_string_representation_asgi(app):
     [
         (
             "------sanic\r\n"
-            'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
+            'Content-Disposition: form-data; filename="filename"'
+            '; name="test"\r\n'
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
@@ -1258,7 +1261,8 @@ async def test_request_string_representation_asgi(app):
         ),
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename="filename"; name="test"\r\n'
+            'content-disposition: form-data; filename="filename"'
+            '; name="test"\r\n'
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
             "------sanic--\r\n",
@@ -1282,37 +1286,41 @@ async def test_request_string_representation_asgi(app):
         ),
         (
             "------sanic\r\n"
-            'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+            "Content-Disposition: form-data; filename*="
+            '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+            "content-disposition: form-data; filename*="
+            '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
         # Umlaut using NFC normalization (Windows, Linux, Android)
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*="utf-8\'\'filename_%C3%A4_test"; name="test"\r\n'
+            "content-disposition: form-data; filename*="
+            '"utf-8\'\'filename_%C3%A4_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00E4_test",
+            "filename_\u00e4_test",
         ),
         # Umlaut using NFD normalization (MacOS client)
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*="utf-8\'\'filename_a%CC%88_test"; name="test"\r\n'
+            "content-disposition: form-data; filename*="
+            '"utf-8\'\'filename_a%CC%88_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00E4_test",  # Sanic should normalize to NFC
+            "filename_\u00e4_test",  # Sanic should normalize to NFC
         ),
     ],
 )
@@ -1332,7 +1340,8 @@ def test_request_multipart_files(app, payload, filename):
     [
         (
             "------sanic\r\n"
-            'Content-Disposition: form-data; filename="filename"; name="test"\r\n'
+            'Content-Disposition: form-data; filename="filename";'
+            ' name="test"\r\n'
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
@@ -1340,7 +1349,8 @@ def test_request_multipart_files(app, payload, filename):
         ),
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename="filename"; name="test"\r\n'
+            'content-disposition: form-data; filename="filename";'
+            ' name="test"\r\n'
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
             "------sanic--\r\n",
@@ -1364,19 +1374,21 @@ def test_request_multipart_files(app, payload, filename):
         ),
         (
             "------sanic\r\n"
-            'Content-Disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+            "Content-Disposition: form-data; filename*="
+            '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
         (
             "------sanic\r\n"
-            'content-disposition: form-data; filename*="utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
+            "content-disposition: form-data; filename*="
+            '"utf-8\'\'filename_%C2%A0_test"; name="test"\r\n'
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
     ],
 )
@@ -1399,7 +1411,8 @@ def test_request_multipart_file_with_json_content_type(app):
 
     payload = (
         "------sanic\r\n"
-        'Content-Disposition: form-data; name="file"; filename="test.json"\r\n'
+        'Content-Disposition: form-data; name="file";'
+        ' filename="test.json"\r\n'
         "Content-Type: application/json\r\n"
         "Content-Length: 0"
         "\r\n"
@@ -1421,7 +1434,8 @@ async def test_request_multipart_file_with_json_content_type_asgi(app):
 
     payload = (
         "------sanic\r\n"
-        'Content-Disposition: form-data; name="file"; filename="test.json"\r\n'
+        'Content-Disposition: form-data; name="file";'
+        ' filename="test.json"\r\n'
         "Content-Type: application/json\r\n"
         "Content-Length: 0"
         "\r\n"
@@ -1483,7 +1497,8 @@ def test_request_multipart_file_duplicate_filed_name(app):
     )
 
     headers = {
-        "Content-Type": "multipart/form-data; boundary=e73ffaa8b1b2472b8ec848de833cb05b"
+        "Content-Type": "multipart/form-data;"
+        " boundary=e73ffaa8b1b2472b8ec848de833cb05b"
     }
 
     request, _ = app.test_client.post(
@@ -1518,7 +1533,8 @@ async def test_request_multipart_file_duplicate_filed_name_asgi(app):
     )
 
     headers = {
-        "Content-Type": "multipart/form-data; boundary=e73ffaa8b1b2472b8ec848de833cb05b"
+        "Content-Type": "multipart/form-data;"
+        " boundary=e73ffaa8b1b2472b8ec848de833cb05b"
     }
 
     request, _ = await app.asgi_client.post("/", data=payload, headers=headers)
@@ -1534,9 +1550,11 @@ def test_request_multipart_with_multiple_files_and_type(app):
         return text("OK")
 
     payload = (
-        '------sanic\r\nContent-Disposition: form-data; name="file"; filename="test.json"'
+        '------sanic\r\nContent-Disposition: form-data; name="file";'
+        ' filename="test.json"'
         "\r\nContent-Type: application/json\r\n\r\n\r\n"
-        '------sanic\r\nContent-Disposition: form-data; name="file"; filename="some_file.pdf"\r\n'
+        '------sanic\r\nContent-Disposition: form-data; name="file";'
+        ' filename="some_file.pdf"\r\n'
         "Content-Type: application/pdf\r\n\r\n\r\n------sanic--"
     )
     headers = {"content-type": "multipart/form-data; boundary=------sanic"}
@@ -1554,9 +1572,11 @@ async def test_request_multipart_with_multiple_files_and_type_asgi(app):
         return text("OK")
 
     payload = (
-        '------sanic\r\nContent-Disposition: form-data; name="file"; filename="test.json"'
+        '------sanic\r\nContent-Disposition: form-data; name="file";'
+        ' filename="test.json"'
         "\r\nContent-Type: application/json\r\n\r\n\r\n"
-        '------sanic\r\nContent-Disposition: form-data; name="file"; filename="some_file.pdf"\r\n'
+        '------sanic\r\nContent-Disposition: form-data; name="file";'
+        ' filename="some_file.pdf"\r\n'
         "Content-Type: application/pdf\r\n\r\n\r\n------sanic--"
     )
     headers = {"content-type": "multipart/form-data; boundary=------sanic"}
@@ -2011,11 +2031,11 @@ def test_server_name_and_url_for(app):
     app.config.SERVER_NAME = "my-server"  # This means default port
     assert app.url_for("handler", _external=True) == "http://my-server/foo"
     request, response = app.test_client.get("/foo")
-    assert request.url_for("handler") == f"http://my-server/foo"
+    assert request.url_for("handler") == "http://my-server/foo"
 
     app.config.SERVER_NAME = "https://my-server/path"
     request, response = app.test_client.get("/foo")
-    url = f"https://my-server/path/foo"
+    url = "https://my-server/path/foo"
     assert app.url_for("handler", _external=True) == url
     assert request.url_for("handler") == url
 
@@ -2180,7 +2200,7 @@ def test_safe_method_with_body_ignored(app):
     )
 
     assert request.body == b""
-    assert request.json == None
+    assert request.json is None
     assert response.body == b"OK"
 
 
@@ -2206,12 +2226,14 @@ async def test_conflicting_body_methods_overload_error(app: Sanic):
     @app.put("/")
     @app.put("/p/")
     @app.put("/p/<foo>")
-    async def put(request, foo=None):
-        ...
+    async def put(request, foo=None): ...
 
     with pytest.raises(
         ServerError,
-        match="Duplicate route names detected: test_conflicting_body_methods_overload_error\.put.*",
+        match=(
+            r"Duplicate route names detected:"
+            r" test_conflicting_body_methods_overload_error\.put.*"
+        ),
     ):
         await app._startup()
 
@@ -2268,12 +2290,14 @@ def test_conflicting_body_methods_overload(app: Sanic):
 async def test_handler_overload_error(app: Sanic):
     @app.get("/long/sub/route/param_a/<param_a:str>/param_b/<param_b:str>")
     @app.post("/long/sub/route/")
-    def handler(request, **kwargs):
-        ...
+    def handler(request, **kwargs): ...
 
     with pytest.raises(
         ServerError,
-        match="Duplicate route names detected: test_handler_overload_error\.handler.*",
+        match=(
+            r"Duplicate route names detected:"
+            r" test_handler_overload_error\.handler.*"
+        ),
     ):
         await app._startup()
 

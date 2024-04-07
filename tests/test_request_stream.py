@@ -572,8 +572,8 @@ def test_streaming_echo():
             app.stop()
 
     async def client(app, reader, writer):
-        # Unfortunately httpx does not support 2-way streaming, so do it by hand.
-        host = f"host: localhost:8000\r\n".encode()
+        # httpx doesn't support 2-way streaming,so do it by hand.
+        host = "host: localhost:8000\r\n".encode()
         writer.write(
             b"POST /echo HTTP/1.1\r\n" + host + b"content-length: 2\r\n"
             b"content-type: text/plain; charset=utf-8\r\n"
@@ -581,7 +581,7 @@ def test_streaming_echo():
         )
         # Read response
         res = b""
-        while not b"\r\n\r\n" in res:
+        while b"\r\n\r\n" not in res:
             res += await reader.read(4096)
         assert res.startswith(b"HTTP/1.1 200 OK\r\n")
         assert res.endswith(b"\r\n\r\n")
@@ -589,7 +589,7 @@ def test_streaming_echo():
 
         async def read_chunk():
             nonlocal buffer
-            while not b"\r\n" in buffer:
+            while b"\r\n" not in buffer:
                 data = await reader.read(4096)
                 assert data
                 buffer += data
@@ -618,6 +618,6 @@ def test_streaming_echo():
         assert res == b"-"
 
         res = await read_chunk()
-        assert res == None
+        assert res is None
 
     app.run(access_log=False, single_process=True)

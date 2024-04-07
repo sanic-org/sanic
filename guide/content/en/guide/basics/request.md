@@ -253,10 +253,7 @@ As dicussed in [application customization](./app.md#custom-requests), you can cr
     ```
 
 
-
-.. new:: NEW in v23.6
-
-    ### Custom Request Context
+### Custom Request Context
 
 By default, the request context (`request.ctx`) is a [`Simplenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) object allowing you to set arbitrary attributes on it. While this is super helpful to reuse logic across your application, it can be difficult in the development experience since the IDE will not know what attributes are available.
 

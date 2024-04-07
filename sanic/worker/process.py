@@ -1,6 +1,7 @@
 import os
 
 from datetime import datetime, timezone
+from inspect import signature
 from multiprocessing.context import BaseContext
 from signal import SIGINT
 from threading import Thread
@@ -21,14 +22,26 @@ class WorkerProcess:
 
     THRESHOLD = 300  # == 30 seconds
     SERVER_LABEL = "Server"
+    SERVER_IDENTIFIER = "Srv"
 
-    def __init__(self, factory, name, target, kwargs, worker_state):
+    def __init__(
+        self,
+        factory,
+        name,
+        ident,
+        target,
+        kwargs,
+        worker_state,
+        restartable: bool = False,
+    ):
         self.state = ProcessState.IDLE
         self.factory = factory
         self.name = name
+        self.ident = ident
         self.target = target
         self.kwargs = kwargs
         self.worker_state = worker_state
+        self.restartable = restartable
         if self.name not in self.worker_state:
             self.worker_state[self.name] = {
                 "server": self.SERVER_LABEL in self.name
@@ -46,6 +59,7 @@ class WorkerProcess:
 
     def start(self):
         os.environ["SANIC_WORKER_NAME"] = self.name
+        os.environ["SANIC_WORKER_IDENTIFIER"] = self.ident
         logger.debug(
             f"{Colors.BLUE}Starting a process: {Colors.BOLD}"
             f"{Colors.SANIC}%s{Colors.END}",
@@ -62,6 +76,7 @@ class WorkerProcess:
                 "starts": 1,
             }
         del os.environ["SANIC_WORKER_NAME"]
+        del os.environ["SANIC_WORKER_IDENTIFIER"]
 
     def join(self):
         self.set_state(ProcessState.JOINED)
@@ -108,9 +123,10 @@ class WorkerProcess:
             self._terminate_now()
         else:
             self._old_process = self._current_process
-        self.kwargs.update(
-            {"config": {k.upper(): v for k, v in kwargs.items()}}
-        )
+        if self._add_config():
+            self.kwargs.update(
+                {"config": {k.upper(): v for k, v in kwargs.items()}}
+            )
         try:
             self.spawn()
             self.start()
@@ -147,7 +163,13 @@ class WorkerProcess:
     def pid(self):
         return self._current_process.pid
 
+    @property
+    def exitcode(self):
+        return self._current_process.exitcode
+
     def _terminate_now(self):
+        if not self._current_process.is_alive():
+            return
         logger.debug(
             f"{Colors.BLUE}Begin restart termination: "
             f"{Colors.BOLD}{Colors.SANIC}"
@@ -196,26 +218,43 @@ class WorkerProcess:
             self._old_process.terminate()
         delattr(self, "_old_process")
 
+    def _add_config(self) -> bool:
+        sig = signature(self.target)
+        if "config" in sig.parameters or any(
+            param.kind == param.VAR_KEYWORD
+            for param in sig.parameters.values()
+        ):
+            return True
+        return False
+
 
 class Worker:
-    WORKER_PREFIX = "Sanic-"
+    WORKER_PREFIX = "Sanic"
 
     def __init__(
         self,
         ident: str,
+        name: str,
         serve,
         server_settings,
         context: BaseContext,
         worker_state: Dict[str, Any],
         num: int = 1,
+        restartable: bool = False,
+        tracked: bool = True,
+        auto_start: bool = True,
     ):
         self.ident = ident
+        self.name = name
         self.num = num
         self.context = context
         self.serve = serve
         self.server_settings = server_settings
         self.worker_state = worker_state
         self.processes: Set[WorkerProcess] = set()
+        self.restartable = restartable
+        self.tracked = tracked
+        self.auto_start = auto_start
         for _ in range(num):
             self.create_process()
 
@@ -226,10 +265,17 @@ class Worker:
             # implementations do. We can safely ignore as it is a typing
             # issue in the standard lib.
             factory=self.context.Process,  # type: ignore
-            name=f"{self.WORKER_PREFIX}{self.ident}-{len(self.processes)}",
+            name="-".join(
+                [self.WORKER_PREFIX, self.name, str(len(self.processes))]
+            ),
+            ident=self.ident,
             target=self.serve,
             kwargs={**self.server_settings},
             worker_state=self.worker_state,
+            restartable=self.restartable,
         )
         self.processes.add(process)
         return process
+
+    def has_alive_processes(self) -> bool:
+        return any(process.is_alive() for process in self.processes)

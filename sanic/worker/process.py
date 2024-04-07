@@ -22,11 +22,13 @@ class WorkerProcess:
 
     THRESHOLD = 300  # == 30 seconds
     SERVER_LABEL = "Server"
+    SERVER_IDENTIFIER = "Srv"
 
     def __init__(
         self,
         factory,
         name,
+        ident,
         target,
         kwargs,
         worker_state,
@@ -35,6 +37,7 @@ class WorkerProcess:
         self.state = ProcessState.IDLE
         self.factory = factory
         self.name = name
+        self.ident = ident
         self.target = target
         self.kwargs = kwargs
         self.worker_state = worker_state
@@ -56,6 +59,7 @@ class WorkerProcess:
 
     def start(self):
         os.environ["SANIC_WORKER_NAME"] = self.name
+        os.environ["SANIC_WORKER_IDENTIFIER"] = self.ident
         logger.debug(
             f"{Colors.BLUE}Starting a process: {Colors.BOLD}"
             f"{Colors.SANIC}%s{Colors.END}",
@@ -72,6 +76,7 @@ class WorkerProcess:
                 "starts": 1,
             }
         del os.environ["SANIC_WORKER_NAME"]
+        del os.environ["SANIC_WORKER_IDENTIFIER"]
 
     def join(self):
         self.set_state(ProcessState.JOINED)
@@ -224,11 +229,12 @@ class WorkerProcess:
 
 
 class Worker:
-    WORKER_PREFIX = "Sanic-"
+    WORKER_PREFIX = "Sanic"
 
     def __init__(
         self,
         ident: str,
+        name: str,
         serve,
         server_settings,
         context: BaseContext,
@@ -239,6 +245,7 @@ class Worker:
         auto_start: bool = True,
     ):
         self.ident = ident
+        self.name = name
         self.num = num
         self.context = context
         self.serve = serve
@@ -258,7 +265,10 @@ class Worker:
             # implementations do. We can safely ignore as it is a typing
             # issue in the standard lib.
             factory=self.context.Process,  # type: ignore
-            name=f"{self.WORKER_PREFIX}{self.ident}-{len(self.processes)}",
+            name="-".join(
+                [self.WORKER_PREFIX, self.name, str(len(self.processes))]
+            ),
+            ident=self.ident,
             target=self.serve,
             kwargs={**self.server_settings},
             worker_state=self.worker_state,

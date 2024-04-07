@@ -101,7 +101,7 @@ def test_transfer_chunked(client):
 def test_url_encoding(client):
     client.send(
         """
-        GET /invalid\xA0url HTTP/1.1
+        GET /invalid\xa0url HTTP/1.1
 
         """
     )

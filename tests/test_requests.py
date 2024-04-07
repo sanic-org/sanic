@@ -1291,7 +1291,7 @@ async def test_request_string_representation_asgi(app):
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
         (
             "------sanic\r\n"
@@ -1300,7 +1300,7 @@ async def test_request_string_representation_asgi(app):
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
         # Umlaut using NFC normalization (Windows, Linux, Android)
         (
@@ -1310,7 +1310,7 @@ async def test_request_string_representation_asgi(app):
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00E4_test",
+            "filename_\u00e4_test",
         ),
         # Umlaut using NFD normalization (MacOS client)
         (
@@ -1320,7 +1320,7 @@ async def test_request_string_representation_asgi(app):
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00E4_test",  # Sanic should normalize to NFC
+            "filename_\u00e4_test",  # Sanic should normalize to NFC
         ),
     ],
 )
@@ -1379,7 +1379,7 @@ def test_request_multipart_files(app, payload, filename):
             "\r\n"
             "OK\r\n"
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
         (
             "------sanic\r\n"
@@ -1388,7 +1388,7 @@ def test_request_multipart_files(app, payload, filename):
             "\r\n"
             'content-type: application/json; {"field": "value"}\r\n'
             "------sanic--\r\n",
-            "filename_\u00A0_test",
+            "filename_\u00a0_test",
         ),
     ],
 )
@@ -2226,8 +2226,7 @@ async def test_conflicting_body_methods_overload_error(app: Sanic):
     @app.put("/")
     @app.put("/p/")
     @app.put("/p/<foo>")
-    async def put(request, foo=None):
-        ...
+    async def put(request, foo=None): ...
 
     with pytest.raises(
         ServerError,
@@ -2291,8 +2290,7 @@ def test_conflicting_body_methods_overload(app: Sanic):
 async def test_handler_overload_error(app: Sanic):
     @app.get("/long/sub/route/param_a/<param_a:str>/param_b/<param_b:str>")
     @app.post("/long/sub/route/")
-    def handler(request, **kwargs):
-        ...
+    def handler(request, **kwargs): ...
 
     with pytest.raises(
         ServerError,

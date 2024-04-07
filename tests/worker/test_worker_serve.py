@@ -42,7 +42,7 @@ def test_config_app(mock_app: Mock):
 
 def test_bad_process(mock_app: Mock, caplog):
     environ["SANIC_WORKER_NAME"] = (
-        Worker.WORKER_PREFIX + WorkerProcess.SERVER_LABEL + "-FOO"
+        f"{Worker.WORKER_PREFIX}-{WorkerProcess.SERVER_LABEL}-FOO"
     )
 
     message = "No restart publisher found in worker process"
@@ -62,7 +62,7 @@ def test_bad_process(mock_app: Mock, caplog):
 
 def test_has_multiplexer(app: Sanic):
     environ["SANIC_WORKER_NAME"] = (
-        Worker.WORKER_PREFIX + WorkerProcess.SERVER_LABEL + "-FOO"
+        f"{Worker.WORKER_PREFIX}-{WorkerProcess.SERVER_LABEL}-FOO"
     )
 
     Sanic.register_app(app)

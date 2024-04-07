@@ -72,6 +72,7 @@ from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.logging.setup import setup_logging
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
@@ -1937,6 +1938,7 @@ class Sanic(
         details: https://asgi.readthedocs.io/en/latest
         """
         if scope["type"] == "lifespan":
+            setup_logging(self.state.is_debug, self.config.NO_COLOR)
             self.asgi = True
             self.motd("")
             self._asgi_lifespan = Lifespan(self, scope, receive, send)

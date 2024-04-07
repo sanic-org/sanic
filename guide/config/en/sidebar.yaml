@@ -257,7 +257,7 @@ root:
                   path: /api/sanic.compat.html
                 - label: sanic.helpers
                   path: /api/sanic.helpers.html
-                - label: sanic.log
-                  path: /api/sanic.log.html
+                - label: sanic.logging
+                  path: /api/sanic.logging.html
                 - label: sanic.utils
                   path: /api/sanic.utils.html

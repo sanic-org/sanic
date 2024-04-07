@@ -3,7 +3,6 @@ For 3.7 compat
 
 """
 
-
 from unittest.mock import Mock
 
 

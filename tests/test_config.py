@@ -134,8 +134,7 @@ def test_env_lowercase():
 
 
 def test_add_converter_multiple_times(caplog):
-    def converter():
-        ...
+    def converter(): ...
 
     message = (
         "Configuration value converter 'converter' has already been registered"

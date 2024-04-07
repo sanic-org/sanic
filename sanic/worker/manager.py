@@ -323,7 +323,7 @@ class WorkerManager:
                     "One of your worker processes terminated before startup "
                     "was completed. Please solve any errors experienced "
                     "during startup. If you do not see an exception traceback "
-                    "in your error logs, try running Sanic in in a single "
+                    "in your error logs, try running Sanic in a single "
                     "process using --single-process or single_process=True. "
                     "Once you are confident that the server is able to start "
                     "without errors you can switch back to multiprocess mode."

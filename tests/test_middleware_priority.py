@@ -41,8 +41,7 @@ def reset_middleware():
 
 
 def test_add_register_priority(app: Sanic):
-    def foo(*_):
-        ...
+    def foo(*_): ...
 
     app.register_middleware(foo, priority=999)
     assert len(app.request_middleware) == 1
@@ -55,8 +54,7 @@ def test_add_register_priority(app: Sanic):
 
 
 def test_add_register_named_priority(app: Sanic):
-    def foo(*_):
-        ...
+    def foo(*_): ...
 
     app.register_named_middleware(foo, route_names=["foo"], priority=999)
     assert len(app.named_request_middleware) == 1
@@ -71,8 +69,7 @@ def test_add_register_named_priority(app: Sanic):
 
 
 def test_add_decorator_priority(app: Sanic):
-    def foo(*_):
-        ...
+    def foo(*_): ...
 
     app.middleware(foo, priority=999)
     assert len(app.request_middleware) == 1
@@ -85,8 +82,7 @@ def test_add_decorator_priority(app: Sanic):
 
 
 def test_add_convenience_priority(app: Sanic):
-    def foo(*_):
-        ...
+    def foo(*_): ...
 
     app.on_request(foo, priority=999)
     assert len(app.request_middleware) == 1
@@ -99,8 +95,7 @@ def test_add_convenience_priority(app: Sanic):
 
 
 def test_add_conflicting_priority(app: Sanic):
-    def foo(*_):
-        ...
+    def foo(*_): ...
 
     middleware = Middleware(foo, MiddlewareLocation.REQUEST, priority=998)
     app.register_middleware(middleware=middleware, priority=999)
@@ -109,8 +104,7 @@ def test_add_conflicting_priority(app: Sanic):
 
 
 def test_add_conflicting_priority_named(app: Sanic):
-    def foo(*_):
-        ...
+    def foo(*_): ...
 
     middleware = Middleware(foo, MiddlewareLocation.REQUEST, priority=998)
     app.register_named_middleware(

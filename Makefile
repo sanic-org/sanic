@@ -1,23 +1,19 @@
-.PHONY: help test test-coverage install docker-test black fix-import beautify
-
+RUFF_FORMATTED_FOLDERS = sanic examples scripts tests guide docs
 .DEFAULT: help
 
+.PHONY: help
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "test"
-	@echo "		Run Sanic Unit Tests"
-	@echo "test-coverage"
-	@echo "		Run Sanic Unit Tests with Coverage"
 	@echo "install"
 	@echo "		Install Sanic"
 	@echo "docker-test"
 	@echo "		Run Sanic Unit Tests using Docker"
-	@echo "black"
-	@echo "		Analyze and fix linting issues using Black"
-	@echo "fix-import"
-	@echo "		Analyze and fix import order using isort"
-	@echo "beautify [sort_imports=1] [include_tests=1]"
-	@echo "		Analyze and fix linting issue using black and optionally fix import sort using isort"
+	@echo "fix"
+	@echo "		Analyze and fix linting issues using ruff"
+	@echo "format"
+	@echo "		Analyze and format using ruff"
+	@echo "pretty"
+	@echo "		Analyze and fix linting and format using ruff"
 	@echo ""
 	@echo "docs"
 	@echo "		Generate Sanic documentation"
@@ -35,7 +31,7 @@ help:
 	@echo "		Prepare Sanic for a new changes by version bump and changelog"
 	@echo ""
 
-
+.PHONY: clean
 clean:
 	find . ! -path "./.eggs/*" -name "*.pyc" -exec rm {} \;
 	find . ! -path "./.eggs/*" -name "*.pyo" -exec rm {} \;
@@ -43,59 +39,55 @@ clean:
 	rm -rf build/* > /dev/null 2>&1
 	rm -rf dist/* > /dev/null 2>&1
 
-test: clean
-	python setup.py test
-
-test-coverage: clean
-	python setup.py test --pytest-args="--cov sanic --cov-report term --cov-append "
-
+.PHONY: view-coverage
 view-coverage:
 	sanic ./coverage --simple
 
+.PHONY: install
 install:
-	python setup.py install
+	python -m pip install .
 
+.PHONY: docker-test
 docker-test: clean
 	docker build -t sanic/test-image -f docker/Dockerfile .
 	docker run -t sanic/test-image tox
 
-beautify: black
-ifdef sort_imports
-ifdef include_tests
-	$(warning It is suggested that you do not run sort import on tests)
-	isort -rc sanic tests
-else
-	$(info Sorting Imports)
-	isort -rc sanic tests
-endif
-endif
+.PHONY: fix
+fix:
+	ruff check ${RUFF_FORMATTED_FOLDERS} --fix
 
-black:
-	black sanic tests
+.PHONY: format
+format:
+	ruff format ${RUFF_FORMATTED_FOLDERS}
 
-isort:
-	isort sanic tests
+.PHONY: pretty
+pretty: format fix
 
-pretty: black isort
-
+.PHONY: docs-clean
 docs-clean:
 	cd docs && make clean
 
+.PHONY: docs
 docs: docs-clean
 	cd docs && make html
 
+.PHONY: docs-test
 docs-test: docs-clean
 	cd docs && make dummy
 
+.PHONY: docs-serve
 docs-serve:
 	sphinx-autobuild docs docs/_build/html --port 9999 --watch ./
 
+.PHONY: changelog
 changelog:
 	python scripts/changelog.py
 
+.PHONY: guide-serve
 guide-serve:
 	cd guide && sanic server:app -r -R ./content -R ./style
 
+.PHONY: release
 release:
 ifdef version
 	python scripts/release.py --release-version ${version} --generate-changelog

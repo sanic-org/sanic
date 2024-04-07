@@ -44,12 +44,8 @@ class ConnInfo:
         self.server_name = ""
         self.cert: Dict[str, Any] = {}
         self.network_paths: List[Any] = []
-        sslobj: Optional[SSLObject] = transport.get_extra_info(
-            "ssl_object"
-        )  # type: ignore
-        sslctx: Optional[SSLContext] = transport.get_extra_info(
-            "ssl_context"
-        )  # type: ignore
+        sslobj: Optional[SSLObject] = transport.get_extra_info("ssl_object")  # type: ignore
+        sslctx: Optional[SSLContext] = transport.get_extra_info("ssl_context")  # type: ignore
         if sslobj:
             self.ssl = True
             self.server_name = getattr(sslobj, "sanic_server_name", None) or ""
@@ -67,9 +63,7 @@ class ConnInfo:
             if addr[1] != (443 if self.ssl else 80):
                 self.server = f"{self.server}:{addr[1]}"
         self.peername = addr = transport.get_extra_info("peername")
-        self.network_paths = transport.get_extra_info(  # type: ignore
-            "network_paths"
-        )
+        self.network_paths = transport.get_extra_info("network_paths")  # type: ignore
 
         if isinstance(addr, tuple):
             self.client = addr[0] if len(addr) == 2 else f"[{addr[0]}]"

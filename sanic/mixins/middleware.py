@@ -25,9 +25,8 @@ class MiddlewareMixin(metaclass=SanicMeta):
         attach_to: str = "request",
         apply: bool = True,
         *,
-        priority: int = 0
-    ) -> MiddlewareType:
-        ...
+        priority: int = 0,
+    ) -> MiddlewareType: ...
 
     @overload
     def middleware(
@@ -36,9 +35,8 @@ class MiddlewareMixin(metaclass=SanicMeta):
         attach_to: str = "request",
         apply: bool = True,
         *,
-        priority: int = 0
-    ) -> Callable[[MiddlewareType], MiddlewareType]:
-        ...
+        priority: int = 0,
+    ) -> Callable[[MiddlewareType], MiddlewareType]: ...
 
     def middleware(
         self,
@@ -46,7 +44,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
         attach_to: str = "request",
         apply: bool = True,
         *,
-        priority: int = 0
+        priority: int = 0,
     ) -> Union[MiddlewareType, Callable[[MiddlewareType], MiddlewareType]]:
         """Decorator for registering middleware.
 

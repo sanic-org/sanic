@@ -2,9 +2,9 @@
 
 from pygments.formatters import html
 from sass import compile as compile_scss
-from webapp.display.code_style import SanicCodeStyle
 
 from sanic import Sanic
+from webapp.display.code_style import SanicCodeStyle
 
 
 def setup_style(app: Sanic) -> None:

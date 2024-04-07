@@ -349,8 +349,7 @@ def parse_content_header(value: str) -> Tuple[str, Options]:
         options: Dict[str, Union[int, str]] = {}
     else:
         options = {
-            m.group(1)
-            .lower(): (m.group(2) or m.group(3))
+            m.group(1).lower(): (m.group(2) or m.group(3))
             .replace("%22", '"')
             .replace("%0D%0A", "\n")
             for m in _param.finditer(value[pos:])

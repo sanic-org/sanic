@@ -1,3 +1,7 @@
+---
+title: Sanic Testing - Test Clients
+---
+
 # Test Clients
 
 There are three different test clients available to you, each of them presents different capabilities.

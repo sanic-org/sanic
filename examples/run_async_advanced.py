@@ -35,6 +35,7 @@ async def after_server_stop(app, loop):
 async def test(request):
     return response.json({"answer": "42"})
 
+
 if __name__ == "__main__":
     asyncio.set_event_loop(uvloop.new_event_loop())
     serv_coro = app.create_server(

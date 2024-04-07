@@ -3,13 +3,12 @@ from re import Match
 from textwrap import dedent
 from typing import Any
 
+from html5tagger import HTML, E
 from mistune import HTMLRenderer
 from mistune.block_parser import BlockParser
 from mistune.core import BlockState
 from mistune.directives import DirectivePlugin, RSTDirective
 from mistune.markdown import Markdown
-
-from html5tagger import HTML, E
 
 
 class Mermaid(DirectivePlugin):

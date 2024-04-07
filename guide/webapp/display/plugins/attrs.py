@@ -2,11 +2,10 @@ from re import Match
 from textwrap import dedent
 from typing import Any
 
+from html5tagger import HTML, E
 from mistune.block_parser import BlockParser
 from mistune.core import BlockState
 from mistune.directives import DirectivePlugin
-
-from html5tagger import HTML, E
 
 
 class Attributes(DirectivePlugin):

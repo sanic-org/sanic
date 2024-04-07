@@ -2,11 +2,11 @@
 
 Sanic 允许您根据[Python log, 错误日志](https://docs.python.org/3/howto/logging.html)对请求进行不同类型的日志(访问日志, 错误日志)。 如果您想要创建一个新的配置，您应该在 Python 日志记录中获得一些基本知识。
 
-But, don't worry, out of the box Sanic ships with some sensible logging defaults. 在方框中，它使用一个 `AutoFormatter` 来格式化日志，取决于您是否处于调试模式。 我们将告诉你如何稍后强制这个操作。
+但不要担心的是，沙尼克船在箱子里有一些合理的日志缺失。 在方框中，它使用一个 `AutoFormatter` 来格式化日志，取决于您是否处于调试模式。 我们将告诉你如何稍后强制这个操作。
 
 ## 快速开始
 
-Let's start by looking at what logging might look like in local development. 为此，我们将使用 Sanic 提供的默认日志配置，并确保在开发模式中运行 Sanic。
+让我们首先看看本地开发中日志可能看起来像是什么。 为此，我们将使用 Sanic 提供的默认日志配置，并确保在开发模式中运行 Sanic。
 
 .. 列:
 
@@ -34,7 +34,7 @@ async def test(request):
 .. 列:
 
 ```
-Because we are specifically trying to look at the development logs, we will make sure to run Sanic in development mode.
+因为我们正在特别试图查看发展记录，因此我们将确保在发展模式中运行萨尼克。
 ```
 
 .. 列:
@@ -47,56 +47,56 @@ sanic path.to.server:app --dev
 
 在服务器运行后，你应该看到像这样的日志。
 
-![Sanic Logging Start](/assets/images/logging-debug-start.png)
+![Sanic Logging Star](/assets/images/logging-debug-start.png)
 
 您可以向服务器发送请求，它将打印日志消息。
 
-![Sanic Logging Access](/assets/images/logging-debug-access.png)
+![Sanic 日志Access](/assets/images/logging-debug-access.png)
 
-Some important points to note:
+需要注意的一些重要要点：
 
-- The default log level in **production** mode is `INFO`.
-- The default log level in **debug** mode is `DEBUG`.
-- When in **debug** mode, the log messages will not have a timestamp (except on access logs).
-- Sanic will try to colorize the logs if the terminal supports it. If you are running in Docker with docker-compose, you may need to set `tty: true` in your `docker-compose.yml` file to see the colors.
+- **production** 模式下的默认日志级别是 `INFO` 。
+- **debug** 模式下的默认日志级别是 `DEBUG` 。
+- 在 **debug** 模式中，日志消息将没有时间戳(访问日志除外)。
+- 如果终端支持它，Sanic将尝试对日志进行颜色。 如果你正在Docker中使用docker-compose，你可能需要在你的`docker-compose.yml`文件中设置`tty：true`来查看颜色。
 
-## Sanic's loggers
+## Sanic伐木者
 
-Out of the box, Sanic ships with five loggers:
+在箱子里，有五艘伐木船的萨尼克船：
 
-| **Logger Name**    | **Use Case**                                   |
-| ------------------ | ---------------------------------------------- |
-| `sanic.root`       | Used to log internal messages. |
-| `sanic.error`      | Used to log error logs.        |
-| `sanic.access`     | Used to log access logs.       |
-| `sanic.server`     | Used to log server logs.       |
-| `sanic.websockets` | Used to log websocket logs.    |
+| **Logger Name**    | **使用大小写**       |
+| ------------------ | --------------- |
+| `sanic.root`       | 用于记录内部消息。       |
+| `sanic.error`      | 用于记录错误日志。       |
+| `sanic.access`     | 用于日志访问日志。       |
+| `sanic.server`     | 用于记录服务器日志。      |
+| `sanic.websockets` | 用于记录 Web 套接字日志。 |
 
-.. column::
+.. 列:
 
 ```
-If you want to use these loggers yourself, you can import them from `sanic.log`.
+如果你想要自己使用这些记录器，你可以从 `sanic.log`中导入它们。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic.log import logger, error_logger, access_logger, server_logger, websockets_logger
+来自sanic.log logger, error_logger, access_logger, server_logger, websockets_logger
 
-logger.info('This is a root logger message')
+logger.info('这是一个root logger message')
 ```
 ````
 
-.. warning::
+.. 警告：:
 
 ```
-Feel free to use the root logger and the error logger yourself. But, you probably don't want to use the access logger, server logger, or websockets logger directly. These are used internally by Sanic and are configured to log in a specific way. If you want to change the way these loggers log, you should change the logging configuration.
+请随时使用您自己的Root日志和错误日志。 但您可能不想直接使用访问日志、服务器记录器或Websockets记录器。 这些是由 Sanic 内部使用的，并被配置为以特定方式登录。 如果你想要更改这些日志记录的方式，你应该更改日志的配置。
 ```
 
-## Default logging configuration
+## 默认日志配置
 
-Sanic ships with a default logging configuration that is used when you do not provide your own. This configuration is stored in `sanic.log.LOGGING_CONFIG_DEFAULTS`.
+当您不提供自己的时候，默认日志配置为 Sanic 飞船。 此配置存储在 `sanic.log.LOGGING_CONFIG_DEFAULTS` 中。
 
 ```python
 {
@@ -155,13 +155,13 @@ Sanic ships with a default logging configuration that is used when you do not pr
 
 ## 正在更改 Sanic logger
 
-.. column::
+.. 列:
 
 ```
 要使用您自己的日志配置，只需使用 `logging.config.dictConfig`，或通过 `log_config` 来初始化Sanic 应用程序。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
@@ -172,22 +172,22 @@ if __name__ == "__main__":
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
-But, what if you do not want to control the logging completely, just change the formatter for example? Here, we will import the default logging config and modify only the parts that we want to force (for example) to use the `ProdFormatter` all of the time.
+但是，如果你不想完全控制日志记录, 那么如何改变格式化程序？ 在这里，我们将导入默认的日志配置，并且只修改我们想要随时使用 "ProdFormatter" 的部件。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python
-from sanic.log import LOGGING_CONFIG_DEFAULTS
+from sanic.log import LOGING_CONFIGG_DEFAULTS
 
-LOGGING_CONFIG_DEFAULTS['formatters']['generic']['class'] = 'sanic.logging.formatter.ProdFormatter'
-LOGGING_CONFIG_DEFAULTS['formatters']['access']['class'] = 'sanic.logging.formatter.ProdAccessFormatter'
+LOGING_CONFIG_DEFAULTS ['formations']['generic']['class'] = 'sanic.logging.formter.ProdFormatter'
+LOGING_CONFIG_DEFAULTS['格式']['access']['class'] = 'sanic.logging.form.ter.ProdAccessFormatter'
 
-app = Sanic('logging_example', log_config=LOGGING_CONFIG_DEFAULTS)
+app = Sanic('logging_example', log_config=LOGING_CONFIG_FAULTS)
 ```
 ````
 
@@ -201,18 +201,18 @@ app = Sanic('logging_example', log_config=LOGGING_CONFIG_DEFAULTS)
 为了最佳生产性能，建议运行 Sanic，禁用了 `debug` 和 `access_log` ：`app.run(debug=False, access_log=False)`
 ```
 
-## Access logger additional parameters
+## 访问记录器附加参数
 
-Sanic provides additional parameters to the access logger.
+Sanic 为访问日志提供额外参数。
 
-| 日志上下文参数    | 参数值                                 | Datatype |
-| ---------- | ----------------------------------- | -------- |
-| `host`     | `request.ip`                        | `str`    |
-| `request`  | `request.methods + " + request.url` | `str`    |
-| `status`   | `response`                          | `int`    |
-| `byte`     | `len(response.body)`                | `int`    |
-| `duration` | <calculated>                        | `float`  |
+| 日志上下文参数   | 参数值                                 | Datatype |
+| --------- | ----------------------------------- | -------- |
+| `host`    | `request.ip`                        | `str`    |
+| `request` | `request.methods + " + request.url` | `str`    |
+| `status`  | `response`                          | `int`    |
+| `byte`    | `len(response.body)`                | `int`    |
+| `持续时间`    | <calculated>                        | `float`  |
 
-## Legacy logging
+## 旧日志记录
 
-Many logging changes were introduced in Sanic 24.3. The main changes were related to logging formats. If you prefer the legacy logging format, you can use the `sanic.logging.formatter.LegacyFormatter` and `sanic.logging.formatter.LegacyAccessFormatter` formatters.
+Sanic 24.3引入了许多伐木变化。 主要的变动与伐木格式有关。 如果你喜欢旧版日志格式，你可以使用 `sanic.logging.formter.LegacyFormatter` 和 `sanic.logging.formter.LegacyAccessFormatter` 格式。

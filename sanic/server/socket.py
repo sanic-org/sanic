@@ -6,7 +6,7 @@ import stat
 
 from ipaddress import ip_address
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
@@ -37,7 +37,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
 
 
 def bind_unix_socket(
-    path: Path | str, *, mode=0o666, backlog=100
+    path: Union[Path, str], *, mode=0o666, backlog=100
 ) -> socket.socket:
     """Create unix socket.
     :param path: filesystem path
@@ -79,11 +79,12 @@ def bind_unix_socket(
     return sock
 
 
-def remove_unix_socket(path: Optional[Path]) -> None:
+def remove_unix_socket(path: Optional[Union[Path, str]]) -> None:
     """Remove dead unix socket during server exit."""
     if not path:
         return
     try:
+        path = Path(path)
         if stat.S_ISSOCK(path.lstat().st_mode):
             # Is it actually dead (doesn't belong to a new server instance)?
             with socket.socket(socket.AF_UNIX) as testsock:

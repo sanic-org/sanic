@@ -15,7 +15,7 @@ Sanic 是 Python3.8+ Web 服务器和 Web 框架，旨在提高性能。 它允�
 | Stats    | [![Monthly Downloads](https://img.shields.io/pypi/dm/sanic.svg)](https://pepy.tech/project/sanic) [![Weekly Downloads](https://img.shields.io/pypi/dw/sanic.svg)](https://pepy.tech/project/sanic) [![Conda downloads](https://img.shields.io/conda/dn/conda-forge/sanic.svg)](https://anaconda.org/conda-forge/sanic) |
 ```
 
-## 什么是？
+## 是什么？(What is it?)
 
 首先，在入坑之前， 您应该知道 Sanic 框架和其他的框架相比是与众不同的。
 
@@ -62,7 +62,7 @@ Sanic 不仅仅是一个**框架（framework）**，更是一个**服务器（we
 
 ## 加入社区
 
-讨论的主要渠道是[社区论坛](https://community.sanicframework.org/)。 还有一个 [Discord 服务器](https://discord.gg/RARQzAEMAA) 进行现场讨论和聊天。
+讨论的主要渠道是[社区论坛](https://community.sanicframework.org/)。 还有一个 [Discord 聊天室](https://discord.gg/RARQzAEMAA) 进行现场讨论和聊天。
 
 Stackoverflow \`[sanic]' 标签由项目维护者[积极关注](https://stackoverflow.com/questions/tagged/sanic)。
 

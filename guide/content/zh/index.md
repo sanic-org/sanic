@@ -1,5 +1,5 @@
 ---
-title: 闪电般快速的异步 Python Web 框架
+title: 快如闪电的异步 Python Web 框架
 layout: 首页
 features:
   - title: 简单轻便

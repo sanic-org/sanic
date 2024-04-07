@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 import secrets
 import socket
 import stat
 
 from ipaddress import ip_address
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
 
 from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
@@ -36,7 +36,9 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     return sock
 
 
-def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
+def bind_unix_socket(
+    path: Union[Path, str], *, mode=0o666, backlog=100
+) -> socket.socket:
     """Create unix socket.
     :param path: filesystem path
     :param backlog: Maximum number of connections to queue
@@ -44,29 +46,29 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     """
 
     # Sanitise and pre-verify socket path
-    path = os.path.abspath(path)
-    folder = os.path.dirname(path)
-    if not os.path.isdir(folder):
+    path = Path(path)
+    folder = path.parent
+    if not folder.is_dir():
         raise FileNotFoundError(f"Socket folder does not exist: {folder}")
     try:
-        if not stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
+        if not stat.S_ISSOCK(path.lstat().st_mode):
             raise FileExistsError(f"Existing file is not a socket: {path}")
     except FileNotFoundError:
         pass
     # Create new socket with a random temporary name
-    tmp_path = f"{path}.{secrets.token_urlsafe()}"
+    tmp_path = path.with_name(f"{path.name}.{secrets.token_urlsafe()}")
     sock = socket.socket(socket.AF_UNIX)
     try:
         # Critical section begins (filename races)
-        sock.bind(tmp_path)
+        sock.bind(tmp_path.as_posix())
         try:
-            os.chmod(tmp_path, mode)
+            tmp_path.chmod(mode)
             # Start listening before rename to avoid connection failures
             sock.listen(backlog)
-            os.rename(tmp_path, path)
+            tmp_path.rename(path)
         except:  # noqa: E722
             try:
-                os.unlink(tmp_path)
+                tmp_path.unlink()
             finally:
                 raise
     except:  # noqa: E722
@@ -77,18 +79,19 @@ def bind_unix_socket(path: str, *, mode=0o666, backlog=100) -> socket.socket:
     return sock
 
 
-def remove_unix_socket(path: Optional[str]) -> None:
+def remove_unix_socket(path: Optional[Union[Path, str]]) -> None:
     """Remove dead unix socket during server exit."""
     if not path:
         return
     try:
-        if stat.S_ISSOCK(os.stat(path, follow_symlinks=False).st_mode):
+        path = Path(path)
+        if stat.S_ISSOCK(path.lstat().st_mode):
             # Is it actually dead (doesn't belong to a new server instance)?
             with socket.socket(socket.AF_UNIX) as testsock:
                 try:
-                    testsock.connect(path)
+                    testsock.connect(path.as_posix())
                 except ConnectionRefusedError:
-                    os.unlink(path)
+                    path.unlink()
     except FileNotFoundError:
         pass
 
@@ -103,6 +106,7 @@ def configure_socket(
     unix = server_settings["unix"]
     backlog = server_settings["backlog"]
     if unix:
+        unix = Path(unix).absolute()
         sock = bind_unix_socket(unix, backlog=backlog)
         server_settings["unix"] = unix
     if sock is None:

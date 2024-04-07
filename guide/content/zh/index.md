@@ -3,20 +3,20 @@ title: 快如闪电的异步 Python Web 框架
 layout: 首页
 features:
   - title: 简单轻便
-    details: 直观的 API 具有智能默认设置且无臃肿，让您可以直接开始构建应用程序。
+    details: 直观、智能、精简的API，让您可以直接开始构建应用程序。
   - title: 灵巧无束
-    details: 按照您的意愿进行自由创建，不会对您造成任何约束
-  - title: 易于拓展
-    details: 关注应用的速度和可伸缩性 随时为大大小小的网络应用程序提供支持
+    details: 可以用您自己的方式进行创作，不会对您造成任何约束
+  - title: 高效且可拓展
+    details: 关注应用的速度和可扩展性 随时为大大小小的网络应用程序提供支持
   - title: 生产就绪
     details: 开箱即用，Sanic 不仅是一个框架，也是一个服务器，并随时准备驱动您的 Web 应用
   - title: 备受信赖
-    details: Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步 Web 框架
+    details: Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步python Web 框架
   - title: 社区驱动
-    details: 从社区来，到社区去。Sanic 由社区维护和管理
+    details: 从社区来，到社区去。Sanic 由社区共同维护和管理
 ---
 
-### :hig_voltag: 闪电般快速的异步 Python Web 框架
+### ⚡ 快如闪电的异步 Python Web 框架
 
 .. attrs::
 :class: columns is-multiline mt-6
@@ -27,21 +27,21 @@ features:
 
     #### 简单轻便
 
-    直观的 API 具有智能默认设置且无臃肿，让您可以直接开始构建应用程序。
+    直观、智能、精简的API，让您可以直接开始构建应用程序。
 
 .. attrs::
     :class: column is-4
 
     #### 灵巧无束
 
-    按照您的意愿进行自由创建，不会对您造成任何约束
+    可以用您自己的方式进行创作，不会对您造成任何约束
 
 .. attrs::
     :class: column is-4
 
-    #### 易于拓展
+    #### 高效且可拓展
 
-    关注应用的速度和可伸缩性，可随时为大大小小的网络应用程序提供支持
+    关注应用的速度和可扩展性，可随时为大大小小的网络应用程序提供支持
 
 .. attrs::
     :class: column is-4
@@ -55,14 +55,14 @@ features:
 
     #### 备受信赖
 
-    Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步 Web 框架
+    Sanic 是 PyPI 最受欢迎的框架之一，是顶级的异步python Web 框架
 
 .. attrs::
     :class: column is-4
 
     #### 社区驱动
 
-    从社区来，到社区去。Sanic 由社区维护和管理
+    从社区来，到社区去。Sanic 由社区共同维护和管理
 ```
 
 .. attrs::
@@ -82,7 +82,7 @@ features:
 .. tab:: 生产级别（Production-grade）
 
 ````
-在安装后，Sanic 将为您提供开箱即用的可扩展生产级服务器所需的所有工具！
+开箱即用，在安装后，Sanic 为您提供创建高扩展性、生产级服务器需的所有工具！
 
 甚至包括[完整的 TLS 支持](/zh/guide/how-to/tls)。
 
@@ -149,14 +149,14 @@ async def feed(request: Request, ws: Websocket):
 .. tab:: 静态文件（Static files）
 
 ````
-建立静态文件服务当然是既直观又容易。只需配置一个入口并且指定一个文件或一个目录文件夹即可。
+为静态文件服务当然是既直观又容易。只需配置一个入口并且指定一个文件或一个目录文件夹即可。
 
 ```python
 app.static("/", "/path/to/index.html")
 app.static("/uploads/", "/path/to/uploads/")
 ```
 
-此外，为目录提供服务还有两个附加功能：自动提供索引和自动提供文件浏览器。
+此外，当参数是目录时，还有两个附加功能：自动提供索引和自动提供文件浏览器。
 
 Sanic 可以自动将 `index.html` (或任何其他命名文件) 作为目录或其子目录中的索引页。
 
@@ -168,7 +168,7 @@ app.static(
 )
 ```
 
-之后，设置 Sanic 以显示文件浏览器。
+让 Sanic 以显示文件浏览器需要这样设置。
 
 
 ![image](/assets/images/directory-view.png)

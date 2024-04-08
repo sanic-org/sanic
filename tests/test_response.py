@@ -575,13 +575,19 @@ def test_direct_response_stream(app: Sanic):
     assert "Content-Length" not in response.headers
 
 
-def test_two_respond_calls(app: Sanic):
+@pytest.mark.asyncio
+async def test_direct_response_stream_asgi(app: Sanic):
     @app.route("/")
-    async def handler(request: Request):
-        response = await request.respond()
+    async def test(request: Request):
+        response = await request.respond(content_type="text/csv")
         await response.send("foo,")
         await response.send("bar")
         await response.eof()
+
+    _, response = await app.asgi_client.get("/")
+    assert response.text == "foo,bar"
+    assert response.headers["Content-Type"] == "text/csv"
+    assert "Content-Length" not in response.headers
 
 
 def test_multiple_responses(
@@ -684,7 +690,7 @@ def test_multiple_responses(
         assert message_in_records(caplog.records, error_msg2)
 
 
-def send_response_after_eof_should_fail(
+def test_send_response_after_eof_should_fail(
     app: Sanic,
     caplog: LogCaptureFixture,
     message_in_records: Callable[[List[LogRecord], str], bool],
@@ -698,17 +704,48 @@ def send_response_after_eof_should_fail(
 
     error_msg1 = (
         "The error response will not be sent to the client for the following "
-        'exception:"Second respond call is not allowed.". A previous '
+        'exception:"Response stream was ended, no more response '
+        'data is allowed to be sent.". A previous '
         "response has at least partially been sent."
     )
 
-    error_msg2 = (
-        "Response stream was ended, no more "
-        "response data is allowed to be sent."
-    )
+    error_msg2 = "Response stream was ended, no more response data is allowed to be sent."
 
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/")
+        assert "foo, " in response.text
+        assert message_in_records(caplog.records, error_msg1)
+        assert message_in_records(caplog.records, error_msg2)
+
+
+@pytest.mark.asyncio
+async def test_send_response_after_eof_should_fail_asgi(
+    app: Sanic,
+    caplog: LogCaptureFixture,
+    message_in_records: Callable[[List[LogRecord], str], bool],
+):
+    @app.get("/")
+    async def handler(request: Request):
+        response = await request.respond()
+        await response.send("foo, ")
+        await response.eof()
+        await response.send("bar")
+
+    error_msg1 = (
+        "The error response will not be sent to the client for the "
+        'following exception:"There is no request to respond to, '
+        "either the response has already been sent or the request "
+        'has not been received yet.". A previous response has '
+        "at least partially been sent."
+    )
+
+    error_msg2 = (
+        "There is no request to respond to, either the response has "
+        "already been sent or the request has not been received yet."
+    )
+
+    with caplog.at_level(ERROR):
+        _, response = await app.asgi_client.get("/")
         assert "foo, " in response.text
         assert message_in_records(caplog.records, error_msg1)
         assert message_in_records(caplog.records, error_msg2)

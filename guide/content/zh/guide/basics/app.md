@@ -6,7 +6,7 @@ title: Sanic 应用程序
 
 请参阅API文档： [sanic.app](/api/sanic.app)
 
-## 实例(Instance)
+## 实例（Instance）
 
 .. column::
 
@@ -28,7 +28,7 @@ app = Sanic("MyHelloWorldApp")
 
 ## 应用上下文(Application context)
 
-大多数应用程序都需要跨代码库的不同部分共享/重用数据或对象。 Sanic 帮助在应用程序实例上提供 `ctx` 对象。 它是开发者附加应用整个生命周期中应该存在的任何对象或数据的可用空间。
+大多数应用程序都需要跨代码库的不同部分共享/重用数据或对象。 Sanic 帮助在应用程序实例上提供 `ctx` 对象。 它是开发者可以在应用程序整个生命周期中附加任何应存在的对象或数据的自由空间。
 
 .. column::
 
@@ -68,7 +68,7 @@ async def attach_db(app, loop):
 .. column::
 
 ```
-当您实例化一个 Sanic 实例时，它可以稍后从 Sanic 应用程序注册表中检索。 例如，如果您需要从无法访问的地方访问您的 Sanic 实例，这可能是有用的。
+当您实例化一个 Sanic 类时，它可以稍后从 `Sanic` 提供的方法`get_app()`中获取到这个实例。 例如，如果您需要从无法访问的地方访问您的 Sanic 实例，这可能是有用的。
 ```
 
 .. column::
@@ -90,7 +90,7 @@ app = Sanic.get_app("my_awesome_server")
 .. column::
 
 ```
-如果您在不存在的应用程序上调用 Sanic.get_app("non-existing") ，默认情况下它将引发 :class:`sanic.exceptions.SanicException`。但是，您也可以强制该方法返回具有该名称的 Sanic 的新实例。
+如果您调用 Sanic.get_app("non-existing") 尝试去获取一个不存在的实例时，默认情况下它将引发 :class:`sanic.exceptions.SanicException`。但是，您也可以通过指定`force_create=True`强制该方法返回具有该名称的 Sanic 的新实例。
 ```
 
 .. column::
@@ -107,7 +107,7 @@ app = Sanic.get_app(
 .. column::
 
 ```
-如果有 **只有** 一个Sanic 实例注册，那么调用 `Sanic.get_app()` 但没有参数将返回这个实例
+如果有 **只有** 一个Sanic 实例，那么不带参数，直接调用 `Sanic.get_app()` 将返回这个实例
 ```
 
 .. column::
@@ -167,7 +167,7 @@ app.config.bad = "boo"
 .. column::
 
 ```
-超级简单的出厂模式看起来像这样：
+一个简单的出厂模式看起来像这样：
 ```
 
 .. column::
@@ -203,7 +203,7 @@ sanic path.to.server:create_app
 
 ## 自定义(Customization)
 
-Sanic 应用程序实例可以通过各种不同的实例实例为您的应用程序需要量身定制的。
+在实例化阶段，可以根据您的应用程序需求以多种方式自定义 Sanic 应用程序实例。
 
 详情请查看[API 文档](/api/sanic.app)。
 
@@ -235,7 +235,7 @@ app = Sanic(..., config=MyConfig())
 .. column::
 
 ```
-此功能的一个有用例子是如果您想使用一个格式不同于 [supported]的配置文件 (. /running/configuration.md#using-sanicupdateconfig)。
+此功能的一个有用例子是如，果您想使用一个格式不同于 [supported]的配置文件 (. /running/configuration.md#using-sanicupdateconfig)。
 ```
 
 .. column::
@@ -312,7 +312,7 @@ app = Sanic(..., ctx=MyContext())
 
 
 
-.. note:: Important
+.. note:: 重点
 
 重要的是要记住，您传递的是 *class* 而不是该类的实例。
 ```
@@ -506,7 +506,7 @@ sanic.app.Sanic[main.CustomConfig, main.Foo]
 ```
 ````
 
-如果您为应用程序实例创建一个自定义类型别名，以便您可以使用它来批注听器和处理器，此模式就特别有用。
+如果为应用程序实例创建了自定义类型别名，则这种模式特别有用，因为您可以使用它来注解监听器和处理器。
 
 ```python
 # ./path/to/types.py
@@ -544,7 +544,7 @@ _添加于 v23.6_
 
 ### 自定义request请求
 
-Sanic还允许您自定义请求对象的类型。 如果您想要将自定义属性添加到请求对象，这是有用的， 或者能够访问您输入的应用程序实例的自定义属性。
+Sanic还允许您自定义请求对象的类型。 如果您想向请求对象添加自定义属性，或者能够访问具有类型的应用程序实例的自定义属性，这将非常有用。
 
 Sanic 请求实例的正确、默认类型是：
 
@@ -558,16 +558,16 @@ sanic.request.Request[
 它指的是两种一般类型：
 
 1. 第一个是应用程序实例的类型。 默认为`sanic.app.Sanic[sanic.config.Config、types.SimpleNamespace]`，但可以是这个分类中的任何一个子类。
-2. 第二种是请求上下文的类型。 它默认了 `types.SimpleNamespace`，但可以在 [自定义请求](#custom-requests) 中显示**任何对象** 。
+2. 第二种是请求上下文的类型。 默认为`types.SimpleNamespace`，但可以是如上所示 [自定义请求](#custom-requests) 中的**任何对象**。
 
 让我们看看如何改变类型的一些例子。
 
 .. column::
 
 ```
-扩展到上面的完整示例，在这个示例中有一个自定义应用程序实例的类型别名， 我们还可以创建一个自定义请求类型，以便我们可以访问这些类型的注释。
+在上述包含自定义应用程序实例类型别名的完整示例基础上，我们还可以创建自定义请求类型，以便访问相同的类型注解。
 
-当然，您不需要输入别名才能工作。 我们只是在这里显示它们来削减显示的代码数量。
+当然，要实现这一功能并不需要类型别名。此处仅展示它们是为了减少显示的代码量。
 ```
 
 .. column::
@@ -589,7 +589,7 @@ def add_routes(app: MyApp):
 .. column::
 
 ```
-也许您有一个生成自定义上下文对象的自定义请求对象。 您可以输入注解来正确访问这些属性，如这里所示。
+也许您有一个生成自定义上下文对象的自定义请求对象。您可以像这里所示那样通过类型注解正确地使用 IDE 访问这些属性。
 ```
 
 .. 列:

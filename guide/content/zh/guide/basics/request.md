@@ -205,21 +205,22 @@ async def hi_my_name_is(request):
     return text(f"Hi, my name is {request.ctx.user.name}")
 ````
 
-正如你可以看到的那样，`请求'。 tx`对象是一个很好的地方来存储您需要在多个处理程序中访问的信息，使您的代码更加DRY和更容易维护。 但是，我们将在[中间件部分](./中间件部分)中学习。 您也可以使用它来存储来自一个中间件的信息，这些信息将用于另一个中间件中。
+如您所见，`request.ctx`对象是一个很好的位置，用于存储您需要在多个处理器中访问的信息，从而使您的代码更加遵循DRY原则（Don't Repeat Yourself），也更易于维护。 但是，正如我们在中间件章节中将要学习的那样，您还可以使用它来存储在一个中间件中产生的信息，这些信息将在另一个中间件中使用。
 
-### 连接环境
+### 连接上下文(Connection context)
 
-.. 列:
+.. column::
 
 ```
-Often times your API will need to serve multiple concurrent (or consecutive) requests to the same client. This happens, for example, very often with progressive web apps that need to query multiple endpoints to get data.
 
-The HTTP protocol calls for an easing of overhead time caused by the connection with the use of [keep alive headers](../deployment/configuration.md#keep-alive-timeout).
+很多时候，您的API需要为同一客户端并发（或连续）处理多个请求。这种情况在需要查询多个端点以获取数据的渐进式Web应用程序中经常发生。
 
-When multiple requests share a single connection, Sanic provides a context object to allow those requests to share state.
+HTTP协议要求通过使用 [保持连接头](../deployment/configuration.md#keep-alive-timeout).来减轻由连接引起的开销时间。
+
+当多个请求共享单个连接时，Sanic提供了一个上下文对象，允许这些请求共享状态。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -242,25 +243,25 @@ request.conn_info.ctx.foo=3
 ```
 ````
 
-.. 警告：:
+.. warning::
 
 ```
-虽然这看起来是一个方便的地方来存储通过单个HTTP连接请求之间的信息。 不假设单个连接上的所有请求来自单个终端用户。 这是因为HTTP 代理和负载均衡器可以将多个多个连接连接到您的服务器。
+虽然对于通过单一HTTP连接在请求之间存储信息而言，这是一个便利的位置，但不要假定单个连接上的所有请求都来自同一个最终用户。这是因为HTTP代理和负载均衡器可能会将多个连接复用到单个到服务器的连接中。
 
-**DO Not** 使用它来存储有关单个用户的信息。为此使用 `request.ctx` 对象。
+**切勿** 使用此机制来存储关于单个用户的信息。为此目的应使用`request.ctx`对象。
 ```
 
-### 自定义请求对象
+### 自定义请求对象(Custom Request Objects)
 
-As dicussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. 这有助于添加特定于您应用程序的附加属性或方法。
+正如在[自定义app](./app.md#custom-requests)部分讨论的那样，您可以创建:class:`sanic.request.Request`的一个子类，以向请求对象添加更多功能。 这对于添加专属于您的应用程序的额外属性或方法非常有用。
 
-.. 列:
+.. column::
 
 ```
-例如，请想象您的应用程序发送一个包含用户ID的自定义标题。 您可以创建一个自定义请求对象，解析该标头并为您存储用户 ID。
+例如，设想您的应用程序发送了一个包含用户ID的自定义头部。您可以创建一个自定义请求对象，它将解析该头部并将用户ID为您存储起来。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -275,7 +276,7 @@ app = Sanic("Example", request_class=CustomRequest)
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 现在，您可以在处理器中访问 `user_id` 属性。
@@ -291,19 +292,19 @@ async def handler(request: CustomRequest):
 ```
 ````
 
-### 自定义请求内容
+### 自定义请求上下文（Custom Request Context）
 
-默认情况下，请求上下文(`request.ctx`) 是一个[`Simpenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) 对象，允许您在它上设置任意属性。 虽然这对于在您的应用程序中重新使用逻辑非常有用， 在发展经验中可能很困难，因为IDE将不知道有哪些属性。
+默认情况下，请求上下文(`request.ctx`) 是一个[`Simpenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) 对象，允许您在它上设置任意属性。 尽管在整个应用程序中重用这一逻辑非常有助于提高效率，但在开发过程中可能会遇到困难，因为IDE无法知道有哪些可用的属性。
 
-为了帮助解决这个问题，您可以创建一个将被使用的自定义请求上下文对象，而不是默认的\`SimpleNamespace'。 这可以让您在上下文对象中添加提示并让它们在您的 IDE 中可用。
+为了解决这个问题，您可以创建一个自定义请求上下文对象，以替代默认的`SimpleNamespace`。 这样您可以在上下文对象中添加类型提示，并使其在您的IDE中可用。
 
-.. 列:
+.. column::
 
 ```
-Start by subclassing the :class:`sanic.request.Request` class to create a custom request type. Then, you will need to add a `make_context()` method that returns an instance of your custom context object. *NOTE: the `make_context` method should be a static method.*
+首先，通过继承 :class:`sanic.request.Request` 类来创建自定义请求类型。接着，您需要添加一个 `make_context()` 方法，该方法返回您的自定义上下文对象实例。*注意：`make_context` 方法应为静态方法。*
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -325,59 +326,59 @@ class CustomContext:
 ```
 ````
 
-.. 注：
+.. note:: 注意
 
 ```
-这是一个神秘的电源用户功能，它使得在大代码折叠中具有请求上下文对象变得非常方便。 当然，这是不需要的，但可能很有帮助。
+这是一个Sanic高级用户的特性，使得在大型代码库中拥有类型化的请求上下文对象变得极为方便。当然这不是必需的，但会非常有帮助。
 ```
 
 _添加于 v23.6_
 
-## 参数
+## 路径参数（Parameters）
 
-.. 列:
+.. column::
 
 ```
-从路径参数中提取的值作为参数注入到处理程序中，或更具体地作为关键字参数注入。 [路由部分](./routing.md) 中有更多关于这一点的详细信息。
+从路径参数中提取的值会被注入到处理器作为参数，更具体地说，是以关键字参数的形式。关于这一点，在[路由章节](./routing.md)中有更多详细信息。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route('/tag/<tag>')
-Async def tag_handler(请求，标签):
-    return text("Tag - {}"。 ormat(标签))
+async def tag_handler(request, tag):
+    return text("Tag - {}".format(tag))
 
-# 或明确作为关键词参数
-@app。 oute('/tag/<tag>')
-async def tag_handler(请求, *, 标签):
-    return text("Tag - {}".format (tag))
+# or, explicitly as keyword arguments
+@app.route('/tag/<tag>')
+async def tag_handler(request, *, tag):
+    return text("Tag - {}".format(tag))
 ```
 ````
 
-## 参数
+## 查询参数（Arguments）
 
 在 "request" 实例上有两个属性来获取查询参数：
 
 - `request.args`
 - `requery_args`
 
-这些允许您访问请求路径中的查询参数(URL中`?`后面的部分)。
+这些让您能够从请求路径中访问查询参数（URL中`?`号后面的部分）。
 
-### 典型的使用情况
+### 典型应用场景
 
-在大多数情况下，您将想使用 `request.args` 对象来访问查询参数。 这将是解析的查询字符串。
+在大多数情况下，您将想使用 `request.args` 对象来访问查询参数。 它是解析后的查询字符串，存储为一个字典。
 
-这是迄今最常见的模式。
+迄今为止，这是最常见的模式。
 
-.. 列:
+.. column::
 
 ```
-考虑一个我们想要用来搜索某些东西的 `/search` 端点的例子。
+考虑这样一个示例：我们有一个带有`q`参数的`/search`路由入口，我们希望使用这个参数来进行搜索。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -392,51 +393,51 @@ async def search(request):
 
 ### 解析查询字符串
 
-但有时您可能想要以原始字符串或导管列表的形式访问查询字符串。 为此，您可以使用 `request.query_string` 和 `request.query_args` 属性。
+然而，在某些情况下，您可能希望以原始字符串形式或元组列表形式访问查询字符串。 为此，您可以使用`request.query_string` 和 `request.query_args` 属性。
 
-还应该注意的是，HTTP允许单个键的多个值。 虽然`request.args`看起来像一个常规字典，但它实际上是一种特殊的类型，允许一个单个键的多个值。 您可以使用 `request.args.getlist()` 方法访问这个。
+此外还应注意，HTTP协议允许单个键拥有多个值。 虽然`request.args`看起来像一个常规字典，但实际上它是一种特殊类型，允许单个键对应多个值。 您可以通过`request.args.getlist()`方法来访问这些多个值。
 
-- `requery_string` - 原始查询字符串
-- `requery_args` - 解析的查询字符串为导游列表
-- `request.args` - 解析的查询字符串为 _特殊_ 字典
-  - `request.args.get()` - 获取关键字的第一个值 (像普通字典一样)
-  - `request.args.getlist()` - 获取所有键值
+- `request.query_string` - 原始查询字符串
+- `request.query_args` - 解析成元组的查询字符串
+- `request.args` - 解析成字典的查询字符串
+  - `request.args.get()` - 获取查询参数中对应key的第一个值 (像普通字典一样)
+  - `request.args.getlist()` - 取查询参数中对应key的所有值（返回一个数组）
 
 ```sh
 curl "http://localhost:8000?key1=val1&key2=val2&key1=val3"
 ```
 
 ```python
->>> Print(request.args)
+>>> print(request.args)
 {'key1': ['val1', 'val3'], 'key2': ['val2']}
 
->> print(request.args.get("key1"))
+>>> print(request.args.get("key1"))
 val1
 
->> print(request.args. etlist("key1"))
+>>> print(request.args.getlist("key1"))
 ['val1', 'val3']
 
->> Print(request.query_args)
+>>> print(request.query_args)
 [('key1', 'val1'), ('key2', 'val2'), ('key1', 'val3')]
 
->> > 打印(request.query_string)
+>>> print(request.query_string)
 key1=val1&key2=val2&key1=val3
 
 ```
 
-.. tip:: FYI
+.. tip:: 额外提示
 
 ```
-"request.args"对象是几种类型的字典之一，每个值都是一个列表。 这是因为HTTP允许重用单个键来发送多个值。  
+`request.args`对象是一种字典类型的实例，其中每个值都是一个列表。这是由于HTTP协议允许单个参数名多次出现以传输多个值。
 
-大多数您想使用 `.get()` 方法访问第一个元素而不是列表的时间。 如果您确实想要列出所有项目，您可以使用 `.getlist()` 。
+大多数情况下，您可能希望使用`.get()`方法来获取并访问第一个元素而非整个列表。但如果确实需要获取所有项目组成的列表，您可以使用`.getlist()`方法。
 ```
 
-## 当前请求获取
+## 获取当前请求对象
 
-有时您可能会在无法访问的地方发现您需要访问您的应用程序中的当前请求。 一个典型的例子可能是 `logging` 格式。 您可以使用 `Request.get_current()` 方法获取当前请求(如果有)。
+有时您可能会发现在应用程序中的某个位置无法直接访问当前请求， 比如在日志格式化时。 此时，您可以使用Request.get_current()来获取当前请求（如果需要的话）。
 
-记住，请求对象仅限于正在运行处理程序的单个[[asyncio.Task\`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)。 如果你没有执行这项任务，没有请求对象。
+请记住，请求对象只限于运行处理器的那个单独的 [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) 内。 如果您不在那个任务中，就不会存在请求对象。
 
 ```python
 import logging

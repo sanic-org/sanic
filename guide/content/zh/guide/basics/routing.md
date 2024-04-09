@@ -3,12 +3,12 @@
 .. column::
 
 ```
-So far we have seen a lot of this decorator in different forms.
+至今为止，我们已经看到了这个装饰器的不同形式。
 
-But what is it? And how do we use it?
+但它究竟是什么？以及我们应该如何使用它呢？
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -25,50 +25,50 @@ But what is it? And how do we use it?
 
 ## 添加路由
 
-.. 列:
+.. column::
 
 ```
-The most basic way to wire up a handler to an endpoint is with `app.add_route()`.
+将处理函数连接到路由入口的最基本方法是使用 `app.add_route()`。
 
-See [API docs](https://sanic.readthedocs.io/en/stable/sanic/api_reference.html#sanic.app.Sanic.url_for) for more details.
+详情请参考 [API 文档](https://sanic.readthedocs.io/en/stable/sanic/api_reference.html#sanic.app.Sanic.url_for)
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-async def 处理器(请求):
+async def handler(request):
     return text("OK")
 
 app.add_route(handler, "/test")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-默认情况下，路由是可用的 HTTP `GET` 调用。您可以更改处理程序来响应一个或多个HTTP方法。
+默认情况下，路由可通过 HTTP `GET` 请求访问。您可以更改处理函数，使其响应一种或多种 HTTP 方法。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 app.add_route(
     handler,
     '/test',
-    meths=["POST", "PUT",
+    methods=["POST", "PUT"],
 )
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-使用装饰符语法, 前面的示例与此相同。
+使用装饰器语法，前面的例子等同于下面这样。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -78,21 +78,21 @@ async def handler(request):
 ```
 ````
 
-## HTTP 方法
+## HTTP 方法(HTTP methods)
 
-每种标准HTTP方法都有一个方便装饰器。
+每种标准 HTTP 方法都有一个便捷的装饰器。
 
-### 获取
+### GET
 
 ```python
 @app.get('/test')
-async def 处理器(请求):
-    返回文本('OK')
+async def handler(request):
+    return text('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/GET)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET)
 
-### 帖子
+### POST
 
 ```python
 @app.post('/test')
@@ -100,14 +100,14 @@ async def handler(request):
     return text('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/POST)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)
 
-### 弹出
+### PUT
 
 ```python
 @app.put('/test')
-async def 处理器(请求):
-    返回文本('OK')
+async def handler(request):
+    return text('OK')
 ```
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT)
@@ -116,109 +116,109 @@ async def 处理器(请求):
 
 ```python
 @app.patch('/test')
-async def 处理器(请求):
-    返回文本('OK')
+async def handler(request):
+    return text('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/PATCH)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH)
 
-### 删除
+### DELETE
 
 ```python
 @app.delete('/test')
-async def 处理器(请求):
-    返回文本('OK')
+async def handler(request):
+    return text('OK')
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/DELETE)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE)
 
-### 黑色
+### HEAD
 
 ```python
 @app.head('/test')
-async def 处理器(请求):
+async def handler(request):
     return empty()
 ```
 
-[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTPMethods/HEAD)
+[MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD)
 
-### 选项
+### OPTIONS
 
 ```python
 @app.options('/test')
-async def 处理器(请求):
+async def handler(request):
     return empty()
 ```
 
 [MDN Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS)
 
-.. 警告：:
+.. warning:: 警告⚠
 
 ````
-默认情况下，Sanic **只**在不安全的 HTTP 方法上消耗传入的请求机构：“POST`、`PUT`、`PATCH`、`DELETE`”。 如果您想要在 HTTP 请求中在任何其他方法上接收数据，， 您将需要做以下两个选项之一：
+默认情况下，Sanic 只会在非安全 HTTP 方法（`POST`、`PUT`、`PATCH`、`DELETE`）上接受传入的请求正文。如果您想在任何其他方法上接收 HTTP 请求中的数据，您需要采取以下两种选项之一：
 
-**选项#1 - 告诉Sanic使用`ignore_body`**
+**选项 #1 - 使用 `ignore_body` 告诉 Sanic 去接受请求体**
 ```python
-@app。 赤道("/path", ignore_body=False)
+@app.request("/path", ignore_body=False)
 async def handler(_):
     ...
 ```
 
-**Option #2 - 手动使用 `receive_body`**
+**选项 #2 - 在处理函数中手动使用 `receive_body` 接受请求体**
 ```python
-@app. et("/path")
-async def 处理器(请求: 请求):
-    等待request.receive_body()
+@app.get("/path")
+async def handler(request: Request):
+    await request.receive_body()
 ```
 ````
 
-## 路径参数
+## 路径参数（Path parameters）
 
-.. 列:
+.. column::
 
 ```
-Sanic 允许模式匹配，也允许从 URL 路径中提取值。然后这些参数作为关键词参数在路由处理器中注入。
+Sanic 支持模式匹配，可以从 URL 路径中提取参数，并将这些参数作为关键字参数注入到路由处理函数中。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.get("/tag/<tag>")
-async def tag_handler(请求，标签):
-    return text("Tag - {}".form(标签))
+async def tag_handler(request, tag):
+    return text("Tag - {}".format(tag))
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-您可以声明参数类型。匹配时将强制执行，并且还将输入变量。
+您可以为参数声明一个类型。在匹配时，该类型将被强制执行，并且还会对该变量进行类型转换。
 ```
 
 .. 列:
 
 ````
 ```python
-@app.get("/fo/<foo_id:uuid>")
+@app.get("/foo/<foo_id:uuid>")
 async def uuid_handler(request, foo_id: UUID):
-    return text("UUUID - {}".format (fo_id))
+    return text("UUID - {}".format(foo_id))
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-对于一些标准类型，如`str`、`int`和`UUID`，Sanic可以从函数签名中推断路径参数类型。 这意味着可能并非总是需要在路径参数定义中包含类型。
+对于一些标准类型，如 `str`、`int` 和 `UUID`，Sanic 可以从函数签名中推断路径参数的类型。这意味着在路径参数定义中不一定总是需要包含类型。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app。 et("/foo/<foo_id>") # 路径参数
-async def uuid_handler不存在:uuid (请求) foo_id: UUID:
-    return text("UUID - {}" ormat(fo_id))
+@app.get("/foo/<foo_id>")  # Notice there is no :uuid in the path parameter
+async def uuid_handler(request, foo_id: UUID):
+    return text("UUID - {}".format(foo_id))
 ```
 ````
 
@@ -226,139 +226,139 @@ async def uuid_handler不存在:uuid (请求) foo_id: UUID:
 
 ### `str`
 
-.. 列:
+.. column::
 
 ```
-**Regular expression applied**: `r"[^/]+"`  
-**Cast type**: `str`  
-**Example matches**:  
+**正则表达式**: `r"[^/]+"`  
+**转换类型**: `str`  
+**匹配案例**:  
 
 - `/path/to/Bob`
 - `/path/to/Python%203`
 
-Beginning in v22.3 `str` will *not* match on empty strings. See `strorempty` for this behavior.
+从 v22.3 版本开始，`str` 将不会匹配空字符串。对于这种行为，请参见 `strorempty`。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:str>")
-Async def 处理器(请求, foo: str):
+async def handler(request, foo: str):
     ...
 ```
 ````
 
 ### `strorempty`
 
-.. 列:
+.. column::
 
 ```
-**Regular expression applied**: `r"[^/]*"`  
-**Cast type**: `str`  
-**Example matches**:
+**正则表达式**: `r"[^/]*"`  
+**转换类型**: `str`  
+**匹配案例**:
 
 - `/path/to/Bob`
 - `/path/to/Python%203`
 - `/path/to/`
 
-Unlike the `str` path parameter type, `strorempty` can also match on an empty string path segment.
+与 `str` 路径参数类型不同，`strorempty` 也可以匹配空字符串路径段。
 
-*Added in v22.3*
+*添加于 v22.3*
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:strorempty>")
-Async def 处理器(请求, foo: str):
+async def handler(request, foo: str):
     ...
 ```
 ````
 
 ### `int`
 
-.. 列:
+.. column::
 
 ```
-**正则表达式已应用**: `r"-?\d+"  
-**Cast 类型**: `int`  
-**示例匹配** :  
+**正则表达式**: `r"-?\d+"`  
+**转换类型**: `int`  
+**匹配案例**:  
 
 - `/path/to/10`
 - `/path/to/-10`
 
-_不匹配浮点, 十六进制, octal等_
+_不匹配浮点数(float)、十六进制(hex)、八进制(octal)等_
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:int>")
-Async def 处理器(请求, foo: int):
+async def handler(request, foo: int):
     ...
 ```
 ````
 
 ### `float`
 
-.. 列:
+.. column::
 
 ```
-**正则表达式已应用**: `r"-?(?:\d+(?:\.\d*)?|\.\d+)"  
-**投射类型**: `float`  
-**示例匹配**:  
+**正则表达式**: `r"-?(?:\d+(?:\.\d*)?|\.\d+)"`  
+**转换类型**: `float`  
+**匹配案例**:  
 
 - `/path/to/10`
 - `/path/to/-10`
 - `/path/to/1.5`
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:float>")
-Async def 处理器(请求，foo: float):
+async def handler(request, foo: float):
     ...
 ```
 ````
 
 ### `alpha`
 
-.. 列:
+.. column::
 
 ```
-**正则表达式已应用**：`r'[A-Za-z]+"`  
-**快速类型**：`str`  
-**示例匹配**：  
+**正则表达式**: `r"[A-Za-z]+"`  
+**转换类型**: `str`  
+**匹配实例**:  
 
 - `/path/to/Bob`
 - `/path/to/Python`
 
-_不匹配数字， 或空格或其他特殊字符_
+_不匹配数字(digit)、空格(space )或其他特殊字符(special character)_
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:alpha>")
-Async def 处理器(请求, foo: str):
+async def handler(request, foo: str):
     ...
 ```
 ````
 
 ### `slug`
 
-.. 列:
+.. column::
 
 ```
-**正则表达式**：`r'[a-z0-9]+(?:-[a-z0-9]+)*"  
-**快速类型**：`str`  
-**示例匹配**：  
+**正则表达式**: `r"[a-z0-9]+(?:-[a-z0-9]+)*"`  
+**转换类型**: `str`  
+**匹配案例**:  
 
 - `/path/to/some-news-story`
 - `/path/to/or-has-digits-123`
@@ -366,167 +366,167 @@ Async def 处理器(请求, foo: str):
 *添加于v21.6*
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<article:slug>")
-async def 处理器(请求，文章: str):
+async def handler(request, article: str):
     ...
 ```
 ````
 
 ### `path`
 
-.. 列:
+.. column::
 
 ```
-**正则表达式已应用**: `r"[^/].*?"  
-**快速类型**: `str`  
-**示例匹配**:
+**正则表达式**: `r"[^/].*?"`  
+**转换类型**: `str`  
+**匹配案例**:
 - `/path/to/hello`
 - `/path/to/hello.txt`
 - `/path/to/hello/world.txt`
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:path>")
-Async def 处理器(请求, foo: str):
+async def handler(request, foo: str):
     ...
 ```
 ````
 
-.. 警告：:
+.. warning:: 警告
 
 ```
-因为这将在`/`上匹配， 你应该仔细和彻底地测试你使用`path`的模式，这样他们就不会捕获打算用于另一端点的流量。 此外，根据您如何使用这种类型，您可能会在应用程序中创建一条横向脆弱性。 你的任务是保护你的终点不受这种影响。 但如果您需要帮助，请在我们的社区频道中寻求帮助:)
+由于 `path` 类型会匹配 `/` 符号，您应在使用 `path` 类型时务必小心，并彻底测试您的模式，以免捕获到原本打算发往其他端点的流量。另外，根据您如何使用这种类型，可能会在您的应用程序中引入路径遍历漏洞。防止此类漏洞是您的责任，但如有需要，请随时在我们的社区频道寻求帮助:)
 ```
 
 ### `ymd`
 
-.. 列:
+.. column::
 
 ```
-**正则表达式已应用**: `r"^([12]\d{3}( 0[1-9]|1[0-2])-( 0[1-9]|[12]\d|3[01])""  
-**Cast类型**: `datetime.  
-**示例匹配**:  
+**正则表达式**: `r"^([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))"`  
+**转换类型**: `datetime.date`  
+**匹配案例**:  
 
 - `/path/to/2021-03-28`
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:ymd>")
-Async def 处理程序(请求，foo: datetime.date):
+async def handler(request, foo: datetime.date):
     ...
 ```
 ````
 
 ### `uuid`
 
-.. 列:
+.. column::
 
 ```
-**Regular expression applied**: `r"[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}"`  
-**Cast type**: `UUID`  
-**Example matches**:  
+**正则表达式**: `r"[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}"`  
+**转换类型**: `UUID`  
+**匹配案例**:  
 
 - `/path/to/123a123a-a12a-1a1a-a1a1-1a12a1a12345`
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:uuid>")
-Async def 处理器(请求, foo: UUID):
+async def handler(request, foo: UUID):
     ...
 ```
 ````
 
 ### ext
 
-.. 列:
+.. column::
 
 ```
-**正则表达式**：n/a
-**铸造类型**：*varies*
-**示例匹配**：
+**正则表达式**: n/a
+**转换类型**: *varies*
+**匹配案例**:
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/path/to/<foo:ext>")
-Async def 处理程序(请求，foo: str, ext: str):
+async def handler(request, foo: str, ext: str):
     ...
 ```
 ````
 
 | 定义                                                       | 示例                                                          | 文件名      | 扩展                          |
 | -------------------------------------------------------- | ----------------------------------------------------------- | -------- | --------------------------- |
-| \file:ext                                | 页次                                                          | `"page"` | `"txt"`                     |
-| \file:ext=jpg                            | jpg                                                         | `"cat"`  | \`"jpg""                    |
-| \file:ext=jpg\\\|png\\\|gif\\\|svg | jpg                                                         | `"cat"`  | \`"jpg""                    |
+| \file:ext                                | page.txt                                    | `"page"` | `"txt"`                     |
+| \file:ext=jpg                            | cat.jpg                                     | `"cat"`  | \`"jpg""                    |
+| \file:ext=jpg\\\|png\\\|gif\\\|svg | cat.jpg                                     | `"cat"`  | \`"jpg""                    |
 | \<file=int:ext>                          | 123.txt                                     | `123`    | `"txt"`                     |
 | \<file=int:ext=jpg\\|png\\|gif\\|svg> | 123.svg                                     | `123`    | `"svg"`                     |
 | \<file=float:ext=tar.gz> | 3.14.tar.gz | `3.14`   | \`"tar.gz"" |
 
-文件扩展名可以使用特殊的 `ext` 参数类型匹配。 它使用特殊格式，允许您指定其他类型的参数类型作为文件名。 和上面的示例表所示的一个或多个具体扩展。
+可以通过特殊的 ext 参数类型来匹配文件扩展名。 它采用一种特殊格式，允许您指定其他类型的参数作为文件名，并如上文示例表格所示，指定一个或多个特定扩展名。
 
-它不支持 `path` 参数类型。
+它**不支持** `path` 参数类型。
 
 _添加于 v22.3_
 
 ### 正则表达式
 
-.. 列:
+.. column::
 
 ```
-**正则表达式已应用**：_无论你插入了什么样的  
-**投射类型**：`str`  
-**示例匹配**：  
+**正则表达式**: _whatever you insert_  
+**转换类型**: `str`  
+**匹配案例**:  
 
 - `/path/to/2021-01-01`
 
-这使你能够自由地定义你使用的特定匹配模式。
+这样您就可以自由地为您的应用场景定义特定的匹配模式。
 
-在所显示的示例中，我们正在寻找一个 `YYYY-MM-DD` 格式的日期。
+在所示示例中，我们正在查找符合 `YYYY-MM-DD` 格式的日期。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route(r"/path/to/<foo:([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))>")
-async def 处理程序(请求，foo: str):
+async def handler(request, foo: str):
     ...
 ```
 ````
 
 ### 正则表达式匹配
 
-与复杂的路由相比，上述例子往往太简单， 我们使用完全不同的路由匹配模式，所以我们将在这里详细解释正则表达式匹配的高级用途。
+相比于复杂的路由，上述例子往往过于简单，我们采用了完全不同的路由匹配模式，因此这里将详细解释正则表达式匹配的高级用法。
 
-有时候你想要匹配路由的一部分：
+有时，您可能只想匹配路由的一部分：
 
 ```text
 /image/123456789.jpg
 ```
 
-如果你想要匹配文件模式，但仅捕获数字部分，你需要做一些regex funn 😄:
+如果你想要匹配包含文件模式，并仅捕获其中的数字部分，那么确实需要运用一些正则表达式的技巧 😄：
 
 ```python
 app.route(r"/image/<img_id:(?P<img_id>\d+)\.jpg>")
 ```
 
-此外，所有这些都应当是可以接受的：
+此外，所有以下这些匹配项也都是可以的：
 
 ```python
 @app.get(r"/<foo:[a-z]{3}.txt>")                # matching on the full pattern
@@ -535,81 +535,81 @@ app.route(r"/image/<img_id:(?P<img_id>\d+)\.jpg>")
 @app.get(r"/<foo:(?P<foo>[a-z]{3}).(?:txt)>")   # defining a single named matching group, with one or more non-matching groups
 ```
 
-而且，如果使用一个命名匹配组，它必须与段标签相同。
+另外，如果使用命名匹配组，其名称必须与段标签相同。
 
 ```python
 @app.get(r"/<foo:(?P<foo>\d+).jpg>")  # OK
 @app.get(r"/<foo:(?P<bar>\d+).jpg>")  # NOT OK
 ```
 
-更多常规使用方法，请参阅[正则表达式操作](https://docs.python.org/3/library/re.html)
+有关更多常规正则表达式用法，请参考 [正则表达式操作](https://docs.python.org/3/library/re.html) 。
 
-## 正在生成 URL
+## 动态访问(Generating a URL)
 
-.. 列:
+.. column::
 
 ```
-Sanic 提供了一个基于处理方法名称：`app.url_for()`生成URL的方法。 如果你想要避免硬编码URL路径到你的应用，那么这将是有用的；相反，你只能引用处理程序名称。
+Sanic 提供了一种基于处理程序方法名称生成 URL 的方法：`app.url_for()`。当您希望避免在应用中硬编码 URL 路径时，这非常有用；您可以仅引用处理程序名称即可。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app。 oute('/')
+@app.route('/')
 async def index(request):
-    # 为端点 `post_handler`
-    url = app. rl_for('post_handler', post_id=5)
+    # generate a URL for the endpoint `post_handler`
+    url = app.url_for('post_handler', post_id=5)
 
-    # 重定向到 "/posts/5"
+    # Redirect to `/posts/5`
     return redirect(url)
 
-@app. oute('/posts/<post_id>')
+@app.route('/posts/<post_id>')
 async def post_handler(request, post_id):
     ...
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-您可以传递任意数量的关键字参数。 任何为 _not_ 的请求参数都将作为查询字符串的一部分实现。
+您可以传递任意数量的关键字参数。任何不是请求参数的项都将作为查询字符串的一部分实现。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-claim app.url_for(
+assert app.url_for(
     "post_handler",
     post_id=5,
     arg_one="one",
     arg_two="two",
-) =="/posts/5?arg_one=one&arg_two=two"
+) == "/posts/5?arg_one=one&arg_two=two"
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-还支持通过单个查询键的多个值。
+同样支持对单一查询键传入多个值。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-claim app.url_for(
+assert app.url_for(
     "post_handler",
     post_id=5,
-    arg_one=["one", "two",
-) =="/posts/5?arg_one=one=one&arg_one=two"
+    arg_one=["one", "two"],
+) == "/posts/5?arg_one=one&arg_one=two"
 ```
 ````
 
 ### 特殊关键字参数
 
-详见API Docs。
+See API 文档 for more details.
 
 ```python
 app.url_for("post_handler", post_id=5, arg_one="one", _anchor="anchor")
@@ -628,15 +628,15 @@ app.url_for("post_handler", post_id=5, arg_one=["one", "two"], arg_two=2, _ancho
 # 'http://another_server:8888/posts/5?arg_one=one&arg_one=two&arg_two=2#anchor'
 ```
 
-### 自定义路由名称
+### 自定义路由名称(Customizing a route name)
 
-.. 列:
+.. column::
 
 ```
-在注册路由时可以通过 `name` 参数使用自定义路由名称。
+可以通过在注册路由时传递 `name` 参数来自定义路由名称。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -646,13 +646,13 @@ def handler(request):
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-现在，使用此自定义名称检索URL
+现在，可以使用这个自定义名称来检索 URL。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -660,63 +660,63 @@ assert app.url_for("get_handler", foo="bar") == "/get?foo=bar"
 ```
 ````
 
-## Websockets路由
+## Websockets 路由（Websockets routes）
 
-.. 列:
+.. column::
 
 ```
-Websocket 路由器类似于HTTP方法。
+WebSocket 路由的工作方式与 HTTP 方法类似。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-async def 处理器(请求) ws：
+async def handler(request, ws):
     message = "Start"
-    而True：
-        等待w。 end(message)
-        message = 等待ws.recv()
+    while True:
+        await ws.send(message)
+        message = await ws.recv()
 
 app.add_websocket_route(handler, "/test")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-它还有一个方便装饰器。
+它还提供了一个便捷装饰器。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.websocket("/test")
-async def handler(request, w):
+async def handler(request, ws):
     message = "Start"
     while True:
-        request ws.send(message)
-        message = 等待ws.recv()
+        await ws.send(message)
+        message = await ws.recv()
 ```
 ````
 
-阅读[websockets部分](/guide/advanced/websockets.md)以了解如何工作的更多信息。
+请阅读[WebSocket 部分](/zh/guide/advanced/websockets.md)，了解更多关于它们如何工作的内容。
 
-## 严格斜线
+## 严格匹配分隔符(Strict slashes)
 
-.. 列:
+.. column::
 
 ```
-Sanic 路由可以被配置为完全匹配是否存在尾随斜线： `/`。 这可以在几个级别上进行配置，按照这个先后顺序排列：
+Sanic 路由可以根据 URL 是否包含尾部斜杠（/）进行严格的匹配配置。这一配置可以在以下几个层级进行，并遵循以下优先级顺序：
 
-1。 Route
-2. 蓝图
-3. 蓝图组
-4 应用程序
+1. 路由（Route）
+2. 蓝图（Blueprint）
+3. 蓝图组（BlueprintGroup）
+4. 应用程序（Application）
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -755,42 +755,42 @@ group = Blueprint.group([bp1, bp2], strict_slashes=True)
 ```
 ````
 
-## 静态文件
+## 静态文件(Static files)
 
-.. 列:
+.. column::
 
 ```
-In order to serve static files from Sanic, use `app.static()`.
+为了在 Sanic 中提供静态文件服务，请使用 `app.static()` 方法。
 
-The order of arguments is important:
+参数的顺序很重要：
 
-1. Route the files will be served from
-2. Path to the files on the server
+1. 文件将被服务的路由地址
+2. 服务器上的文件实际路径
 
-See [API docs](https://sanic.readthedocs.io/en/stable/sanic/api/app.html#sanic.app.Sanic.static) for more details.
+欲了解更多信息，请参阅 [API 文档](https://sanic.readthedocs.io/en/stable/sanic/api/app.html#sanic.app.Sanic.static)。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-app.static("/static/", "/path/to/directory")
+app.static("/static/", "/path/to/directory/")
 ```
 ````
 
 .. tip::
 
 ```
-通常最佳做法是以斜杠结束您的目录路径(`/this/is/a/directory/`)。这会通过更明确地去除模糊性。
+通常最好以尾部斜杠（/）结束您的目录路径（如 `/this/is/a/directory/`）。这样做能够更明确地消除歧义。
 ```
 
-.. 列:
+.. column::
 
 ```
-您也可以为个别文件服务。
+您也可以单独提供单个文件的服务。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -798,44 +798,44 @@ app.static("/", "/path/to/index.html")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-命名您的端点有时也是有用的
+有时为你指定入口提供一个名称也会有所帮助。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 app.static(
     "/user/uploads/",
     "/path/to/uploads/",
-    name="上传",
+    name="uploads",
 )
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-检索URL与处理程序相似。但当我们需要一个目录中的特定文件时，我们也可以添加 `filename` 参数。
+获取 URL 的工作方式与处理程序类似。但是，当我们需要获取目录中的特定文件时，还可以添加 `filename` 参数。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-claim app.url_for(
+assert app.url_for(
     "static",
     name="static",
-    filename="filename="文件。 xt",
+    filename="file.txt",
 ) == "/static/file.txt"
 ```
 ```python
-sapp. rl_for(
+assert app.url_for(
     "static",
-    name="上传",
+    name="uploads",
     filename="image.png",
 ) == "/user/uploads/image.png"
 
@@ -845,23 +845,23 @@ sapp. rl_for(
 .. tip::
 
 ````
-如果你要多道`static()`路由，那么*强烈*建议你手动命名。 这几乎肯定会缓解发现缺陷的可能性。
+如果您打算设置多个 `static()` 路由，强烈建议您手动为它们命名。这样做几乎可以肯定能缓解潜在的难以发现的错误问题。
 
 ```python
-app.static("/user/uploads/", "/path/to/uploads/", name="上传")
+app.static("/user/uploads/", "/path/to/uploads/", name="uploads")
 app.static("/user/profile/", "/path/to/profile/", name="profile_pics")
 ```
 ````
 
-#### 自动索引服务
+#### 自动索引服务（Auto index serving）
 
-.. 列:
+.. column::
 
 ```
-如果你有一个静态文件目录，应该通过索引页面来使用，你可以提供索引的文件名。 现在，当到达该目录 URL 时，索引页面将被服务。
+如果您有一目录静态文件应通过索引页面提供服务，您可以提供该索引页面的文件名。这样一来，当访问该目录 URL 时，系统将会自动提供索引页面服务。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -871,37 +871,37 @@ app.static("/foo/", "/path/to/foo/", index="index.html")
 
 _添加于 v23.3_
 
-#### 文件浏览器
+#### 文件浏览器（File browser）
 
-.. 列:
+.. column::
 
 ```
-当使用静态处理器的目录时，Sanic可以被配置为显示基本文件浏览器，而不是使用 `directory_view=True`。
+当从静态处理器提供目录服务时，可以配置 Sanic 使用 `directory_view=True` 来显示一个基本的文件浏览器。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 app.static("/uploads/", "/path/to/dir", directory_view=True)
-
+```
 ````
 
-您的浏览器现在有一个可浏览的目录：
+现在您可以在 Web 浏览器中浏览该目录了：
 
 ![image](/assets/images/directory-view.png)
 
 _添加于 v23.3_
 
-## 路由环境
+## 路由上下文(Route context)
 
-.. 列:
+.. column::
 
 ```
-当路由被定义时，您可以添加任何数量的关键字参数与 `ctx_` 前缀。 这些值将被注入到路由 `ctx` 对象中。
+在定义路由时，您可以添加任意数量以 `ctx_` 前缀的关键字参数。这些值将被注入到路由的 `ctx` 对象中。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python

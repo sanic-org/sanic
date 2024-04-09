@@ -1,6 +1,6 @@
 # 路由(Routing)
 
-.. 列:
+.. column::
 
 ```
 So far we have seen a lot of this decorator in different forms.

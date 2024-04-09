@@ -1,76 +1,74 @@
-# 请求
+# 请求(Request)
 
 查看 API 文档： [sanic.request](/api/sanic.request)
 
-:class: `sanic.request.Request` 实例包含了许多有用的信息，这些信息可以在其参数中获得。 详情请参阅[API 文档](https://sanic.readthedocs.io/)。
+:class: `sanic.request.Request` 实例的参数中包含大量有用的信息。 详情请参阅[API 文档](https://sanic.readthedocs.io/)。
 
-正如我们在 [handlers](./handlers) 部分中所看到的，路由处理器的第一个参数通常是 :class:`sanic.request.Request` 对象。 因为Sanic是一个异步框架，处理器将在一个 [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) 内运行，并由事件循环调度。 这意味着处理器将在一个隔离的上下文中执行，并且请求对象对于该处理器是唯一的。
+正如我们在 [响应函数(Handlers)](./handlers) 部分中所看到的，路由处理器的第一个参数通常是 :class:`sanic.request.Request` 对象。 因为Sanic是一个异步框架，处理器将在一个 [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) 内运行，并由事件循环（event loop）调度。 这意味着处理器将在一个隔离的上下文中执行，并且请求对象（Rquest）将是该处理器任务所独有的。
 
-.. 列:
+.. column::
 
 ```
 按照惯例，参数被命名为`request`，但您可以根据需要随意命名。参数的名称并不重要。以下两个处理器的写法都是有效的。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.get("/foo")
 async def typical_use_case(request):
-    return text("我说了！")
+    return text("I said foo!")
 ```
 
 ```python
-@app. et("/foo")
+@app.get("/foo")
 async def atypical_use_case(req):
-    return text("我说了！")
+    return text("I said foo!")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-注释请求对象超级简单。
-    
+对请求的对象添加一个注解变的超级简单
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-来自sanic.request
-from sanic.request import text
+from sanic.request import Request
+from sanic.response import text
 
-@app.get("/输入")
+@app.get("/typed")
 async def typed_handler(request: Request):
-    return text("完成")
+    return text("Done.")
 ```
 ````
 
-.. tip::
+.. tip:: 提示
 
 ```
-为了您的方便，假设您正在使用现代的集成开发环境（IDE），您应该利用类型注解来帮助代码自动完成和文档编写。这在使用request对象时尤为有用，因为它具有**许多**属性和方法。
+为了方便起见，假设您正在使用现代IDE，您应当利用类型注解来辅助完成代码提示和文档编写。这对于使用request对象时尤其有帮助，因为它具有**许多**属性和方法。
 
-要查看可用属性和方法的完整列表，请参阅[API文档]
-(/api/sanic.request)。
+若要查看所有可用属性和方法的完整列表，请参阅 [API 文档](/api/sanic.request).
 ```
 
-## 正文内容
+## 请求体(Body)
 
-`Request`对象允许您以几种不同的方式访问请求体的内容。
+`Request`对象允许您用以下几种不同的方式访问请求体的内容。
 
-### JSON
+### JSON（json数据）
 
-.. 列:
+.. column::
 
 ```
 **参数**: `request.json`  
-**Description**: 已解析的 JSON 对象
+**描述**: 已解析的 JSON 对象
 ```
 
-.. 列:
+.. column::
 
 ````
 ```bash
@@ -83,44 +81,44 @@ $ curl localhost:8000 -d '{"foo": "bar"}'
 ```
 ````
 
-### 原始数据
+### Raw（原始数据）
 
-.. 列:
+.. column::
 
 ```
 **参数**: `request.body`  
 **描述**: 请求正文中的原始字节
 ```
 
-.. 列:
+.. column::
 
 ````
 ```bash
-$ curl localhost:8000 -d '{"foo": "bar"}"
-``'
+$ curl localhost:8000 -d '{"foo": "bar"}'
+```
 
 ```python
->> print(request.body)
-b'{"foo": "bar"}"
+>>> print(request.body)
+b'{"foo": "bar"}'
 ```
 ````
 
-### 形式
+### Form（表单数据）
 
-.. 列:
+.. column::
 
 ```
-**Parameter**: `request.form`  
-**Description**: The form data
+**参数**: `request.form`  
+**描述**: 表单数据
 
-.. tip:: FYI
+.. tip:: 额外补充
 
-    The `request.form` object is one of a few types that is a dictionary with each value being a list. This is because HTTP allows a single key to be reused to send multiple values.  
+`request.form`对象是几种类型之一，它是一个字典，其中每个值都是一个列表。这是因为HTTP协议允许单个键被重复用来发送多个值。
 
-    Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
+大多数情况下，您可能希望使用`.get()`方法访问第一个元素而不是一个列表。如果您确实需要所有项的列表，您可以使用`.getlist()`方法。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```bash
@@ -128,36 +126,36 @@ $ curl localhost:8000 -d 'foo=bar'
 ```
 
 ```python
->> > print(request.body)
+>>> print(request.body)
 b'foo=bar'
 
->> Print(request). orm)
-{'foot': ['bar']}
+>>> print(request.form)
+{'foo': ['bar']}
 
->> Print(request.form.get("foo"))
+>>> print(request.form.get("foo"))
 bar
 
->> Print(request.form.getlist("foo"))
+>>> print(request.form.getlist("foo"))
 ['bar']
 ```
 ````
 
-### 上传完成
+### Uploaded（上传文件）
 
-.. 列:
+.. column::
 
 ```
-**Parameter**: `request.files`  
-**Description**: The files uploaded to the server
+**参数**: `request.files`  
+**描述**: 上传给服务器的文件数据
 
-.. tip:: FYI
+.. tip:: 额外提示
 
-    The `request.files` object is one of a few types that is a dictionary with each value being a list. This is because HTTP allows a single key to be reused to send multiple values.  
+`request.files`对象是一种字典类型的实例，其中每个值都是一个列表。这是由于HTTP协议允许单个键被重复用来发送多个文件。
 
-    Most of the time you will want to use the `.get()` method to access the first element and not a list. If you do want a list of all items, you can use `.getlist()`.
+大多数时候，您可能希望通过`.get()`方法获取并访问第一个文件对象而非整个列表。如果您确实需要获取所有文件项的列表，您可以使用`.getlist()`方法。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```bash
@@ -179,21 +177,21 @@ File(type='application/octet-stream', body=b'hello\n', name='TEST')
 ```
 ````
 
-## 二. 背景
+## 上下文(Context)
 
 ### 请求上下文内容
 
-`request.ctx`对象是您的游戏场，可以存储您需要的关于请求的任何信息。 这只适用于请求的持续时间，是请求独有的。
+request.ctx 对象是存储请求相关信息的地方。 它仅在请求的生命周期内存在，并且是针对该请求独一无二的。
 
-这可以与所有请求共享的 `app.ctx` 对象混合。 请注意不要混淆他们！
+这与app.ctx对象形成了对比，后者是在所有请求间共享的。 务必注意不要混淆它们！
 
-默认情况下，`request.ctx`对象是 `SimpleNamespace`，允许您在它上设置任意属性。 Sanic将不会为任何东西使用此对象，所以你可以自由地使用它，不管你想不必担心名称冲突。
+默认情况下，request.ctx对象是一个SimpleNamespace对象，允许您在其上设置任意属性。 Sanic不会对此对象做任何用途，因此您可以自由地按照需要使用它，无需担心名称冲突问题。
 
 ````python
 
-### Typical use case
+### 典型应用场景
 
-This is often used to store items like authenticated user details. We will get more into [middleware](./middleware.md) later, but here is a simple example.
+这种做法常用于存储诸如认证用户详情之类的数据。我们将在后面的[middleware](./middleware.md)部分详细介绍，但这里先给出一个简单的示例。
 
 ```python
 @app.on_request

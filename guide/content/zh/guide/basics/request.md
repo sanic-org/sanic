@@ -31,7 +31,7 @@ async def atypical_use_case(req):
 .. column::
 
 ```
-对请求的对象添加一个注解变的超级简单
+为请求的对象添加一个注解变是超级简单的
 ```
 
 .. column::

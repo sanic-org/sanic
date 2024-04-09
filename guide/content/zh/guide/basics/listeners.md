@@ -1,4 +1,4 @@
-# 监听器
+# 监听器(Listeners)
 
 Sanic为您提供了八(8)个机会，将操作注入到您的应用程序服务器的生命周期。 这不包括 [signals](../advanced/signals.md)，它允许进一步的自定义注入。
 

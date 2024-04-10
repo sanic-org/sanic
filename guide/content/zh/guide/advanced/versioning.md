@@ -1,31 +1,31 @@
-# Versioning
+# 版本控制（Versioning）
 
-API 构建中的标准做法是将版本添加到您的端点。 这使您能够轻松区分不兼容的端点，当您尝试并以破解的方式更改您的 API。
+在API构建的标准实践中，向路由入口添加版本是一种常见做法。 这样，当您在未来以破坏性方式更改API时，可以轻松区分不兼容的路由入口。
 
-Adding a version will add a `/v{version}` url prefix to your endpoints.
+添加版本号将会在您的路由入口前加上 `/v{version}` 形式的URL前缀。
 
-版本可以是 `int`、`float`、`str`。 可接受值：
+版本可以是 `int`、`float`、`str`类型 下列值都为有效值：
 
 - `1`, `2`, `3`
 - `1.1`, `2.25`, `3.0`
-- `"1", `v1", `"v1.1"`
+- `"1"`, `"v1"`, `"v1.1"`
 
-## 每条路由
+## 单个路由（Per route）
 
-.. 列:
+.. column::
 
 ```
-您可以直接将版本号传递给路由。
+您可以直接向路由传递版本号。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 # /v1/text
 @app.route("/text", version=1)
 def handle_request(request):
-    return response. ext("Hello world! Version 1")
+    return response.text("Hello world! Version 1")
 
 # /v2/text
 @app.route("/text", version=2)
@@ -34,42 +34,44 @@ def handle_request(request):
 ```
 ````
 
-## 每个蓝图
+## 单个蓝图（Per Blueprint）
 
-.. 列:
+.. column::
 
 ```
-您也可以将版本号传递到蓝图，这将适用于该蓝图中的所有路线。
+您还可以向蓝图传递版本号，这样该版本号将应用于该蓝图内的所有路由。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-bp = Blueprint("test", url_prefix="/fo", version=1)
+bp = Blueprint("test", url_prefix="/foo", version=1)
 
-# /v1/fo/html
+# /v1/foo/html
 @bp.route("/html")
 def handle_request(request):
     return response.html("<p>Hello world!</p>")
 ```
 ````
 
-## 每个蓝图组
+## 单个蓝图组（Per Blueprint Group）
 
-.. 列:
+.. column::
 
 ```
-为了简化版本化蓝图的管理，您可以在蓝图中提供版本号组。如果蓝图还没有覆盖，那么同样的将被继承到分组在它下面的所有蓝图与创建蓝图实例时指定的值相同的信息。
+为了简化版本化蓝图的管理，您可以在蓝图组中提供一个版本号。如果蓝图在创建实例时未指定覆盖相同信息的值，那么同一版本号将自动应用于该蓝图组下的所有蓝图。
 
-当使用蓝图组来管理版本时，遵循以下顺序将Version前缀应用于正在注册的路由。
+在使用蓝图组管理版本时，将按照以下顺序将Version前缀应用于正在注册的路由：
 
-1. 路由级别配置
-2. 蓝图级配置
-3. 组级配置
+1. 路由级别的配置
+2. 蓝图级别的配置
+3. 蓝图组级别的配置
+
+如果我们发现更具体的版本化规范，我们将优先选择它，而不是蓝图或蓝图组中提供的更通用的版本化规范。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -84,6 +86,7 @@ bp1 = Blueprint(
 bp2 = Blueprint(
     name="blueprint-2",
     url_prefix="/bp2",
+)
 
 group = Blueprint.group(
     [bp1, bp2],

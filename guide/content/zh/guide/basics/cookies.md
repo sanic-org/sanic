@@ -1,14 +1,14 @@
-# Cookie
+# Cookies
 
-## 正在阅读
+## 读取(Reading)
 
-.. 列:
+.. column::
 
 ```
-Cookie 可以通过 `Request` 对象的 `cookies` 字典访问。
+可以通过 `Request` 对象的 `cookies` 字典来访问 Cookies。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -19,72 +19,72 @@ async def test(request):
 ```
 ````
 
-.. tip:: FYI
+.. tip:: 提示一下
 
 ```
-💡 "request.cookies"对象是几种类型的字典之一，每个值都是 "list"。 这是因为HTTP允许重用单个键来发送多个值。
+💡 `request.cookies` 对象是一种具有列表值的字典类型之一。这是因为在 HTTP 中，允许使用单个键重复以发送多个值。
 
-大部分时间你想使用 `.get()` 方法来访问第一个元素，而不是一个 `list` 。 如果你确实想要一个所有项目的 `list` ，你可以使用 `.getlist()` 。
+大部分情况下，您可能希望使用 `.get()` 方法获取第一个元素而不是一个 `list`。如果您确实需要所有项目组成的 `list`，可以使用 `.getlist()` 方法。
 
-*添加于v23.3*
+*该功能在 v23.3 版本中添加*
 ```
 
-## 写入中
+## 写入(Writing)
 
-.. 列:
+.. column::
 
 ```
-返回响应时，cookie可以在 "Response" 对象上设置: "response.cookies" 此对象是 `CookieJar` 的一个实例，这是一个特殊的词典，它将自动为您写出响应标题。
+在返回响应时，可以通过 `Response` 对象上的 `response.cookies` 设置 cookie。该对象是 `CookieJar` 类的一个实例，这是一种特殊类型的字典，它会自动为您写入响应头部信息。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app。 oute("/cookie")
+@app.route("/cookie")
 async def test(request):
-    response = text("在此响应中有cookie")
-    响应。 dd_cookie(
+    response = text("There's a cookie up in this response")
+    response.add_cookie(
         "test",
-        "它正常工作! ,
-        domain=". umyummy-cookie。 om",
+        "It worked!",
+        domain=".yummy-yummy-cookie.com",
         httponly=True
-
-    返回响应
+    )
+    return response
 ```
 ````
 
-响应 cookie 可以设置为字典值，并且有以下参数可用：
+响应中的 cookie 可以像设置字典值一样设置，并且具有以下可用参数：
 
-- `路径：str` - 此 cookie 适用的 URL 的子集。 默认值为 `/`。
-- `domain: str` - 指定 cookie 有效的域名。 一个明确指定的域必须始终以点开始。
-- `max_age: int` - cookie 应该使用的秒数。
-- `过期：日期时间` - 客户端浏览器过期的 cookie 时间。 通常最好使用最大年龄。
-- `secure: bool` - 指定是否只能通过 HTTPS 发送 cookie 默认值为“True”。
-- `http：ool` - 指定 cookie 是否被 JavaScript 读取。
-- `samesite: str` - 可用值: Lax, Strict and None 默认为\`Lax'。
-- `comment: str` - 备注(metadata)。
-- `host_prefix: bool` - 是否将 `__Host-` 前缀添加到 cookie。
-- `secure_prefix: bool` - 是否将 `__Secure-` 前缀添加到 cookie。
-- `分区：bool` - 是否将 cookie 标记为分区。
+- `path: str` - 指定该 cookie 适用的 URL 子集， 默认为 `/`。
+- `domain: str` - 指定 cookie 有效的域名 。 显式指定的域名必须始终以点号开始。
+- `max_age: int` - 表示 cookie 应该存活的时间（秒）。
+- `expires: datetime` - 指定 cookie 在客户端浏览器上过期的时间。 通常最好使用 `max_age`。
+- `secure: bool` - 表示该 cookie 是否仅通过 HTTPS 发送， 默认为 `True`。
+- `httponly: bool` - 表示是否禁止 JavaScript 读取该 cookie 。
+- `samesite: str` - 可选值包括 Lax、Strict 和 None， 默认为\`Lax'。
+- `comment: str` - 用于提供 cookie 的注释（元数据）。
+- `host_prefix: bool` - 指定是否为 cookie 添加 __Host- 前缀。
+- `secure_prefix: bool` - 指定是否为 cookie 添加 __Secure- 前缀。
+- `partitioned: bool` - 表示是否标记该 cookie 为分区（partitioned）cookie。
 
-为了更好地理解这些数值的影响和用法，阅读[MDN文档](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)[setting cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie)可能会有帮助。
+为了更好地理解这些参数的作用和使用场景，阅读[MDN文档](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)  和 [关于设置cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie)的相关文档可能会有所帮助。
 
-.. tip:: FYI
-
-```
-默认情况下，Sanic会将 `secure` 标志设置为 `True` ，以确保只能通过 HTTPS 发送cookie 作为合理的默认值。 这不应对本地发展产生影响，因为通过 HTTP 提供安全的 cookie 仍应发送至 `localhost` 。 欲了解更多信息，您应该在[secure cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies)上阅读[MDN documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#Secure)。
-```
-
-## 删除中
-
-.. 列:
+.. tip:: 提示一下
 
 ```
-Cookie 可以用语义或明确的方式移除。
+默认情况下，Sanic 会将 `secure` 标志设为 `True`，确保 cookie 只通过 HTTPS 安全传输，这是一个明智的默认设置。这对于本地开发来说一般不会有影响，因为在 HTTP 上安全的 cookie 仍然会被发送到 `localhost`。了解更多的信息，你可能需要阅读 [MDN 文档](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies) 和 [安全 cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#Secure).
 ```
 
-.. 列:
+## 删除(Deleting)
+
+.. column::
+
+```
+Cookie 可以通过语义化方式或明确方式移除。
+```
+
+.. column::
 
 ````
 ```python
@@ -101,18 +101,18 @@ async def test(request):
     return response
 ```
 
-*Don't forget to add `path` or `domain` if needed!*
+*别忘了在必要时添加 `path` 或 `domain`！*
 ````
 
-## 吃了
+## 食用(Eating)
 
-.. 列:
+.. column::
 
 ```
-Sanic 喜欢cookie
+Sanic 喜欢吃 cookies，给你也分一块！
 ```
 
-.. 列:
+.. column::
 
 ```
 .. attrs::

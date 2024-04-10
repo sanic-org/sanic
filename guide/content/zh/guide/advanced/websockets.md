@@ -1,88 +1,88 @@
 # Websockets
 
-Sanic 提供了一个易于使用的 [websockets]顶部的摘要(https://websockets.readthedocs.io/en/stable/)。
+Sanic 提供了一个基于 [websockets](https://websockets.readthedocs.io/en/stable/) 的易于使用的抽象层
 
-## 路由
+## 路由(Routing)
 
-.. 列:
+.. column::
 
 ```
-Websocket 处理程序可以绑定到路由器，类似于常规处理程序。
+Websocket 处理程序可以像常规处理程序那样连接到路由器上。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 from sanic import Request, Websocket
 
-async def Feed(request: Request, ws: Websocket):
-    pask
+async def feed(request: Request, ws: Websocket):
+    pass
 
-appp dd_websocket_route(feed, "/feed")
+app.add_websocket_route(feed, "/feed")
 ```
 ```python
 from sanic import Request, Websocket
 
-@app. ebsocket("/feed")
-async def Feed(request, ws: Websocket):
-    passe
+@app.websocket("/feed")
+async def feed(request: Request, ws: Websocket):
+    pass
 ```
 ````
 
-## Handler
+## 定义响应函数(Handler)
 
-.. 列:
+.. column::
 
 ```
-通常情况下，一个 websocket 处理程序将会保持打开一个循环。
+通常情况下，websocket 处理程序会维持一个循环保持打开状态。
 
-然后它可以在注入处理器的第二个对象上使用 `send()` 和 `recv()` 方法。
+然后，可以在注入到处理程序的第二个对象上调用 `send()` 和 `recv()` 方法。
 
-这个示例是一个简单的端点，回溯到它收到的客户端消息。
+下面是一个简单的示例，该端点接收来自客户端的消息并将其回显给客户端。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-来自sanic import Request, Websocket
+from sanic import Request, Websocket
 
-@app. ebsocket("/feed")
-async def Feed(请求: 请求, ws: Websocket:
+@app.websocket("/feed")
+async def feed(request: Request, ws: Websocket):
     while True:
-        data = "hello!
-        打印("发送：" + 数据)
-        等待ws。 end(data)
-        data = 等待ws。 ecv()
-        打印("接收：" + 数据)
+        data = "hello!"
+        print("Sending: " + data)
+        await ws.send(data)
+        data = await ws.recv()
+        print("Received: " + data)
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-You can simplify your loop by just iterating over the `Websocket` object in a for loop.
+您可以通过在一个for循环中迭代 `Websocket` 对象来简化您的循环。
 
-*Added in v22.9*
+*该特性在v22.9版本中添加*
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-来自sanic import Request, Websocket
+from sanic import Request, Websocket
 
-@app. ebsocket("/feed")
-async def Feed(请求: 请求, ws: Websocket:
-    async for msg in w:
-        等待w. end(msg)
+@app.websocket("/feed")
+async def feed(request: Request, ws: Websocket):
+    async for msg in ws:
+        await ws.send(msg)
 ```
 ````
 
-## 配置
+## 配置(Configuration)
 
-详见[配置部分](/guide/deplement/configuration.md)，但默认值显示在下面。
+更多详情请参阅[配置部分](/zh/guide/deployment/configuration.md)，不过下面列出了默认值。
 
 ```python
 app.config.WEBSOCKET_MAX_SIZE = 2 ** 20

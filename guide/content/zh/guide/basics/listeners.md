@@ -1,76 +1,76 @@
 # 监听器(Listeners)
 
-Sanic为您提供了八(8)个机会，将操作注入到您的应用程序服务器的生命周期。 这不包括 [signals](../advanced/signals.md)，它允许进一步的自定义注入。
+Sanic 提供了八个（8）机会让您在应用程序服务器生命周期的不同阶段注入操作。 这还不包括[信号](../advanced/signals.md)，后者允许进一步自定义注入。
 
-在你的主要Sanic 进程上\*\*只运行两个(2)(每次通话一次)
+有两个（2）**仅**在主 Sanic 进程中运行（即每次调用 `sanic server.app` 时运行一次）。
 
 - `main_process_start`
 - `main_process_stop`
 
-还有两（2）如果自动重新加载已打开，则只在读取过程中运行 \*\*。
+另外有两个（2）是在启用自动重载功能时**仅**在重载进程中运行的。
 
 - `reload_process_start`
 - `reload_process_stop`
 
 \*在 v22.3中添加 `reload_process_start` 和 `reload_process_stop` \*
 
-有四(4)使您能够在服务器启动或关闭时执行启动/拆解代码。
+还有四个（4）允许您在服务器启动(startup)或关闭(teardown )时执行启动/清理代码。
 
-- `befor_server_start`
-- `After _server_start`
+- `before_server_start`
+- `after_server_start`
 - `before_server_stop`
-- `After _server_stop`
+- `after_server_stop`
 
-工序的生命周期看起来就像这样：
+工作者进程的生命周期如下所示：
 
-.. mermaid:
+.. mermaid::
 
 ```
-序列图
+sequenceDiagram
 autonumber
-参与进程
-参与员工
-参与者监听器
-参与者处理器
-进程注释：无声服务器。 pp
-循环
-    进程->列表: @app。 ain_process_start
-    Listener->>>Handler: Invoke event manager
+participant Process
+participant Worker
+participant Listener
+participant Handler
+Note over Process: sanic server.app
+loop
+    Process->>Listener: @app.main_process_start
+    Listener->>Handler: Invoke event handler
 end
-Process->> Workers: Run workers
-roop starting each worker
-    roop
-        Worker->Listener: @app. efore_server_start
-        Listener->>>Handler: Invoke event handler
-
-    Note over Worker: Server status: started
-    roop
-        Worker->Listener: @app. fter_server_start
-        Listener->>>Handler: Invoke Event Event
-    end
-    Note over Worker: Server status: possible
-end
-Process->Workers: Graceful shutdown
-roop Stop each worker
-    roop
-        Worker->Listener: @app. efore_server_stop
-        Listener->>>Handler: Invoke event handler
-    end
-    Note over Worker: Server status: 停止
-    循环
-        Worker->Listener: @app. fter_server_stop
+Process->>Worker: Run workers
+loop Start each worker
+    loop
+        Worker->>Listener: @app.before_server_start
         Listener->>Handler: Invoke event handler
-    ender
-    Note over Work: Server status: closed
+    end
+    Note over Worker: Server status: started
+    loop
+        Worker->>Listener: @app.after_server_start
+        Listener->>Handler: Invoke event handler
+    end
+    Note over Worker: Server status: ready
+end
+Process->>Worker: Graceful shutdown
+loop Stop each worker
+    loop
+        Worker->>Listener: @app.before_server_stop
+        Listener->>Handler: Invoke event handler
+    end
+    Note over Worker: Server status: stopped
+    loop
+        Worker->>Listener: @app.after_server_stop
+        Listener->>Handler: Invoke event handler
+    end
+    Note over Worker: Server status: closed
 end
 loop
-    Process->>Listener: @app. ain_process_stop
-    Listener->>>处理程序：Invoke 事件处理程序
-结尾
-进程注释：退出
+    Process->>Listener: @app.main_process_stop
+    Listener->>Handler: Invoke event handler
+end
+Note over Process: exit
 ```
 
-读取器进程在这个工人进程之外生活在负责启动和停止萨尼克进程的进程内。 请考虑以下示例：
+重新加载进程位于负责启动和停止 Sanic 进程的外部进程内，独立于上述工作者进程之外运行。 请看下面的例子：
 
 ```python
 @app.reload_process_start
@@ -86,7 +86,7 @@ async def before_start(*_):
 	print(">>>>>> before_start <<<<<<")
 ```
 
-如果此应用程序运行时启用自动重新加载功能，当读取器进程开始时将调用 "reload_start" 函数。 "main_start" 函数也会在主进程开始时调用。 **HOWEVER**，每次启动的工作流程将调用一次`before_start`函数， 并且随后每次保存一个文件并重启该工作人员。
+如果该应用程序在开启自动重载的情况下运行，当重新加载进程启动时，会调用一次 `reload_start` 函数。 当主进程启动时，`main_start` 函数也会被调用一次。 **然而**，`before_start` 函数会在每个启动的工作者进程中被调用一次，并且每当文件保存导致工作者进程重启时，也会再次调用。
 
 ## 正在附加侦听器
 

@@ -111,29 +111,29 @@ async def handle_endpoint_2_bp2(request):
 ```
 ````
 
-## 版本前缀
+## 版本前缀(Version prefix)
 
-如上文所见，适用于路由的 `version` 总是生成的 URI 路径中的第一个部分。 因此，为了能够在版本之前添加路径段, 每个传递`version`参数的地方, 你也可以通过 `version_prefix`.
+如上所述，应用于路由的版本始终是生成URI路径中的第一个部分。 因此，为了能够在版本之前添加路径部分，您在传入版本参数的所有位置都可以同时传入`version_prefix`参数，从而实现这一目的。
 
-`version_prefix`参数可以定义于：
+`version_prefix` 参数可以定义于：
 
-- `app.route` 和 `bp.route` 装饰符 (也包括所有方便装饰师)
+- `app.route` 和 `bp.route` 装饰器 (也包括所有便捷的装饰器）
 - `Blueprint` 实例
-- `Blueprint.group` 构造函数
+- `Blueprint.group`  构造函数
 - `BlueprintGroup` 实例
-- `app.bluprint` 注册
+- `使用 `app.blueprint\` 注册蓝图时
 
-如果在多个地方有定义，则更具体的定义优先于较一般的定义。 这个列表提供了这个等级。
+如果有多个位置定义，较具体的定义会覆盖较一般的定义。 本列表提供了这一层级关系。
 
-`version_prefix`的默认值是 `/v`。
+版本控制前缀`version_prefix`的默认值是 `/v`。
 
-.. 列:
+.. column::
 
 ```
-一个经常请求的功能是能够在`/api`上挂载版本路由。这可以很容易地通过`version_prefix`来完成。
+一个常被要求的功能是在 `/api` 上挂载版本化的路由。这可以通过 `version_prefix` 轻松实现。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -142,13 +142,13 @@ app.route("/my/path", version=1, version_prefix="/api/v")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-或许一个更令人信服的用法是将所有的`/api`路由加载到一个单一的`蓝图组'。
+或许一个更具说服力的用法是将所有 `/api` 路由加载到单个 `BlueprintGroup` 中。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -166,16 +166,16 @@ app.blueprint(api)
 ```
 ````
 
-因此，我们可以了解到路由的 URI 是：
+因此我们可以得知，一个路由的 URI 是由下面基本构成的：
 
 ```
-version_prefix + 版本 + url_prefix + URI 定义
+version_prefix + version + url_prefix + URI definition
 ```
 
-.. tip::
+.. tip:: 提示
 
 ````
-Just like with `url_prefix`, it is possible to define path parameters inside a `version_prefix`. It is perfectly legitimate to do this. Just remember that every route will have that parameter injected into the handler.
+就像 `url_prefix` 一样，在 `version_prefix` 内部定义路径参数也是可能的。这样做完全合理。但请记住，每个路由都会将该参数注入到处理器中。
 
 ```python
 version_prefix="/<foo:str>/v"

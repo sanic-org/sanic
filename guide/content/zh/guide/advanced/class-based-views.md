@@ -2,17 +2,17 @@
 
 ## 为什么要使用它？
 
-.. 列:
+.. column::
 
 ```
 ### 问题所在
 
-设计 API 时的常见思路是在根据 HTTP 请求方法的不同而产生不同响应的同一端点上实现多种功能。
+设计API时常见的一个模式是在同一路由入口上根据HTTP方法实现多种功能。
 
-虽然这两种选项都可以，但它们并不是良好的设计思维，随着你的项目的发展，可能很难长期维护。
+虽然这两种方案都能正常工作，但它们并不是良好的设计实践，并且随着项目的增长，可能会随着时间推移变得难以维护。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -41,15 +41,15 @@ async def bar(request):
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
 ### 解决方案
 
-基于类的视图只是实现请求响应行为的类。 它们提供了一种在同一端点划分不同 HTTP 请求类型的处理方法。
+基于类的视图本质上是实现响应请求行为的类。它们提供了一种方式，在同一路由入口上将不同类型的HTTP请求处理方式进行模块化管理。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -69,16 +69,16 @@ app.add_route(FooBar.as_view(), "/foobar")
 ```
 ````
 
-## 定义一个视图
+## 定义视图 (Defining a view)
 
-基于类的视图应当继承 :class:`sanic.views.HTTPMethodView`。 然后，您可以使用相应 HTTP 方法的名称来实现类方法。 如果收到一个没有定义方法的请求，将生成一个 \`405: Method not allowed' 响应。
+一个基于类的视图应继承自  :class:`sanic.views.HTTPMethodView`. 然后，您可以实现与相应HTTP方法同名的类方法。 如果接收到的方法未定义的请求，将生成`405: Method not allowed`的响应。
 
-.. 列:
+.. column::
 
 ```
-要在一个 URL 端点注册一个基于类的视图，需要使用 `app.add_route` 方法。 第一个参数应该是实现了`as_view`方法的定义类，第二个参数应该是 URL 端点。
+在路由入口上注册基于类的视图时，通常使用 `app.add_route` 方法。第一个参数应当是已定义的类，并调用其 `as_view` 方法，第二个参数则是该视图要绑定的URL路由入口。
 
-可用的方法是：
+可用的方法包括：
 
 - get
 - post
@@ -89,7 +89,7 @@ app.add_route(FooBar.as_view(), "/foobar")
 - options
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -101,7 +101,7 @@ class SimpleView(HTTPMethodView):
   def get(self, request):
       return text("I am get method")
 
-  # 也支持 async 语法
+  # You can also use async syntax
   async def post(self, request):
       return text("I am post method")
 
@@ -118,110 +118,110 @@ app.add_route(SimpleView.as_view(), "/")
 ```
 ````
 
-## 路径参数
+## 路径参数（Path parameters）
 
-.. 列:
+.. column::
 
 ```
-您可以完全按照[路由部分](/guide/basics/routing.md)中讨论的方式使用路径参数。
+您可以完全按照[路由部分](/zh/guide/basics/routing.md)中讨论的方式来使用路径参数。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 class NameView(HTTPMethodView):
 
   def get(self, request, name):
-    return text("Hello {}".format (name))
+    return text("Hello {}".format(name))
 
-app.add_route(NameView.asp.as_view(), "/<name>")
+app.add_route(NameView.as_view(), "/<name>")
 ```
 ````
 
-## 装饰器
+## 装饰器（Decorators）
 
-正如[装饰器部分](/guide/best-practices/decorators.md)中所讨论的，您通常需要使用装饰器向端点添加功能。 您与 CBV 有两个选项：
+正如在[装饰器](/zh/guide/best-practices/decorators.md)部分讨论的那样，您经常需要通过使用装饰器为路由入口添加功能。 对于基于类的视图（CBV），有两种选择：
 
-1. 应用于视图中的 _全部_ HTTP 方法
-2. 单独应用于视图中的 HTTP 方法
+1. 应用于视图中的**所有**HTTP方法
+2. 分别应用于视图中的各个HTTP方法
 
-让我们看看这些选项是什么样子：
+让我们来看一下这两种选项的样子：
 
-.. 列:
+.. column::
 
 ```
-### 应用于所有方法
+### 应用于视图中的所有HTTP方法
 
-如果您想要将任何装饰符添加到类中，您可以设置 "装饰符" 类变量。 当调用`as_view`时，这些将应用于该类。
+若要向此类添加任何装饰器，您可以设置 `decorators` 类变量。当调用 `as_view` 时，这些装饰器将会应用于此类。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-class ViewWidDecorator(HTTPMethodView):
+class ViewWithDecorator(HTTPMethodView):
   decorators = [some_decorator_here]
 
-  def get(self, request, pass). 姓名:
-    退货文本("Hello I have a decorator")
+  def get(self, request, name):
+    return text("Hello I have a decorator")
 
-  def post(self, 请求，名称：
-    return text("Hello I also a Decorator")
+  def post(self, request, name):
+    return text("Hello I also have a decorator")
 
-app dd_route(ViewWidDecorator.as_view(), "/url")
+app.add_route(ViewWithDecorator.as_view(), "/url")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-### 应用于个别方法
+### 分别应用于视图中的各个HTTP方法
 
-但是如果你只想装饰一些方法而不是所有方法，你可以如这里所示。
+但是，如果您只想装饰某些方法而不是所有方法，则可以如以下所示操作。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-class Viewwitwithout Decorator(HTTPMethodView):
+class ViewWithSomeDecorator(HTTPMethodView):
 
-    @static方法
+    @staticmethod
     @some_decorator_here
-    def get(request 姓名:
-        退货文本("Hello I have a decorator")
+    def get(request, name):
+        return text("Hello I have a decorator")
 
-    def post(self, 请求 姓名：
-        return text("Hello I no some decorators")
+    def post(self, request, name):
+        return text("Hello I do not have any decorators")
 
     @some_decorator_here
-    def patch(self, 请求，名称：
-        返回文本("Hello I have a decorator")
+    def patch(self, request, name):
+        return text("Hello I have a decorator")
 ```
 ````
 
-## 正在生成 URL
+## 动态路由(Generating a URL)
 
-.. 列:
+.. column::
 
 ```
-这就像[生成任何其它URL](/guide/basics/routing.md#generating-a-url)一样，只是类名称是端点的一部分。
+这就像[生成任何其他URL](/zh/guide/basics/routing.md#generating-a-url)一样工作，只不过类名是路由入口的一部分。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.route("/")
 def index(request):
-    url = app. rl_for("SpecialClassView")
+    url = app.url_for("SpecialClassView")
     return redirect(url)
 
 class SpecialClassView(HTTPMethodView):
-    def get(self, 请求:
-        返回文本("您好，来自特殊类视图!
+    def get(self, request):
+        return text("Hello from the Special Class View!")
 
-应用。 dd_route(SpecialClassView.as_view), "/special_class_view")
+app.add_route(SpecialClassView.as_view(), "/special_class_view")
 ```
 ````

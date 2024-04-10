@@ -88,91 +88,91 @@ async def before_start(*_):
 
 如果该应用程序在开启自动重载的情况下运行，当重新加载进程启动时，会调用一次 `reload_start` 函数。 当主进程启动时，`main_start` 函数也会被调用一次。 **然而**，`before_start` 函数会在每个启动的工作者进程中被调用一次，并且每当文件保存导致工作者进程重启时，也会再次调用。
 
-## 正在附加侦听器
+## 注册监听器(Attaching a listener)
 
-.. 列:
+.. column::
 
 ```
-作为侦听器设置函数的过程类似于声明路由。
+将函数设置为监听器的过程类似于声明路由。
 
-正在运行的 `Sanic()` 实例被注入到侦听器中。
+当前正在运行的 `Sanic()` 实例会被注入到监听器中。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 async def setup_db(app):
-    app.ctx.db = 等待db_setup()
+    app.ctx.db = await db_setup()
 
-app.register_listener(setup_db, "previ_server_start")
+app.register_listener(setup_db, "before_server_start")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-“Sanic”应用实例也有一个方便装饰器。
+`Sanic` 应用实例还提供了一个便利的装饰器。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app.listener("prev_server_start")
+@app.listener("before_server_start")
 async def setup_db(app):
-    app.ctx.db = 等待db_setup()
+    app.ctx.db = await db_setup()
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-在 v22.3 之前，应用程序实例和当前事件循环都被注入到函数中。 然而，默认情况下只注入应用程序实例。 如果您的函数签名同时接受，那么应用程序和循环都会像这里显示的那样被注入。
+在 v22.3 版本之前，应用程序实例和当前事件循环都会被注入到函数中。然而，默认情况下只会注入应用程序实例。如果您的函数签名同时接受这两个参数，那么应用程序实例和循环将会像下面所示那样都被注入。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app.listener("prev_server_start")
+@app.listener("before_server_start")
 async def setup_db(app, loop):
-    app.ctx.db = 等待db_setup()
+    app.ctx.db = await db_setup()
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-您可以进一步缩短装饰。如果您拥有一个自动完成的 IDE，这将是很有帮助的。
+您甚至可以进一步缩短装饰器。这对于具有自动补全功能的 IDE 尤其有用。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.before_server_start
 async def setup_db(app):
-    app.ctx.db = 等待db_setup()
+    app.ctx.db = await db_setup()
 ```
 ````
 
-## 执行顺序
+## 执行顺序(Order of execution)
 
-侦听器按启动时的申报顺序执行，并在拆解时反向排序。
+在启动期间，监听器按照声明的顺序执行，在关闭期间则按照声明的反向顺序执行。
 
-|                       | 阶段     | 订单                                                                                                 |
-| --------------------- | ------ | -------------------------------------------------------------------------------------------------- |
-| `main_process_start`  | 主要启动   | 普通:稍微ly_smiling_face: ⬇️ |
-| `befor_server_start`  | 工作人员启动 | 普通:稍微ly_smiling_face: ⬇️ |
-| `After _server_start` | 工作人员启动 | 普通:稍微ly_smiling_face: ⬇️ |
-| `before_server_stop`  | 工人关机   | 🙃 ⬆️ reverse                                                                                      |
-| `After _server_stop`  | 工人关机   | 🙃 ⬆️ reverse                                                                                      |
-| `main_process_stop`   | 主要关机   | 🙃 ⬆️ reverse                                                                                      |
+|                       | 执行阶段            | 执行顺序          |
+| --------------------- | --------------- | ------------- |
+| `main_process_start`  | main startup    | regular 🙂 ⬇️ |
+| `before_server_start` | worker startup  | regular 🙂 ⬇️ |
+| `after_server_start`  | worker startup  | regular 🙂 ⬇️ |
+| `before_server_stop`  | worker shutdown | 🙃 ⬆️ reverse |
+| `after_server_stop`   | worker shutdown | 🙃 ⬆️ reverse |
+| `main_process_stop`   | main shutdown   | 🙃 ⬆️ reverse |
 
-鉴于以下情况，如果我们运行两名工人，我们应该在控制台中看到这一点。
+鉴于以下设置，如果我们运行两个工作者进程，我们预期会在控制台看到以下输出：
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -180,37 +180,37 @@ async def setup_db(app):
 async def listener_1(app, loop):
     print("listener_1")
 
-@appp efor_server_start
-async def listener_2(app, loor):
+@app.before_server_start
+async def listener_2(app, loop):
     print("listener_2")
 
-@app. istener("after_server_start")
-async def listener_3(app, rol):
+@app.listener("after_server_start")
+async def listener_3(app, loop):
     print("listener_3")
 
-@app. fter_server_start
-async def listener_4(app, loor):
+@app.after_server_start
+async def listener_4(app, loop):
     print("listener_4")
 
-@app. istener("before_server_stop")
-async def listener_5(app, rol):
+@app.listener("before_server_stop")
+async def listener_5(app, loop):
     print("listener_5")
 
-@app. efor_server_stop
-async def listener_6(app, loor):
+@app.before_server_stop
+async def listener_6(app, loop):
     print("listener_6")
 
-@app. istener("after_server_stop")
-async def listener_7(app, rol):
+@app.listener("after_server_stop")
+async def listener_7(app, loop):
     print("listener_7")
 
-@app. fter_server_stop
-async def listener_8(app, loor):
+@app.after_server_stop
+async def listener_8(app, loop):
     print("listener_8")
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
@@ -239,39 +239,39 @@ async def listener_8(app, loor):
 [pid: 1000000] [INFO] listener_9
 [pid: 1000000] [INFO] Server Stopped
 ```
-In the above example, notice how there are three processes running:
+在上面的例子中，请注意存在三个运行中的进程：
 
 - `pid: 1000000` - The *main* process
 - `pid: 1111111` - Worker 1
 - `pid: 1222222` - Worker 2
 
-*Just because our example groups all of one worker and then all of another, in reality since these are running on separate processes, the ordering between processes is not guaranteed. But, you can be sure that a single worker will **always** maintain its order.*
+*尽管我们的示例先展示了所有属于一个工作者（worker）的输出，然后展示了另一个工作者（worker）的所有输出，但在实际情况中，由于这些进程是在不同的进程中运行的，不同进程之间的执行顺序并不保证一致。但是，您完全可以确定的是，单一工作者（worker）进程 **总是** 会保持其内部执行顺序不变。*
 ````
 
-.. tip:: FYI
+.. tip:: 提示一下
 
 ```
-这个结果的实际结果是，如果`pre_server_start`中的第一个监听器设置了数据库连接。 注册后的侦听器可以在启动和停止时依靠该连接存活。
+这种情况的实际结果是，如果在 `before_server_start` 处理器中的第一个监听器设置了数据库连接，那么在此之后注册的监听器可以依赖于在它们启动和停止时该连接都处于活跃状态。
 ```
 
-### 优先权
+### 优先级（Priority）
 
-.. 新：v23.12
+.. new:: v23.12
 
 ```
-在 v23.12，监听器中添加了 `priority` 关键字参数。这允许调整监听器的执行顺序。 默认优先级是 `0`。优先级较高的侦听器将先执行。 具有相同优先级的侦听器将按照他们注册的顺序执行。 此外，连接到 `app` 实例的侦听器将在连接到 `Blueprint` 实例的侦听器之前执行。
+自 v23.12 版本起，向监听器添加了 `priority` 关键字参数。这允许精细调整监听器执行顺序。默认优先级为 `0`。优先级较高的监听器将首先执行。相同优先级的监听器将按照注册的顺序执行。此外，附加到 `app` 实例的监听器将优先于附加到 `Blueprint` 实例的监听器执行。
 ```
 
-总体上，决定执行顺序的规则如下：
+决定执行顺序的整体规则如下：
 
-1. 按降序排序
-2. 蓝图监听器之前的应用程序监听器
-3. 注册订单
+1. 先级降序排列
+2. 应用程序级别的监听器优先于蓝图级别的监听器执行
+3. 按照注册顺序执行
 
-.. 列:
+.. column::
 
 ````
-As an example, consider the following, which will print:
+作为示例，考虑以下内容，它将打印：
 
 ```bash
 third
@@ -284,7 +284,7 @@ bp_first
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -292,27 +292,27 @@ bp_first
 async def first(app):
     print("first")
 
-@app。 istener("before_server_start", priority=2)
+@app.listener("before_server_start", priority=2)
 async def second(app):
     print("second")
 
-@app. efor_server_start(priority=3)
+@app.before_server_start(priority=3)
 async def third(app):
     print("third")
 
-@bp.befor_server_start
+@bp.before_server_start
 async def bp_first(app):
     print("bp_first")
 
-@bp. istener("before_server_start", priority=2)
+@bp.listener("before_server_start", priority=2)
 async def bp_second(app):
     print("bp_second")
 
-@bp. efor_server_start(priority=3)
+@bp.before_server_start(priority=3)
 async def bp_third(app):
     print("bp_third")
 
-@app。 efore_server_start
+@app.before_server_start
 async def fourth(app):
     print("fourth")
 
@@ -320,11 +320,11 @@ app.blueprint(bp)
 ```
 ````
 
-## ASGI 模式
+## ASGI 模式 (ASGI Mode)
 
-如果您正在使用 ASGI 服务器运行您的应用程序，请注意以下变化：
+如果你使用ASGI服务器运行应用程序，请注意以下变化：
 
 - `reload_process_start` 和 `reload_process_stop` 将被**忽略**
 - `main_process_start` 和 `main_process_stop` 将被**忽略**
-- `befor_server_start` 将尽早运行，并且将在 `After _server_start` 之前运行，但是从技术上讲，服务器已经在那个地点运行。
-- `after _server_stop`将会尽早运行，并且会在 `before_server_stop` 之后运行，但从技术上讲，服务器仍然在那个地点运行
+- `before_server_start` 尽可能早地运行，并且将在 `after_server_start ` 之前执行，但从技术上讲，在此时服务器已经启动了
+- `after_server_stop` 尽可能晚地运行，并且将在 `before_server_stop` 之后执行，但从技术上讲，在此时服务器仍在运行中

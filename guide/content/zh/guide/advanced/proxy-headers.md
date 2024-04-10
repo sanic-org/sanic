@@ -1,68 +1,68 @@
-# 代理配置
+# 代理配置 (Proxy configuration)
 
-当您使用反向代理服务器 (例如nginx) 时，`request.ip` 的值将包含代理的 IP，通常是 `127.0.0.1` 。 几乎总是**不是**你想要的。
+当您使用反向代理服务器（例如nginx）时，`request.ip` 的值将包含代理的IP地址，通常是 `127.0.0.1`。 几乎在所有情况下，这都不是您所期望得到的结果。
 
-Sanic 可能被配置为使用代理头来确定真正的客户端 IP，可用于“request.remote_addr”。 完整的外部 URL 也是从标题字段 _如果可用的话_构建的。
+Sanic 可以配置为使用代理头信息来确定真实的客户端IP地址，该地址可通过 `request.remote_addr` 获取。 如果有提供的话，完整的外部URL也会从头字段中构建出来。
 
-.. 提示：浮动通知
-
-```
-如果没有适当的防范措施，恶意客户可能会使用代理头来歪曲自己的IP。 为了避免这种问题，除非明确启用，否则Sanic不会使用任何代理标题。
-```
-
-.. 列:
+.. tip:: 注意一下
 
 ```
-逆向代理后面的服务必须配置以下[配置值](/guide/deplement/configuration.md):
+未经适当防护措施，恶意客户端可能会利用代理头信息伪造自己的IP地址。为了避免这类问题，Sanic默认不使用任何代理头信息，除非明确启用此功能。
+```
+
+.. column::
+
+```
+部署在反向代理之后的服务必须配置以下[配置值](/zh/guide/deployment/configuration.md)之一或多者：
 
 - `FORWARDED_SECRET`
 - `REAL_IP_HEADER`
 - `PROXIES_COUNT`
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-app.config.FORWARDED_SECRET = "超级duper-secret"
+app.config.FORWARDED_SECRET = "super-duper-secret"
 app.config.REAL_IP_HEADER = "CF-Connecting-IP"
-app.config.PROXIEs_COUNT = 2
+app.config.PROXIES_COUNT = 2
 ```
 ````
 
-## 转发标题
+## 转发头(Forwarded header)
 
-为了使用 `Forwarded` 标题，您应该将 `app.config.FORWARDED_SECRET` 设置为信任的代理服务器已知的值。 此密钥用于安全识别特定代理服务器。
+为了使用“Forwarded”头信息，您应该将 `app.config.FORWARDED_SECRET` 设置为可信代理服务器所知的一个值。 这个密钥用于安全地识别特定的代理服务器。
 
-神秘忽略任何没有密钥的元素，如果没有设置秘密，甚至不会解析标题。
+如果没有设置密钥，Sanic会忽略任何没有密钥的秘密元素，甚至不会解析该头信息。
 
-所有其它代理头在找到可信任的转发元素时被忽略，因为它已经包含了有关客户端的完整信息。
+一旦找到可信的转发元素，所有其他代理头信息都将被忽略，因为可信的转发元素已经携带了关于客户端的完整信息。
 
-若要了解更多关于 `Forwarded` 标题，请阅读相关的 [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded) 和 [Nginx](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/) 文章。
+要了解更多关于Forwarded头信息的内容，请阅读相关的 [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded) 和[Nginx](https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/) 文章。
 
-## 传统代理信头
+## 常见的代理请求头(Traditional proxy headers)
 
-### IP 头
+### IP Headers
 
-当你的代理转发你已知的标题中的 IP 地址时，你可以告诉Sanic 什么是 `REAL_IP_HEADER` 配置值。
+当您的代理通过某个已知头信息传递IP地址时，您可以使用 `REAL_IP_HEADER` 配置值告诉Sanic这个头信息是什么。
 
-### X-转发-输入
+### X-Forwarded-For
 
-此页眉通常包含一个通过代理服务器的每层IP地址链。 设置 `PROXIES_COUNT` 告诉Sanic寻找客户端的实际IP地址。 此值应等于 _expected_number 的 IP 地址。
+此头信息通常包含经过每一层代理的IP地址链。 设置 PROXIES_COUNT 告诉Sanic应深入到哪一层以获取实际的客户端IP地址。 这个值应等于链中IP地址预期的数量。
 
-### 其他X-headers
+### Other X-headers
 
-如果客户端IP找到这些方法之一，Sanic对URL部分使用以下标题：
+如果通过上述方法找到了客户端IP地址，Sanic会使用以下头信息来构建URL各部分：
 
-- x-转发-proto
-- x转发主机
-- x转发端口
-- x转发路径
-- x 方案
+- x-forwarded-proto
+- x-forwarded-host
+- x-forwarded-port
+- x-forwarded-path
+- x-scheme
 
-## 示例：
+## 示例
 
-在下面的例子中，所有请求都将假定终点看起来像这样：
+在以下示例中，所有请求都将以如下形式的路由入口为基础进行演示：
 
 ```python
 @app.route("/fwd")
@@ -80,20 +80,20 @@ async def forwarded(request):
 
 ---
 
-##### 例1
+##### 例一(Example 1)
 
-如果没有配置FORWARDED_SECRET, X-headers 应该受到尊重。
+若未配置`FORWARDED_SECRET`，应尊重x-headers
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forwar: for=1.1.1, for=injected;host="[:2]";proto=https://;host=me.tld;path="/app/";secret=mySecret,for=brochen;secret=b0rked, for=127。 .0.3;scheme=http;port=1234' \
-	-H "X-Real-IP: 127.0.0.2"
-	-H "X-For: 127.0.1"
-	- H "X-Scheme: w"
-	- H "Host: local.site" | jq
+	-H 'Forwarded: for=1.1.1.1, for=injected;host=", for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret,for=broken;;secret=b0rked, for=127.0.0.3;scheme=http;port=1234' \
+	-H "X-Real-IP: 127.0.0.2" \
+	-H "X-Forwarded-For: 127.0.1.1" \
+	-H "X-Scheme: ws" \
+	-H "Host: local.site" | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -103,18 +103,18 @@ app.config.REAL_IP_HEADER = "x-real-ip"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
-# curl replacement
-Paper
-  "remote_addr": "127.0.0.0.2",
+# curl response
+{
+  "remote_addr": "127.0.0.2",
   "scheme": "ws",
-  "server_name": "local. ite”,
+  "server_name": "local.site",
   "server_port": 80,
-  "forwarded": 许诺,
-    "for": "127. .0.2",
+  "forwarded": {
+    "for": "127.0.0.2",
     "proto": "ws"
   }
 }
@@ -123,20 +123,20 @@ Paper
 
 ---
 
-##### 例2
+##### 例二(Example 2)
 
-FORWARDED_SECRET 已配置
+`FORWARDED_SECRET` 已配置
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forwar: for=1.1.1, for=injected;host="[:2]";proto=https://;host=me.tld;path="/app/";secret=mySecret,for=brochen;secret=b0rked, for=127。 .0.3;scheme=http;port=1234' \
-	-H "X-Real-IP: 127.0.0.2"
-	-H "X-For: 127.0.1"
-	- H "X-Scheme: w"
-	- H "Host: local.site" | jq
+	-H 'Forwarded: for=1.1.1.1, for=injected;host=", for="[::2]";proto=https;host=me.tld;path="/app/";secret=mySecret,for=broken;;secret=b0rked, for=127.0.0.3;scheme=http;port=1234' \
+	-H "X-Real-IP: 127.0.0.2" \
+	-H "X-Forwarded-For: 127.0.1.1" \
+	-H "X-Scheme: ws" \
+	-H "Host: local.site" | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -147,7 +147,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
@@ -170,19 +170,19 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ---
 
-##### 例3
+##### 例三(Example 3)
 
-空转发头 -> 使用 X-headers
+空`Forwarded`头信息 -> 使用`X-headers`
 
 ```sh
 curl localhost:8000/fwd \
 	-H "X-Real-IP: 127.0.0.2" \
-	-H "X-For: 127.0.1" \
-	-H "X-Scheme: w"
+	-H "X-Forwarded-For: 127.0.1.1" \
+	-H "X-Scheme: ws" \
 	-H "Host: local.site" | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -193,18 +193,18 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
-# curl replacement
-Paper
-  "remote_addr": "127.0.0.0.2",
+# curl response
+{
+  "remote_addr": "127.0.0.2",
   "scheme": "ws",
-  "server_name": "local. ite”,
+  "server_name": "local.site",
   "server_port": 80,
-  "forwarded": 许诺,
-    "for": "127. .0.2",
+  "forwarded": {
+    "for": "127.0.0.2",
     "proto": "ws"
   }
 }
@@ -213,16 +213,16 @@ Paper
 
 ---
 
-##### 例4
+##### 例四(Example 4)
 
-页眉已存在，但不匹配任何内容
+存在头信息但无法匹配任何内容
 
 ```sh
 curl localhost:8000/fwd \
-	-H "Forwar: nomatch" | jq
+	-H "Forwarded: nomatch" | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -238,7 +238,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ````
 ```bash
 # curl response
-Power
+{
   "remote_addr": "",
   "scheme": "http",
   "server_name": "localhost",
@@ -251,17 +251,17 @@ Power
 
 ---
 
-##### 例5
+##### 例五(Example 5)
 
-转发头，但没有匹配的密钥 -> 使用 X-headers
+`Forwarded`头信息存在，但无匹配的密钥 -> 使用`X-headers`
 
 ```sh
 curl localhost:8000/fwd \
-	-H "Forwar: for=1.1.1;secret=x, for=127.0.0.1"
+	-H "Forwarded: for=1.1.1.1;secret=x, for=127.0.0.1" \
 	-H "X-Real-IP: 127.0.0.2" | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -272,18 +272,18 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
-# curl reply
-Power
-  "remote_addr": "127.0.0.0 ",
+# curl response
+{
+  "remote_addr": "127.0.0.2",
   "scheme": "http",
   "server_name": "localhost",
   "server_port": 8000,
-  "forwarded": 许诺,
-    "for": "127. 0.2"
+  "forwarded": {
+    "for": "127.0.0.2"
   }
 }
 ```
@@ -291,16 +291,16 @@ Power
 
 ---
 
-##### 例6
+##### 例六(Example 6)
 
-不同格式化并击中标题两端的标题
+不同格式化方式，同时触及头信息两端的情况
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forward: Secret="mysecret";For=127.0.0.4;Port=1234' | jq
+	-H 'Forwarded: Secret="mySecret";For=127.0.0.4;Port=1234' | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -311,19 +311,19 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
-# curl reply
-Power
-  "remote_addr": "127.0.0.0 ",
+# curl response
+{
+  "remote_addr": "127.0.0.4",
   "scheme": "http",
   "server_name": "localhost",
   "server_port": 1234,
-  "forwarded": Power
-    "secret": "mysecret",
-    "for": "127. .0.4",
+  "forwarded": {
+    "secret": "mySecret",
+    "for": "127.0.0.4",
     "port": 1234
   }
 }
@@ -332,16 +332,16 @@ Power
 
 ---
 
-##### 例7
+##### 例七(Example 7)
 
-测试逃逸(如果你看到有人正在执行引用的对等内容，请修改此选项)
+测试转义字符（如果发现有人实现引用对，请修改此处）
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forwar: for=test;quoted="\,x=x;y=\";secret=mysecret' | jq
+	-H 'Forwarded: for=test;quoted="\,x=x;y=\";secret=mySecret' | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -352,20 +352,20 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
-# curl replacement
-Paper
+# curl response
+{
   "remote_addr": "test",
   "scheme": "http",
   "server_name": "localhost",
   "server_port": 8000,
-  "forwarded": 许诺,
+  "forwarded": {
     "for": "test",
-    "quoted": "\,x=x; =\\",
-    "secret": "mysecret"
+    "quoted": "\\,x=x;y=\\",
+    "secret": "mySecret"
   }
 }
 ```
@@ -373,16 +373,16 @@ Paper
 
 ---
 
-##### 例8
+##### 例八(Example 8)
 
-由格式错误的字段 #1 隔绝的绝密项
+密钥信息因格式错误的字段而被隔绝 #1
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forwar: for=test;secret=mySecret;b0rked;proto=wss;' | jq
+	-H 'Forwarded: for=test;secret=mySecret;b0rked;proto=wss;' | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -393,7 +393,7 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
@@ -413,16 +413,16 @@ app.config.FORWARDED_SECRET = "mySecret"
 
 ---
 
-##### 例9
+##### 例九(Example 9)
 
-由格式不正确的字段 #2 隔热绝的密钥
+密钥信息因格式错误的字段而被隔绝 #2
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forwar: for=test;b0rked;secret=mySecret;proto=wss' | jq
+	-H 'Forwarded: for=test;b0rked;secret=mySecret;proto=wss' | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -433,18 +433,18 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
 # curl response
-WP
+{
   "remote_addr": "",
   "scheme": "wss",
   "server_name": "localhost",
   "server_port": 8000,
-  "forwarded": 许诺
-    "secret": "mysecret",
+  "forwarded": {
+    "secret": "mySecret",
     "proto": "wss"
   }
 }
@@ -453,16 +453,16 @@ WP
 
 ---
 
-##### 例10
+##### 例十(Example 10)
 
-意外终止不应丢失现有可接受的值
+意外终止不应丢失现有的有效值
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forwar: b0rked;secret=mySecret;proto=wss' | jq
+	-H 'Forwarded: b0rked;secret=mySecret;proto=wss' | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -473,18 +473,18 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
 # curl response
-WP
+{
   "remote_addr": "",
   "scheme": "wss",
   "server_name": "localhost",
   "server_port": 8000,
-  "forwarded": 许诺
-    "secret": "mysecret",
+  "forwarded": {
+    "secret": "mySecret",
     "proto": "wss"
   }
 }
@@ -493,16 +493,16 @@ WP
 
 ---
 
-##### 例11
+##### 例十一(Example 11)
 
-实地正常化
+字段标准化
 
 ```sh
 curl localhost:8000/fwd \
 	-H 'Forwarded: PROTO=WSS;BY="CAFE::8000";FOR=unknown;PORT=X;HOST="A:2";PATH="/With%20Spaces%22Quoted%22/sanicApp?key=val";SECRET=mySecret' | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -513,22 +513,22 @@ app.config.FORWARDED_SECRET = "mySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
 # curl response
-Power
+{
   "remote_addr": "",
   "scheme": "wss",
   "server_name": "a",
   "server_port": 2,
-  "转发": Power
-    "原始": "wss",
-    "by": "[cafe:8000]",
-    "主机": "a:2",
-    "路径": "/With Spaces\"Quoted\"/sanicApp? ey=val",
-    "secret": "mysecret"
+  "forwarded": {
+    "proto": "wss",
+    "by": "[cafe::8000]",
+    "host": "a:2",
+    "path": "/With Spaces\"Quoted\"/sanicApp?key=val",
+    "secret": "mySecret"
   }
 }
 ```
@@ -536,16 +536,16 @@ Power
 
 ---
 
-##### 例12
+##### 例十二(Example 12)
 
-使用“by”字段作为密钥
+使用 "by" 字段作为密钥
 
 ```sh
 curl localhost:8000/fwd \
-	-H 'Forward: for=1.2.3.4; by=_proxySecret' | jq
+	-H 'Forwarded: for=1.2.3.4; by=_proxySecret' | jq
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -556,18 +556,18 @@ app.config.FORWARDED_SECRET = "_proxySecret"
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
 # curl response
-Power
-  "remote_addr": "1.2.3。 ",
+{
+  "remote_addr": "1.2.3.4",
   "scheme": "http",
   "server_name": "localhost",
   "server_port": 8000,
-  "forwarded": 许诺,
-    "for": "1. .3.4",
+  "forwarded": {
+    "for": "1.2.3.4",
     "by": "_proxySecret"
   }
 }

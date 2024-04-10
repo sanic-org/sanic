@@ -1,6 +1,6 @@
-# 中间件
+# 中间件(Middleware)
 
-听众允许您在工作流程的生命周期中附加功能， 中间件允许您在HTTP流的生命周期中附加功能。
+监听器（listeners ）允许您将功能附加到工作进程的生命周期中，中间件（middleware ）则允许您将功能附加到HTTP流的生命周期中。
 
 ```python
 @app.on_request
@@ -8,7 +8,7 @@ async def example(request):
 	print("I execute before the handler.")
 ```
 
-您可以执行 _befor_ 的处理程序或者执行 _after _。
+您可以选择在处理器执行前或执行后执行中间件。
 
 ```python
 @app.on_response
@@ -16,7 +16,7 @@ async def example(request, response):
 	print("I execute after the handler.")
 ```
 
-.. mermaid:
+.. mermaid::
 
 ```
 sequenceDiagram
@@ -43,66 +43,66 @@ end
 Note over Worker: Deliver response
 ```
 
-## 附加中间件
+## 注册中间件（Attaching middleware）
 
-.. 列:
+.. column::
 
 ```
-现在也许应该看起来很熟悉。 您需要做的只是当您想要执行中间件时声明：在 "request" 或 "response" 上。
+到现在为止，这个概念应该已经很熟悉了。您需要做的只是声明何时希望中间件执行：是在请求（`request`）阶段还是响应（`response`）阶段。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 async def extract_user(request):
-    request.ctx.user = request_user_from_request(request)
+    request.ctx.user = await extract_user_from_request(request)
 
 app.register_middleware(extract_user, "request")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-同样，“Sanic”应用实例也有一个方便装饰器。
+同样，`Sanic` 应用实例也提供了一个便捷的装饰器。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app.midleware("request")
+@app.middleware("request")
 async def extract_user(request):
-    request.ctx.user = request_user_from_request(request)
+    request.ctx.user = await extract_user_from_request(request)
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-响应中间件同时收到“request”和“response”两个参数。
+响应中间件同时接收 `request` 和 `response` 参数。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app.midleware('response')
+@app.middleware('response')
 async def prevent_xss(request, response):
     response.headers["x-xss-protection"] = "1; mode=block"
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-您可以进一步缩短装饰。如果您拥有一个自动完成的 IDE，这将是很有帮助的。
+您甚至可以进一步简化装饰器。如果您使用的IDE支持自动补全，这将非常有帮助。
 
-这是首选用法，这是我们今后使用的方法。
+这是首选用法，也是我们后续将会采用的方式。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -116,37 +116,37 @@ async def prevent_xss(request, response):
 ```
 ````
 
-## 修改
+## 修改（Modification）
 
-中间件可以修改它被指定的请求或响应参数，只要它不返回它。
+只要中间件不返回请求或响应参数，它可以修改接收到的请求或响应参数。
 
-.. 列:
+.. column::
 
 ```
 #### 执行顺序
 
-1. 请求中间行：`add_key`
-2. 路由处理：`index`
-3. 响应中间行：`prevent_xss`
-4. 响应中间行程：`cust_banner`
+1. Request middleware: `add_key`
+2. Route handler: `index`
+3. Response middleware: `prevent_xss`
+4. Response middleware: `custom_banner`
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
-@app。 n_request
-async def add_key(请求):
-    # 任意数据可能存储在请求的上下文中:
-    请求。 tx.foo = "bar"
+@app.on_request
+async def add_key(request):
+    # Arbitrary data may be stored in request context:
+    request.ctx.foo = "bar"
 
 @app.on_response
 async def custom_banner(request, response):
-    response. eaders["Server"] = "Fake-Server"
+    response.headers["Server"] = "Fake-Server"
 
 @app.on_response
 async def prevent_xss(request, response):
-    response. eaders["x-xss-protection"] = "1; mode=block"
+    response.headers["x-xss-protection"] = "1; mode=block"
 
 @app.get("/")
 async def index(request):
@@ -155,46 +155,45 @@ async def index(request):
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-您可以修改 `request.match_info` 。例如，一个有用的功能可以用于中间件将`a-slug` 转换为 `a_slug` 。
+您可以修改 `request.match_info`。例如，在中间件中，可以利用这一有用特性将 `a-slug` 转换为 `a_slug`。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 @app.on_request
-def convert_slug_to_underly(request:
-    request.match_info["slug"] = request.match_info["slug"].replace("-"_")
+def convert_slug_to_underscore(request: Request):
+    request.match_info["slug"] = request.match_info["slug"].replace("-", "_")
 
-@app. et("/<slug:slug>")
-async def 处理器(请求) slug):
+@app.get("/<slug:slug>")
+async def handler(request, slug):
     return text(slug)
 ```
 ```
-$ curl localhost:99999/foo-bar-baz
+$ curl localhost:9999/foo-bar-baz
 foo_bar_baz
 ```
 ````
 
-## 早期响应
+## 提前响应(Resonding early)
 
-.. 列:
-
-```
-If middleware returns a `HTTPResponse` object, the request will stop processing and the response will be returned. If this occurs to a request before the route handler is reached, the handler will **not** be called. Returning a response will also prevent any further middleware from running.
+.. column::
 
 ```
-
-.. tip::
-
-```
-您可以返回 `None` 值来停止执行中间件处理程序，以允许请求正常处理。 这可能有助于早日返回以避免处理中间件处理器内的请求。
+如果中间件返回一个 `HTTPResponse` 对象，则请求处理将停止，并返回该响应。如果在到达路由处理器之前发生这种情况，则不会调用处理器。返回响应也将阻止任何其他中间件继续执行。
 ```
 
-.. 列:
+.. tip:: 提示
+
+```
+您可以在中间件处理器中返回 `None` 值来停止执行，以允许请求正常进行处理。当使用早期返回机制避免在此中间件处理器内部处理请求时，这一做法十分有用。
+```
+
+.. column::
 
 ````
 ```python
@@ -208,13 +207,13 @@ async def halt_response(request, response):
 ```
 ````
 
-## 执行顺序
+## 执行顺序(Order of execution)
 
-请求中间件在已声明的订单中执行。 响应中间件在 **逆序** 中执行。
+请求中间件按照声明的顺序执行。 响应中间件按**相反顺序**执行。
 
-鉴于以下情况，我们应该在控制台上看到这一点。
+按照下面的代码，我们应该期望在控制台看到这样的输出结果。
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -222,47 +221,47 @@ async def halt_response(request, response):
 async def middleware_1(request):
     print("middleware_1")
 
-@appp. n_request
+@app.on_request
 async def middleware_2(request):
     print("middleware_2")
 
-@app. n_response
+@app.on_response
 async def middleware_3(request, response):
     print("middleware_3")
 
-@app. n_response
+@app.on_response
 async def middleware_4(request, response):
     print("middleware_4")
 
-@app. et("/handler")
+@app.get("/handler")
 async def handler(request):
-    print("~handler ~")
-    return text("完成")
+    print("~ handler ~")
+    return text("Done.")
 ```
 ````
 
-.. 列:
+.. column::
 
 ````
 ```bash
 middleware_1
 middleware_2
-~
+~ handler ~
 middleware_4
 middleware_3
-[INFO][127.0.0.1:4478]: GET http://localhost:8000/handler 200 5
+[INFO][127.0.0.1:44788]: GET http://localhost:8000/handler  200 5
 ```
 ````
 
-### 中间件优先级
+### 中间件优先级（Middleware priority）
 
-.. 列:
+.. column::
 
 ```
-您可以通过赋予它更高的优先级来修改中间件的执行顺序。这发生在中间件定义内。 值越高，相对于其他中间件执行的越早。中间件的默认优先级是 `0'。
+您可以通过分配更高的优先级来修改中间件执行的顺序。这一操作在定义中间件时进行。优先级值越高，相对于其他中间件，其执行就越早。默认情况下，中间件的优先级为 `0`。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -276,4 +275,4 @@ async def high_priority(request):
 ```
 ````
 
-_添加于 v22.9_
+\*添加于 v22.9 \*

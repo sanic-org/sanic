@@ -89,7 +89,7 @@ app.run(...)
 创建任务时，通过提供一个`name`，你可以让Sanic帮你跟踪这个任务。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -97,13 +97,13 @@ app.add_task(troub_work, name="low_task")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-您现在可以使用`get_task`从应用程序中的任何地方检索该任务实例。
+现在，你可以在应用程序的任何地方使用`get_task`来检索该任务实例。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -111,13 +111,13 @@ task = app.get_task("slow_task")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-如果该任务需要取消，你可以使用 "cancel_task" 来完成。请确保你"等待"。
+如果需要取消该任务，你可以使用`cancel_task`来完成。确保对它进行`await`调用。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -125,13 +125,13 @@ await app.cancel_task("slow_task")
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-所有注册的任务都可以在 `app.tasks` 属性中找到。为了防止被取消的任务填充，您可能想要运行 `app。 urge_tasks`将清除任何已完成或已取消的任务。
+所有已注册的任务都可以在`app.tasks`属性中找到。为了避免被取消的任务占用空间，你可能想要运行`app.purge_tasks`，它会清除所有已完成或被取消的任务。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -139,7 +139,7 @@ app.purge_tasks()
 ```
 ````
 
-这种模式在 `websockets` 中特别有用：
+这种模式在处理`websockets`时尤其有用：
 
 ```python
 async def receiver(ws):
@@ -163,4 +163,4 @@ async def feed(request, ws):
         request.app.purge_tasks()
 ```
 
-_添加于 v21.12_
+\*添加于 v21.12 \*

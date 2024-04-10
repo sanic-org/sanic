@@ -2,50 +2,50 @@
 title: 背景任务
 ---
 
-# 背景任务
+# 后台任务(Background tasks)
 
-## 创建任务
+## 创建任务(Creating Tasks)
 
-在异步Python中使用 [tasks]通常是可取和非常方便的。 (https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task) Sanic 提供了一种方便的方法，可以将任务添加到当前的 **running** 循环中。 它与`asyncio.create_task`有些相似。 在 'App' 循环运行之前添加任务, 见下一个部分。
+在异步 Python 中，常常希望能够方便地使用任务[tasks](https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task)。 Sanic 提供了一种便捷的方法，可以将任务添加到当前**正在运行**的循环中， 类似于 `asyncio.create_task`。 若要在“App”循环启动前添加任务，请参阅下一节内容。
 
 ```python
-async def notify_server_started_after _fif_seconds():
-    等待asyncio.sleep(5)
-    print('Server successful started!')
+async def notify_server_started_after_five_seconds():
+    await asyncio.sleep(5)
+    print('Server successfully started!')
 
-app.add_task(notify_server_started_after_first_five _seconds())
+app.add_task(notify_server_started_after_five_seconds())
 ```
 
-.. 列:
+.. column::
 
 ```
-Sanic 会尝试自动注入应用，将其作为参数传递给任务。
+Sanic 会尝试自动注入应用实例，并将其作为参数传递给任务。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 async def auto_inject(app):
-    等待 asyncio.sleep(5)
+    await asyncio.sleep(5)
     print(app.name)
 
 app.add_task(auto_inject)
 ```
 ````
 
-.. 列:
+.. column::
 
 ```
-或者你可以明确传递`app`的参数。
+或者，您可以显式地传递 `app` 参数。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
 async def explicit_inject(app):
-    required asyncio.sleep(5)
+    await asyncio.sleep(5)
     print(app.name)
 
 app.add_task(explicit_inject(app))
@@ -54,17 +54,17 @@ app.add_task(explicit_inject(app))
 
 ## 在 `app.run` 之前添加任务
 
-在“app.run”之前添加后台任务是可能的。 若要在应用程序运行前添加任务，建议不要通过Coroutine对象 (e)。 一个通过调用 `async` 调用来创建的东西，但只是传递可调用和 Sanic将在 **每个工人** 上创建可调用物体。 注意：添加的任务将以 `before_server_start` 的形式运行，从而在每个工人（而不是主工）上运行。 这对[这个问题](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668)[这个问题](https://github.com/sanic-org/sanic/issues/2139)有某些后果，详情请参阅。
+在应用运行之前（即在调用 app.run 之前），可以添加后台任务。 建议在这种情况下不要传递协程对象（即通过调用异步可调用函数创建的对象），而是仅传递可调用函数，Sanic 会在**每个工作进程**中自行创建协程对象。 请注意，这样添加的任务会在每个工作进程内以 `before_server_start `任务的形式运行，而不是在主进程中运行。 这一点具有特定的影响，请参阅该问题下的[这条评论](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668) 在 [issue](https://github.com/sanic-org/sanic/issues/2139) 以获取更多细节。
 
-要添加主进程的工作，请考虑将工作添加到[`@app.main_process_start`](./listeners.md)。 注意：工人在完成此工作之前不会开始工作。
+若要在主进程中添加任务，请考虑使用装饰器  [`@app.main_process_start`](./listeners.md) 来添加任务。 请注意，直到这些任务完成，工作进程才开始启动。
 
-.. 列:
+.. column::
 
 ```
-在 `app.run` 之前添加任务的示例
+在 `app.run` 之前添加任务的示例代码
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -81,12 +81,12 @@ app.run(...)
 ```
 ````
 
-## 命名的任务
+## 命名任务(Named tasks)
 
-.. 列:
+.. column::
 
 ```
-创建任务时，您可以通过 "name" 要求Sanic 为您记录它。
+创建任务时，通过提供一个`name`，你可以让Sanic帮你跟踪这个任务。
 ```
 
 .. 列:

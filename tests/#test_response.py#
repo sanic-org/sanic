@@ -709,10 +709,7 @@ def test_send_response_after_eof_should_fail(
         "response has at least partially been sent."
     )
 
-    error_msg2 = (
-        "Response stream was ended, "
-        "no more response data is allowed to be sent."
-    )
+    error_msg2 = "Response stream was ended, no more response data is allowed to be sent."
 
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/")
@@ -734,7 +731,8 @@ async def test_send_response_after_eof_should_fail_asgi(
         await response.eof()
         await response.send("bar")
 
-    error_msg1 = (
+    error_msg1 =(
+        
         "The error response will not be sent to the client for the "
         'following exception:"There is no request to respond to, '
         "either the response has already been sent or the request "

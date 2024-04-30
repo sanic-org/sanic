@@ -62,4 +62,14 @@ $background-image-size: 270px;
     .nc { color: #{$yellow}; }
     .c1 { color: #{$grey-dark}; }
     .introduction-table .table tbody tr:last-child td { border-bottom-width: 1px; }
+
+    $scrollbar-width: 12px;
+    ::-webkit-scrollbar { width: $scrollbar-width; height: $scrollbar-width; }
+    ::-webkit-scrollbar-track { background: #{$black-ter}; }
+    ::-webkit-scrollbar-thumb {
+	background: #{$black-bis};
+	border-radius: 6px;
+	border: 3px solid #{$black-ter};
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #{$black}; }
 }

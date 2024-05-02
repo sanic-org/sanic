@@ -167,7 +167,6 @@ The `request.ctx` object by default is a `SimpleNamespace` object allowing you t
 
 This is often used to store items like authenticated user details. We will get more into [middleware](./middleware.md) later, but here is a simple example.
 
-```python
 @app.on_request
 async def run_before_handler(request):
     request.ctx.user = await fetch_user_by_token(request.token)

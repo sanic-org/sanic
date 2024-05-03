@@ -81,9 +81,12 @@ if TYPE_CHECKING:
     sanic_type = TypeVar(
         "sanic_type", bound=Sanic, default=Sanic[Config, SimpleNamespace]
     )
+    ctx_type = TypeVar(
+        "ctx_type", bound=SimpleNamespace, default=SimpleNamespace
+    )
 else:
     sanic_type = TypeVar("sanic_type")
-ctx_type = TypeVar("ctx_type")
+    ctx_type = TypeVar("ctx_type")
 
 
 class Request(Generic[sanic_type, ctx_type]):

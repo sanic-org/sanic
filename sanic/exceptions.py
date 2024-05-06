@@ -74,8 +74,8 @@ class SanicException(Exception):
         )
         quiet = quiet or getattr(self.__class__, "quiet", None)
         headers = headers or getattr(self.__class__, "headers", {})
-        if not isinstance(message, str):
-            # If a `bytes`-like object is provided, normalize it to a string.
+        if isinstance(message, bytes):
+            # If a `bytes` object is provided, normalize it to a string.
             message = message.decode("utf8")
         if message is None:
             cls_message = getattr(self.__class__, "message", None)

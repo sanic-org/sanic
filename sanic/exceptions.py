@@ -76,20 +76,22 @@ class SanicException(Exception):
         headers = headers or getattr(self.__class__, "headers", {})
         if isinstance(message, bytes):
             # If a `bytes` object is provided, normalize it to a string.
-            message = message.decode("utf8")
-        if message is None:
+            message_str: str = message.decode("utf8")
+        elif message is not None:
+            message_str = message
+        else:
             cls_message = getattr(self.__class__, "message", None)
             if cls_message:
-                message = cls_message
+                message_str = cls_message
             elif status_code:
-                message = STATUS_CODES.get(status_code, b"").decode("utf8")
+                message_str = STATUS_CODES.get(status_code, b"").decode("utf8")
 
-        super().__init__(message)
+        super().__init__(message_str)
 
         self.status_code = status_code or self.status_code
         self.quiet = quiet
         self.headers = headers
-        self.message = message
+        self.message = message_str
 
 
 class HTTPException(SanicException):

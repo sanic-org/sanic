@@ -75,8 +75,9 @@ class SanicException(Exception):
         quiet = quiet or getattr(self.__class__, "quiet", None)
         headers = headers or getattr(self.__class__, "headers", {})
         if message is None:
-            if self.message:
-                message = self.message
+            cls_message = getattr(self.__class__, "message", None)
+            if cls_message:
+                message = cls_message
             elif status_code:
                 msg: bytes = STATUS_CODES.get(status_code, b"")
                 message = msg.decode("utf8")
@@ -86,6 +87,7 @@ class SanicException(Exception):
         self.status_code = status_code or self.status_code
         self.quiet = quiet
         self.headers = headers
+        self.message = message
 
 
 class HTTPException(SanicException):

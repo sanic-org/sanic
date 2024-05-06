@@ -87,7 +87,7 @@ class SanicException(Exception):
         self.status_code = status_code or self.status_code
         self.quiet = quiet
         self.headers = headers
-        self.message = message
+        self.message = message  # type: ignore
 
 
 class HTTPException(SanicException):

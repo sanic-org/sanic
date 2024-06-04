@@ -18,7 +18,7 @@ import pytest
 from aiofiles import os as async_os
 from pytest import LogCaptureFixture
 
-from sanic import Request, Sanic
+from sanic import Request, Sanic, exceptions
 from sanic.compat import Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.cookies import CookieJar
@@ -216,6 +216,19 @@ def test_no_content(json_app):
     assert response.status == 204
     assert response.text == ""
     assert "Content-Length" not in response.headers
+
+
+def test_412_should_has_content_length(app: Sanic):
+    @app.get("/failed-precondition")
+    async def failed_precondition(request: Request):
+        raise exceptions.SanicException("Failed Precondition", status_code=412)
+
+    request, response = app.test_client.get("/failed-precondition")
+    assert response.status == 412
+    assert "Content-Length" in response.headers
+    assert response.headers["Content-Length"] == str(
+        len(response.text.encode())
+    )
 
 
 @pytest.fixture

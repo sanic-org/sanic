@@ -672,3 +672,17 @@ def test_refresh_pass_passthru_data_to_new_instance(app: Sanic):
 
     assert app.inspector == 2
     assert app.config.TOUCHUP == 23
+
+
+
+def test_myclass_ack_method(app: Sanic):
+    
+    app.multiplexer = Mock()
+    app.ack()
+
+    app.multiplexer.ack.assert_called_once()
+    app.multiplexer.reset_mock()
+
+    del app.multiplexer 
+    app.ack()
+    app.multiplexer.ack.assert_not_called()

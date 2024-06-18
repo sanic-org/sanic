@@ -8,7 +8,10 @@ from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
 from sanic.worker.constants import RestartOrder
 from sanic.worker.manager import WorkerManager
+from sanic.worker.manager import MonitorCycle
 from sanic.worker.process import Worker
+
+
 
 
 if not OS_IS_WINDOWS:
@@ -441,3 +444,62 @@ def test_remove_untracked_worker(manager: WorkerManager, caplog):
     assert len(manager.transient) == 1
     assert len(manager.durable) == 0
     assert ("sanic.root", 20, message) in caplog.record_tuples
+
+
+
+@pytest.fixture
+def worker_manager():
+    p1 = Mock()
+    p1.pid = 1234
+    context = Mock()
+    context.Process.return_value = p1
+    pub = Mock()
+    sub = Mock()
+    manager = WorkerManager(1, fake_serve, {}, context, (pub, sub), {})
+    manager._handle_terminate = Mock()
+    manager._handle_manage = Mock()
+    manager._handle_message = Mock()
+    return manager
+
+
+def test_poll_monitor_no_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = False 
+    result = worker_manager._poll_monitor()
+    assert result is None 
+
+def test_poll_monitor_empty_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True 
+    worker_manager.monitor_subscriber.recv.return_value = "" 
+    result = worker_manager._poll_monitor()
+    assert result ==  MonitorCycle.BREAK  
+
+
+def test_poll_monitor_terminate_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = "__TERMINATE__" 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_terminate.assert_called_once()
+    assert result == MonitorCycle.BREAK
+
+
+def test_poll_monitor_valid_tuple_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = (1, 2, 3, 4, 5, 6, 7) 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_manage.assert_called_once_with(1, 2, 3, 4, 5, 6, 7)
+    assert result == MonitorCycle.CONTINUE
+
+
+def test_poll_monitor_invalid_message_type(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = 12345 
+    result = worker_manager._poll_monitor()
+    assert result == MonitorCycle.CONTINUE
+
+
+def test_poll_monitor_handle_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = "Valid_Message" 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_message.assert_called_once_with("Valid_Message")
+    assert result is not None 

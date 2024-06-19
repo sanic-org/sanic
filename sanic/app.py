@@ -113,6 +113,8 @@ if OS_IS_WINDOWS:  # no cov
 ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
+unregister_branches = {"not_an_instance": False, "name_in_registry": False}
+
 
 class Sanic(
     Generic[config_type, ctx_type],
@@ -2161,11 +2163,18 @@ class Sanic(
             ```
         """
         if not isinstance(app, cls):
+            unregister_branches["not_an_instance"] = True
             raise SanicException("Registered app must be an instance of Sanic")
 
         name = app.name
         if name in cls._app_registry:
+            unregister_branches["name_in_registry"] = True
             del cls._app_registry[name]
+    
+    def print_unregister_coverage(app):
+        for branch, hit in unregister_branches.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+
 
     @classmethod
     def get_app(

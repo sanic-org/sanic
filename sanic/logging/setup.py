@@ -20,13 +20,18 @@ from sanic.logging.formatter import (
 )
 
 
-def setup_logging(debug: bool, no_color: bool = False) -> None:
+def setup_logging(
+    debug: bool, no_color: bool = False, log_extra: bool = True
+) -> None:
     if AutoFormatter.SETUP:
         return
 
     if no_color:
         os.environ["SANIC_NO_COLOR"] = str(no_color)
         AutoFormatter.NO_COLOR = no_color
+    if not log_extra:
+        os.environ["SANIC_LOG_EXTRA"] = str(log_extra)
+        AutoFormatter.LOG_EXTRA = log_extra
     AutoFormatter.SETUP = True
     for lggr in (logger, server_logger, error_logger, websockets_logger):
         _auto_format(

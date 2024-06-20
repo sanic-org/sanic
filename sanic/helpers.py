@@ -2,10 +2,22 @@
 
 import sys
 
+from functools import partial
 from importlib import import_module
 from inspect import ismodule
 from typing import Dict
 
+
+try:
+    from ujson import dumps as ujson_dumps
+
+    json_dumps = partial(ujson_dumps, escape_forward_slashes=False)
+except ImportError:
+    # This is done in order to ensure that the JSON response is
+    # kept consistent across both ujson and inbuilt json usage.
+    from json import dumps
+
+    json_dumps = partial(dumps, separators=(",", ":"))
 
 STATUS_CODES: Dict[int, bytes] = {
     100: b"Continue",

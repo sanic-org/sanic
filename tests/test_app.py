@@ -672,3 +672,45 @@ def test_refresh_pass_passthru_data_to_new_instance(app: Sanic):
 
     assert app.inspector == 2
     assert app.config.TOUCHUP == 23
+
+def test_refresh_when_self_not_registered():
+    # Register an instance with a different name
+    registered_instance = Sanic("test_instance")
+    Sanic._app_registry["test_instance"] = registered_instance
+
+    new_instance = Sanic("another_instance")
+    new_instance.config.DEBUG = True
+    new_instance.name = "test_instance"
+
+    refreshed_instance = new_instance.refresh()
+
+    # Assertions
+    assert refreshed_instance is registered_instance  # Ensure it's now the registered instance
+    assert refreshed_instance.config.DEBUG is True  # Check the attribute was copied
+
+def test_refresh_server_info_assignment():
+    registered_instance = Sanic("test_instance")
+    Sanic._app_registry["test_instance"] = registered_instance
+
+    # Create a new instance with a different name
+    new_instance = Sanic("another_instance")
+    new_instance.state.server_info = {"info": "example"}
+
+    new_instance.name = "test_instance"
+
+    refreshed_instance = new_instance.refresh()
+
+    # Assertions
+    assert refreshed_instance is registered_instance
+    assert refreshed_instance.state.server_info == {"info": "example"}
+
+def test_refresh_with_multiplexer():
+    # Create an instance with multiplexer attribute
+    app = Sanic("test_app")
+    app.multiplexer = Mock()
+
+    refreshed_instance = app.refresh()
+
+    # Assertions
+    assert hasattr(refreshed_instance, "multiplexer")
+    refreshed_instance.multiplexer.lock.assert_called_once()

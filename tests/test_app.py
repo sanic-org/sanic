@@ -714,3 +714,48 @@ def test_refresh_with_multiplexer():
     # Assertions
     assert hasattr(refreshed_instance, "multiplexer")
     refreshed_instance.multiplexer.lock.assert_called_once()
+
+def app():
+    return Sanic("test_app")
+
+
+def test_purge_with_none_task(app):
+    app._task_registry = {
+        "task1": None
+    }
+    
+    app.purge_tasks()  
+    assert len(app._task_registry) == 0, "Task registry should be empty after purging a None task"
+
+
+def test_purge_with_all_tasks_done_or_cancelled(app):
+    task1 = asyncio.Future()
+    task1.set_result(None)  
+    task2 = asyncio.Future()
+    task2.cancel()  
+
+    app._task_registry = {
+        "task1": task1,
+        "task2": task2
+    }
+    
+    app.purge_tasks() 
+    assert len(app._task_registry) == 0, "Task registry should be empty after purging only done and cancelled tasks"
+
+
+def test_purge_with_mixed_tasks(app):
+    task1 = asyncio.Future()
+    task1.set_result(None)  # Done
+    task2 = asyncio.Future()
+    task2.cancel()  # Cancelled
+    task3 = asyncio.Future()  # Still pending
+
+    app._task_registry = {
+        "task1": task1,
+        "task2": task2,
+        "task3": task3
+    }
+
+    app.purge_tasks() 
+    assert len(app._task_registry) == 1, "Task registry should have one task left"
+    assert "task3" in app._task_registry, "Only the pending task should remain"

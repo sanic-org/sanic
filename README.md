@@ -1,9 +1,6 @@
-Report for Assignment 1
+# Report for Assignment 1
 
-Sanic
-
-
-
+## Sanic
 
 
 Name: Group 102
@@ -27,9 +24,9 @@ Programming language: Python
 
 
 
-Coverage measurement
+## Coverage measurement
 
-Existing tool :
+### Existing tool
 
 The existing tool that was used for the coverage measurement is Coverage.py which was provided in the gitbook. To execute the tool, we implemented “pip install coverage”. Based on that we either used the command “python -m coverage run -m pytest” for windows and “coverage run -m pytest” for mac which ran the coverage. We also added the modules required to run it such as “pip install sanic” and other required modules. Based on that, “python -m coverage report” was used to generate the report and it was exported as an html via “python -m coverage html”.
 
@@ -43,7 +40,7 @@ The existing tool that was used for the coverage measurement is Coverage.py whic
 
 
 
-
+### Your own coverage tool
 Group member name: Medon Abraham 
 
 Function 1 name:  def _poll_monitor(self) -> Optional[MonitorCycle]:
@@ -118,7 +115,7 @@ Coverage after tests:
 
 
 
-Coverage improvement: 39%
+## Coverage improvement: 39%
 
 
 
@@ -146,7 +143,7 @@ Coverage after tests:
 
 
 
-Coverage improvement: 50%
+## Coverage improvement: 50%
 
 
 
@@ -176,7 +173,7 @@ Coverage after tests:
 
 
 
-Coverage improvement: 33%
+## Coverage improvement: 33%
 
 Reason: The test cases now account for situations where the app is not an instance of a Sanic app, and presents two test cases where the name of the app is in the registry and not in it.
 
@@ -217,7 +214,7 @@ Function after Instrumentation:
 
 
 
-Tests:
+### Individual tests
 
  
 
@@ -228,7 +225,7 @@ Coverage after Tests:
 
 
 
-Coverage improvement:
+## Coverage improvement:
 25% improvement, from 75% to 100%
 
 Elaboration:
@@ -267,7 +264,7 @@ Tests 1:
 <Provide a screenshot of the new coverage results>
 
 
-<State the coverage improvement with a number and elaborate on why the coverage is improved>
+<State the ## Coverage improvement with a number and elaborate on why the coverage is improved>
 
 The improvement went from 40% to 100% which is an increase of 60%. The reason why the coverage has improved is because of 
 
@@ -295,7 +292,7 @@ Overview of uncovered lines:
 Function Instrumentation:
 
 
-Tests:
+### Individual tests
 
 
 
@@ -308,7 +305,7 @@ Tests:
 
 
 
-<State the coverage improvement with a number and elaborate on why the coverage is improved>
+<State the ## Coverage improvement with a number and elaborate on why the coverage is improved>
 
 The improvement went from 69% to 100% which is an improvement of 31%. The reason why the coverage has improved is because 
 
@@ -353,7 +350,7 @@ Function Coverage after instrumentation:
 
 
 
-Tests:
+### Individual tests
 
 
 
@@ -366,7 +363,7 @@ coverage after tests:
 
 
 
-Coverage improvement:
+## Coverage improvement:
 
 The coverage increased  26%, from 71% to 97% after the instrumentation and enhancing the tests in the test file.
 
@@ -402,8 +399,7 @@ Function Coverage after instrumentation:
 
 
 
-Tests:
-
+### Individual tests
 
 
 
@@ -412,7 +408,7 @@ coverage after tests:
 
 
 
-Coverage improvement:
+## Coverage improvement:
 
 The coverage increased  21%, from 79% to 100% after the instrumentation and enhancing the tests in the test file.
 

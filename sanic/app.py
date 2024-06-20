@@ -114,6 +114,7 @@ ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
 refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False}
+purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 
 
 class Sanic(
@@ -1876,13 +1877,21 @@ class Sanic(
         """
         for key, task in self._task_registry.items():
             if task is None:
+                purge_branch_coverage["purge_b1"] = True
                 continue
             if task.done() or task.cancelled():
+                purge_branch_coverage["purge_b1"] = True
                 self._task_registry[key] = None
 
         self._task_registry = {
             k: v for k, v in self._task_registry.items() if v is not None
         }
+
+    def print_apply_coverage():
+        for branch, hit in purge_branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+
+    print_apply_coverage()
 
     def shutdown_tasks(
         self, timeout: Optional[float] = None, increment: float = 0.1

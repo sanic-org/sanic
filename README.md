@@ -442,4 +442,146 @@ Jana:
 Medon
 
 
+## Own coverage tool
+### Medon Abraham
+
+*Function 1:* def ack(self) -> None:
+
+*Intrumented code*
+
+```
+ack_branch_coverage = {
+    "ack_has_multiplexer" : False,
+    "ack_no_multiplexer" : False}
+    
+
+def ack(self) -> None:
+        if hasattr(self, "multiplexer"):
+            ack_branch_coverage["ack_has_multiplexer"] = True
+            self.multiplexer.ack()
+        else:
+            ack_branch_coverage["ack_no_multiplexer"] = True
+    def print_ack_coverage():
+        for branch, hit in ack_branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+```
+
+
+*Result Output by Instrumentation*
+
+![alt text](Screenshots/Medon/Ack_instrumentation_result_before.png "instrumentation result")
+
+*Function 2:* def _poll_monitor(self) -> Optional[MonitorCycle]
+
+*Intrumented code*
+
+```
+
+monitor_branch_coverage = {
+        "polled_message": False,
+        "empty_message": False,
+        "terminate_message": False,
+        "tuple_message": False,
+        "invalid_message": False,
+        "default_message": False,
+        "no_message": False,
+    }
+
+    def _poll_monitor(self) -> Optional[MonitorCycle]:
+        if self.monitor_subscriber.poll(0.1):
+            monitor_branch_coverage["polled_message"] = True
+            message = self.monitor_subscriber.recv()
+            logger.debug(f"Monitor message: {message}", extra={"verbosity": 2})
+            if not message:
+                monitor_branch_coverage["empty_message"] = True
+                return MonitorCycle.BREAK
+            elif message == "__TERMINATE__":
+                monitor_branch_coverage["terminate_message"] = True
+                self._handle_terminate()
+                return MonitorCycle.BREAK
+            elif isinstance(message, tuple) and (
+                len(message) == 7 or len(message) == 8
+            ):
+                monitor_branch_coverage["tuple_message"] = True
+                self._handle_manage(*message)  # type: ignore
+                return MonitorCycle.CONTINUE
+            elif not isinstance(message, str):
+                monitor_branch_coverage["invalid_message"] = True
+                error_logger.error(
+                    "Monitor received an invalid message: %s", message
+                )
+                return MonitorCycle.CONTINUE
+            monitor_branch_coverage["default_message"] = True
+            return self._handle_message(message)
+    
+        monitor_branch_coverage["no_message"] = True
+        return None
+
+    def print_monitor_coverage(self):
+        for branch, hit in monitor_branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+```
+
+*Result Output by Instrumentation*
+
+![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_before.png "instrumentation result")
+
+## Coverage improvement
+
+### Individual tests
+
+### Medon Abraham
+*Function 1: Tests in test_app.py* 
+
+*Old Covergae Results*
+![alt text](Screenshots/Medon/Ack_coverage_initial.png "instrumentation result")
+
+![alt text](Screenshots/Medon/Ack_coverage_details.png "instrumentation result")
+
+
+*Added Test*
+```
+def test_myclass_ack_method(app: Sanic):
+   
+    print("\nBranch coverage before: ")
+    Sanic.print_ack_coverage()
+    print("\n")
+
+    app.multiplexer = Mock()
+    app.ack()
+   
+    app.multiplexer.ack.assert_called_once()
+    app.multiplexer.reset_mock()
+
+    del app.multiplexer 
+    app.ack()
+
+    print("\nBranch coverage after: ")
+    Sanic.print_ack_coverage()
+    print("\n")
+
+    with pytest.raises(AttributeError):
+        app.multiplexer.ack.assert_not_called()
+
+```
+
+*New Coverage*
+![alt text](Screenshots/Medon/Ack_coverage_after.png "instrumentation result")
+
+![alt text](Screenshots/Medon/Ack_coverage_details_after.png "instrumentation result")
+
+
+*Coverage Improvement* : 50%
+
+
+<Test 2>
+*Function 1: Tests in test_manager.py* 
+
+<Provide the same kind of information provided for Test 1>
+
+
+
+
+
+
 

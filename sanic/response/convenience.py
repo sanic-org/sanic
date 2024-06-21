@@ -208,9 +208,18 @@ async def validate_file(
     validate_branches["file_modified"] = True
     return None
 
-def print_coverage():
+def print_validate_coverage(app):
+    hits = 0
     for branch, hit in validate_branches.items():
-        print(f"{branch} was {'hit' if hit else 'not hit'}")
+        if hit:
+            print(f"{branch} was hit")
+            hits += 1
+        else:
+            print(f"{branch} was not hit")
+    
+    coverage_percentage = (hits / len(validate_branches)) * 100
+    print(f"\nCoverage: {hits}/{len(validate_branches)} branches hit ({coverage_percentage:.2f}%)")
+
 
 async def file(
     location: Union[str, PurePath],

@@ -6,7 +6,28 @@ from sanic import Sanic, headers, json, text
 from sanic.exceptions import InvalidHeader, PayloadTooLarge
 from sanic.http import Http
 from sanic.request import Request
+from sanic.headers import MediaType  
 
+def stringParameters():
+    mediaTypes = MediaType("application", "json")
+    
+    with pytest.raises(ValueError):
+        mediaTypes == "application/json; charset=utf-8"
+
+def mediaType():
+    mediaTypes1 = MediaType("application", "json")
+    mediaTypes2 = MediaType("application", "json")
+    assert mediaTypes1 == mediaTypes2
+
+def differentMedias():
+    mediaTypes1 = MediaType("application", "json")
+    mediaTypes2 = MediaType("text", "plain")
+    assert mediaTypes1 != mediaTypes2
+
+def differentData():
+    mediaType = MediaType("application", "json")
+    results = mediaType == 102  
+    assert results is False
 
 def make_request(headers) -> Request:
     return Request(b"/", headers, "1.1", "GET", None, None)
@@ -469,3 +490,8 @@ def test_multiple_fields_accessor(app: Sanic):
         "/", headers=(("Example-Field", "Foo, Bar"), ("Example-Field", "Baz"))
     )
     assert response.json["field"] == "Foo, Bar,Baz"
+
+stringParameters()
+mediaType()
+differentMedias()
+differentData()

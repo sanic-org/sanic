@@ -575,10 +575,99 @@ def test_myclass_ack_method(app: Sanic):
 *Coverage Improvement* : 50%
 
 
-<Test 2>
-*Function 1: Tests in test_manager.py* 
 
-<Provide the same kind of information provided for Test 1>
+*Function 2: Tests in test_manager.py* 
+
+
+*Old Covergae Results*
+![alt text](Screenshots/Medon/PollMonitor_coverage_initial.png "instrumentation result")
+
+![alt text](Screenshots/Medon/PollMonitor_coverage_details_before.png "instrumentation result")
+
+
+
+*Added Test*
+
+```
+@pytest.fixture
+def worker_manager():
+    p1 = Mock()
+    p1.pid = 1234
+    context = Mock()
+    context.Process.return_value = p1
+    pub = Mock()
+    sub = Mock()
+    manager = WorkerManager(1, fake_serve, {}, context, (pub, sub), {})
+    manager._handle_terminate = Mock()
+    manager._handle_manage = Mock()
+    manager._handle_message = Mock()
+    return manager
+
+def test_init_monitor_coverage(worker_manager):
+    print("\nBranch coverage before: ")
+    worker_manager.print_monitor_coverage()
+    print("\n")
+
+def test_poll_monitor_no_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = False 
+    result = worker_manager._poll_monitor()
+    assert result is None 
+
+def test_poll_monitor_empty_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True 
+    worker_manager.monitor_subscriber.recv.return_value = "" 
+    result = worker_manager._poll_monitor()
+    assert result ==  MonitorCycle.BREAK  
+
+
+def test_poll_monitor_terminate_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = "__TERMINATE__" 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_terminate.assert_called_once()
+    assert result == MonitorCycle.BREAK
+
+
+def test_poll_monitor_valid_tuple_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = (1, 2, 3, 4, 5, 6, 7) 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_manage.assert_called_once_with(1, 2, 3, 4, 5, 6, 7)
+    assert result == MonitorCycle.CONTINUE
+
+
+def test_poll_monitor_invalid_message_type(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = 12345 
+    result = worker_manager._poll_monitor()
+    assert result == MonitorCycle.CONTINUE
+
+
+def test_poll_monitor_handle_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = "Valid_Message" 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_message.assert_called_once_with("Valid_Message")
+    assert result is not None 
+
+
+def test_post_monitor_coverage(worker_manager):
+    print("\nBranch coverage after: ")
+    worker_manager.print_monitor_coverage()
+    print("\n")
+
+```
+
+*New Coverage*
+
+![alt text](Screenshots/Medon/PolMonitor_coverage_after.png "instrumentation result")
+
+![alt text](Screenshots/Medon/PollMonitor_coverage_details_after.png "instrumentation result")
+
+![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_after.png "instrumentation result")
+
+
+*Coverage Improvement* : 55%
 
 
 

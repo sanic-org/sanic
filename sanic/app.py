@@ -113,7 +113,7 @@ if OS_IS_WINDOWS:  # no cov
 ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
-branch_coverage = {
+ack_branch_coverage = {
     "ack_has_multiplexer" : False,
     "ack_no_multiplexer" : False
 
@@ -2416,16 +2416,17 @@ class Sanic(
         ready to begin operation.
         """
         if hasattr(self, "multiplexer"):
-            branch_coverage["ack_has_multiplexer"] = True
+            ack_branch_coverage["ack_has_multiplexer"] = True
             self.multiplexer.ack()
         else:
-            branch_coverage["ack_no_multiplexer"] = True
+            ack_branch_coverage["ack_no_multiplexer"] = True
 
-    def print_coverage():
-        for branch, hit in branch_coverage.items():
+    def print_ack_coverage():
+        overall = 0
+        for branch, hit in ack_branch_coverage.items():
+            if hit: overall += 1
             print(f"{branch} was {'hit' if hit else 'not hit'}")
-
-    print_coverage()
+            print(f"Coverage: {round(overall/len(ack_branch_coverage),2) * 100} %")
 
 
     def set_serving(self, serving: bool) -> None:

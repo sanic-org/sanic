@@ -676,13 +676,26 @@ def test_refresh_pass_passthru_data_to_new_instance(app: Sanic):
 
 
 def test_myclass_ack_method(app: Sanic):
-    
+   
+    print("\nCovergae before: ")
+    Sanic.print_ack_coverage()
+    print("\n")
+
     app.multiplexer = Mock()
     app.ack()
-
+   
     app.multiplexer.ack.assert_called_once()
     app.multiplexer.reset_mock()
 
     del app.multiplexer 
     app.ack()
+
+    print("\nCovergae after: ")
+    Sanic.print_ack_coverage()
+    print("\n")
+
+
     app.multiplexer.ack.assert_not_called()
+   
+
+

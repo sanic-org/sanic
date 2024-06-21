@@ -22,7 +22,7 @@ else:
     SIGKILL = SIGINT
 
 
-branch_coverage = {
+monitor_branch_coverage = {
         "polled_message": False,
         "empty_message": False,
         "terminate_message": False,
@@ -462,39 +462,40 @@ class WorkerManager:
    
     def _poll_monitor(self) -> Optional[MonitorCycle]:
         if self.monitor_subscriber.poll(0.1):
-            branch_coverage["polled_message"] = True
+            monitor_branch_coverage["polled_message"] = True
             message = self.monitor_subscriber.recv()
             logger.debug(f"Monitor message: {message}", extra={"verbosity": 2})
             if not message:
-                branch_coverage["empty_message"] = True
+                monitor_branch_coverage["empty_message"] = True
                 return MonitorCycle.BREAK
             elif message == "__TERMINATE__":
-                branch_coverage["terminate_message"] = True
+                monitor_branch_coverage["terminate_message"] = True
                 self._handle_terminate()
                 return MonitorCycle.BREAK
             elif isinstance(message, tuple) and (
                 len(message) == 7 or len(message) == 8
             ):
-                branch_coverage["tuple_message"] = True
+                monitor_branch_coverage["tuple_message"] = True
                 self._handle_manage(*message)  # type: ignore
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
-                branch_coverage["invalid_message"] = True
+                monitor_branch_coverage["invalid_message"] = True
                 error_logger.error(
                     "Monitor received an invalid message: %s", message
                 )
                 return MonitorCycle.CONTINUE
-            branch_coverage["default_message"] = True
+            monitor_branch_coverage["default_message"] = True
             return self._handle_message(message)
     
-        branch_coverage["no_message"] = True
+        monitor_branch_coverage["no_message"] = True
         return None
 
-    def print_coverage():
-        for branch, hit in branch_coverage.items():
+    def print_monitor_coverage(self):
+        overall = 0
+        for branch, hit in monitor_branch_coverage.items():
+            if hit: overall += 1
             print(f"{branch} was {'hit' if hit else 'not hit'}")
-
-    print_coverage()
+            print(f"Coverage: {round((overall/len(monitor_branch_coverage)),2) * 100} %")
 
 
     def _handle_terminate(self) -> None:

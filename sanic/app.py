@@ -2171,11 +2171,10 @@ class Sanic(
             unregister_branches["name_in_registry"] = True
             del cls._app_registry[name]
     
-    def print_unregister_coverage(app):
+    def print_unregister_coverage():
         for branch, hit in unregister_branches.items():
             print(f"{branch} was {'hit' if hit else 'not hit'}")
-
-
+    
     @classmethod
     def get_app(
         cls, name: Optional[str] = None, *, force_create: bool = False

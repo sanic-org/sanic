@@ -22,7 +22,6 @@ from sanic.router import Route
 
 from .conftest import get_port
 
-
 @pytest.fixture(autouse=True)
 def clear_app_registry():
     Sanic._app_registry = {}
@@ -352,6 +351,11 @@ def test_app_registry_retrieval_from_multiple():
     Sanic("something_else")
     assert Sanic.get_app("test") is instance
 
+def test_initial_print_unregister_coverage():
+    print("Before: \n")
+    Sanic.print_unregister_coverage()
+    print("\n")
+
 def test_unregister_non_sanic_instance():
     # create non sanic object
     non_sanic = object()
@@ -385,9 +389,10 @@ def test_unsuccessful_unregister_non_registered_sanic_app():
 
     assert app.name not in Sanic._app_registry
 
-def test_print_unregister_coverage(app):
-    Sanic.print_unregister_coverage(app)
-
+def test_final_print_unregister_coverage():
+    print("After: \n")
+    Sanic.print_unregister_coverage()
+    print("\n")
 
 def test_get_app_does_not_exist():
     with pytest.raises(

@@ -8,6 +8,14 @@ from urllib.parse import unquote
 from sanic.exceptions import InvalidHeader
 from sanic.helpers import STATUS_CODES
 
+branch_coverage = {
+    "headBranch1": False,  
+    "headBranch2": False,
+    "headBranch3": False,
+    "headBranch4": False,
+    "headBranch5": False,
+    "headBranch6": False,
+}
 
 # TODO:
 # - the Options object should be a typed object to allow for less casting
@@ -74,14 +82,24 @@ class MediaType:
         """Check for mime (str or MediaType) identical type/subtype.
         Parameters such as q are not considered."""
         if isinstance(other, str):
+            branch_coverage["headBranch1"] = True
             # Give a friendly reminder if str contains parameters
             if ";" in other:
+                branch_coverage["headBranch2"] = True
                 raise ValueError("Use match() to compare with parameters")
+            branch_coverage["headBranch3"] = True
             return self.mime == other
+        branch_coverage["headBranch4"] = True
         if isinstance(other, MediaType):
             # Ignore parameters silently with MediaType objects
+            branch_coverage["headBranch5"] = True
             return self.mime == other.mime
+        branch_coverage["headBranch6"] = True
         return NotImplemented
+
+    def print_coverage():
+        for branch, hit in branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
 
     def match(
         self,

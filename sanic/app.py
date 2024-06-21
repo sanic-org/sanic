@@ -2172,8 +2172,16 @@ class Sanic(
             del cls._app_registry[name]
     
     def print_unregister_coverage():
+        hits = 0
         for branch, hit in unregister_branches.items():
-            print(f"{branch} was {'hit' if hit else 'not hit'}")
+            if hit:
+                print(f"{branch} was hit")
+                hits += 1
+            else:
+                print(f"{branch} was not hit")
+    
+        coverage_percentage = (hits / len(unregister_branches)) * 100
+        print(f"\nCoverage: {hits}/{len(unregister_branches)} branches hit ({coverage_percentage:.2f}%)")
     
     @classmethod
     def get_app(

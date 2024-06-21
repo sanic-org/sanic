@@ -569,6 +569,7 @@ def test_myclass_ack_method(app: Sanic):
 ![alt text](Screenshots/Medon/Ack_coverage_after.png "instrumentation result")
 
 ![alt text](Screenshots/Medon/Ack_coverage_details_after.png "instrumentation result")
+![alt text](Screenshots/Medon/Ack_instrumentation_after.png "instrumentation result")
 
 
 *Coverage Improvement* : 50%

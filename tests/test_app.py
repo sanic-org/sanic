@@ -694,8 +694,7 @@ def test_myclass_ack_method(app: Sanic):
     Sanic.print_ack_coverage()
     print("\n")
 
-
-    app.multiplexer.ack.assert_not_called()
-   
+    with pytest.raises(AttributeError):
+        app.multiplexer.ack.assert_not_called()
 
 

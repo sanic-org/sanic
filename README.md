@@ -445,7 +445,12 @@ Medon
 ## Own coverage tool
 ### Medon Abraham
 
-***Function 1:*** def ack(self) -> None:
+**Function 1:** *def ack(self) -> None:*
+
+The first function I choose to further analyze and improve is the def ack(self) -> None function in app.py.
+The ack function in the provided code is designed to send an acknowledgment (ack) message to a Server Manager, indicating that a process is operational and ready to begin its work.
+
+The dictionary ack_branch_coverage is used to instrument the function and track which branch of the if-else statement was executed. The result output by the instrumentation shows that *ack_has_multiplexer* branch is not hit.
 
 *Intrumented code*
 
@@ -471,7 +476,15 @@ def ack(self) -> None:
 
 ![alt text](Screenshots/Medon/Ack_instrumentation_result_before.png "instrumentation result")
 
-***Function 2:*** def _poll_monitor(self) -> Optional[MonitorCycle]
+**Function 2:** *def _poll_monitor(self) -> Optional[MonitorCycle]*
+
+The second funtion I choose to analyze and improve is def _poll_monitor(self) -> Optional[MonitorCycle] in manager.py.
+
+The _poll_monitor function polls for messages from a monitor_subscriber with a timeout of 0.1 seconds, processes each message based on its content, and determines the appropriate action. If a message is received, it logs the message and checks if it is empty, a termination signal (__TERMINATE__), a tuple with 7 or 8 elements, or an invalid type. Based on these checks, it either handles the termination, manages the tuple, logs an error for invalid messages, or processes other messages appropriately, returning either MonitorCycle.BREAK or MonitorCycle.CONTINUE.
+
+
+The monitor_branch_coverage is a dictionary initialized with keys representing different branches within the _poll_monitor function. Initially, all values are set to False. The result output by the instrumentation shows that *terminate_message*, *tuple_message*, *invalid_messsage*, and *no_message* branches were not hit. 
+
 
 *Intrumented code*
 
@@ -526,20 +539,34 @@ monitor_branch_coverage = {
 
 ![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_before.png "instrumentation result")
 
+
 ## Coverage improvement
 
 ### Individual tests
 
 ### Medon Abraham
-***Function 1: Tests in test_app.py***
+**Function 1:** *def ack(self) -> None:*
 
 *Old Covergae Results*
+
+The initial covergae of the function is **50%**
+
 ![alt text](Screenshots/Medon/Ack_coverage_initial.png "instrumentation result")
 
 ![alt text](Screenshots/Medon/Ack_coverage_details.png "instrumentation result")
 
-
 *Added Test*
+
+The test_myclass_ack_method function is designed to test the ack method and to ensure that both branches of the ack method are covered during testing.
+
+To test for *ack_has_multiplexer*:
++ The app.multiplexer attribute is set to a mock object Mock(), simulating an environment where the multiplexer attribute exists.
++ The ack method is called on the app instance, which should trigger the branch where multiplexer is present. The test asserts that the ack method on the multiplexer mock object was called exactly once, verifying that this branch was executed.
+
+To test for *ack_no_multiplexer*:
++ The multiplexer attribute is deleted from the app instance using del app.multiplexer, simulating an environment where the multiplexer attribute does not exist.
++ The ack method is called again on the app instance, which should trigger the branch where multiplexer is absent.
+  
 ```
 def test_myclass_ack_method(app: Sanic):
    
@@ -565,28 +592,46 @@ def test_myclass_ack_method(app: Sanic):
 
 ```
 
+
+
 *New Coverage*
+
+After running the tests, the function calls Sanic.print_ack_coverage() again to print the updated branch coverage, showing that all branches were hit during the test execution.
+
 ![alt text](Screenshots/Medon/Ack_coverage_after.png "instrumentation result")
 
 ![alt text](Screenshots/Medon/Ack_coverage_details_after.png "instrumentation result")
+
 ![alt text](Screenshots/Medon/Ack_instrumentation_result_after.png "instrumentation result")
 
 
-*Coverage Improvement* : 50%
+
+Coverage Improvement : *50%*
 
 
-
-*Function 2: Tests in test_manager.py* 
-
+**Function 2:** *def _poll_monitor(self) -> Optional[MonitorCycle]*
 
 *Old Covergae Results*
+
+The initial covergae of the function is **55%**
+
 ![alt text](Screenshots/Medon/PollMonitor_coverage_initial.png "instrumentation result")
 
 ![alt text](Screenshots/Medon/PollMonitor_coverage_details_before.png "instrumentation result")
 
 
-
 *Added Test*
+
+These test cases are designed to thoroughly test the _poll_monitor method of the WorkerManager class, ensuring that all possible branches and code paths are executed. 
++ test_init_monitor_coverage: This test prints the branch coverage before any tests are run, providing a baseline for the initial state.
++ test_poll_monitor_no_message: Simulates a scenario where the monitor_subscriber does not receive any message (poll returns False).  
++ test_poll_monitor_empty_message: Simulates receiving an empty message (recv returns an empty string). Asserts that the result is MonitorCycle.BREAK.
++ test_poll_monitor_terminate_message: Simulates receiving the termination message (recv returns "__TERMINATE__"). Asserts that the _handle_terminate method is called and the result is MonitorCycle.BREAK.
++ test_poll_monitor_valid_tuple_message: Simulates receiving a valid tuple message with 7 elements (recv returns a tuple of 7 elements). Asserts that the _handle_manage method is called with the correct arguments and the result is MonitorCycle.CONTINUE.
++ test_poll_monitor_invalid_message_type: Simulates receiving a message of an invalid type (not a string) (recv returns an integer).Asserts that the result is MonitorCycle.CONTINUE.
++ test_poll_monitor_handle_message: Simulates receiving a valid string message (recv returns "Valid_Message"). Asserts that the _handle_message method is called with the correct argument and that the result is not None
+
+
 
 ```
 @pytest.fixture
@@ -660,6 +705,9 @@ def test_post_monitor_coverage(worker_manager):
 
 *New Coverage*
 
+
+After running the tests, the function test_post_monitor_coverage prints the updated branch coverage, showing that all branches were hit during the test execution.
+
 ![alt text](Screenshots/Medon/PolMonitor_coverage_after.png "instrumentation result")
 
 ![alt text](Screenshots/Medon/PollMonitor_coverage_details_after.png "instrumentation result")
@@ -667,7 +715,7 @@ def test_post_monitor_coverage(worker_manager):
 ![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_after.png "instrumentation result")
 
 
-*Coverage Improvement* : 55%
+Coverage Improvement : *55%*
 
 
 

@@ -491,12 +491,8 @@ class WorkerManager:
         return None
 
     def print_monitor_coverage(self):
-        overall = 0
         for branch, hit in monitor_branch_coverage.items():
-            if hit: overall += 1
             print(f"{branch} was {'hit' if hit else 'not hit'}")
-            print(f"Coverage: {round((overall/len(monitor_branch_coverage)),2) * 100} %")
-
 
     def _handle_terminate(self) -> None:
         self.shutdown()

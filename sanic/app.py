@@ -2422,11 +2422,8 @@ class Sanic(
             ack_branch_coverage["ack_no_multiplexer"] = True
 
     def print_ack_coverage():
-        overall = 0
         for branch, hit in ack_branch_coverage.items():
-            if hit: overall += 1
             print(f"{branch} was {'hit' if hit else 'not hit'}")
-            print(f"Coverage: {round(overall/len(ack_branch_coverage),2) * 100} %")
 
 
     def set_serving(self, serving: bool) -> None:

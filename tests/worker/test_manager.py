@@ -209,7 +209,7 @@ def worker_manager():
     return manager
 
 def test_init_monitor_coverage(worker_manager):
-    print("\nCovergae before: ")
+    print("\nBranch coverage before: ")
     worker_manager.print_monitor_coverage()
     print("\n")
 
@@ -257,7 +257,7 @@ def test_poll_monitor_handle_message(worker_manager):
 
 
 def test_post_monitor_coverage(worker_manager):
-    print("\nCoverage after: ")
+    print("\nBranch coverage after: ")
     worker_manager.print_monitor_coverage()
     print("\n")
 

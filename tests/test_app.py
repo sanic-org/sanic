@@ -677,7 +677,7 @@ def test_refresh_pass_passthru_data_to_new_instance(app: Sanic):
 
 def test_myclass_ack_method(app: Sanic):
    
-    print("\nCovergae before: ")
+    print("\nBranch coverage before: ")
     Sanic.print_ack_coverage()
     print("\n")
 
@@ -690,7 +690,7 @@ def test_myclass_ack_method(app: Sanic):
     del app.multiplexer 
     app.ack()
 
-    print("\nCovergae after: ")
+    print("\nBranch coverage after: ")
     Sanic.print_ack_coverage()
     print("\n")
 

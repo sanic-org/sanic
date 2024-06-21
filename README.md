@@ -445,7 +445,7 @@ Medon
 ## Own coverage tool
 ### Medon Abraham
 
-*Function 1:* def ack(self) -> None:
+***Function 1:*** def ack(self) -> None:
 
 *Intrumented code*
 
@@ -471,7 +471,7 @@ def ack(self) -> None:
 
 ![alt text](Screenshots/Medon/Ack_instrumentation_result_before.png "instrumentation result")
 
-*Function 2:* def _poll_monitor(self) -> Optional[MonitorCycle]
+***Function 2:*** def _poll_monitor(self) -> Optional[MonitorCycle]
 
 *Intrumented code*
 
@@ -531,7 +531,7 @@ monitor_branch_coverage = {
 ### Individual tests
 
 ### Medon Abraham
-*Function 1: Tests in test_app.py* 
+***Function 1: Tests in test_app.py***
 
 *Old Covergae Results*
 ![alt text](Screenshots/Medon/Ack_coverage_initial.png "instrumentation result")

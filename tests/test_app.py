@@ -340,7 +340,6 @@ def test_app_registry_name_reuse():
     Sanic.test_mode = True
     Sanic("test")
 
-
 def test_app_registry_retrieval():
     instance = Sanic("test")
     assert Sanic.get_app("test") is instance

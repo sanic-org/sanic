@@ -188,11 +188,9 @@ File(type='application/octet-stream', body=b'hello\n', name='TEST')
 
 デフォルトでは `request.ctx` オブジェクトは `SimpleNamespace` オブジェクトで、任意の属性を設定できます。 Sanicはこのオブジェクトを何にも使用しないので、名前の衝突を心配することなく自由に使用できます。
 
-````python
+### 典型的な使用例
 
-### Typical use case
-
-This is often used to store items like authenticated user details. We will get more into [middleware](./middleware.md) later, but here is a simple example.
+これは、認証されたユーザーの詳細などのアイテムを格納するためによく使用されます。 あとで [middleware](./middleware.md) に入りますが、ここに簡単な例があります。
 
 ```python
 @app.on_request
@@ -204,7 +202,7 @@ async def hi_my_name_is(request):
     if not request.ctx.user:
         return text("Hmm... I don't know you)
     return text(f"Hi, my name is {request.ctx.user.name}")
-````
+```
 
 ご覧のとおり、 `request. tx`オブジェクトは、複数のハンドラにアクセスするために必要な情報を格納するのに最適な場所です。 しかし、format@@0(./middleware) で学びます。 d)を使用して、別のミドルウェアから情報を保存することもできます。
 

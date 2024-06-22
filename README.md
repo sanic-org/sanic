@@ -442,9 +442,9 @@ eq_branch = {
 ### Medon Abraham
 **Function 1:** *def ack(self) -> None:*
 
-*Old Covergae Results*
+*Old Coverage Results*
 
-The initial covergae of the function is **50%**
+The initial coverage of the function is **50%**
 
 ![alt text](Screenshots/Medon/Ack_coverage_initial.png "instrumentation result")
 
@@ -506,9 +506,9 @@ Coverage Improvement : *50%*
 
 **Function 2:** *def _poll_monitor(self) -> Optional[MonitorCycle]*
 
-*Old Covergae Results*
+*Old Coverage Results*
 
-The initial covergae of the function is **55%**
+The initial coverage of the function is **55%**
 
 ![alt text](Screenshots/Medon/PollMonitor_coverage_initial.png "instrumentation result")
 
@@ -780,9 +780,9 @@ Coverage Improvement : *25%*
 ### Amirreza Darabi
 **Function 1:** *def refresh(self,passthru: Optional[Dict[str, Any]] = None,) -> Sanic:*
 
-*Old Covergae Results*
+*Old Coverage Results*
 
-The initial covergae of the function is **71%**
+The initial coverage of the function is **71%**
 
 ![alt text](Screenshots/Amir/Refresh_coverage_initial_percentage.png "instrumentation result")
 
@@ -874,9 +874,9 @@ Coverage Improvement : *26%*
 
 **Function 2:** *purge_tasks(self) -> None*
 
-*Old Covergae Results*
+*Old Coverage Results*
 
-The initial covergae of the function is **55%**
+The initial coverage of the function is **55%**
 
 ![alt text](Screenshots/Amir/Purge_coverage_initial_percentage.png "instrumentation result")
 
@@ -991,17 +991,21 @@ Coverage Improvement : *21%*
 The initial coverage of the def __extract_style is 40%
 
 ![alt text](Screenshots/Ayush/extract_style_coverage_initial.png "instrumentation result")
+
 ![alt text](Screenshots/Ayush/extract_style_coverage_details_before.png "instrumentation result")
+
+![alt text](Screenshots/Ayush/extract_style_instrumentation_after.png "instrumentation result")
+
 
 *Added Test*
 
 There are three tests added which are *expected_file_test*, *non_existing_file_test* and *no_files_test* functions which are to ensure that the branches that were not hit are now covered during testing. 
 
-*expected_file_test*: This test creates a CSS file with a specific CSS rule such that extract_style is called to check if the results matches the expected CSS rule. This ensures that the branch *maybe_path_exists* is hit.
+*expected_file_path_test*: This test creates a CSS file with a specific CSS rule such that extract_style is called to check if the results matches the expected CSS rule. This ensures that the branch *maybe_path_exists* is hit.
 
-*non_existing_file_test*: This test ensures that the *extract_style* function is able to handle non-existent files in which it calls the function for a non-existing file which checks for an empty string and ensures the proper handling for the scenario. This hits the *return_maybe_style* branch since this is when the code has no path file that exists which triggers the branch and returns maybe_style. It also triggers the *maybe_style_provided* since an existing and non existing files are provided which ensures that the branch is covered. 
+*non_existing_file_path_test*: This test ensures that the *extract_style* function is able to handle non-existent files in which it calls the function for a non-existing file which checks for an empty string and ensures the proper handling for the scenario. This hits the *return_maybe_style* branch since this is when the code has no path file that exists which triggers the branch and returns maybe_style. It also triggers the *maybe_style_provided* since an existing and non existing files are provided which ensures that the branch is covered. 
 
-*no_files_test*: This test is about calling *extract_style* with the paramater 'None' as the file. Then an assert is added to ensure the proper handling for the 'None' input whcih will check if there is an empty string. This hits the branch *no_maybe_path* since there is no valid path thus it returns an empty string.
+*no_files_path_test*: This test is about calling *extract_style* with the paramater 'None' as the file. Then an assert is added to ensure the proper handling for the 'None' input whcih will check if there is an empty string. This hits the branch *no_maybe_path* since there is no valid path thus it returns an empty string.
 
 ```
 def test_initial_print_extract_style():
@@ -1031,40 +1035,90 @@ def test_final_print_extract_style():
 
 ```
 
-
 *New Coverage*
 
 The function test_final_print_extract_style() prints out the updated branch coverage, showing that all the branches were hit during the test execution.
 
 ![alt text](Screenshots/Ayush/extract_style_coverage_after.png "instrumentation result")
+
 ![alt text](Screenshots/Ayush/extract_style_coverage_details_after.png "instrumentation result")
+
 ![alt text](Screenshots/Ayush/extract_style_instrumentation_after.png "instrumentation result")
 
 Coverage Improvement: 60%
 
 
+**Function 2**: * def __eq__(self, other):*
+
+*Old Coverage Results:*
+
+The initial coverage of the def __eq__ is 69%
+
+![alt text](Screenshots/Ayush/eq_coverage_initial.png "instrumentation result")
+
+![alt text](Screenshots/Ayush/eq_coverage_details_before.png "instrumentation result")
+
+![alt text](Screenshots/Ayush/eq_instrumentation_after.png "instrumentation result")
 
 
+*Added Test*
 
+These tests are designed to test the __eq__ function and to ensure that all possible branches and code paths are executed.
 
++ *test_eq_no_string_params*:
++ *test_eq_string_parameters*
++ *test_eq_media_type_equality*:
++ *test_eq_different_media_types*:
++ *test_eq_different_data_types*
 
+```
+def test_initial_print_eq_coverage():
+    print("\nBranch coverage before: ")
+    MediaType.print_eq_coverage()
+    print("\n")
 
+def test_eq_no_string_params():
+    media_type = MediaType("application", "json")
+    assert media_type == "application/json"
 
+def test_eq_string_parameters():
+    media_type = MediaType("application", "json")
+    with pytest.raises(ValueError):
+        media_type == "application/json; charset=utf-8"
 
+def test_eq_media_type_equality():
+    media_type1 = MediaType("application", "json")
+    media_type2 = MediaType("application", "json")
+    assert media_type1 == media_type2
 
+def test_eq_different_media_types():
+    media_type1 = MediaType("application", "json")
+    media_type2 = MediaType("text", "plain")
+    assert media_type1 != media_type2
 
+def test_eq_different_data_types():
+    media_type = MediaType("application", "json")
+    result = media_type == 102
+    assert result is False
 
+def test_final_print_eq_coverage():
+    print("\nBranch coverage after: ")
+    MediaType.print_eq_coverage()
+    print("\n")
 
+```
 
+*New Coverage*
 
+The function test_final_print_eq() prints out the updated branch coverage, showing that all the branches were hit during the test execution.
 
+![alt text](Screenshots/Ayush/eq_coverage_after.png "instrumentation result")
 
+![alt text](Screenshots/Ayush/eq_coverage_details_after.png "instrumentation result")
 
+![alt text](Screenshots/Ayush/eq_instrumentation_after.png "instrumentation result")
 
-
-
-
-
+Coverage Improvement: 31%
 
 
 ### Overall
@@ -1077,12 +1131,12 @@ Coverage Improvement: 60%
 
 ## Statement of individual contributions
 
-Amir: 
+**Amir**: 
 
-Ayush: I did smth
+**Ayush**: Throughout the project, I wrote about the number of lines of code and the tool used in the Readme file. I also described the how we used the existing tool to get the values for the coverage. I worked on two functions which are *extract_style* and *eq* in which I performed the coverage instrumentation and also added tests to achieve a code coverage of 100% for both functions.
 
-Jana:
+**Jana**:
 
-Medon
+**Medon**
 
 

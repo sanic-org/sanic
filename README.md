@@ -26,105 +26,7 @@ The existing tool that was used for the coverage measurement is Coverage.py whic
 
 
 
-### Your own coverage tool
 
-Group Member Name: Ayush Khadka
-
-
-Function 1 Name: def _extract_style(maybe_style: Optional[str], name: str) -> str:
-
-Function Coverage Before Instrumentation: 
-
-
-
-Overview of uncovered lines:
-
-
-Function Instrumentation:
-
-
-
-
-The coverage result outputted by the instrumentation is 
-
-Tests 1:
-
-
-
-
-<Provide a screenshot of the old coverage results >
-
-<Provide a screenshot of the new coverage results>
-
-
-<State the ## Coverage improvement with a number and elaborate on why the coverage is improved>
-
-The improvement went from 40% to 100% which is an increase of 60%. The reason why the coverage has improved is because of 
-
-
-
-
-
-
-
-
-
-
-
-
-
-Function 2 Name:  def __eq__(self, other):
-
-Function Coverage Before Instrumentation: 
-
-
-Overview of uncovered lines:
-
-
-
-Function Instrumentation:
-
-
-### Individual tests
-
-
-
-
-
-<Provide a screenshot of the old coverage results >
-
-
-<Provide a screenshot of the new coverage results>
-
-
-
-<State the ## Coverage improvement with a number and elaborate on why the coverage is improved>
-
-The improvement went from 69% to 100% which is an improvement of 31%. The reason why the coverage has improved is because 
-
-
-
-
-
-
-
-### Overall
-
-<Provide a screenshot of the old coverage results by running an existing tool (the same as you already showed above)>
-
-
-<Provide a screenshot of the new coverage results by running the existing tool using all test modifications made by the group>
-
-
-## Statement of individual contributions
-
-Amir: 
-
-Ayush: I did smth
-
-Jana:
-
-Medon
 
 
 ## Own coverage tool
@@ -992,5 +894,49 @@ After running the tests, the function test_final_purge_print prints the updated 
 
 
 Coverage Improvement : *21%*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Overall
+
+<Provide a screenshot of the old coverage results by running an existing tool (the same as you already showed above)>
+
+
+<Provide a screenshot of the new coverage results by running the existing tool using all test modifications made by the group>
+
+
+## Statement of individual contributions
+
+Amir: 
+
+Ayush: I did smth
+
+Jana:
+
+Medon
 
 

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from collections import deque, namedtuple
@@ -55,6 +56,9 @@ def transport(message_stack, receive, send):
 
 @pytest.fixture
 def protocol(transport):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    transport.loop = loop
     return transport.get_protocol()
 
 

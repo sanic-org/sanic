@@ -188,8 +188,6 @@ This can be constrasted with the `app.ctx` object which is shared across all req
 
 The `request.ctx` object by default is a `SimpleNamespace` object allowing you to set arbitrary attributes on it. Sanic will not use this object for anything, so you are free to use it however you want without worrying about name clashes.
 
-````python
-
 ### Typical use case
 
 This is often used to store items like authenticated user details. We will get more into [middleware](./middleware.md) later, but here is a simple example.
@@ -204,7 +202,7 @@ async def hi_my_name_is(request):
     if not request.ctx.user:
         return text("Hmm... I don't know you)
     return text(f"Hi, my name is {request.ctx.user.name}")
-````
+```
 
 As you can see, the `request.ctx` object is a great place to store information that you need to access in multiple handlers making your code more DRY and easier to maintain. But, as we will learn in the [middleware section](./middleware.md), you can also use it to store information from one middleware that will be used in another.
 

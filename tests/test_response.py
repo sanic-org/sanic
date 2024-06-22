@@ -709,7 +709,10 @@ def test_send_response_after_eof_should_fail(
         "response has at least partially been sent."
     )
 
-    error_msg2 = "Response stream was ended, no more response data is allowed to be sent."
+    error_msg2 = (
+        "Response stream was ended, no more response "
+        "data is allowed to be sent."
+    )
 
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/")

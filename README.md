@@ -839,6 +839,88 @@ After running the tests, the function test_post_monitor_coverage prints the upda
 Coverage Improvement : *55%*
 
 
+### Jana Abuasbeh
+**Function 1:** *def unregister_app(cls, app: Sanic) -> None:*
+
+*Old Coverage Results*
+
+The initial coverage of the function is **67%**:
+
+![alt text](Screenshots/Jana/unregister_app_coverage_before.png "instrumentation result")
+
+![alt text](Screenshots/Jana/unregister_app_line_by_line.png "instrumentation result")
+
+*Added Tests*
+
+The tests test_unregister_non_sanic_instance(), test_successful_unregister_sanic_app(), and test_unsuccessful_unregister_non_registered_sanic_app() are designed to test the unregister_app() method and to ensure that both branches of the ack method are covered during testing.
+
+To test for *not_an_instance*:
++ The test_unregister_non_sanic_instance() test improves branch coverage by attempting to unregister a non-sanic instance.
++ It triggers the 'not_an_instance' branch in the unregister_app function, ensuring that a SanicException is raised when a non-Sanic instance is passed. 
+
+To test for *name_in_registry*:
++  The test_successful_unregister_sanic_app() test improves branch coverage by successfully unregistering a registered Sanic app. 
++ It triggers the 'name_in_registry' branch ensuring that a registered Sanic app can be successfully unregistered (such that its name is no longer in the registry). 
+
+The test_unsuccessful_unregister_sanic_app() test improves branch coverage by attempting to unregister a non-registered Sanic app. This test does not hit any specific branch, but it ensures that the unregister_app function handles the case where the app to be unregistered is not in the registry without raising an exception.
+ 
+```
+def test_unregister_non_sanic_instance():
+	# create non sanic object
+	non_sanic = object()
+
+	# try to unregister it, should raise SanicException
+	with pytest.raises(SanicException) as exc_info:
+    	Sanic.unregister_app(non_sanic)
+
+	assert str(exc_info.value) == "Registered app must be an instance of Sanic"
+
+def test_successful_unregister_sanic_app():
+	# create new sanic app
+	app = Sanic("TestApp")
+
+	# manually register it if necessary
+	Sanic._app_registry[app.name] = app
+
+	Sanic.unregister_app(app)
+
+	# check if the name is not in the registry anymore
+	assert app.name not in Sanic._app_registry
+
+def test_unsuccessful_unregister_non_registered_sanic_app():
+	app = Sanic("UnregisteredApp")
+
+	# make sure it's not registered
+	if app.name in Sanic._app_registry:
+    	del Sanic._app_registry[app.name]
+
+	Sanic.unregister_app(app)
+
+	assert app.name not in Sanic._app_registry
+
+```
+
+*New Coverage*
+
+After running the tests, the function calls Sanic.print_unregister_coverage() again to print the updated branch coverage, demonstrating that all branches were hit during the test execution.
+
+![alt text](Screenshots/Jana/unregister_app_lines_after.png "instrumentation result")
+
+![alt text](Screenshots/Jana/unregister_app_instrumentation_after.png "instrumentation result")
+
+![alt text](Screenshots/Jana/unregister_app_coveragepy_after.png "instrumentation result")
+
+Coverage Improvement : *33%*
+
+**Function 2:** *async def validate_file(request_headers: Header, last_modified: Union[datetime, float, int]) -> Optional[HTTPResponse]:*
+
+*Old Coverage Results*
+
+The initial coverage of the function is **75%**
+
+![alt text](Screenshots/Jana/validate_file_coveragepy_before.png "instrumentation result")
+
+![alt text](Screenshots/Janavalidate_file_line_by_line_before.png "instrumentation result")
 
 
 

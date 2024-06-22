@@ -28,6 +28,84 @@ The existing tool that was used for the coverage measurement is Coverage.py whic
 
 ### Your own coverage tool
 
+Group Member Name: Ayush Khadka
+
+
+Function 1 Name: def _extract_style(maybe_style: Optional[str], name: str) -> str:
+
+Function Coverage Before Instrumentation: 
+
+
+
+Overview of uncovered lines:
+
+
+Function Instrumentation:
+
+
+
+
+The coverage result outputted by the instrumentation is 
+
+Tests 1:
+
+
+
+
+<Provide a screenshot of the old coverage results >
+
+<Provide a screenshot of the new coverage results>
+
+
+<State the ## Coverage improvement with a number and elaborate on why the coverage is improved>
+
+The improvement went from 40% to 100% which is an increase of 60%. The reason why the coverage has improved is because of 
+
+
+
+
+
+
+
+
+
+
+
+
+
+Function 2 Name:  def __eq__(self, other):
+
+Function Coverage Before Instrumentation: 
+
+
+Overview of uncovered lines:
+
+
+
+Function Instrumentation:
+
+
+### Individual tests
+
+
+
+
+
+<Provide a screenshot of the old coverage results >
+
+
+<Provide a screenshot of the new coverage results>
+
+
+
+<State the ## Coverage improvement with a number and elaborate on why the coverage is improved>
+
+The improvement went from 69% to 100% which is an improvement of 31%. The reason why the coverage has improved is because 
+
+
+
+
+
 
 Group member name :  Amirreza Darabi
 
@@ -474,99 +552,7 @@ purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 
 ![alt text](Screenshots/Amir/Purge_coverage_before.png "instrumentation result")
 
-### Ayush Khadka
 
-Function 1: *def _extract_style(maybe_style: Optional[str], name: str) -> str:*
-
-The function that was chosen to improve the coverage is the function _extract_style(maybe_style: Optional[str], name: str) -> str: in the css.py file. The purpose of this function is to retrieve contents from a css file. There are two ways of getting the content which are from the maybe_style which is an optional string representing a file path and from a default location. 
-
-The dictionary extract_style_branch is used to instrument the function and track which branch of the statements was executed. The result outputted by the instrumentation show that the branches maybe_style_provided, maybe_path_exists, return_maybe_style and no_maybe_path branches are not hit. 
-
-*Instrumented Code*
-
-```
-extract_style_branch = {
-    "maybe_style_provided": False,  
-    "maybe_path_exists": False,
-    "return_maybe_style": False,
-    "maybe_style_not_provided": False,
-    "maybe_path": False,
-    "no_maybe_path": False,
-}
-
-def _extract_style(maybe_style: Optional[str], name: str) -> str:
-    if maybe_style is not None:
-        extract_style_branch["maybe_style_provided"] = True
-        maybe_path = Path(maybe_style)
-        if maybe_path.exists():
-            extract_style_branch["maybe_path_exists"] = True
-            return maybe_path.read_text(encoding="UTF-8")
-        extract_style_branch["return_maybe_style"] = True
-        return maybe_style
-    extract_style_branch["maybe_style_not_provided"] = True
-    maybe_path = CURRENT_DIR / "styles" / f"{name}.css"
-    if maybe_path.exists():
-        extract_style_branch["maybe_path"] = True
-        return maybe_path.read_text(encoding="UTF-8")
-    extract_style_branch["no_maybe_path"] = True
-    return ""
-
-def print_extract_style_coverage():
-    for branch, hit in extract_style_branch.items():
-        print(f"{branch} was {'hit' if hit else 'not hit'}")
-
-```
-*Result Output by Instrumentation*
-
-![alt text](Screenshots/Ayush/extract_style_instrumentation_before.png "instrumentation result")
-
-Function 2: *def __eq__(self, other):*
-
-The function that was chosen to improve the coverage is the function *def __eq__(self, other):* in the headers.py file. The purpose of this function is to compare and to see if they repesent the same MIME type for (self) and (other). It checks for a string or MediaTypes. For the string comparison, if there are paramaters such as ; then it will raise an error due to the rule comparision. It compares self.mine with the provided string of (other) and if they match then it returns true otherwise false. If it is not a string then it checks for the MediaType and if that is true then it compares self.mine with other.mine it returns true if they are qual else it returns false. If a string or MediaType is not provided then it returns NotImplemented. 
-
-The dictionary eq_branch is used to instrument the function and track which branch of the statements was executed. The result outputted by the instrumentation show that all of the branches are not hit. 
-
-*Instrumented Code*
-
-```
-eq_branch = {
-    "is_str": False,  
-    "contains_params": False,
-    "no_params": False,
-    "not_str": False,
-    "is_media_type": False,
-    "not_media_type": False,
-}
-
-    def __eq__(self, other):
-        """Check for mime (str or MediaType) identical type/subtype.
-        Parameters such as q are not considered."""
-        if isinstance(other, str):
-            eq_branch["is_str"] = True
-            # Give a friendly reminder if str contains parameters
-            if ";" in other:
-                eq_branch["contains_params"] = True
-                raise ValueError("Use match() to compare with parameters")
-            eq_branch["no_params"] = True
-            return self.mime == other
-        eq_branch["not_str"] = True
-        if isinstance(other, MediaType):
-            # Ignore parameters silently with MediaType objects
-            eq_branch["is_media_type"] = True
-            return self.mime == other.mime
-        eq_branch["not_media_type"] = True
-        return NotImplemented
-    
-    def print_eq_coverage():
-        for branch, hit in eq_branch.items():
-            print(f"{branch} was {'hit' if hit else 'not hit'}")
-
-
-```
-
-*Result Output by Instrumentation*
-
-![alt text](Screenshots/Ayush/eq_instrumentation_before.png "instrumentation result")
 
 
 ## Coverage improvement
@@ -578,7 +564,7 @@ eq_branch = {
 
 *Old Covergae Results*
 
-The initial coverage of the function is **50%**
+The initial covergae of the function is **50%**
 
 ![alt text](Screenshots/Medon/Ack_coverage_initial.png "instrumentation result")
 
@@ -987,11 +973,6 @@ def test_final_refresh_print():
     print("\n After:")
     Sanic.print_refresh_coverage()
 
-
-def test_initial_purge_print():
-    print("\n Before:")
-    Sanic.print_purge_coverage()
-
 ```
 
 
@@ -1008,115 +989,116 @@ After running the tests, the function calls Sanic.print_refresh_coverage() again
 
 
 
-Coverage Improvement : *21%*
+Coverage Improvement : *26%*
 
 
-**Function 2:** *def _poll_monitor(self) -> Optional[MonitorCycle]*
+**Function 2:** *purge_tasks(self) -> None*
 
 *Old Covergae Results*
 
 The initial covergae of the function is **55%**
 
-![alt text](Screenshots/Medon/PollMonitor_coverage_initial.png "instrumentation result")
+![alt text](Screenshots/Amir/Purge_coverage_initial_percentage.png "instrumentation result")
 
-![alt text](Screenshots/Medon/PollMonitor_coverage_details_before.png "instrumentation result")
+![alt text](Screenshots/Amir/Purge_coverage_initial_lines.png "instrumentation result")
 
 
 *Added Test*
 
-These test cases are designed to thoroughly test the _poll_monitor method of the WorkerManager class, ensuring that all possible branches and code paths are executed. 
-+ test_init_monitor_coverage: This test prints the branch coverage before any tests are run, providing a baseline for the initial state.
-+ test_poll_monitor_no_message: Simulates a scenario where the monitor_subscriber does not receive any message (poll returns False).  
-+ test_poll_monitor_empty_message: Simulates receiving an empty message (recv returns an empty string). Asserts that the result is MonitorCycle.BREAK.
-+ test_poll_monitor_terminate_message: Simulates receiving the termination message (recv returns "__TERMINATE__"). Asserts that the _handle_terminate method is called and the result is MonitorCycle.BREAK.
-+ test_poll_monitor_valid_tuple_message: Simulates receiving a valid tuple message with 7 elements (recv returns a tuple of 7 elements). Asserts that the _handle_manage method is called with the correct arguments and the result is MonitorCycle.CONTINUE.
-+ test_poll_monitor_invalid_message_type: Simulates receiving a message of an invalid type (not a string) (recv returns an integer).Asserts that the result is MonitorCycle.CONTINUE.
-+ test_poll_monitor_handle_message: Simulates receiving a valid string message (recv returns "Valid_Message"). Asserts that the _handle_message method is called with the correct argument and that the result is not None
+These test cases are designed to thoroughly test the purge_tasks method , ensuring that all possible branches and code paths are executed. 
+
+app
++ Defines a function app that returns an instance of Sanic with the name "test_app".
+
+test_purge_with_none_task
++ Sets up an instance of Sanic (app) using the app function.
++ Modifies app._task_registry to contain a None task.
++ Calls app.purge_tasks() to execute the method being tested.
++ Asserts that after purging, the _task_registry of app should be empty (len(app._task_registry) == 0).
+  
+test_purge_with_all_tasks_done_or_cancelled
++ Sets up an instance of Sanic (app) using the app function.
++ Modifies app._task_registry to contain tasks that are both done (task1) and cancelled (task2).
++ Calls app.purge_tasks() to purge completed and cancelled tasks.
++ Asserts that after purging, the _task_registry of app should be empty (len(app._task_registry) == 0).
+
+test_purge_with_mixed_tasks
++ Sets up an instance of Sanic (app) using the app function.
++ Modifies app._task_registry to contain tasks that are done (task1), cancelled (task2), and pending (task3).
++ Calls app.purge_tasks() to purge completed and cancelled tasks, leaving pending tasks.
++ Asserts that after purging, the _task_registry of app should have only one task left (len(app._task_registry) == 1) and that the remaining task is the pending one ("task3").
 
 
 
 ```
-@pytest.fixture
-def worker_manager():
-    p1 = Mock()
-    p1.pid = 1234
-    context = Mock()
-    context.Process.return_value = p1
-    pub = Mock()
-    sub = Mock()
-    manager = WorkerManager(1, fake_serve, {}, context, (pub, sub), {})
-    manager._handle_terminate = Mock()
-    manager._handle_manage = Mock()
-    manager._handle_message = Mock()
-    return manager
+def test_initial_purge_print():
+    print("\n Before:")
+    Sanic.print_purge_coverage()
 
-def test_init_monitor_coverage(worker_manager):
-    print("\nBranch coverage before: ")
-    worker_manager.print_monitor_coverage()
-    print("\n")
-
-def test_poll_monitor_no_message(worker_manager):
-    worker_manager.monitor_subscriber.poll.return_value = False 
-    result = worker_manager._poll_monitor()
-    assert result is None 
-
-def test_poll_monitor_empty_message(worker_manager):
-    worker_manager.monitor_subscriber.poll.return_value = True 
-    worker_manager.monitor_subscriber.recv.return_value = "" 
-    result = worker_manager._poll_monitor()
-    assert result ==  MonitorCycle.BREAK  
+def app():
+    return Sanic("test_app")
 
 
-def test_poll_monitor_terminate_message(worker_manager):
-    worker_manager.monitor_subscriber.poll.return_value = True
-    worker_manager.monitor_subscriber.recv.return_value = "__TERMINATE__" 
-    result = worker_manager._poll_monitor()
-    worker_manager._handle_terminate.assert_called_once()
-    assert result == MonitorCycle.BREAK
+def test_purge_with_none_task(app):
+    app._task_registry = {
+        "task1": None
+    }
+    
+    app.purge_tasks()  
+    assert len(app._task_registry) == 0, "Task registry should be empty after purging a None task"
 
 
-def test_poll_monitor_valid_tuple_message(worker_manager):
-    worker_manager.monitor_subscriber.poll.return_value = True
-    worker_manager.monitor_subscriber.recv.return_value = (1, 2, 3, 4, 5, 6, 7) 
-    result = worker_manager._poll_monitor()
-    worker_manager._handle_manage.assert_called_once_with(1, 2, 3, 4, 5, 6, 7)
-    assert result == MonitorCycle.CONTINUE
+def test_purge_with_all_tasks_done_or_cancelled(app):
+    task1 = asyncio.Future()
+    task1.set_result(None)  
+    task2 = asyncio.Future()
+    task2.cancel()  
+
+    app._task_registry = {
+        "task1": task1,
+        "task2": task2
+    }
+    
+    app.purge_tasks() 
+    assert len(app._task_registry) == 0, "Task registry should be empty after purging only done and cancelled tasks"
 
 
-def test_poll_monitor_invalid_message_type(worker_manager):
-    worker_manager.monitor_subscriber.poll.return_value = True
-    worker_manager.monitor_subscriber.recv.return_value = 12345 
-    result = worker_manager._poll_monitor()
-    assert result == MonitorCycle.CONTINUE
+def test_purge_with_mixed_tasks(app):
+    task1 = asyncio.Future()
+    task1.set_result(None)  # Done
+    task2 = asyncio.Future()
+    task2.cancel()  # Cancelled
+    task3 = asyncio.Future()  # Still pending
 
+    app._task_registry = {
+        "task1": task1,
+        "task2": task2,
+        "task3": task3
+    }
 
-def test_poll_monitor_handle_message(worker_manager):
-    worker_manager.monitor_subscriber.poll.return_value = True
-    worker_manager.monitor_subscriber.recv.return_value = "Valid_Message" 
-    result = worker_manager._poll_monitor()
-    worker_manager._handle_message.assert_called_once_with("Valid_Message")
-    assert result is not None 
+    app.purge_tasks() 
+    assert len(app._task_registry) == 1, "Task registry should have one task left"
+    assert "task3" in app._task_registry, "Only the pending task should remain"\
+    
 
-
-def test_post_monitor_coverage(worker_manager):
-    print("\nBranch coverage after: ")
-    worker_manager.print_monitor_coverage()
-    print("\n")
+def test_final_purge_print():
+    print("\n After:")
+    Sanic.print_purge_coverage()
 
 ```
 
 *New Coverage*
 
 
-After running the tests, the function test_post_monitor_coverage prints the updated branch coverage, showing that all branches were hit during the test execution.
+After running the tests, the function test_final_purge_print prints the updated branch coverage.
 
-![alt text](Screenshots/Medon/PolMonitor_coverage_after.png "instrumentation result")
+![alt text](Screenshots/Amir/Purge_coverage_finall_percentage.png "instrumentation result")
 
-![alt text](Screenshots/Medon/PollMonitor_coverage_details_after.png "instrumentation result")
+![alt text](Screenshots/Amir/Purge_coverage_final_lines.png "instrumentation result")
 
-![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_after.png "instrumentation result")
+![alt text](Screenshots/Amir/Purge_coverage_after.png "instrumentation result")
 
 
-Coverage Improvement : *55%*
+Coverage Improvement : *21%*
 
 

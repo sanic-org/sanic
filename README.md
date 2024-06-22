@@ -800,11 +800,12 @@ def test_unsuccessful_unregister_non_registered_sanic_app():
 
 After running the tests, the function calls Sanic.print_unregister_coverage() again to print the updated branch coverage, demonstrating that all branches were hit during the test execution.
 
+![alt text](Screenshots/Jana/unregister_app_coveragepy_after.png "instrumentation result")
+
 ![alt text](Screenshots/Jana/unregister_app_lines_after.png "instrumentation result")
 
 ![alt text](Screenshots/Jana/unregister_app_instrumentation_after.png "instrumentation result")
 
-![alt text](Screenshots/Jana/unregister_app_coveragepy_after.png "instrumentation result")
 
 Coverage Improvement : *33%*
 
@@ -879,5 +880,229 @@ Coverage Improvement : *25%*
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Amirreza Darabi
+**Function 1:** *def refresh(self,passthru: Optional[Dict[str, Any]] = None,) -> Sanic:*
+
+*Old Covergae Results*
+
+The initial covergae of the function is **71%**
+
+![alt text](Screenshots/Amir/Refresh_coverage_initial_percentage.png "instrumentation result")
+
+![alt text](Screenshots/Amir/Refresh_coverage_initial_lines.png "instrumentation result")
+
+*Added Test*
+
+The provided three tests ensure that the refresh method in the Sanic class correctly handles instance reassignment and updates:
+
+test_refresh_when_self_not_registered
++ Verifies unregistered instance is replaced with the registered one.
++ Ensures the DEBUG configuration attribute is retained after refresh.
+test_refresh_server_info_assignment
++ Checks server_info from a new instance is assigned to the registered instance.
++ Validates proper state updates during the refresh process.
+test_refresh_with_multiplexer
++ Ensures multiplexer attribute is retained in the refreshed instance.
++ Confirms multiplexer's lock method is called during refresh.
+  
+```
+def test_initial_refresh_print():
+    print("\n Before:")
+    Sanic.print_refresh_coverage()
+    
+def test_refresh_when_self_not_registered():
+    # Register an instance with a different name
+    registered_instance = Sanic("test_instance")
+    Sanic._app_registry["test_instance"] = registered_instance
+
+    new_instance = Sanic("another_instance")
+    new_instance.config.DEBUG = True
+    new_instance.name = "test_instance"
+
+    refreshed_instance = new_instance.refresh()
+
+    # Assertions
+    assert refreshed_instance is registered_instance  # Ensure it's now the registered instance
+    assert refreshed_instance.config.DEBUG is True  # Check the attribute was copied
+
+def test_refresh_server_info_assignment():
+    registered_instance = Sanic("test_instance")
+    Sanic._app_registry["test_instance"] = registered_instance
+
+    # Create a new instance with a different name
+    new_instance = Sanic("another_instance")
+    new_instance.state.server_info = {"info": "example"}
+
+    new_instance.name = "test_instance"
+
+    refreshed_instance = new_instance.refresh()
+
+    # Assertions
+    assert refreshed_instance is registered_instance
+    assert refreshed_instance.state.server_info == {"info": "example"}
+
+def test_refresh_with_multiplexer():
+    # Create an instance with multiplexer attribute
+    app = Sanic("test_app")
+    app.multiplexer = Mock()
+
+    refreshed_instance = app.refresh()
+
+    # Assertions
+    assert hasattr(refreshed_instance, "multiplexer")
+    refreshed_instance.multiplexer.lock.assert_called_once()
+
+def test_final_refresh_print():
+    print("\n After:")
+    Sanic.print_refresh_coverage()
+
+
+def test_initial_purge_print():
+    print("\n Before:")
+    Sanic.print_purge_coverage()
+
+```
+
+
+
+*New Coverage*
+
+After running the tests, the function calls Sanic.print_refresh_coverage() again to print the updated branch coverage, showing that all branches were hit during the test execution.
+
+![alt text](Screenshots/Amir/Refresh_coverage_finall_percentage.png "instrumentation result")
+
+![alt text](Screenshots/Amir/Refresh_coverage_final_lines.png "instrumentation result")
+
+![alt text](Screenshots/Amir/Refresh_coverage_after.png "instrumentation result")
+
+
+
+Coverage Improvement : *21%*
+
+
+**Function 2:** *def _poll_monitor(self) -> Optional[MonitorCycle]*
+
+*Old Covergae Results*
+
+The initial covergae of the function is **55%**
+
+![alt text](Screenshots/Medon/PollMonitor_coverage_initial.png "instrumentation result")
+
+![alt text](Screenshots/Medon/PollMonitor_coverage_details_before.png "instrumentation result")
+
+
+*Added Test*
+
+These test cases are designed to thoroughly test the _poll_monitor method of the WorkerManager class, ensuring that all possible branches and code paths are executed. 
++ test_init_monitor_coverage: This test prints the branch coverage before any tests are run, providing a baseline for the initial state.
++ test_poll_monitor_no_message: Simulates a scenario where the monitor_subscriber does not receive any message (poll returns False).  
++ test_poll_monitor_empty_message: Simulates receiving an empty message (recv returns an empty string). Asserts that the result is MonitorCycle.BREAK.
++ test_poll_monitor_terminate_message: Simulates receiving the termination message (recv returns "__TERMINATE__"). Asserts that the _handle_terminate method is called and the result is MonitorCycle.BREAK.
++ test_poll_monitor_valid_tuple_message: Simulates receiving a valid tuple message with 7 elements (recv returns a tuple of 7 elements). Asserts that the _handle_manage method is called with the correct arguments and the result is MonitorCycle.CONTINUE.
++ test_poll_monitor_invalid_message_type: Simulates receiving a message of an invalid type (not a string) (recv returns an integer).Asserts that the result is MonitorCycle.CONTINUE.
++ test_poll_monitor_handle_message: Simulates receiving a valid string message (recv returns "Valid_Message"). Asserts that the _handle_message method is called with the correct argument and that the result is not None
+
+
+
+```
+@pytest.fixture
+def worker_manager():
+    p1 = Mock()
+    p1.pid = 1234
+    context = Mock()
+    context.Process.return_value = p1
+    pub = Mock()
+    sub = Mock()
+    manager = WorkerManager(1, fake_serve, {}, context, (pub, sub), {})
+    manager._handle_terminate = Mock()
+    manager._handle_manage = Mock()
+    manager._handle_message = Mock()
+    return manager
+
+def test_init_monitor_coverage(worker_manager):
+    print("\nBranch coverage before: ")
+    worker_manager.print_monitor_coverage()
+    print("\n")
+
+def test_poll_monitor_no_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = False 
+    result = worker_manager._poll_monitor()
+    assert result is None 
+
+def test_poll_monitor_empty_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True 
+    worker_manager.monitor_subscriber.recv.return_value = "" 
+    result = worker_manager._poll_monitor()
+    assert result ==  MonitorCycle.BREAK  
+
+
+def test_poll_monitor_terminate_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = "__TERMINATE__" 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_terminate.assert_called_once()
+    assert result == MonitorCycle.BREAK
+
+
+def test_poll_monitor_valid_tuple_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = (1, 2, 3, 4, 5, 6, 7) 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_manage.assert_called_once_with(1, 2, 3, 4, 5, 6, 7)
+    assert result == MonitorCycle.CONTINUE
+
+
+def test_poll_monitor_invalid_message_type(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = 12345 
+    result = worker_manager._poll_monitor()
+    assert result == MonitorCycle.CONTINUE
+
+
+def test_poll_monitor_handle_message(worker_manager):
+    worker_manager.monitor_subscriber.poll.return_value = True
+    worker_manager.monitor_subscriber.recv.return_value = "Valid_Message" 
+    result = worker_manager._poll_monitor()
+    worker_manager._handle_message.assert_called_once_with("Valid_Message")
+    assert result is not None 
+
+
+def test_post_monitor_coverage(worker_manager):
+    print("\nBranch coverage after: ")
+    worker_manager.print_monitor_coverage()
+    print("\n")
+
+```
+
+*New Coverage*
+
+
+After running the tests, the function test_post_monitor_coverage prints the updated branch coverage, showing that all branches were hit during the test execution.
+
+![alt text](Screenshots/Medon/PolMonitor_coverage_after.png "instrumentation result")
+
+![alt text](Screenshots/Medon/PollMonitor_coverage_details_after.png "instrumentation result")
+
+![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_after.png "instrumentation result")
+
+
+Coverage Improvement : *55%*
 
 

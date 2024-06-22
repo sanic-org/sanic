@@ -187,11 +187,9 @@ request.ctx 对象是存储请求相关信息的地方。 它仅在请求的生�
 
 默认情况下，request.ctx对象是一个SimpleNamespace对象，允许您在其上设置任意属性。 Sanic不会对此对象做任何用途，因此您可以自由地按照需要使用它，无需担心名称冲突问题。
 
-````python
-
 ### 典型应用场景
 
-这种做法常用于存储诸如认证用户详情之类的数据。我们将在后面的[middleware](./middleware.md)部分详细介绍，但这里先给出一个简单的示例。
+这常常用来存储像认证用户详细信息这样的项目。 稍后我们会更多地进入 [middleware](./medileware.md)，但这是一个简单的例子。
 
 ```python
 @app.on_request
@@ -203,7 +201,7 @@ async def hi_my_name_is(request):
     if not request.ctx.user:
         return text("Hmm... I don't know you)
     return text(f"Hi, my name is {request.ctx.user.name}")
-````
+```
 
 如您所见，`request.ctx`对象是一个很好的位置，用于存储您需要在多个处理器中访问的信息，从而使您的代码更加遵循DRY原则（Don't Repeat Yourself），也更易于维护。 但是，正如我们在中间件章节中将要学习的那样，您还可以使用它来存储在一个中间件中产生的信息，这些信息将在另一个中间件中使用。
 
@@ -276,13 +274,13 @@ app = Sanic("Example", request_class=CustomRequest)
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 现在，您可以在处理器中访问 `user_id` 属性。
 ```
 
-.. 列:
+.. column::
 
 ````
 ```python
@@ -366,7 +364,7 @@ async def tag_handler(request, *, tag):
 
 这些让您能够从请求路径中访问查询参数（URL中`?`号后面的部分）。
 
-### 典型应用场景
+### 典型的使用情况
 
 在大多数情况下，您将想使用 `request.args` 对象来访问查询参数。 它是解析后的查询字符串，存储为一个字典。
 

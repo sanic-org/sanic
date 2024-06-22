@@ -8,13 +8,13 @@ from urllib.parse import unquote
 from sanic.exceptions import InvalidHeader
 from sanic.helpers import STATUS_CODES
 
-branch_coverage = {
-    "headBranch1": False,  
-    "headBranch2": False,
-    "headBranch3": False,
-    "headBranch4": False,
-    "headBranch5": False,
-    "headBranch6": False,
+eq_branch = {
+    "is_str": False,  
+    "contains_params": False,
+    "no_params": False,
+    "not_str": False,
+    "is_media_type": False,
+    "not_media_type": False,
 }
 
 # TODO:
@@ -38,7 +38,9 @@ _host_re = re.compile(
 # even though no client escapes in a way that would allow perfect handling.
 
 # For more information, consult ../tests/test_requests.py
-
+def print_eq_coverage():
+        for branch, hit in eq_branch.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
 
 class MediaType:
     """A media type, as used in the Accept header.
@@ -82,24 +84,21 @@ class MediaType:
         """Check for mime (str or MediaType) identical type/subtype.
         Parameters such as q are not considered."""
         if isinstance(other, str):
-            branch_coverage["headBranch1"] = True
+            eq_branch["is_str"] = True
             # Give a friendly reminder if str contains parameters
             if ";" in other:
-                branch_coverage["headBranch2"] = True
+                eq_branch["contains_params"] = True
                 raise ValueError("Use match() to compare with parameters")
-            branch_coverage["headBranch3"] = True
+            eq_branch["no_params"] = True
             return self.mime == other
-        branch_coverage["headBranch4"] = True
+        eq_branch["not_str"] = True
         if isinstance(other, MediaType):
             # Ignore parameters silently with MediaType objects
-            branch_coverage["headBranch5"] = True
+            eq_branch["is_media_type"] = True
             return self.mime == other.mime
-        branch_coverage["headBranch6"] = True
+        eq_branch["not_media_type"] = True
         return NotImplemented
 
-    def print_coverage():
-        for branch, hit in branch_coverage.items():
-            print(f"{branch} was {'hit' if hit else 'not hit'}")
 
     def match(
         self,

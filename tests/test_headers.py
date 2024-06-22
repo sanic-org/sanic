@@ -6,28 +6,37 @@ from sanic import Sanic, headers, json, text
 from sanic.exceptions import InvalidHeader, PayloadTooLarge
 from sanic.http import Http
 from sanic.request import Request
-from sanic.headers import MediaType  
+from sanic.headers import MediaType, print_eq_coverage
 
-def stringParameters():
-    mediaTypes = MediaType("application", "json")
-    
+def test_initial_print_eq_coverage():
+    print("\nBranch coverage before: ")
+    print_eq_coverage()
+    print("\n")
+
+def test_eq_string_parameters():
+    media_type = MediaType("application", "json")
     with pytest.raises(ValueError):
-        mediaTypes == "application/json; charset=utf-8"
+        media_type == "application/json; charset=utf-8"
 
-def mediaType():
-    mediaTypes1 = MediaType("application", "json")
-    mediaTypes2 = MediaType("application", "json")
-    assert mediaTypes1 == mediaTypes2
+def test_eq_media_type_equality():
+    media_type1 = MediaType("application", "json")
+    media_type2 = MediaType("application", "json")
+    assert media_type1 == media_type2
 
-def differentMedias():
-    mediaTypes1 = MediaType("application", "json")
-    mediaTypes2 = MediaType("text", "plain")
-    assert mediaTypes1 != mediaTypes2
+def test_eq_different_media_types():
+    media_type1 = MediaType("application", "json")
+    media_type2 = MediaType("text", "plain")
+    assert media_type1 != media_type2
 
-def differentData():
-    mediaType = MediaType("application", "json")
-    results = mediaType == 102  
-    assert results is False
+def test_eq_different_data_types():
+    media_type = MediaType("application", "json")
+    result = media_type == 102
+    assert result is False
+
+def test_final_print_eq_coverage():
+    print("\nBranch coverage after: ")
+    print_eq_coverage()
+    print("\n")
 
 def make_request(headers) -> Request:
     return Request(b"/", headers, "1.1", "GET", None, None)
@@ -490,8 +499,3 @@ def test_multiple_fields_accessor(app: Sanic):
         "/", headers=(("Example-Field", "Foo, Bar"), ("Example-Field", "Baz"))
     )
     assert response.json["field"] == "Foo, Bar,Baz"
-
-stringParameters()
-mediaType()
-differentMedias()
-differentData()

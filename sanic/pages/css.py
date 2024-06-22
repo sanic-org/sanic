@@ -5,31 +5,35 @@ from typing import Optional
 
 CURRENT_DIR = Path(__file__).parent
 
-branch_coverage = {
-    "cssBranch1": False,  
-    "cssBranch2": False,
-    "cssBranch3": False,
-    "cssBranch4": False,
-    "cssBranch5": False,
-    "cssBranch6": False,
+extract_style_branch = {
+    "maybe_style_provided": False,  
+    "maybe_path_exists": False,
+    "return_maybe_style": False,
+    "maybe_style_not_provided": False,
+    "maybe_path": False,
+    "no_maybe_path": False,
 }
 
 def _extract_style(maybe_style: Optional[str], name: str) -> str:
     if maybe_style is not None:
-        branch_coverage["cssBranch1"] = True
+        extract_style_branch["maybe_style_provided"] = True
         maybe_path = Path(maybe_style)
         if maybe_path.exists():
-            branch_coverage["cssBranch2"] = True
+            extract_style_branch["maybe_path_exists"] = True
             return maybe_path.read_text(encoding="UTF-8")
-        branch_coverage["cssBranch3"] = True
+        extract_style_branch["return_maybe_style"] = True
         return maybe_style
-    branch_coverage["cssBranch4"] = True
+    extract_style_branch["maybe_style_not_provided"] = True
     maybe_path = CURRENT_DIR / "styles" / f"{name}.css"
     if maybe_path.exists():
-        branch_coverage["cssBranch5"] = True
+        extract_style_branch["maybe_path"] = True
         return maybe_path.read_text(encoding="UTF-8")
-    branch_coverage["cssBranch6"] = True
+    extract_style_branch["no_maybe_path"] = True
     return ""
+
+def print_extract_style_coverage():
+    for branch, hit in extract_style_branch.items():
+        print(f"{branch} was {'hit' if hit else 'not hit'}")
 
 
 class CSS(ABCMeta):

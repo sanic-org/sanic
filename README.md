@@ -476,7 +476,7 @@ purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 
 ### Ayush Khadka
 
-Function 1: def _extract_style(maybe_style: Optional[str], name: str) -> str:
+Function 1: *def _extract_style(maybe_style: Optional[str], name: str) -> str:*
 
 The function that was chosen to improve the coverage is the function _extract_style(maybe_style: Optional[str], name: str) -> str: in the css.py file. The purpose of this function is to retrieve contents from a css file. There are two ways of getting the content which are from the maybe_style which is an optional string representing a file path and from a default location. 
 
@@ -519,6 +519,15 @@ def print_extract_style_coverage():
 *Result Output by Instrumentation*
 
 ![alt text](Screenshots/Ayush/extract_style_instrumentation_before.png "instrumentation result")
+
+Function 2: *def __eq__(self, other):*
+
+The function that was chosen to improve the coverage is the function *def __eq__(self, other):* in the headers.py file. The purpose of this function is to compare and to see if they repesent the same MIME type for (self) and (other). It checks for a string or MediaTypes. For the string comparison, if there are paramaters such as ; then it will raise an error due to the rule comparision. It compares self.mine with the provided string of (other) and if they match then it returns true otherwise false. If it is not a string then it checks for the MediaType and if that is true then it compares self.mine with other.mine it returns true if they are qual else it returns false. If a string or MediaType is not provided then it returns NotImplemented. 
+
+The dictionary eq_branch is used to instrument the function and track which branch of the statements was executed. The result outputted by the instrumentation show that all of the branches are not hit. 
+
+*Instrumented Code*
+![alt text](Screenshots/Ayush/eq_instrumentation_before.png "instrumentation result")
 
 
 ## Coverage improvement

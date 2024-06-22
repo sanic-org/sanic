@@ -527,6 +527,45 @@ The function that was chosen to improve the coverage is the function *def __eq__
 The dictionary eq_branch is used to instrument the function and track which branch of the statements was executed. The result outputted by the instrumentation show that all of the branches are not hit. 
 
 *Instrumented Code*
+
+```
+eq_branch = {
+    "is_str": False,  
+    "contains_params": False,
+    "no_params": False,
+    "not_str": False,
+    "is_media_type": False,
+    "not_media_type": False,
+}
+
+    def __eq__(self, other):
+        """Check for mime (str or MediaType) identical type/subtype.
+        Parameters such as q are not considered."""
+        if isinstance(other, str):
+            eq_branch["is_str"] = True
+            # Give a friendly reminder if str contains parameters
+            if ";" in other:
+                eq_branch["contains_params"] = True
+                raise ValueError("Use match() to compare with parameters")
+            eq_branch["no_params"] = True
+            return self.mime == other
+        eq_branch["not_str"] = True
+        if isinstance(other, MediaType):
+            # Ignore parameters silently with MediaType objects
+            eq_branch["is_media_type"] = True
+            return self.mime == other.mime
+        eq_branch["not_media_type"] = True
+        return NotImplemented
+    
+    def print_eq_coverage():
+        for branch, hit in eq_branch.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+
+
+```
+
+*Result Output by Instrumentation*
+
 ![alt text](Screenshots/Ayush/eq_instrumentation_before.png "instrumentation result")
 
 
@@ -539,7 +578,7 @@ The dictionary eq_branch is used to instrument the function and track which bran
 
 *Old Covergae Results*
 
-The initial covergae of the function is **50%**
+The initial coverage of the function is **50%**
 
 ![alt text](Screenshots/Medon/Ack_coverage_initial.png "instrumentation result")
 

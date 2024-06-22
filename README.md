@@ -332,7 +332,7 @@ monitor_branch_coverage = {
 
 ![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_before.png "instrumentation result")
 
-### Jana Abuasbeh
+### Jana Salah Mohammad Ali Abuasbeh
 
 **Function 1:** *def unregister_app(cls, app: Sanic) -> None:*
 
@@ -632,7 +632,7 @@ After running the tests, the function test_post_monitor_coverage prints the upda
 Coverage Improvement : *55%*
 
 
-### Jana Abuasbeh
+### Jana Salah Mohammad Ali Abuasbeh
 **Function 1:** *def unregister_app(cls, app: Sanic) -> None:*
 
 *Old Coverage Results*

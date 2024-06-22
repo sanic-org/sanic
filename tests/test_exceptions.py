@@ -403,7 +403,9 @@ def test_exception_aliases():
 def test_exception_message_attribute():
     assert ServerError("it failed").message == "it failed"
     assert ServerError(b"it failed").message == "it failed"
-    assert ServerError().message == str(ServerError()) == "Internal Server Error"
+    assert (
+        ServerError().message == str(ServerError()) == "Internal Server Error"
+    )
 
     class CustomError(SanicException):
         message = "Something bad happened"

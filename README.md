@@ -994,7 +994,7 @@ The initial coverage of the def __extract_style is 40%
 
 ![alt text](Screenshots/Ayush/extract_style_coverage_details_before.png "instrumentation result")
 
-![alt text](Screenshots/Ayush/extract_style_instrumentation_after.png "instrumentation result")
+![alt text](Screenshots/Ayush/extract_style_instrumentation_before.png "instrumentation result")
 
 
 *Added Test*
@@ -1058,7 +1058,7 @@ The initial coverage of the def __eq__ is 69%
 
 ![alt text](Screenshots/Ayush/eq_coverage_details_before.png "instrumentation result")
 
-![alt text](Screenshots/Ayush/eq_instrumentation_after.png "instrumentation result")
+![alt text](Screenshots/Ayush/eq_instrumentation_before.png "instrumentation result")
 
 
 *Added Test*

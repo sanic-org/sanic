@@ -850,6 +850,8 @@ The initial coverage of the function is **67%**:
 
 ![alt text](Screenshots/Jana/unregister_app_line_by_line.png "instrumentation result")
 
+![alt text](Screenshots/Jana/unregister_app_instrumentation_before.png "instrumentation result")
+
 *Added Tests*
 
 The tests test_unregister_non_sanic_instance(), test_successful_unregister_sanic_app(), and test_unsuccessful_unregister_non_registered_sanic_app() are designed to test the unregister_app() method and to ensure that both branches of the ack method are covered during testing.
@@ -920,7 +922,9 @@ The initial coverage of the function is **75%**
 
 ![alt text](Screenshots/Jana/validate_file_coveragepy_before.png "instrumentation result")
 
-![alt text](Screenshots/Janavalidate_file_line_by_line_before.png "instrumentation result")
+![alt text](Screenshots/Jana/validate_file_line_by_line_before.png "instrumentation result")
+
+![alt text](Screenshots/Jana/validate_file_instrumentation_before.png "instrumentation result")
 
 
 

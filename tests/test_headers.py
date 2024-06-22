@@ -6,12 +6,16 @@ from sanic import Sanic, headers, json, text
 from sanic.exceptions import InvalidHeader, PayloadTooLarge
 from sanic.http import Http
 from sanic.request import Request
-from sanic.headers import MediaType, print_eq_coverage
+from sanic.headers import MediaType
 
 def test_initial_print_eq_coverage():
     print("\nBranch coverage before: ")
-    print_eq_coverage()
+    MediaType.print_eq_coverage()
     print("\n")
+
+def test_eq_string_no_param():
+    media_type = MediaType("application", "json")
+    assert media_type == "application/json"
 
 def test_eq_string_parameters():
     media_type = MediaType("application", "json")
@@ -35,7 +39,7 @@ def test_eq_different_data_types():
 
 def test_final_print_eq_coverage():
     print("\nBranch coverage after: ")
-    print_eq_coverage()
+    MediaType.print_eq_coverage()
     print("\n")
 
 def make_request(headers) -> Request:

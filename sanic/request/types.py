@@ -83,7 +83,7 @@ if TYPE_CHECKING:
     )
 else:
     sanic_type = TypeVar("sanic_type")
-ctx_type = TypeVar("ctx_type")
+ctx_type = TypeVar("ctx_type", default=SimpleNamespace)
 
 
 class Request(Generic[sanic_type, ctx_type]):
@@ -288,9 +288,7 @@ class Request(Generic[sanic_type, ctx_type]):
             int: The HTTP/3 stream ID.
         """
         if self.protocol.version is not HTTP.VERSION_3:
-            raise ServerError(
-                "Stream ID is only a property of a HTTP/3 request"
-            )
+            raise ServerError("Stream ID is only a property of a HTTP/3 request")
         return self._stream_id
 
     def reset_response(self) -> None:
@@ -305,10 +303,7 @@ class Request(Generic[sanic_type, ctx_type]):
                 sent.
         """
         try:
-            if (
-                self.stream is not None
-                and self.stream.stage is not Stage.HANDLER
-            ):
+            if self.stream is not None and self.stream.stage is not Stage.HANDLER:
                 raise ServerError(
                     "Cannot reset response because previous response was sent."
                 )
@@ -631,9 +626,7 @@ class Request(Generic[sanic_type, ctx_type]):
                 pass
         return self.parsed_credentials
 
-    def get_form(
-        self, keep_blank_values: bool = False
-    ) -> Optional[RequestParameters]:
+    def get_form(self, keep_blank_values: bool = False) -> Optional[RequestParameters]:
         """Method to extract and parse the form data from a request.
 
         Args:
@@ -644,9 +637,7 @@ class Request(Generic[sanic_type, ctx_type]):
         """  # noqa: E501
         self.parsed_form = RequestParameters()
         self.parsed_files = RequestParameters()
-        content_type = self.headers.getone(
-            "content-type", DEFAULT_HTTP_CONTENT_TYPE
-        )
+        content_type = self.headers.getone("content-type", DEFAULT_HTTP_CONTENT_TYPE)
         content_type, parameters = parse_content_header(content_type)
         try:
             if content_type == "application/x-www-form-urlencoded":
@@ -744,9 +735,7 @@ class Request(Generic[sanic_type, ctx_type]):
                     )
                 )
 
-        return self.parsed_args[
-            (keep_blank_values, strict_parsing, encoding, errors)
-        ]
+        return self.parsed_args[(keep_blank_values, strict_parsing, encoding, errors)]
 
     args = property(get_args)
     """Convenience property to access `Request.get_args` with default values.
@@ -1002,9 +991,7 @@ class Request(Generic[sanic_type, ctx_type]):
         server_name = self.app.config.get("SERVER_NAME")
         if server_name:
             return server_name.split("//", 1)[-1].split("/", 1)[0]
-        return str(
-            self.forwarded.get("host") or self.headers.getone("host", "")
-        )
+        return str(self.forwarded.get("host") or self.headers.getone("host", ""))
 
     @property
     def server_name(self) -> str:

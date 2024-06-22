@@ -461,94 +461,96 @@ def print_validate_coverage(app):
 The first function I choose to further analyze and improve is the def refresh(self,passthru: Optional[Dict[str, Any]] = None,) -> Sanic function in app.py.
 The refresh function in the provided code is designed to refresh the application instance
 
-The dictionary refresh_branch_coverage is used to instrument the function and track which branch of the if-else statement was executed. The result output by the instrumentation shows that *ack_has_multiplexer* branch is not hit.
+The dictionary refresh_branch_coverage is used to instrument the function and track which branch of the if-else statement was executed. The result output by the instrumentation shows that first, second and fifth branch were not hit.
 
 *Intrumented code*
 
 ```
-ack_branch_coverage = {
-    "ack_has_multiplexer" : False,
-    "ack_no_multiplexer" : False}
-    
-
-def ack(self) -> None:
+refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False, "refresh_b5" : False}
+    def refresh(
+        self,
+        passthru: Optional[Dict[str, Any]] = None,
+    ) -> Sanic:
+        registered = self.__class__.get_app(self.name)
+        if self is not registered:
+            refresh_branch_coverage["refresh_b1"] = True
+            if not registered.state.server_info:
+                refresh_branch_coverage["refresh_b2"] = True
+                registered.state.server_info = self.state.server_info
+            self = registered
+        if passthru:
+            refresh_branch_coverage["refresh_b3"] = True
+            for attr, info in passthru.items():
+                if isinstance(info, dict):
+                    refresh_branch_coverage["refresh_b4"] = True
+                    for key, value in info.items():
+                        setattr(getattr(self, attr), key, value)
+                else:
+                    setattr(self, attr, info)
         if hasattr(self, "multiplexer"):
-            ack_branch_coverage["ack_has_multiplexer"] = True
-            self.multiplexer.ack()
-        else:
-            ack_branch_coverage["ack_no_multiplexer"] = True
-    def print_ack_coverage():
-        for branch, hit in ack_branch_coverage.items():
+            refresh_branch_coverage["refresh_b5"] = True
+            self.shared_ctx.lock()
+        return self
+
+    def print_refresh_coverage():
+        for branch, hit in refresh_branch_coverage.items():
             print(f"{branch} was {'hit' if hit else 'not hit'}")
 ```
 
 
 *Result Output by Instrumentation*
 
-![alt text](Screenshots/Medon/Ack_instrumentation_result_before.png "instrumentation result")
+![alt text](Screenshots/Amir/Refresh_coverage_before.png "instrumentation result")
 
-**Function 2:** *def _poll_monitor(self) -> Optional[MonitorCycle]*
+**Function 2:** *def purge_tasks(self) -> None:*
 
-The second funtion I choose to analyze and improve is def _poll_monitor(self) -> Optional[MonitorCycle] in manager.py.
+The second funtion I choose to analyze and improve is def purge_tasks(self) -> None: in app.py.
 
-The _poll_monitor function polls for messages from a monitor_subscriber with a timeout of 0.1 seconds, processes each message based on its content, and determines the appropriate action. If a message is received, it logs the message and checks if it is empty, a termination signal (__TERMINATE__), a tuple with 7 or 8 elements, or an invalid type. Based on these checks, it either handles the termination, manages the tuple, logs an error for invalid messages, or processes other messages appropriately, returning either MonitorCycle.BREAK or MonitorCycle.CONTINUE.
+The function iterates through the task registry, identifying any tasks that are either done or cancelled, and then removes those tasks, leaving only the pending tasks in the registry.
 
 
-The monitor_branch_coverage is a dictionary initialized with keys representing different branches within the _poll_monitor function. Initially, all values are set to False. The result output by the instrumentation shows that *terminate_message*, *tuple_message*, *invalid_messsage*, and *no_message* branches were not hit. 
-
+The purge_branch_coverage is a dictionary initialized with keys representing different branches within the purge_tasks function. Initially, all values are set to False. The result output by the instrumentation shows that first and second branches were not hit.
 
 *Intrumented code*
 
 ```
 
-monitor_branch_coverage = {
-        "polled_message": False,
-        "empty_message": False,
-        "terminate_message": False,
-        "tuple_message": False,
-        "invalid_message": False,
-        "default_message": False,
-        "no_message": False,
-    }
+purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 
-    def _poll_monitor(self) -> Optional[MonitorCycle]:
-        if self.monitor_subscriber.poll(0.1):
-            monitor_branch_coverage["polled_message"] = True
-            message = self.monitor_subscriber.recv()
-            logger.debug(f"Monitor message: {message}", extra={"verbosity": 2})
-            if not message:
-                monitor_branch_coverage["empty_message"] = True
-                return MonitorCycle.BREAK
-            elif message == "__TERMINATE__":
-                monitor_branch_coverage["terminate_message"] = True
-                self._handle_terminate()
-                return MonitorCycle.BREAK
-            elif isinstance(message, tuple) and (
-                len(message) == 7 or len(message) == 8
-            ):
-                monitor_branch_coverage["tuple_message"] = True
-                self._handle_manage(*message)  # type: ignore
-                return MonitorCycle.CONTINUE
-            elif not isinstance(message, str):
-                monitor_branch_coverage["invalid_message"] = True
-                error_logger.error(
-                    "Monitor received an invalid message: %s", message
-                )
-                return MonitorCycle.CONTINUE
-            monitor_branch_coverage["default_message"] = True
-            return self._handle_message(message)
-    
-        monitor_branch_coverage["no_message"] = True
-        return None
 
-    def print_monitor_coverage(self):
-        for branch, hit in monitor_branch_coverage.items():
+    def refresh(
+        self,
+        passthru: Optional[Dict[str, Any]] = None,
+    ) -> Sanic:
+        registered = self.__class__.get_app(self.name)
+        if self is not registered:
+            refresh_branch_coverage["refresh_b1"] = True
+            if not registered.state.server_info:
+                refresh_branch_coverage["refresh_b2"] = True
+                registered.state.server_info = self.state.server_info
+            self = registered
+        if passthru:
+            refresh_branch_coverage["refresh_b3"] = True
+            for attr, info in passthru.items():
+                if isinstance(info, dict):
+                    refresh_branch_coverage["refresh_b4"] = True
+                    for key, value in info.items():
+                        setattr(getattr(self, attr), key, value)
+                else:
+                    setattr(self, attr, info)
+        if hasattr(self, "multiplexer"):
+            refresh_branch_coverage["refresh_b5"] = True
+            self.shared_ctx.lock()
+        return self
+
+    def print_refresh_coverage():
+        for branch, hit in refresh_branch_coverage.items():
             print(f"{branch} was {'hit' if hit else 'not hit'}")
 ```
 
 *Result Output by Instrumentation*
 
-![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_before.png "instrumentation result")
+![alt text](Screenshots/Amir/Purge_coverage_before.png "instrumentation result")
 
 
 

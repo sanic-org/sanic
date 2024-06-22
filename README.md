@@ -347,6 +347,49 @@ purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 ![alt text](Screenshots/Amir/Purge_coverage_before.png "instrumentation result")
 
 
+### Ayush Khadka
+
+Function 1: *def _extract_style(maybe_style: Optional[str], name: str) -> str:*
+
+The function that was chosen to improve the coverage is the function *_extract_style(maybe_style: Optional[str], name: str) -> str:* in the css.py file. The purpose of this function is to retrieve contents from a css file. There are two ways of getting the content which are from the maybe_style which is an optional string representing a file path and from a default location. 
+
+The dictionary extract_style_branch is used to instrument the function and track which branch of the statements was executed. The result outputted by the instrumentation show that the branches maybe_style_provided, maybe_path_exists, return_maybe_style and no_maybe_path branches are not hit. 
+
+*Instrumented Code*
+
+```
+extract_style_branch = {
+    "maybe_style_provided": False,  
+    "maybe_path_exists": False,
+    "return_maybe_style": False,
+    "maybe_style_not_provided": False,
+    "maybe_path": False,
+    "no_maybe_path": False,
+}
+def _extract_style(maybe_style: Optional[str], name: str) -> str:
+    if maybe_style is not None:
+        extract_style_branch["maybe_style_provided"] = True
+        maybe_path = Path(maybe_style)
+        if maybe_path.exists():
+            extract_style_branch["maybe_path_exists"] = True
+            return maybe_path.read_text(encoding="UTF-8")
+        extract_style_branch["return_maybe_style"] = True
+        return maybe_style
+    extract_style_branch["maybe_style_not_provided"] = True
+    maybe_path = CURRENT_DIR / "styles" / f"{name}.css"
+    if maybe_path.exists():
+        extract_style_branch["maybe_path"] = True
+        return maybe_path.read_text(encoding="UTF-8")
+    extract_style_branch["no_maybe_path"] = True
+    return ""
+def print_extract_style_coverage():
+    for branch, hit in extract_style_branch.items():
+        print(f"{branch} was {'hit' if hit else 'not hit'}")
+```
+*Result Output by Instrumentation*
+
+![alt text](Screenshots/Ayush/extract_style_instrumentation_before.png "instrumentation result")
+
 
 
 ## Coverage improvement

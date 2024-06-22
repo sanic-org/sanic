@@ -995,12 +995,10 @@ def test_stream_response_with_default_headers(app: Sanic):
     assert response.headers["Content-Type"] == "text/csv"
 
 def test_initial_print_validate_coverage(app, capfd):
-    # Print initial coverage results
     print("Before: \n")
     convenience.print_validate_coverage(app)
     print("\n")
 
-    # Capture and print the output
     captured = capfd.readouterr()
     print(captured.out)
 

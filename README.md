@@ -539,6 +539,127 @@ monitor_branch_coverage = {
 
 ![alt text](Screenshots/Medon/PollMonitor_instrumentation_result_before.png "instrumentation result")
 
+### Jana Abuasbeh
+
+**Function 1:** *def unregister_app(cls, app: Sanic) -> None:*
+
+The first function I chose to improve the coverage of is the unregister_app(cls,app) function in app.py. This function unregisters a “Sanic” instance from the class registry. 
+
+The dictionary unregister_branches is used to instrument the function and track which of the two if branches was executed. The result output by the instrumentation shows that *ack_has_multiplexer* branch is not hit.
+
+*Intrumented code*
+
+```
+unregister_branches = {"not_an_instance": False, "name_in_registry": False}
+    
+@classmethod
+def unregister_app(cls, app: Sanic) -> None:
+if not isinstance(app, cls):
+        		unregister_branches["not_an_instance"] = True
+        		raise SanicException("Registered app must be an instance of Sanic")
+
+    	name = app.name
+    	if name in cls._app_registry:
+        		unregister_branches["name_in_registry"] = True
+        		del cls._app_registry[name]
+    
+def print_unregister_coverage():
+    	hits = 0
+    	for branch, hit in unregister_branches.items():
+        		if hit:
+            		print(f"{branch} was hit")
+            		hits += 1
+        		else:
+           			print(f"{branch} was not hit")
+   
+   	coverage_percentage = (hits / len(unregister_branches)) * 100
+    	print(f"\nCoverage: {hits}/{len(unregister_branches)} branches 
+hit({coverage_percentage:.2f}%)")
+	
+```
+
+
+*Result Output by Instrumentation*
+
+![alt text](Screenshots/Jana/unregister_app_instrumentation_before.png "instrumentation result")
+
+**Function 2:** *async def validate_file(request_headers: Header, last_modified: Union[datetime, float, int]) -> Optional[HTTPResponse]:*
+
+The second function I chose to improve the coverage of is async def validate_file(request_headers, last_modified) -> Optional[HTTPResponse] in sanic/response/convenience.py. 
+
+The validate_file function validates a file based on request headers. It takes the arguments request_headers (Header): the request headers, and last_modified (Union[datetime, float, int]): the last modified date and time of the file. It then returns an Optional[HTTPResponse] which is a response object with status 304 if the file is not modified.
+
+*Intrumented code*
+
+```
+
+validate_branches = {
+	"key_error": False,  # on If-Modified-Since
+	"type_or_value_error": False,  # on If-Modified-Since
+	"non_datetime": False,  # regarding last_modified
+	"last_modified_none": False,  # timezone mismatch, last_modified None
+	"if_modified_since_none": False,  # timezone mismatch, if_modified_since None
+	"last_modified_smaller": False,  # last_modified <= if_modified_since
+	"file_modified": False   # no specific response
+}
+
+async def validate_file(
+	request_headers: Header, last_modified: Union[datetime, float, int]
+) -> Optional[HTTPResponse]:
+	try:
+    		if_modified_since = request_headers.getone("If-Modified-Since")
+	except KeyError:
+    		validate_branches["key_error"] = True
+    		return None
+	try:
+    		if_modified_since = parsedate_to_datetime(if_modified_since)
+	except (TypeError, ValueError):
+    		validate_branches["type_or_value_error"] = True
+    		logger.warning("Ignorning invalid If-Modified-Since header received: " "'%s'",if_modified_since,)
+    		return None
+
+	if not isinstance(last_modified, datetime):
+    		validate_branches["non_datetime"] = True
+    		last_modified = datetime.fromtimestamp( 
+float(last_modified),tz=timezone.utc).replace(microsecond=0)
+
+	if (last_modified.utcoffset() is None and if_modified_since.utcoffset() is not None):
+    		validate_branches["last_modified_none"] = True
+    		logger.warning("Cannot compare tz-aware and tz-naive datetimes. To avoid "this 
+conflict Sanic is converting last_modified to UTC.")
+    		last_modified.replace(tzinfo=timezone.utc)
+	elif (last_modified.utcoffset() is not None and if_modified_since.utcoffset() is None):
+    		validate_branches["if_modified_since_none"] = True
+    		logger.warning("Cannot compare tz-aware and tz-naive datetimes. To avoid ""this 
+conflict Sanic is converting if_modified_since to UTC.")
+    		if_modified_since.replace(tzinfo=timezone.utc)
+
+	if last_modified.timestamp() <= if_modified_since.timestamp():
+    		validate_branches["last_modified_smaller"] = True
+    		return HTTPResponse(status=304)
+
+	validate_branches["file_modified"] = True
+	return None
+
+def print_validate_coverage(app):
+	hits = 0
+	for branch, hit in validate_branches.items():
+    		if hit:
+        			print(f"{branch} was hit")
+        			hits += 1
+    		else:
+        			print(f"{branch} was not hit")
+    
+	coverage_percentage = (hits / len(validate_branches)) * 100
+	print(f"\nCoverage: {hits}/{len(validate_branches)} branches hit ({coverage_percentage:.2f}%)")
+
+
+```
+
+
+*Result Output by Instrumentation*
+
+![alt text](Screenshots/Jana/validate_file_instrumentation_before.png "instrumentation result")
 
 ## Coverage improvement
 

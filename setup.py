@@ -125,7 +125,7 @@ tests_require = [
     "mypy",
     "docutils",
     "pygments",
-    "uvicorn<0.15.0",
+    "uvicorn",
     "slotscheck>=0.8.0,<1",
     types_ujson,
 ]

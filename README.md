@@ -982,6 +982,66 @@ After running the tests, the function test_final_purge_print prints the updated 
 Coverage Improvement : *21%*
 
 
+### Ayush Khadka
+
+**Function 1**: *def _extract_style(maybe_style: Optional[str], name: str) -> str:*
+
+*Old Coverage Results:*
+
+The initial coverage of the def __extract_style is 40%
+
+![alt text](Screenshots/Ayush/extract_style_coverage_initial.png "instrumentation result")
+![alt text](Screenshots/Ayush/extract_style_coverage_details_before.png "instrumentation result")
+
+*Added Test*
+
+There are three tests added which are *expected_file_test*, *non_existing_file_test* and *no_files_test* functions which are to ensure that the branches that were not hit are now covered during testing. 
+
+*expected_file_test*: This test creates a CSS file with a specific CSS rule such that extract_style is called to check if the results matches the expected CSS rule. This ensures that the branch *maybe_path_exists* is hit.
+
+*non_existing_file_test*: This test ensures that the *extract_style* function is able to handle non-existent files in which it calls the function for a non-existing file which checks for an empty string and ensures the proper handling for the scenario. This hits the *return_maybe_style* branch since this is when the code has no path file that exists which triggers the branch and returns maybe_style. It also triggers the *maybe_style_provided* since an existing and non existing files are provided which ensures that the branch is covered. 
+
+*no_files_test*: This test is about calling *extract_style* with the paramater 'None' as the file. Then an assert is added to ensure the proper handling for the 'None' input whcih will check if there is an empty string. This hits the branch *no_maybe_path* since there is no valid path thus it returns an empty string.
+
+```
+def test_initial_print_extract_style():
+    print("\nBranch coverage before: ")
+    print_extract_style_coverage()
+    print("\n")
+
+def expected_file_path_test():
+    expected_file = "p {text-align: center; color: red;} "
+    Path("test_style.css").write_text(expected_file, encoding="UTF-8")
+    results = _extract_style("test_style.css", "test")
+    assert results == expected_file, f"Expected {expected_file},{results}"
+
+def non_existing_file_path_test():
+    non_existingFile = "nonexistent_style.css"
+    results = _extract_style(non_existingFile, "test")
+    assert results == non_existingFile, f"Expected {non_existingFile},{results}"
+
+def no_files_path_test():
+    results = _extract_style(None, "nonexistent_page")
+    assert results == "", f"Expected '',{results}"
+
+def test_final_print_extract_style():
+    print("\nBranch coverage after: ")
+    print_extract_style_coverage()
+    print("\n")
+
+```
+
+
+*New Coverage*
+
+The function test_final_print_extract_style() prints out the updated branch coverage, showing that all the branches were hit during the test execution.
+
+![alt text](Screenshots/Ayush/extract_style_coverage_after.png "instrumentation result")
+![alt text](Screenshots/Ayush/extract_style_coverage_details_after.png "instrumentation result")
+![alt text](Screenshots/Ayush/extract_style_instrumentation_after.png "instrumentation result")
+
+Coverage Improvement: 60%
+
 
 
 

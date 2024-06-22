@@ -26,6 +26,8 @@ def test_final_print_extract_style():
     print_extract_style_coverage()
     print("\n")
 
+test_initial_print_extract_style()
 expected_file_test()
 non_existing_file_test()
 no_files_Test()
+test_final_print_extract_style()

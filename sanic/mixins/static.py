@@ -112,7 +112,7 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
             ```
         """  # noqa: E501
 
-        name = self._generate_name(name)
+        name = self.generate_name(name)
 
         if strict_slashes is None and self.strict_slashes is not None:
             strict_slashes = self.strict_slashes

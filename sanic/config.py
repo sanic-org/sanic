@@ -56,6 +56,7 @@ DEFAULT_CONFIG = {
     "LOCAL_TLS_KEY": _default,
     "LOCAL_TLS_CERT": _default,
     "LOCALHOST": "localhost",
+    "LOG_EXTRA": _default,
     "MOTD": True,
     "MOTD_DISPLAY": {},
     "NO_COLOR": False,
@@ -115,6 +116,7 @@ class Config(dict, metaclass=DescriptorMeta):
     LOCAL_TLS_KEY: Union[Path, str, Default]
     LOCAL_TLS_CERT: Union[Path, str, Default]
     LOCALHOST: str
+    LOG_EXTRA: Union[Default, bool]
     MOTD: bool
     MOTD_DISPLAY: Dict[str, str]
     NO_COLOR: bool

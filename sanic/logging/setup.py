@@ -1,8 +1,9 @@
 import logging
 import os
 
-from typing import Type
+from typing import Type, Union
 
+from sanic.helpers import Default, _default
 from sanic.log import (
     access_logger,
     error_logger,
@@ -20,14 +21,25 @@ from sanic.logging.formatter import (
 )
 
 
-def setup_logging(debug: bool, no_color: bool = False) -> None:
+def setup_logging(
+    debug: bool,
+    no_color: bool = False,
+    log_extra: Union[bool, Default] = _default,
+) -> None:
     if AutoFormatter.SETUP:
         return
+
+    if isinstance(log_extra, Default):
+        log_extra = debug
+        os.environ["SANIC_LOG_EXTRA"] = str(log_extra)
+    AutoFormatter.LOG_EXTRA = log_extra
 
     if no_color:
         os.environ["SANIC_NO_COLOR"] = str(no_color)
         AutoFormatter.NO_COLOR = no_color
+
     AutoFormatter.SETUP = True
+
     for lggr in (logger, server_logger, error_logger, websockets_logger):
         _auto_format(
             lggr,

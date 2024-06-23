@@ -139,7 +139,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 # variable will be a tuple of (existing routes, handler fn)
                 _, handler = handler
 
-            name = self._generate_name(name, handler)
+            name = self.generate_name(name, handler)
 
             if isinstance(host, str):
                 host = frozenset([host])

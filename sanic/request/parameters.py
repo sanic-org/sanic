@@ -18,13 +18,11 @@ class RequestParameters(dict):
         """  # noqa: E501
         return super().get(name, [default])[0]
 
-    def getlist(
-        self, name: str, default: Optional[List[Any]] = None
-    ) -> List[Any]:
+    def getlist(self, name: str, default: Optional[List[Any]] = None) -> List[Any]:
         """Return the entire list
 
         Args:
-            name (str): The name of the parameterremove-getlist-fallback
+            name (str): The name of the parameter
             default (Optional[List[Any]], optional): The default value. Defaults to None.
 
         Returns:

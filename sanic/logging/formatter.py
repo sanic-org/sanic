@@ -4,7 +4,7 @@ import logging
 import os
 import re
 
-from sanic.helpers import is_atty
+from sanic.helpers import is_atty, json_dumps
 from sanic.logging.color import LEVEL_COLORS
 from sanic.logging.color import Colors as c
 
@@ -17,6 +17,14 @@ EXCEPTION_LINE_RE = re.compile(r"^(?P<exc>.*?): (?P<message>.*)$")
 FILE_LINE_RE = re.compile(
     r"File \"(?P<path>.*?)\", line (?P<line_num>\d+), in (?P<location>.*)"
 )
+DEFAULT_FIELDS = set(
+    logging.LogRecord("", 0, "", 0, "", (), None).__dict__.keys()
+) | {
+    "ident",
+    "message",
+    "asctime",
+    "right",
+}
 
 
 class AutoFormatter(logging.Formatter):
@@ -31,6 +39,7 @@ class AutoFormatter(logging.Formatter):
     SETUP = False
     ATTY = is_atty()
     NO_COLOR = os.environ.get("SANIC_NO_COLOR", "false").lower() == "true"
+    LOG_EXTRA = os.environ.get("SANIC_LOG_EXTRA", "true").lower() == "true"
     IDENT = os.environ.get("SANIC_WORKER_IDENTIFIER", "Main ") or "Main "
     DATE_FORMAT = "%Y-%m-%d %H:%M:%S %z"
     IDENT_LIMIT = 5
@@ -57,7 +66,10 @@ class AutoFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         record.ident = self.IDENT
         self._set_levelname(record)
-        return super().format(record)
+        output = super().format(record)
+        if self.LOG_EXTRA:
+            output += self._log_extra(record)
+        return output
 
     def _set_levelname(self, record: logging.LogRecord) -> None:
         if (
@@ -75,6 +87,34 @@ class AutoFormatter(logging.Formatter):
         if not self.ATTY or self.NO_COLOR:
             return CONTROL_RE.sub("", fmt)
         return fmt
+
+    def _log_extra(self, record: logging.LogRecord, indent: int = 0) -> str:
+        extra_lines = [""]
+
+        for key, value in record.__dict__.items():
+            if key not in DEFAULT_FIELDS:
+                extra_lines.append(self._format_key_value(key, value, indent))
+
+        return "\n".join(extra_lines)
+
+    def _format_key_value(self, key, value, indent):
+        indentation = " " * indent
+        template = (
+            f"{indentation}  {{c.YELLOW}}{{key}}{{c.END}}={{value}}"
+            if self.ATTY and not self.NO_COLOR
+            else f"{indentation}{{key}}={{value}}"
+        )
+        if isinstance(value, dict):
+            nested_lines = [template.format(c=c, key=key, value="")]
+            for nested_key, nested_value in value.items():
+                nested_lines.append(
+                    self._format_key_value(
+                        nested_key, nested_value, indent + 2
+                    )
+                )
+            return "\n".join(nested_lines)
+        else:
+            return template.format(c=c, key=key, value=value)
 
 
 class DebugFormatter(AutoFormatter):
@@ -222,6 +262,7 @@ class DebugAccessFormatter(AutoAccessFormatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 23
     DATE_FORMAT = "%H:%M:%S"
+    LOG_EXTRA = False
 
 
 class ProdAccessFormatter(AutoAccessFormatter):
@@ -236,3 +277,111 @@ class ProdAccessFormatter(AutoAccessFormatter):
         f"%(request)s{c.END} "
         f"%(right)s%(status)s %(byte)s {c.GREY}%(duration)s{c.END}"
     )
+    LOG_EXTRA = False
+
+
+class JSONFormatter(AutoFormatter):
+    """
+    The JSONFormatter is used to output logs in JSON format.
+
+    This is useful for logging to a file or to a log aggregator that
+    understands JSON. It will output all the fields from the LogRecord
+    as well as the extra fields that are passed in.
+
+    You can use it as follows:
+
+    .. code-block:: python
+
+        from sanic.log import LOGGING_CONFIG_DEFAULTS
+
+        LOGGING_CONFIG_DEFAULTS["formatters"] = {
+            "generic": {
+                "class": "sanic.logging.formatter.JSONFormatter"
+            },
+            "access": {
+                "class": "sanic.logging.formatter.JSONFormatter"
+            },
+        }
+    """
+
+    ATTY = False
+    NO_COLOR = True
+    FIELDS = [
+        "name",
+        "levelno",
+        "pathname",
+        "module",
+        "filename",
+        "lineno",
+    ]
+
+    dumps = json_dumps
+
+    def format(self, record: logging.LogRecord) -> str:
+        return self.format_dict(self.to_dict(record))
+
+    def to_dict(self, record: logging.LogRecord) -> dict:
+        base = {field: getattr(record, field, None) for field in self.FIELDS}
+        extra = {
+            key: value
+            for key, value in record.__dict__.items()
+            if key not in DEFAULT_FIELDS
+        }
+        info = {}
+        if record.exc_info:
+            info["exc_info"] = self.formatException(record.exc_info)
+        if record.stack_info:
+            info["stack_info"] = self.formatStack(record.stack_info)
+        return {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            **base,
+            **info,
+            **extra,
+        }
+
+    def format_dict(self, record: dict) -> str:
+        return self.dumps(record)
+
+
+class JSONAccessFormatter(JSONFormatter):
+    """
+    The JSONAccessFormatter is used to output access logs in JSON format.
+
+    This is useful for logging to a file or to a log aggregator that
+    understands JSON. It will output all the fields from the LogRecord
+    as well as the extra fields that are passed in.
+
+    You can use it as follows:
+
+    .. code-block:: python
+
+        from sanic.log import LOGGING_CONFIG_DEFAULTS
+
+        LOGGING_CONFIG_DEFAULTS["formatters"] = {
+            "generic": {
+                "class": "sanic.logging.formatter.JSONFormatter"
+            },
+            "access": {
+                "class": "sanic.logging.formatter.JSONAccessFormatter"
+            },
+        }
+    """
+
+    FIELDS = [
+        "host",
+        "request",
+        "status",
+        "byte",
+        "duration",
+    ]
+
+    def to_dict(self, record: logging.LogRecord) -> dict:
+        base = {field: getattr(record, field, None) for field in self.FIELDS}
+        return {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            **base,
+        }

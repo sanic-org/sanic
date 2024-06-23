@@ -21,6 +21,7 @@ from sanic_testing.testing import PORT
 
 from sanic import Sanic
 from sanic.constants import HTTP_METHODS
+from sanic.logging.formatter import AutoFormatter
 from sanic.router import Router
 from sanic.touchup.service import TouchUp
 
@@ -167,6 +168,10 @@ def app(request):
     for target, method_name in TouchUp._registry:
         setattr(target, method_name, CACHE[method_name])
     Sanic._app_registry.clear()
+    AutoFormatter.SETUP = False
+    AutoFormatter.LOG_EXTRA = False
+    os.environ.pop("SANIC_LOG_EXTRA", None)
+    os.environ.pop("SANIC_NO_COLOR", None)
 
 
 @pytest.fixture(scope="function")

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -20,11 +19,7 @@ from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.cookies.response import Cookie, SameSite
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import (
-    Default,
-    _default,
-    has_message_body,
-)
+from sanic.helpers import Default, _default, has_message_body, json_dumps
 from sanic.http import Http
 
 
@@ -34,18 +29,6 @@ if TYPE_CHECKING:
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
-
-
-try:
-    from ujson import dumps as ujson_dumps
-
-    json_dumps = partial(ujson_dumps, escape_forward_slashes=False)
-except ImportError:
-    # This is done in order to ensure that the JSON response is
-    # kept consistent across both ujson and inbuilt json usage.
-    from json import dumps
-
-    json_dumps = partial(dumps, separators=(",", ":"))
 
 
 class BaseHTTPResponse:

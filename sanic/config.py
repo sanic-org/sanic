@@ -116,7 +116,7 @@ class Config(dict, metaclass=DescriptorMeta):
     LOCAL_TLS_KEY: Union[Path, str, Default]
     LOCAL_TLS_CERT: Union[Path, str, Default]
     LOCALHOST: str
-    LOG_EXTRA: bool
+    LOG_EXTRA: Union[Default, bool]
     MOTD: bool
     MOTD_DISPLAY: Dict[str, str]
     NO_COLOR: bool

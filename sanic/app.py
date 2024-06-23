@@ -114,7 +114,15 @@ ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
 
+
+ack_branch_coverage = {
+    "ack_has_multiplexer" : False,
+    "ack_no_multiplexer" : False
+
+}
+
 unregister_branches = {"not_an_instance": False, "name_in_registry": False}
+
 
 refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False}
 purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
@@ -2431,7 +2439,15 @@ class Sanic(
         ready to begin operation.
         """
         if hasattr(self, "multiplexer"):
+            ack_branch_coverage["ack_has_multiplexer"] = True
             self.multiplexer.ack()
+        else:
+            ack_branch_coverage["ack_no_multiplexer"] = True
+
+    def print_ack_coverage():
+        for branch, hit in ack_branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+
 
     def set_serving(self, serving: bool) -> None:
         """Set the serving state of the application.

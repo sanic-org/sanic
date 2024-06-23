@@ -20,17 +20,19 @@ class BaseMixin(metaclass=SanicMeta):
     def _generate_name(
         self, *objects: Union[NameProtocol, DunderNameProtocol, str]
     ) -> str:
+        print(objects)
+        name: Optional[str] = None
         for obj in objects:
-            if obj:
-                name: Optional[str]
-                if isinstance(obj, str):
-                    name = obj
-                else:
-                    name = getattr(obj, "name", getattr(obj, "__name__", None))
+            if not obj:
+                continue
+            if isinstance(obj, str):
+                name = obj
+            else:
+                name = getattr(obj, "name", getattr(obj, "__name__", None))
 
-                if name:
-                    break
-        else:
+            if name:
+                break
+        if not name or not isinstance(name, str):
             raise ValueError("Could not generate a name for handler")
 
         if not name.startswith(f"{self.name}."):

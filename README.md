@@ -1005,7 +1005,7 @@ There are three tests added which are *expected_file_test*, *non_existing_file_t
 
 *non_existing_file_path_test*: This test ensures that the *extract_style* function is able to handle non-existent files in which it calls the function for a non-existing file which checks for an empty string and ensures the proper handling for the scenario. This hits the *return_maybe_style* branch since this is when the code has no path file that exists which triggers the branch and returns maybe_style. It also triggers the *maybe_style_provided* since an existing and non existing files are provided which ensures that the branch is covered. 
 
-*no_files_path_test*: This test is about calling *extract_style* with the paramater 'None' as the file. Then an assert is added to ensure the proper handling for the 'None' input whcih will check if there is an empty string. This hits the branch *no_maybe_path* since there is no valid path thus it returns an empty string.
+*no_files_path_test*: This test is about calling *extract_style* with the paramater 'None' as the file. Then an assert is added to ensure the proper handling for the 'None' input which will check if there is an empty string. This hits the branch *no_maybe_path* since there is no valid path thus it returns an empty string.
 
 ```
 def test_initial_print_extract_style():
@@ -1091,11 +1091,6 @@ def test_eq_media_type_equality():
     media_type1 = MediaType("application", "json")
     media_type2 = MediaType("application", "json")
     assert media_type1 == media_type2
-
-def test_eq_different_media_types():
-    media_type1 = MediaType("application", "json")
-    media_type2 = MediaType("text", "plain")
-    assert media_type1 != media_type2
 
 def test_eq_different_data_types():
     media_type = MediaType("application", "json")

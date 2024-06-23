@@ -359,8 +359,7 @@ def test_methodview_naming(methodview_app):
 )
 def test_versioning(app, path, version, expected):
     @app.route(path, version=version)
-    def handler(*_):
-        ...
+    def handler(*_): ...
 
     url = app.url_for("handler")
     assert url == expected

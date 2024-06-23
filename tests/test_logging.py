@@ -76,12 +76,12 @@ def test_logging_pass_customer_logconfig():
     # reset_logging()
 
     modified_config = LOGGING_CONFIG_DEFAULTS
-    modified_config["formatters"]["generic"][
-        "format"
-    ] = "%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s"
-    modified_config["formatters"]["access"][
-        "format"
-    ] = "%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s"
+    modified_config["formatters"]["generic"]["format"] = (
+        "%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s"
+    )
+    modified_config["formatters"]["access"]["format"] = (
+        "%(asctime)s - (%(name)s)[%(levelname)s]: %(message)s"
+    )
 
     Sanic("test_logging", log_config=modified_config)
 

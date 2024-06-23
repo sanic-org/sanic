@@ -65,8 +65,7 @@ async def test_skip_touchup_non_reserved(app, caplog, skip_it, result):
     app.config.TOUCHUP = not skip_it
 
     @app.signal("foo.bar.one")
-    def sync_signal(*_):
-        ...
+    def sync_signal(*_): ...
 
     await app._startup()
     assert app.signal_router.allow_fail_builtin is (not skip_it)

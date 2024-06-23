@@ -13,8 +13,7 @@ from sanic.signals import Event
 
 
 def test_add_signal(app):
-    def sync_signal(*_):
-        ...
+    def sync_signal(*_): ...
 
     app.add_signal(sync_signal, "foo.bar.baz")
 
@@ -48,12 +47,10 @@ def test_add_signal_method_handler(app):
 
 def test_add_signal_decorator(app):
     @app.signal("foo.bar.baz")
-    def sync_signal(*_):
-        ...
+    def sync_signal(*_): ...
 
     @app.signal("foo.bar.baz")
-    async def async_signal(*_):
-        ...
+    async def async_signal(*_): ...
 
     assert len(app.signal_router.routes) == 2
     assert len(app.signal_router.dynamic_routes) == 1
@@ -72,8 +69,7 @@ def test_invalid_signal(app, signal):
     with pytest.raises(InvalidSignal, match=f"Invalid signal event: {signal}"):
 
         @app.signal(signal)
-        def handler():
-            ...
+        def handler(): ...
 
 
 @pytest.mark.asyncio
@@ -459,12 +455,10 @@ async def test_dispatch_signal_triggers_event_on_bp(app):
     bp = Blueprint("bp")
 
     @app.signal("foo.bar.baz")
-    def app_signal():
-        ...
+    def app_signal(): ...
 
     @bp.signal("foo.bar.baz")
-    def bp_signal():
-        ...
+    def bp_signal(): ...
 
     app.blueprint(bp)
     app.signal_router.finalize()
@@ -551,8 +545,7 @@ async def test_dispatch_signal_triggers_event_on_bp_with_context(app):
     bp = Blueprint("bp")
 
     @bp.signal("foo.bar.baz")
-    def bp_signal():
-        ...
+    def bp_signal(): ...
 
     app.blueprint(bp)
     app.signal_router.finalize()
@@ -609,8 +602,7 @@ async def test_event_not_exist_with_autoregister(app):
 @pytest.mark.asyncio
 async def test_dispatch_signal_triggers_non_exist_event_with_autoregister(app):
     @app.signal("some.stand.in")
-    async def signal_handler():
-        ...
+    async def signal_handler(): ...
 
     app.config.EVENT_AUTOREGISTER = True
     app_counter = 0
@@ -631,8 +623,7 @@ async def test_dispatch_signal_triggers_non_exist_event_with_autoregister(app):
 @pytest.mark.asyncio
 async def test_dispatch_not_exist(app):
     @app.signal("do.something.start")
-    async def signal_handler():
-        ...
+    async def signal_handler(): ...
 
     app.signal_router.finalize()
     await app.dispatch("does.not.exist")
@@ -642,8 +633,7 @@ def test_event_on_bp_not_registered():
     bp = Blueprint("bp")
 
     @bp.signal("foo.bar.baz")
-    def bp_signal():
-        ...
+    def bp_signal(): ...
 
     with pytest.raises(
         SanicException,
@@ -676,8 +666,7 @@ def test_signal_reservation(app, event, expected):
 @pytest.mark.asyncio
 async def test_report_exception(app: Sanic):
     @app.report_exception
-    async def catch_any_exception(app: Sanic, exception: Exception):
-        ...
+    async def catch_any_exception(app: Sanic, exception: Exception): ...
 
     @app.route("/")
     async def handler(request):
@@ -721,8 +710,7 @@ def test_report_exception_runs_once_inline(app: Sanic):
         next(c)
 
     @app.route("/")
-    async def handler(request):
-        ...
+    async def handler(request): ...
 
     @app.signal(Event.HTTP_ROUTING_AFTER.value)
     async def after_routing(**_):

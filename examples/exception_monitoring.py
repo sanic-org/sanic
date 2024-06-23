@@ -7,6 +7,7 @@ and pass in an instance of it when we create our Sanic instance. Inside this
 class' default handler, we can do anything including sending exceptions to
 an external service.
 """
+
 from sanic import Sanic
 from sanic.exceptions import SanicException
 from sanic.handlers import ErrorHandler

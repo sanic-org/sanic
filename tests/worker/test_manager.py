@@ -17,8 +17,7 @@ else:
     SIGKILL = SIGINT
 
 
-def fake_serve():
-    ...
+def fake_serve(): ...
 
 
 @pytest.fixture

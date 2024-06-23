@@ -673,9 +673,6 @@ def test_refresh_pass_passthru_data_to_new_instance(app: Sanic):
     assert app.inspector == 2
     assert app.config.TOUCHUP == 23
 
-
-
-
 def test_myclass_ack_method(app: Sanic):
    
     print("\nBranch coverage before: ")

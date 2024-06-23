@@ -180,7 +180,7 @@ class Router(BaseRouter):
 
         route = self.name_index.get(view_name)
         if not route:
-            full_name = self.ctx.app._generate_name(view_name)
+            full_name = self.ctx.app.generate_name(view_name)
             route = self.name_index.get(full_name)
 
         if not route:

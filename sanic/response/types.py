@@ -24,7 +24,6 @@ from sanic.helpers import (
     Default,
     _default,
     has_message_body,
-    remove_entity_headers,
 )
 from sanic.http import Http
 
@@ -104,9 +103,6 @@ class BaseHTTPResponse:
         Returns:
             Iterator[Tuple[bytes, bytes]]: A list of header tuples encoded in bytes for sending
         """  # noqa: E501
-        # TODO: Make a blacklist set of header names and then filter with that
-        if self.status in (304, 412):  # Not Modified, Precondition Failed
-            self.headers = remove_entity_headers(self.headers)
         if has_message_body(self.status):
             self.headers.setdefault("content-type", self.content_type)
         # Encode headers into bytes

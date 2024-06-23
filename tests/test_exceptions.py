@@ -398,3 +398,18 @@ def test_exception_aliases():
     assert MethodNotSupported is MethodNotAllowed
     assert ContentRangeError is RangeNotSatisfiable
     assert HeaderExpectationFailed is ExpectationFailed
+
+
+def test_exception_message_attribute():
+    assert ServerError("it failed").message == "it failed"
+    assert ServerError(b"it failed").message == "it failed"
+    assert (
+        ServerError().message == str(ServerError()) == "Internal Server Error"
+    )
+
+    class CustomError(SanicException):
+        message = "Something bad happened"
+
+    assert CustomError().message == CustomError.message == str(CustomError())
+    assert SanicException().message != ""
+    assert SanicException("").message == ""

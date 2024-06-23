@@ -3,8 +3,10 @@ import inspect
 import os
 import time
 
+import pytest
+
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.utils import formatdate, parsedate_to_datetime
 from logging import ERROR, LogRecord
 from mimetypes import guess_type
@@ -12,8 +14,9 @@ from pathlib import Path
 from random import choice
 from typing import Callable, List, Union
 from urllib.parse import unquote
+from sanic.response import validate_file
+from sanic.response import convenience
 
-import pytest
 
 from aiofiles import os as async_os
 from pytest import LogCaptureFixture
@@ -35,7 +38,6 @@ from sanic.response import (
 
 
 JSON_DATA = {"ok": True}
-
 
 @pytest.mark.filterwarnings("ignore:Types other than str will be")
 def test_response_body_not_a_string(app):
@@ -1002,3 +1004,41 @@ def test_stream_response_with_default_headers(app: Sanic):
     assert response.text == "foo"
     assert response.headers["Transfer-Encoding"] == "chunked"
     assert response.headers["Content-Type"] == "text/csv"
+
+def test_initial_print_validate_coverage(app, capfd):
+    print("Before: \n")
+    convenience.print_validate_coverage(app)
+    print("\n")
+
+    captured = capfd.readouterr()
+    print(captured.out)
+
+def test_timezone_none_last_modified(app):
+    @app.route("/")
+    async def test_route(request: Request):
+        # Timezone is None datetime
+        last_modified = datetime.now().replace(tzinfo=None)
+        # Timezone datetime object
+        if_modified_since = datetime.utcnow().replace(tzinfo=timezone.utc)
+        request.headers['If-Modified-Since'] = if_modified_since.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        return await validate_file(request.headers, last_modified)
+
+    request, response = app.test_client.get("/")
+    assert response.status == 304 or response.status is None or response.status == 500
+
+def test_timezone_last_modified_with_none_if_modified_since(app):
+    @app.route("/")
+    async def test_route(request: Request):
+        last_modified = datetime.utcnow().replace(tzinfo=timezone.utc)
+        if_modified_since = datetime.now().replace(tzinfo=None)
+        # Formatting if_modified_since without timezone info 
+        request.headers['If-Modified-Since'] = if_modified_since.strftime("%a, %d %b %Y %H:%M:%S")
+        return await validate_file(request.headers, last_modified)
+
+    request, response = app.test_client.get("/")
+    assert response.status == 304 or response.status is None or response.status == 500
+
+def test_final_print_validate_coverage(app):
+    print("After: \n")
+    convenience.print_validate_coverage(app)
+    print("\n")

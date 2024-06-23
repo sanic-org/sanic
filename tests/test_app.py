@@ -22,7 +22,6 @@ from sanic.router import Route
 
 from .conftest import get_port
 
-
 @pytest.fixture(autouse=True)
 def clear_app_registry():
     Sanic._app_registry = {}
@@ -341,7 +340,6 @@ def test_app_registry_name_reuse():
     Sanic.test_mode = True
     Sanic("test")
 
-
 def test_app_registry_retrieval():
     instance = Sanic("test")
     assert Sanic.get_app("test") is instance
@@ -352,6 +350,48 @@ def test_app_registry_retrieval_from_multiple():
     Sanic("something_else")
     assert Sanic.get_app("test") is instance
 
+def test_initial_print_unregister_coverage():
+    print("Before: \n")
+    Sanic.print_unregister_coverage()
+    print("\n")
+
+def test_unregister_non_sanic_instance():
+    # create non sanic object
+    non_sanic = object()
+
+    # try to unregister it, should raise SanicException
+    with pytest.raises(SanicException) as exc_info:
+        Sanic.unregister_app(non_sanic)
+
+    assert str(exc_info.value) == "Registered app must be an instance of Sanic"
+
+def test_successful_unregister_sanic_app():
+    # create new sanic app
+    app = Sanic("TestApp")
+
+    # manually register it if necessary
+    Sanic._app_registry[app.name] = app
+
+    Sanic.unregister_app(app)
+
+    # check if the name is not in the registry anymore
+    assert app.name not in Sanic._app_registry
+
+def test_unsuccessful_unregister_non_registered_sanic_app():
+    app = Sanic("UnregisteredApp")
+
+    # make sure it's not registered
+    if app.name in Sanic._app_registry:
+        del Sanic._app_registry[app.name] 
+
+    Sanic.unregister_app(app)
+
+    assert app.name not in Sanic._app_registry
+
+def test_final_print_unregister_coverage():
+    print("After: \n")
+    Sanic.print_unregister_coverage()
+    print("\n")
 
 def test_get_app_does_not_exist():
     with pytest.raises(

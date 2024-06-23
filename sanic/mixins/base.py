@@ -22,6 +22,7 @@ class BaseMixin(metaclass=SanicMeta):
     ) -> str:
         for obj in objects:
             if obj:
+                name: Optional[str]
                 if isinstance(obj, str):
                     name = obj
                 else:

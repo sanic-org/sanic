@@ -736,7 +736,6 @@ def test_myclass_ack_method(app: Sanic):
         app.multiplexer.ack.assert_not_called()
 
 
-=======
 def test_refresh_when_self_not_registered():
     # Register an instance with a different name
     registered_instance = Sanic("test_instance")

@@ -38,9 +38,6 @@ _host_re = re.compile(
 # even though no client escapes in a way that would allow perfect handling.
 
 # For more information, consult ../tests/test_requests.py
-def print_eq_coverage():
-        for branch, hit in eq_branch.items():
-            print(f"{branch} was {'hit' if hit else 'not hit'}")
 
 class MediaType:
     """A media type, as used in the Accept header.
@@ -98,6 +95,10 @@ class MediaType:
             return self.mime == other.mime
         eq_branch["not_media_type"] = True
         return NotImplemented
+    
+    def print_eq_coverage():
+        for branch, hit in eq_branch.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
 
 
     def match(

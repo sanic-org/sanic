@@ -2,6 +2,7 @@ import logging
 import os
 
 from typing import Type, Union
+
 from sanic.helpers import Default, _default
 from sanic.log import (
     access_logger,
@@ -21,7 +22,9 @@ from sanic.logging.formatter import (
 
 
 def setup_logging(
-    debug: bool, no_color: bool = False, log_extra: Union[bool, Default] = _default
+    debug: bool,
+    no_color: bool = False,
+    log_extra: Union[bool, Default] = _default,
 ) -> None:
     if AutoFormatter.SETUP:
         return

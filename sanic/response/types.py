@@ -328,7 +328,9 @@ class JSONResponse(HTTPResponse):
     @raw_body.setter
     def raw_body(self, value: Any):
         self._body_manually_set = False
-        self._body = self._encode_body(self._use_dumps(value, **self._use_dumps_kwargs))
+        self._body = self._encode_body(
+            self._use_dumps(value, **self._use_dumps_kwargs)
+        )
         self._raw_body = value
 
     @property  # type: ignore
@@ -460,7 +462,9 @@ class JSONResponse(HTTPResponse):
         self._check_body_not_manually_set()
 
         if not isinstance(self._raw_body, (list, dict)):
-            raise SanicException("Cannot pop from a non-list and non-dict object.")
+            raise SanicException(
+                "Cannot pop from a non-list and non-dict object."
+            )
 
         if isinstance(default, Default):
             value = self._raw_body.pop(key)

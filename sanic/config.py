@@ -56,7 +56,7 @@ DEFAULT_CONFIG = {
     "LOCAL_TLS_KEY": _default,
     "LOCAL_TLS_CERT": _default,
     "LOCALHOST": "localhost",
-    "LOG_EXTRA": "true",
+    "LOG_EXTRA": _default,
     "MOTD": True,
     "MOTD_DISPLAY": {},
     "NO_COLOR": False,
@@ -139,9 +139,7 @@ class Config(dict, metaclass=DescriptorMeta):
 
     def __init__(
         self,
-        defaults: Optional[
-            Dict[str, Union[str, bool, int, float, None]]
-        ] = None,
+        defaults: Optional[Dict[str, Union[str, bool, int, float, None]]] = None,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
         *,
@@ -241,9 +239,7 @@ class Config(dict, metaclass=DescriptorMeta):
         if attr == "LOCAL_CERT_CREATOR" and not isinstance(
             self.LOCAL_CERT_CREATOR, LocalCertCreator
         ):
-            self.LOCAL_CERT_CREATOR = LocalCertCreator[
-                self.LOCAL_CERT_CREATOR.upper()
-            ]
+            self.LOCAL_CERT_CREATOR = LocalCertCreator[self.LOCAL_CERT_CREATOR.upper()]
         elif attr == "DEPRECATION_FILTER":
             self._configure_warnings()
 

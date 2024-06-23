@@ -17,9 +17,7 @@ EXCEPTION_LINE_RE = re.compile(r"^(?P<exc>.*?): (?P<message>.*)$")
 FILE_LINE_RE = re.compile(
     r"File \"(?P<path>.*?)\", line (?P<line_num>\d+), in (?P<location>.*)"
 )
-DEFAULT_FIELDS = set(
-    logging.LogRecord("", 0, "", 0, "", (), None).__dict__.keys()
-) | {
+DEFAULT_FIELDS = set(logging.LogRecord("", 0, "", 0, "", (), None).__dict__.keys()) | {
     "ident",
     "message",
     "asctime",
@@ -45,8 +43,7 @@ class AutoFormatter(logging.Formatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 42
     PREFIX_FORMAT = (
-        f"{c.GREY}%(ident)s{{limit}} %(asctime)s {c.END}"
-        "%(levelname)s: {start}"
+        f"{c.GREY}%(ident)s{{limit}} %(asctime)s {c.END}" "%(levelname)s: {start}"
     )
     MESSAGE_FORMAT = "%(message)s"
 
@@ -100,17 +97,15 @@ class AutoFormatter(logging.Formatter):
     def _format_key_value(self, key, value, indent):
         indentation = " " * indent
         template = (
-            f"{indentation}  {{c.YELLOW}}{{key}}{{c.END}}: {{value}}"
+            f"{indentation}  {{c.YELLOW}}{{key}}{{c.END}}={{value}}"
             if self.ATTY and not self.NO_COLOR
-            else f"{indentation}{{key}}: {{value}}"
+            else f"{indentation}{{key}}={{value}}"
         )
         if isinstance(value, dict):
             nested_lines = [template.format(c=c, key=key, value="")]
             for nested_key, nested_value in value.items():
                 nested_lines.append(
-                    self._format_key_value(
-                        nested_key, nested_value, indent + 2
-                    )
+                    self._format_key_value(nested_key, nested_value, indent + 2)
                 )
             return "\n".join(nested_lines)
         else:
@@ -145,9 +140,7 @@ class DebugFormatter(AutoFormatter):
                 line = self._color_file_line(line)
             elif line.startswith("    "):
                 line = self._color_code_line(line)
-            elif (
-                "Error" in line or "Exception" in line or len(lines) - 1 == idx
-            ):
+            elif "Error" in line or "Exception" in line or len(lines) - 1 == idx:
                 line = self._color_exception_line(line)
             colored_traceback.append(line)
         return "\n".join(colored_traceback)
@@ -269,8 +262,7 @@ class ProdAccessFormatter(AutoAccessFormatter):
     IDENT_LIMIT = 5
     MESSAGE_START = 42
     PREFIX_FORMAT = (
-        f"{c.GREY}%(ident)s{{limit}}|%(asctime)s{c.END} "
-        f"%(levelname)s: {{start}}"
+        f"{c.GREY}%(ident)s{{limit}}|%(asctime)s{c.END} " f"%(levelname)s: {{start}}"
     )
     MESSAGE_FORMAT = (
         f"{c.PURPLE}%(host)s {c.BLUE + c.BOLD}"

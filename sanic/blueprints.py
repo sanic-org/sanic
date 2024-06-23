@@ -391,7 +391,7 @@ class Blueprint(BaseSanic):
             name = future.name
             if opt_name_prefix:
                 name = f"{opt_name_prefix}_{future.name}"
-            name = app._generate_name(name)
+            name = app.generate_name(name)
             host = future.host or self.host
             if isinstance(host, list):
                 host = tuple(host)

@@ -19,13 +19,7 @@ from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.cookies.response import Cookie, SameSite
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import (
-    Default,
-    _default,
-    has_message_body,
-    json_dumps,
-    remove_entity_headers,
-)
+from sanic.helpers import Default, _default, has_message_body, json_dumps
 from sanic.http import Http
 
 
@@ -92,9 +86,6 @@ class BaseHTTPResponse:
         Returns:
             Iterator[Tuple[bytes, bytes]]: A list of header tuples encoded in bytes for sending
         """  # noqa: E501
-        # TODO: Make a blacklist set of header names and then filter with that
-        if self.status in (304, 412):  # Not Modified, Precondition Failed
-            self.headers = remove_entity_headers(self.headers)
         if has_message_body(self.status):
             self.headers.setdefault("content-type", self.content_type)
         # Encode headers into bytes
@@ -337,9 +328,7 @@ class JSONResponse(HTTPResponse):
     @raw_body.setter
     def raw_body(self, value: Any):
         self._body_manually_set = False
-        self._body = self._encode_body(
-            self._use_dumps(value, **self._use_dumps_kwargs)
-        )
+        self._body = self._encode_body(self._use_dumps(value, **self._use_dumps_kwargs))
         self._raw_body = value
 
     @property  # type: ignore
@@ -471,9 +460,7 @@ class JSONResponse(HTTPResponse):
         self._check_body_not_manually_set()
 
         if not isinstance(self._raw_body, (list, dict)):
-            raise SanicException(
-                "Cannot pop from a non-list and non-dict object."
-            )
+            raise SanicException("Cannot pop from a non-list and non-dict object.")
 
         if isinstance(default, Default):
             value = self._raw_body.pop(key)

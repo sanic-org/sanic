@@ -29,9 +29,7 @@ def worker_serve(
     app_loader: AppLoader,
     worker_state: Optional[Dict[str, Any]] = None,
     server_info: Optional[Dict[str, List[ApplicationServerInfo]]] = None,
-    ssl: Optional[
-        Union[SSLContext, Dict[str, Union[str, os.PathLike]]]
-    ] = None,
+    ssl: Optional[Union[SSLContext, Dict[str, Union[str, os.PathLike]]]] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
     reuse_port: bool = False,
@@ -59,7 +57,7 @@ def worker_serve(
 
         app.refresh(passthru)
         app.setup_loop()
-        setup_logging(app.state.is_debug, app.config.NO_COLOR)
+        setup_logging(app.state.is_debug, app.config.NO_COLOR, app.config.LOG_EXTRA)
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -89,9 +87,7 @@ def worker_serve(
             # Hydrate apps with any passed server info
 
             if monitor_publisher is None:
-                raise RuntimeError(
-                    "No restart publisher found in worker process"
-                )
+                raise RuntimeError("No restart publisher found in worker process")
             if worker_state is None:
                 raise RuntimeError("No worker state found in worker process")
 
@@ -99,9 +95,7 @@ def worker_serve(
             apps = list(Sanic._app_registry.values())
             app.before_server_start(partial(app._start_servers, apps=apps))
             for a in apps:
-                a.multiplexer = WorkerMultiplexer(
-                    monitor_publisher, worker_state
-                )
+                a.multiplexer = WorkerMultiplexer(monitor_publisher, worker_state)
 
         if app.debug:
             loop.set_debug(app.debug)

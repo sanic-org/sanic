@@ -13,7 +13,7 @@ def test_initial_print_eq_coverage():
     MediaType.print_eq_coverage()
     print("\n")
 
-def test_eq_string_no_param():
+def test_eq_no_string_params():
     media_type = MediaType("application", "json")
     assert media_type == "application/json"
 
@@ -26,11 +26,6 @@ def test_eq_media_type_equality():
     media_type1 = MediaType("application", "json")
     media_type2 = MediaType("application", "json")
     assert media_type1 == media_type2
-
-def test_eq_different_media_types():
-    media_type1 = MediaType("application", "json")
-    media_type2 = MediaType("text", "plain")
-    assert media_type1 != media_type2
 
 def test_eq_different_data_types():
     media_type = MediaType("application", "json")

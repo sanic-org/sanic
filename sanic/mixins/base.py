@@ -1,37 +1,41 @@
-from typing import Optional
+from typing import Optional, Protocol, Union
 
 from sanic.base.meta import SanicMeta
 
 
+class NameProtocol(Protocol):
+    name: str
+
+
+class DunderNameProtocol(Protocol):
+    __name__: str
+
+
 class BaseMixin(metaclass=SanicMeta):
-    """Base class for some other mixins."""
+    """Base class for various mixins."""
 
     name: str
     strict_slashes: Optional[bool]
 
-    def _generate_name(self, *objects) -> str:
-        name = None
-
+    def _generate_name(
+        self, *objects: Union[NameProtocol, DunderNameProtocol, str]
+    ) -> str:
         for obj in objects:
             if obj:
                 if isinstance(obj, str):
                     name = obj
-                    break
-
-                try:
-                    name = obj.name
-                except AttributeError:
-                    try:
-                        name = obj.__name__
-                    except AttributeError:
-                        continue
                 else:
-                    break
+                    name = getattr(obj, "name", getattr(obj, "__name__", None))
 
-        if not name:  # noqa
+                if name:
+                    break
+        else:
             raise ValueError("Could not generate a name for handler")
 
         if not name.startswith(f"{self.name}."):
             name = f"{self.name}.{name}"
 
         return name
+
+    def generate_name(self, *objects) -> str:
+        return self._generate_name(*objects)

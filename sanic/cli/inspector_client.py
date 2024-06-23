@@ -55,20 +55,39 @@ class InspectorClient:
             sys.stdout.write(out + "\n")
 
     def info(self) -> None:
-        out = sys.stdout.write
         response = self.request("", "GET")
         if self.raw or not response:
             return
         data = response["result"]
         display = data.pop("info")
+        nodes = data.pop("nodes", {})
+        self._display_info(display)
+        self._display_workers(data["workers"], None if not nodes else "Hub")
+        if nodes:
+            for name, node in nodes.items():
+                # info = node.pop("info")
+                workers = node.pop("workers")
+                # self._display_info(info)
+                self._display_workers(workers, name)
+
+    def _display_info(self, display: Dict[str, Any]) -> None:
         extra = display.pop("extra", {})
+        out = sys.stdout.write
         display["packages"] = ", ".join(display["packages"])
         MOTDTTY(get_logo(), self.base_url, display, extra).display(
             version=False,
             action="Inspecting",
             out=out,
         )
-        for name, info in data["workers"].items():
+
+    def _display_workers(
+        self, workers: Dict[str, Dict[str, Any]], node: Optional[str] = None
+    ) -> None:
+        out = sys.stdout.write
+        for name, info in workers.items():
+            name = f"{Colors.BOLD}{Colors.SANIC}{name}{Colors.END}"
+            if node:
+                name += f" {Colors.BOLD}{Colors.YELLOW}({node}){Colors.END}"
             info = "\n".join(
                 f"\t{key}: {Colors.BLUE}{value}{Colors.END}"
                 for key, value in info.items()
@@ -78,7 +97,7 @@ class InspectorClient:
                 + indent(
                     "\n".join(
                         [
-                            f"{Colors.BOLD}{Colors.SANIC}{name}{Colors.END}",
+                            name,
                             info,
                         ]
                     ),

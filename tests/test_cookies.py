@@ -24,9 +24,7 @@ def test_request_cookies():
     assert c.getlist("foo") == ["one", "two"]
     assert c.getlist("abc") == ["xyz"]
     assert c.getlist("") == ["bare", "bare2"]
-    assert (
-        c.getlist("bare") is None
-    )  # [] might be sensible but we got None for now
+    assert c.getlist("bare") == []
 
 
 # ------------------------------------------------------------ #
@@ -461,10 +459,11 @@ def test_cookie_accessors(app: Sanic):
                     "four": request.cookies.get("four", "fallback"),
                 },
                 "getlist": {
-                    "one": request.cookies.getlist("one", ["fallback"]),
-                    "two": request.cookies.getlist("two", ["fallback"]),
-                    "three": request.cookies.getlist("three", ["fallback"]),
-                    "four": request.cookies.getlist("four", ["fallback"]),
+                    "one": request.cookies.getlist("one"),
+                    "two": request.cookies.getlist("two"),
+                    "three": request.cookies.getlist("three"),
+                    "four": request.cookies.getlist("four"),
+                    "five": request.cookies.getlist("five", ["fallback"]),
                 },
                 "getattr": {
                     "one": request.cookies.one,
@@ -500,7 +499,8 @@ def test_cookie_accessors(app: Sanic):
             "one": ["1"],
             "two": ["2"],
             "three": ["3"],
-            "four": ["fallback"],
+            "four": [],
+            "five": ["fallback"],
         },
         "getattr": {
             "one": "1",

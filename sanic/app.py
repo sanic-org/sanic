@@ -114,7 +114,6 @@ ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
 
-
 ack_branch_coverage = {
     "ack_has_multiplexer" : False,
     "ack_no_multiplexer" : False
@@ -124,7 +123,7 @@ ack_branch_coverage = {
 unregister_branches = {"not_an_instance": False, "name_in_registry": False}
 
 
-refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False}
+refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False, "refresh_b5" : False}
 purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 
 
@@ -1897,6 +1896,12 @@ class Sanic(
             k: v for k, v in self._task_registry.items() if v is not None
         }
 
+
+    def print_purge_coverage():
+        for branch, hit in purge_branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+
+
     def shutdown_tasks(
         self, timeout: Optional[float] = None, increment: float = 0.1
     ) -> None:
@@ -2522,11 +2527,23 @@ class Sanic(
         if passthru:
             for attr, info in passthru.items():
                 if isinstance(info, dict):
+                    refresh_branch_coverage["refresh_b4"] = True
                     for key, value in info.items():
                         setattr(getattr(self, attr), key, value)
                 else:
                     setattr(self, attr, info)
         if hasattr(self, "multiplexer"):
+
+            refresh_branch_coverage["refresh_b5"] = True
+            self.shared_ctx.lock()
+        return self
+
+    def print_refresh_coverage():
+        for branch, hit in refresh_branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
+    
+
+=======
             self.shared_ctx.lock()
         return self
 

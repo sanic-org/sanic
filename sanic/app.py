@@ -123,7 +123,7 @@ ack_branch_coverage = {
 unregister_branches = {"not_an_instance": False, "name_in_registry": False}
 
 
-refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False}
+refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False, "refresh_b5" : False}
 purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 
 

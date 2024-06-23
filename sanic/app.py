@@ -113,8 +113,11 @@ if OS_IS_WINDOWS:  # no cov
 ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
-refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False}
+
+
+refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False, "refresh_b5" : False}
 purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
+
 
 
 class Sanic(
@@ -1887,11 +1890,9 @@ class Sanic(
             k: v for k, v in self._task_registry.items() if v is not None
         }
 
-    def print_apply_coverage():
+    def print_purge_coverage():
         for branch, hit in purge_branch_coverage.items():
             print(f"{branch} was {'hit' if hit else 'not hit'}")
-
-    print_apply_coverage()
 
     def shutdown_tasks(
         self, timeout: Optional[float] = None, increment: float = 0.1
@@ -2499,12 +2500,13 @@ class Sanic(
             refresh_branch_coverage["refresh_b3"] = True
             for attr, info in passthru.items():
                 if isinstance(info, dict):
+                    refresh_branch_coverage["refresh_b4"] = True
                     for key, value in info.items():
                         setattr(getattr(self, attr), key, value)
                 else:
                     setattr(self, attr, info)
         if hasattr(self, "multiplexer"):
-            refresh_branch_coverage["refresh_b4"] = True
+            refresh_branch_coverage["refresh_b5"] = True
             self.shared_ctx.lock()
         return self
 
@@ -2512,7 +2514,6 @@ class Sanic(
         for branch, hit in refresh_branch_coverage.items():
             print(f"{branch} was {'hit' if hit else 'not hit'}")
     
-    print_refresh_coverage()
 
     @property
     def inspector(self) -> Inspector:

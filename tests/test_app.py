@@ -673,6 +673,10 @@ def test_refresh_pass_passthru_data_to_new_instance(app: Sanic):
     assert app.inspector == 2
     assert app.config.TOUCHUP == 23
 
+def test_initial_refresh_print():
+    print("\n Before:")
+    Sanic.print_refresh_coverage()
+    
 def test_refresh_when_self_not_registered():
     # Register an instance with a different name
     registered_instance = Sanic("test_instance")
@@ -714,6 +718,15 @@ def test_refresh_with_multiplexer():
     # Assertions
     assert hasattr(refreshed_instance, "multiplexer")
     refreshed_instance.multiplexer.lock.assert_called_once()
+
+def test_final_refresh_print():
+    print("\n After:")
+    Sanic.print_refresh_coverage()
+
+
+def test_initial_purge_print():
+    print("\n Before:")
+    Sanic.print_purge_coverage()
 
 def app():
     return Sanic("test_app")
@@ -758,4 +771,10 @@ def test_purge_with_mixed_tasks(app):
 
     app.purge_tasks() 
     assert len(app._task_registry) == 1, "Task registry should have one task left"
-    assert "task3" in app._task_registry, "Only the pending task should remain"
+    assert "task3" in app._task_registry, "Only the pending task should remain"\
+    
+
+def test_final_purge_print():
+    print("\n After:")
+    Sanic.print_purge_coverage()
+

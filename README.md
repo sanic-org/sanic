@@ -392,7 +392,7 @@ def print_extract_style_coverage():
 
 **Function 2**: *def __eq__(self, other):*
 
-The function that was chosen to improve the coverage is the function *def __eq__(self, other):* in the headers.py file. The purpose of this function is to compare and to see if they repesent the same MIME type for (self) and (other). It checks for a string or MediaTypes. For the string comparison, if there are paramaters such as ; then it will raise an error due to the rule comparision. It compares self.mine with the provided string of (other) and if they match then it returns true otherwise false. If it is not a string then it checks for the MediaType and if that is true then it compares self.mine with other.mine it returns true if they are qual else it returns false. If a string or MediaType is not provided then it returns NotImplemented. 
+The function that was chosen to improve the coverage is the function *def __eq__(self, other):* in the headers.py file. The purpose of this function is to compare and to see if they repesent the same MIME type for (self) and (other). It checks for a string or MediaTypes. For the string comparison, if there are paramaters such as ; then it will raise an error due to the rule comparision. It compares self.mine with the provided string of (other) and if they match then it returns true otherwise false. If it is not a string then it checks for the MediaType and if that is true then it compares self.mine with other.mine it returns true if they are equal else it returns false. If a string or MediaType is not provided then it returns NotImplemented. 
 
 The dictionary eq_branch is used to instrument the function and track which branch of the statements was executed. The result outputted by the instrumentation show that all of the branches are not hit. 
 
@@ -1065,11 +1065,12 @@ The initial coverage of the def __eq__ is 69%
 
 These tests are designed to test the __eq__ function and to ensure that all possible branches and code paths are executed.
 
-+ *test_eq_no_string_params*:
-+ *test_eq_string_parameters*
-+ *test_eq_media_type_equality*:
-+ *test_eq_different_media_types*:
-+ *test_eq_different_data_types*
++ *test_eq_no_string_params*: It creates a mediatype with ("application","json"). Then it asserts that the mediatype is equal to the string "application/json" This essentially tests MIME types matching with no paramters. 
++ *test_eq_string_parameters*: It is similar to *test_eq_no_string_params* however the assert has a string with ";" in which this will raises a ValueError. 
++ *test_eq_media_type_equality*: This test demonstrates two MediaTypes with ("application","json") and the assert compares them to demonstrate that both objects have the same MIME type.
++ *test_eq_different_data_types*: This test simulates a comparision between the MediaType of ("application","json") with an integer value of 102 which asserts that the result is false.
+
+These tests overall make sure that every branch is covered are successfully hit and all code paths are executed.
 
 ```
 def test_initial_print_eq_coverage():

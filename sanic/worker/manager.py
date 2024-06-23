@@ -22,6 +22,18 @@ else:
     SIGKILL = SIGINT
 
 
+monitor_branch_coverage = {
+        "polled_message": False,
+        "empty_message": False,
+        "terminate_message": False,
+        "tuple_message": False,
+        "invalid_message": False,
+        "default_message": False,
+        "no_message": False,
+    }
+    
+
+
 class MonitorCycle(IntEnum):
     BREAK = auto()
     CONTINUE = auto()
@@ -447,27 +459,40 @@ class WorkerManager:
         for worker in to_remove:
             self.remove_worker(worker)
 
+   
     def _poll_monitor(self) -> Optional[MonitorCycle]:
         if self.monitor_subscriber.poll(0.1):
+            monitor_branch_coverage["polled_message"] = True
             message = self.monitor_subscriber.recv()
             logger.debug(f"Monitor message: {message}", extra={"verbosity": 2})
             if not message:
+                monitor_branch_coverage["empty_message"] = True
                 return MonitorCycle.BREAK
             elif message == "__TERMINATE__":
+                monitor_branch_coverage["terminate_message"] = True
                 self._handle_terminate()
                 return MonitorCycle.BREAK
             elif isinstance(message, tuple) and (
                 len(message) == 7 or len(message) == 8
             ):
+                monitor_branch_coverage["tuple_message"] = True
                 self._handle_manage(*message)  # type: ignore
                 return MonitorCycle.CONTINUE
             elif not isinstance(message, str):
+                monitor_branch_coverage["invalid_message"] = True
                 error_logger.error(
                     "Monitor received an invalid message: %s", message
                 )
                 return MonitorCycle.CONTINUE
+            monitor_branch_coverage["default_message"] = True
             return self._handle_message(message)
+    
+        monitor_branch_coverage["no_message"] = True
         return None
+
+    def print_monitor_coverage(self):
+        for branch, hit in monitor_branch_coverage.items():
+            print(f"{branch} was {'hit' if hit else 'not hit'}")
 
     def _handle_terminate(self) -> None:
         self.shutdown()

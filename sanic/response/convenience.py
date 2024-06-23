@@ -17,7 +17,6 @@ from sanic.models.protocol_types import HTMLProtocol, Range
 
 from .types import HTTPResponse, JSONResponse, ResponseStream
 
-
 def empty(
     status: int = 204, headers: Optional[Dict[str, str]] = None
 ) -> HTTPResponse:
@@ -149,58 +148,77 @@ def html(
         content_type="text/html; charset=utf-8",
     )
 
+validate_branches = {
+    "key_error": False,  # on If-Modified-Since
+    "type_or_value_error": False,  # on If-Modified-Since
+    "non_datetime": False,  # regarding last_modified
+    "last_modified_none": False,  # timezone mismatch, last_modified None
+    "if_modified_since_none": False,  # timezone mismatch, if_modified_since None
+    "last_modified_smaller": False,  # last_modified <= if_modified_since
+    "file_modified": False   # no specific response
+}
 
 async def validate_file(
     request_headers: Header, last_modified: Union[datetime, float, int]
 ) -> Optional[HTTPResponse]:
     """Validate file based on request headers.
-
     Args:
         request_headers (Header): The request headers.
         last_modified (Union[datetime, float, int]): The last modified date and time of the file.
-
     Returns:
         Optional[HTTPResponse]: A response object with status 304 if the file is not modified.
     """  # noqa: E501
     try:
         if_modified_since = request_headers.getone("If-Modified-Since")
     except KeyError:
+        validate_branches["key_error"] = True
         return None
     try:
         if_modified_since = parsedate_to_datetime(if_modified_since)
     except (TypeError, ValueError):
+        validate_branches["type_or_value_error"] = True
         logger.warning(
             "Ignorning invalid If-Modified-Since header received: " "'%s'",
-            if_modified_since,
-        )
+            if_modified_since,)
         return None
-    if not isinstance(last_modified, datetime):
-        last_modified = datetime.fromtimestamp(
-            float(last_modified), tz=timezone.utc
-        ).replace(microsecond=0)
 
-    if (
-        last_modified.utcoffset() is None
-        and if_modified_since.utcoffset() is not None
-    ):
+    if not isinstance(last_modified, datetime):
+        validate_branches["non_datetime"] = True
+        last_modified = datetime.fromtimestamp( float(last_modified), tz=timezone.utc).replace(microsecond=0)
+
+    if (last_modified.utcoffset() is None and if_modified_since.utcoffset() is not None):
+        validate_branches["last_modified_none"] = True
         logger.warning(
             "Cannot compare tz-aware and tz-naive datetimes. To avoid "
             "this conflict Sanic is converting last_modified to UTC."
         )
         last_modified.replace(tzinfo=timezone.utc)
-    elif (
-        last_modified.utcoffset() is not None
-        and if_modified_since.utcoffset() is None
-    ):
+    elif (last_modified.utcoffset() is not None and if_modified_since.utcoffset() is None):
+        validate_branches["if_modified_since_none"] = True
         logger.warning(
             "Cannot compare tz-aware and tz-naive datetimes. To avoid "
             "this conflict Sanic is converting if_modified_since to UTC."
         )
         if_modified_since.replace(tzinfo=timezone.utc)
+
     if last_modified.timestamp() <= if_modified_since.timestamp():
+        validate_branches["last_modified_smaller"] = True
         return HTTPResponse(status=304)
 
+    validate_branches["file_modified"] = True
     return None
+
+def print_validate_coverage(app):
+    hits = 0
+    for branch, hit in validate_branches.items():
+        if hit:
+            print(f"{branch} was hit")
+            hits += 1
+        else:
+            print(f"{branch} was not hit")
+    
+    coverage_percentage = (hits / len(validate_branches)) * 100
+    print(f"\nCoverage: {hits}/{len(validate_branches)} branches hit ({coverage_percentage:.2f}%)")
 
 
 async def file(

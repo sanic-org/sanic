@@ -304,5 +304,4 @@ class OutputGroup(Group):
             "--noisy-exceptions",
             dest="noisy_exceptions",
             help="Output stack traces for all exceptions",
-            default=None,
         )

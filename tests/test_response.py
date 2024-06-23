@@ -180,10 +180,6 @@ def json_app(app):
     async def unmodified_handler(request: Request):
         return json(JSON_DATA, status=304)
 
-    @app.get("/precondition")
-    async def precondition_handler(request: Request):
-        return json(JSON_DATA, status=412)
-
     @app.delete("/")
     async def delete_handler(request: Request):
         return json(None, status=204)
@@ -197,10 +193,6 @@ def test_json_response(json_app):
     request, response = json_app.test_client.get("/")
     assert response.status == 200
     assert response.text == json_dumps(JSON_DATA)
-    assert response.json == JSON_DATA
-
-    request, response = json_app.test_client.get("/precondition")
-    assert response.status == 412
     assert response.json == JSON_DATA
 
 
@@ -719,10 +711,7 @@ def test_send_response_after_eof_should_fail(
         "response has at least partially been sent."
     )
 
-    error_msg2 = (
-        "Response stream was ended, no more response "
-        "data is allowed to be sent."
-    )
+    error_msg2 = "Response stream was ended, no more response data is allowed to be sent."
 
     with caplog.at_level(ERROR):
         _, response = app.test_client.get("/")

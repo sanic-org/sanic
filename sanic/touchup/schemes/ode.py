@@ -67,7 +67,8 @@ class RemoveDispatch(NodeTransformer):
 
         if isinstance(func, Attribute) and func.attr == "dispatch":
             event = args[0]
-            if event_name := getattr(event, "value", None):
+            if hasattr(event, "s"):
+                event_name = getattr(event, "value", event.s)
                 if self._not_registered(event_name):
                     logger.debug(
                         f"Disabling event: {event_name}",

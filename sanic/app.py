@@ -114,6 +114,13 @@ ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
 
+unregister_branches = {"not_an_instance": False, "name_in_registry": False}
+
+refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False}
+purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
+
+
+
 class Sanic(
     Generic[config_type, ctx_type],
     StaticHandleMixin,
@@ -2161,12 +2168,26 @@ class Sanic(
             ```
         """
         if not isinstance(app, cls):
+            unregister_branches["not_an_instance"] = True
             raise SanicException("Registered app must be an instance of Sanic")
 
         name = app.name
         if name in cls._app_registry:
+            unregister_branches["name_in_registry"] = True
             del cls._app_registry[name]
-
+    
+    def print_unregister_coverage():
+        hits = 0
+        for branch, hit in unregister_branches.items():
+            if hit:
+                print(f"{branch} was hit")
+                hits += 1
+            else:
+                print(f"{branch} was not hit")
+    
+        coverage_percentage = (hits / len(unregister_branches)) * 100
+        print(f"\nCoverage: {hits}/{len(unregister_branches)} branches hit ({coverage_percentage:.2f}%)")
+    
     @classmethod
     def get_app(
         cls, name: Optional[str] = None, *, force_create: bool = False

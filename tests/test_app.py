@@ -778,3 +778,4 @@ def test_final_purge_print():
     print("\n After:")
     Sanic.print_purge_coverage()
 
+

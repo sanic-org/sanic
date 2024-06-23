@@ -114,7 +114,6 @@ ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
 
 
-
 refresh_branch_coverage = {"refresh_b1" : False, "refresh_b2" : False, "refresh_b3" : False, "refresh_b4" : False, "refresh_b5" : False}
 purge_branch_coverage = {"purge_b1" : False, "purge_b2" : False}
 
@@ -1880,19 +1879,19 @@ class Sanic(
         """
         for key, task in self._task_registry.items():
             if task is None:
-                purge_branch_coverage["purge_b1"] = True
                 continue
             if task.done() or task.cancelled():
-                purge_branch_coverage["purge_b1"] = True
                 self._task_registry[key] = None
 
         self._task_registry = {
             k: v for k, v in self._task_registry.items() if v is not None
         }
 
+
     def print_purge_coverage():
         for branch, hit in purge_branch_coverage.items():
             print(f"{branch} was {'hit' if hit else 'not hit'}")
+
 
     def shutdown_tasks(
         self, timeout: Optional[float] = None, increment: float = 0.1
@@ -2491,13 +2490,10 @@ class Sanic(
         """  # noqa: E501
         registered = self.__class__.get_app(self.name)
         if self is not registered:
-            refresh_branch_coverage["refresh_b1"] = True
             if not registered.state.server_info:
-                refresh_branch_coverage["refresh_b2"] = True
                 registered.state.server_info = self.state.server_info
             self = registered
         if passthru:
-            refresh_branch_coverage["refresh_b3"] = True
             for attr, info in passthru.items():
                 if isinstance(info, dict):
                     refresh_branch_coverage["refresh_b4"] = True
@@ -2506,6 +2502,7 @@ class Sanic(
                 else:
                     setattr(self, attr, info)
         if hasattr(self, "multiplexer"):
+
             refresh_branch_coverage["refresh_b5"] = True
             self.shared_ctx.lock()
         return self
@@ -2514,6 +2511,10 @@ class Sanic(
         for branch, hit in refresh_branch_coverage.items():
             print(f"{branch} was {'hit' if hit else 'not hit'}")
     
+
+=======
+            self.shared_ctx.lock()
+        return self
 
     @property
     def inspector(self) -> Inspector:

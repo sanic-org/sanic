@@ -161,8 +161,6 @@ This can be constrasted with the `app.ctx` object which is shared across all req
 
 The `request.ctx` object by default is a `SimpleNamespace` object allowing you to set arbitrary attributes on it. Sanic will not use this object for anything, so you are free to use it however you want without worrying about name clashes.
 
-```python
-
 ### Typical use case
 
 This is often used to store items like authenticated user details. We will get more into [middleware](./middleware.md) later, but here is a simple example.
@@ -253,10 +251,7 @@ As dicussed in [application customization](./app.md#custom-requests), you can cr
     ```
 
 
-
-.. new:: NEW in v23.6
-
-    ### Custom Request Context
+### Custom Request Context
 
 By default, the request context (`request.ctx`) is a [`Simplenamespace`](https://docs.python.org/3/library/types.html#types.SimpleNamespace) object allowing you to set arbitrary attributes on it. While this is super helpful to reuse logic across your application, it can be difficult in the development experience since the IDE will not know what attributes are available.
 

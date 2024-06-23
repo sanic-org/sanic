@@ -69,5 +69,4 @@ class FutureSignal(NamedTuple):
     priority: int
 
 
-class FutureRegistry(set):
-    ...
+class FutureRegistry(set): ...

@@ -239,6 +239,18 @@ The application instance has access to an object that provides access to interac
     }
     ```
 
+The possible states are:
+
+- `NONE` - The worker has been created, but there is no process yet
+- `IDLE` - The process has been created, but is not running yet
+- `STARTING` - The process is starting
+- `STARTED` - The process has started
+- `ACKED` - The process has started and sent an acknowledgement (usually only for server processes)
+- `JOINED` - The process has exited and joined the main process
+- `TERMINATED` - The process has exited and terminated
+- `RESTARTING` - The process is restarting
+- `FAILED` - The process encountered an exception and is no longer running
+- `COMPLETED` - The process has completed its work and exited successfully
 
 ## Built-in non-server processes
 
@@ -323,6 +335,122 @@ To run a managed custom process on Sanic, you must create a callable. If that pr
     #   app.manager.manage(<name>, <callable>, <kwargs>)
         app.manager.manage("MyProcess", my_process, {"foo": "bar"})
     ```
+
+### Transient v. durable processes
+
+.. column::
+
+    When you manage a process with the `manage` method, you have the option to make it transient or durable. A transient process will be restarted by the auto-reloader, and a durable process will not.
+    
+    By default, all processes are durable.
+    
+.. column::
+
+    ```python
+    @app.main_process_ready
+    async def ready(app: Sanic, _):
+        app.manager.manage(
+            "MyProcess",
+            my_process,
+            {"foo": "bar"},
+            transient=True,
+        )
+    ```
+
+
+### Tracked v. untracked processes
+
+.. new:: v23.12
+
+    Out of the box, Sanic will track the state of all processes. This means that you can access the state of the process from the [multiplexer](./manager#access-to-the-multiplexer) object, or from the [Inspector](./manager#inspector).
+    
+    See [worker state](./manager#worker-state) for more information.
+    
+    Sometimes it is helpful to run background processes that are not long-running. You run them once until completion and then they exit. Upon completion, they will either be in `FAILED` or `COMPLETED` state.
+    
+
+.. column::
+
+    When you are running a non-long-running process, you can opt out of tracking it by setting `tracked=False` in the `manage` method. This means that upon completion of the process it will be removed from the list of tracked processes. You will only be able to check the state of the process while it is running.
+    
+.. column::
+
+    ```python
+    @app.main_process_ready
+    async def ready(app: Sanic, _):
+        app.manager.manage(
+            "OneAndDone",
+            do_once,
+            {},
+            tracked=False,
+        )
+    ```
+
+*Added in v23.12*
+
+### Restartable custom processes
+
+.. new:: v23.12
+
+    A custom process that is transient will **always** be restartable. That means the auto-restart will work as expected. However, what if you want to be able to *manually* restart a process, but not have it be restarted by the auto-reloader?
+    
+.. column::
+
+    In this scenario, you can set `restartable=True` in the `manage` method. This will allow you to manually restart the process, but it will not be restarted by the auto-reloader.
+    
+.. column::
+
+    ```python
+    @app.main_process_ready
+    async def ready(app: Sanic, _):
+        app.manager.manage(
+            "MyProcess",
+            my_process,
+            {"foo": "bar"},
+            restartable=True,
+        )
+    ```
+    
+.. column::
+
+    You could now manually restart that process from the multiplexer.
+    
+.. column::
+
+    ```python
+    @app.get("/restart")
+    async def restart_handler(request: Request):
+        request.app.m.restart("Sanic-MyProcess-0")
+        return json({"foo": request.app.m.name})
+    ```
+    
+*Added in v23.12*
+
+### On the fly process management
+
+.. new:: v23.12
+
+    Custom processes are usually added in the `main_process_ready` listener. However, there may be times when you want to add a process after the application has started. For example, you may want to add a process from a request handler. The multiplexer provides a method for doing this.
+    
+.. column::
+
+    Once you have a reference to the multiplexer, you can call `manage` to add a process. It works the same as the `manage` method on the Manager.
+    
+.. column::
+
+    ```python
+    @app.post("/start")
+    async def start_handler(request: Request):
+        request.app.m.manage(
+            "MyProcess",
+            my_process,
+            {"foo": "bar"},
+            workers=2,
+        )
+        return json({"foo": request.app.m.name})
+    ```
+    
+*Added in v23.12*
 
 ## Single process mode
 

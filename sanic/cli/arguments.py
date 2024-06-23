@@ -42,8 +42,7 @@ class Group:
             params = {args[0][2:].replace("-", "_"): None}
             group.set_defaults(**params)
 
-    def prepare(self, args) -> None:
-        ...
+    def prepare(self, args) -> None: ...
 
 
 class GeneralGroup(Group):
@@ -305,4 +304,5 @@ class OutputGroup(Group):
             "--noisy-exceptions",
             dest="noisy_exceptions",
             help="Output stack traces for all exceptions",
+            default=None,
         )

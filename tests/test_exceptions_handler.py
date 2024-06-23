@@ -268,8 +268,7 @@ def test_exception_handler_response_was_sent(
 
 def test_errir_on_duplicate(app: Sanic):
     @app.exception(ServerError)
-    async def exception_handler_1(request, exception):
-        ...
+    async def exception_handler_1(request, exception): ...
 
     message = (
         "Duplicate exception handler definition on: route=__ALL_ROUTES__ and "
@@ -278,5 +277,4 @@ def test_errir_on_duplicate(app: Sanic):
     with pytest.raises(ServerError, match=message):
 
         @app.exception(ServerError)
-        async def exception_handler_2(request, exception):
-            ...
+        async def exception_handler_2(request, exception): ...

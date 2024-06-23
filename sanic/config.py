@@ -61,6 +61,7 @@ DEFAULT_CONFIG = {
     "LOCALHOST": "localhost",
     "MOTD": True,
     "MOTD_DISPLAY": {},
+    "NO_COLOR": False,
     "NOISY_EXCEPTIONS": False,
     "PROXIES_COUNT": None,
     "REAL_IP_HEADER": None,
@@ -122,6 +123,7 @@ class Config(dict, metaclass=DescriptorMeta):
     LOCALHOST: str
     MOTD: bool
     MOTD_DISPLAY: Dict[str, str]
+    NO_COLOR: bool
     NOISY_EXCEPTIONS: bool
     PROXIES_COUNT: Optional[int]
     REAL_IP_HEADER: Optional[str]

@@ -56,6 +56,7 @@ from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
 from sanic.http.tls.context import SanicSSLContext
 from sanic.log import Colors, deprecation, error_logger, logger
+from sanic.logging.setup import setup_logging
 from sanic.models.handler_types import ListenerType
 from sanic.server import Signal as ServerSignal
 from sanic.server import try_use_uvloop
@@ -665,6 +666,8 @@ class StartupMixin(metaclass=SanicMeta):
         if not self.state.is_debug:
             self.state.mode = Mode.DEBUG if debug else Mode.PRODUCTION
 
+        setup_logging(self.state.is_debug, self.config.NO_COLOR)
+
         if isinstance(version, int):
             version = HTTP(version)
 
@@ -1170,7 +1173,9 @@ class StartupMixin(metaclass=SanicMeta):
                     ...
                 sock.close()
             socks = []
+
             trigger_events(main_stop, loop, primary)
+
             loop.close()
             cls._cleanup_env_vars()
             cls._cleanup_apps()
@@ -1196,7 +1201,12 @@ class StartupMixin(metaclass=SanicMeta):
     @staticmethod
     def _get_process_states(worker_state) -> List[str]:
         return [
-            state for s in worker_state.values() if (state := s.get("state"))
+            state
+            for s in worker_state.values()
+            if (
+                (state := s.get("state"))
+                and state not in ("TERMINATED", "FAILED", "COMPLETED", "NONE")
+            )
         ]
 
     @classmethod

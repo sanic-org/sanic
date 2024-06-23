@@ -1,19 +1,19 @@
 from typing import Optional, Sequence, cast
 
 
-try:  # websockets < 11.0
-    from websockets.connection import State
-    from websockets.server import ServerConnection as ServerProtocol
-except ImportError:  # websockets >= 11.0
+try:  # websockets >= 11.0
     from websockets.protocol import State  # type: ignore
     from websockets.server import ServerProtocol  # type: ignore
+except ImportError:  # websockets < 11.0
+    from websockets.connection import State
+    from websockets.server import ServerConnection as ServerProtocol
 
 from websockets import http11
 from websockets.datastructures import Headers as WSHeaders
 from websockets.typing import Subprotocol
 
 from sanic.exceptions import SanicException
-from sanic.log import logger
+from sanic.log import access_logger, websockets_logger
 from sanic.request import Request
 from sanic.server import HttpProtocol
 
@@ -32,6 +32,8 @@ class WebSocketProtocol(HttpProtocol):
         "websocket_max_size",
         "websocket_ping_interval",
         "websocket_ping_timeout",
+        "websocket_url",
+        "websocket_peer",
     )
 
     def __init__(
@@ -49,11 +51,16 @@ class WebSocketProtocol(HttpProtocol):
         self.websocket_max_size = websocket_max_size
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
+        self.websocket_url: Optional[str] = None
+        self.websocket_peer: Optional[str] = None
 
     def connection_lost(self, exc):
         if self.websocket is not None:
             self.websocket.connection_lost(exc)
         super().connection_lost(exc)
+        self.log_websocket("CLOSE")
+        self.websocket_url = None
+        self.websocket_peer = None
 
     def data_received(self, data):
         if self.websocket is not None:
@@ -121,7 +128,7 @@ class WebSocketProtocol(HttpProtocol):
                 max_size=self.websocket_max_size,
                 subprotocols=subprotocols,
                 state=OPEN,
-                logger=logger,
+                logger=websockets_logger,
             )
             resp = ws_proto.accept(self.sanic_request_to_ws_request(request))
         except Exception:
@@ -158,4 +165,65 @@ class WebSocketProtocol(HttpProtocol):
             else None
         )
         await self.websocket.connection_made(self, loop=loop)
+        self.websocket_url = self._http.request.url
+        self.websocket_peer = f"{id(self):X}"[-5:-1] + "unx"
+        if ip := self._http.request.client_ip:
+            self.websocket_peer = f"{ip}:{self._http.request.port}"
+        self.log_websocket("OPEN")
         return self.websocket
+
+    def log_websocket(self, message):
+        if not self.access_log or not self.websocket_url:
+            return
+        status = ""
+        close = ""
+        try:
+            # Can we get some useful statistics?
+            p = self.websocket.ws_proto
+            state = p.state
+            if state == CLOSED:
+                codes = {
+                    1000: "NORMAL",
+                    1001: "GOING AWAY",
+                    1005: "NO STATUS",
+                    1006: "ABNORMAL",
+                    1011: "SERVER ERR",
+                }
+                if p.close_code == 1006:
+                    message = "CLOSE_ABN"
+                scode = rcode = 1006  # Abnormal closure (disconnection)
+                sdesc = rdesc = ""
+                if p.close_sent:
+                    scode = p.close_sent.code
+                    sdesc = p.close_sent.reason
+                if p.close_rcvd:
+                    rcode = p.close_rcvd.code
+                    rdesc = p.close_rcvd.reason
+                # Use repr() to escape any control characters
+                sdesc = repr(sdesc[:256]) if sdesc else codes.get(scode, "")
+                rdesc = repr(rdesc[:256]) if rdesc else codes.get(rcode, "")
+                if p.close_rcvd_then_sent or scode == 1006:
+                    status = rcode
+                    close = (
+                        f"{rdesc} from client"
+                        if scode in (rcode, 1006)
+                        else f"{rdesc} ▼▲ {scode} {sdesc}"
+                    )
+                else:
+                    status = scode
+                    close = (
+                        f"{sdesc} from server"
+                        if rcode in (scode, 1006)
+                        else f"{sdesc} ▲▼ {rcode} {rdesc}"
+                    )
+
+        except AttributeError:
+            ...
+        extra = {
+            "status": status,
+            "byte": close,
+            "host": self.websocket_peer,
+            "request": f" 🔌 {self.websocket_url}",
+            "duration": "",
+        }
+        access_logger.info(message, extra=extra)

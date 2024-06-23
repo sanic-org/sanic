@@ -237,8 +237,7 @@ def test_route_error_format_unknown(app):
     with pytest.raises(SanicException, match="Unknown format: bad"):
 
         @app.get("/text", error_format="bad")
-        def handler(request):
-            ...
+        def handler(request): ...
 
 
 def test_fallback_with_content_type_html(app):
@@ -550,7 +549,7 @@ def test_guess_mime_logging(
         r.message for r in caplog.records if r.funcName == "guess_mime"
     ]
 
-    assert logmsg == expected
+    assert logmsg == f"Error Page: {expected}"
 
 
 @pytest.mark.parametrize(

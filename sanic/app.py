@@ -72,6 +72,7 @@ from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.logging.setup import setup_logging
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
@@ -247,8 +248,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -269,8 +269,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -291,8 +290,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -313,8 +311,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(
         self,
@@ -380,7 +377,7 @@ class Sanic(
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[Middleware]] = {}
         self.named_response_middleware: Dict[str, Deque[Middleware]] = {}
-        self.request_class: Type[Request] = request_class or Request
+        self.request_class = request_class or Request
         self.request_middleware: Deque[Middleware] = deque()
         self.response_middleware: Deque[Middleware] = deque()
         self.router: Router = router or Router()
@@ -661,8 +658,7 @@ class Sanic(
         fail_not_found: bool = True,
         inline: Literal[True],
         reverse: bool = False,
-    ) -> Coroutine[Any, Any, Awaitable[Any]]:
-        ...
+    ) -> Coroutine[Any, Any, Awaitable[Any]]: ...
 
     @overload
     def dispatch(
@@ -674,8 +670,7 @@ class Sanic(
         fail_not_found: bool = True,
         inline: Literal[False] = False,
         reverse: bool = False,
-    ) -> Coroutine[Any, Any, Awaitable[Task]]:
-        ...
+    ) -> Coroutine[Any, Any, Awaitable[Task]]: ...
 
     def dispatch(
         self,
@@ -1778,18 +1773,19 @@ class Sanic(
             return None
 
     @overload
-    def get_task(self, name: str, *, raise_exception: Literal[True]) -> Task:
-        ...
+    def get_task(
+        self, name: str, *, raise_exception: Literal[True]
+    ) -> Task: ...
 
     @overload
     def get_task(
         self, name: str, *, raise_exception: Literal[False]
-    ) -> Optional[Task]:
-        ...
+    ) -> Optional[Task]: ...
 
     @overload
-    def get_task(self, name: str, *, raise_exception: bool) -> Optional[Task]:
-        ...
+    def get_task(
+        self, name: str, *, raise_exception: bool
+    ) -> Optional[Task]: ...
 
     def get_task(
         self, name: str, *, raise_exception: bool = True
@@ -1942,6 +1938,7 @@ class Sanic(
         details: https://asgi.readthedocs.io/en/latest
         """
         if scope["type"] == "lifespan":
+            setup_logging(self.state.is_debug, self.config.NO_COLOR)
             self.asgi = True
             self.motd("")
             self._asgi_lifespan = Lifespan(self, scope, receive, send)
@@ -2510,7 +2507,10 @@ class Sanic(
         """
         if environ.get("SANIC_WORKER_PROCESS") or not self._inspector:
             raise SanicException(
-                "Can only access the inspector from the main process"
+                "Can only access the inspector from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._inspector
 
@@ -2545,6 +2545,9 @@ class Sanic(
 
         if environ.get("SANIC_WORKER_PROCESS") or not self._manager:
             raise SanicException(
-                "Can only access the manager from the main process"
+                "Can only access the manager from the main process "
+                "after main_process_start has run. For example, you most "
+                "likely want to use it inside the @app.main_process_ready "
+                "event listener."
             )
         return self._manager

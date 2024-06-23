@@ -85,7 +85,7 @@ def test_response_handler_cancelled(response_handler_cancelled_app):
 
 def test_response_timeout_not_applied(caplog):
     modified_config = LOGGING_CONFIG_DEFAULTS
-    modified_config["loggers"]["sanic.root"]["level"] = "DEBUG"
+    modified_config["loggers"]["sanic.websockets"]["level"] = "DEBUG"
 
     app = Sanic("test_logging", log_config=modified_config)
     app.config.RESPONSE_TIMEOUT = 1
@@ -101,7 +101,7 @@ def test_response_timeout_not_applied(caplog):
         _ = app.test_client.websocket("/ws")
     assert app.ctx.event.is_set()
     assert (
-        "sanic.root",
+        "sanic.websockets",
         10,
         "Handling websocket. Timeouts disabled.",
     ) in caplog.record_tuples

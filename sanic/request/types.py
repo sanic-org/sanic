@@ -83,7 +83,7 @@ if TYPE_CHECKING:
     )
 else:
     sanic_type = TypeVar("sanic_type")
-ctx_type = TypeVar("ctx_type")
+ctx_type = TypeVar("ctx_type", default=SimpleNamespace)
 
 
 class Request(Generic[sanic_type, ctx_type]):

@@ -20,7 +20,6 @@ class BaseMixin(metaclass=SanicMeta):
     def _generate_name(
         self, *objects: Union[NameProtocol, DunderNameProtocol, str]
     ) -> str:
-        print(objects)
         name: Optional[str] = None
         for obj in objects:
             if not obj:

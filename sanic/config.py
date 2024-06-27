@@ -44,6 +44,7 @@ DEFAULT_CONFIG = {
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,
+    "GRACEFUL_TCP_CLOSE_TIMEOUT": 5.0,
     "INSPECTOR": False,
     "INSPECTOR_HOST": "localhost",
     "INSPECTOR_PORT": 6457,
@@ -104,6 +105,7 @@ class Config(dict, metaclass=DescriptorMeta):
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
+    GRACEFUL_TCP_CLOSE_TIMEOUT: float
     INSPECTOR: bool
     INSPECTOR_HOST: str
     INSPECTOR_PORT: int

@@ -114,8 +114,8 @@ class SanicProtocol(asyncio.Protocol):
                 # This close timeout needs to be less than the graceful
                 # shutdown timeout. The graceful shutdown _could_ be waiting
                 # for this transport to close before shutting down the app.
-                timeout = self.app.config.GRACEFUL_SHUTDOWN_TIMEOUT / 2.0
-                # This is 15seconds/2 = 7.5seconds by default.
+                timeout = self.app.config.GRACEFUL_TCP_CLOSE_TIMEOUT
+                # This is 5s by default.
         else:
             # Schedule the async close checker but with no timeout,
             # this will ensure abort() is called if required.

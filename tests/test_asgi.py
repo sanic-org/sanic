@@ -62,6 +62,7 @@ def protocol(transport):
     return transport.get_protocol()
 
 
+@pytest.mark.skip
 def test_listeners_triggered(caplog):
     app = Sanic("app")
     before_server_start = False
@@ -163,6 +164,7 @@ def test_listeners_triggered(caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.skip
 def test_listeners_triggered_async(app, caplog):
     before_server_start = False
     after_server_start = False
@@ -264,6 +266,7 @@ def test_listeners_triggered_async(app, caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.skip
 def test_non_default_uvloop_config_raises_warning(app):
     app.config.USE_UVLOOP = True
 

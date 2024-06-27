@@ -232,14 +232,9 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
         """
         Requires to prevent checking timeouts for closed connections
         """
-        if timeout is not None:
-            super().close(timeout=timeout)
-            return
         if self._callback_check_timeouts:
             self._callback_check_timeouts.cancel()
-            if self.transport:
-                self.transport.close()
-                self.abort()
+        return super().close(timeout=timeout)
 
     async def send(self, data):  # no cov
         """

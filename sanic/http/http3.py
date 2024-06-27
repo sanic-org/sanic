@@ -275,15 +275,13 @@ class HTTPReceiver(Receiver, Stream):
 class WebsocketReceiver(Receiver):  # noqa
     """Websocket receiver implementation."""
 
-    async def run(self):
-        ...
+    async def run(self): ...
 
 
 class WebTransportReceiver(Receiver):  # noqa
     """WebTransport receiver implementation."""
 
-    async def run(self):
-        ...
+    async def run(self): ...
 
 
 class Http3:

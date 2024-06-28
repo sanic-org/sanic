@@ -305,7 +305,7 @@ def test_request_header_encoding(app):
                     (b":path", b"/location"),
                     (b":scheme", b"https"),
                     (b":authority", b"localhost:8443"),
-                    ("foo\u00A0".encode(), b"bar"),
+                    ("foo\u00a0".encode(), b"bar"),
                 ],
                 1,
                 False,
@@ -326,7 +326,7 @@ def test_request_url_encoding(app):
             HeadersReceived(
                 [
                     (b":method", b"GET"),
-                    (b":path", b"/location\xA0"),
+                    (b":path", b"/location\xa0"),
                     (b":scheme", b"https"),
                     (b":authority", b"localhost:8443"),
                     (b"foo", b"bar"),

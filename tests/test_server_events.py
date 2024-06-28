@@ -200,8 +200,7 @@ def test_create_server_trigger_events(app):
 @pytest.mark.asyncio
 async def test_missing_startup_raises_exception(app):
     @app.listener("before_server_start")
-    async def init_db(app, loop):
-        ...
+    async def init_db(app, loop): ...
 
     srv = await app.create_server(
         debug=True, return_asyncio_server=True, port=PORT
@@ -212,8 +211,7 @@ async def test_missing_startup_raises_exception(app):
 
 
 def test_reload_listeners_attached(app):
-    async def dummy(*_):
-        ...
+    async def dummy(*_): ...
 
     app.reload_process_start(dummy)
     app.reload_process_stop(dummy)

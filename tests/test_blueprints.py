@@ -1092,8 +1092,7 @@ def test_remove_double_slashes_defined_on_bp(app: Sanic):
     bp = Blueprint("bp", url_prefix="/foo/", strict_slashes=True)
 
     @bp.get("/")
-    async def handler(_):
-        ...
+    async def handler(_): ...
 
     app.blueprint(bp)
     app.router.finalize()
@@ -1105,8 +1104,7 @@ def test_remove_double_slashes_defined_on_register(app: Sanic):
     bp = Blueprint("bp")
 
     @bp.get("/")
-    async def index(_):
-        ...
+    async def index(_): ...
 
     app.blueprint(bp, url_prefix="/foo/", strict_slashes=True)
     app.router.finalize()

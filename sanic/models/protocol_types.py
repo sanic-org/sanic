@@ -19,11 +19,9 @@ else:
     from typing import Protocol
 
     class HTMLProtocol(Protocol):
-        def __html__(self) -> Union[str, bytes]:
-            ...
+        def __html__(self) -> Union[str, bytes]: ...
 
-        def _repr_html_(self) -> Union[str, bytes]:
-            ...
+        def _repr_html_(self) -> Union[str, bytes]: ...
 
     class Range(Protocol):
         start: Optional[int]

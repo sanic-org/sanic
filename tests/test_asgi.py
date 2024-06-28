@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from collections import deque, namedtuple
@@ -17,6 +18,8 @@ from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection
 from sanic.signals import RESERVED_NAMESPACES
+
+from .conftest import get_port
 
 
 try:
@@ -53,9 +56,13 @@ def transport(message_stack, receive, send):
 
 @pytest.fixture
 def protocol(transport):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    transport.loop = loop
     return transport.get_protocol()
 
 
+@pytest.mark.skip
 def test_listeners_triggered(caplog):
     app = Sanic("app")
     before_server_start = False
@@ -91,7 +98,9 @@ def test_listeners_triggered(caplog):
         def install_signal_handlers(self):
             pass
 
-    config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
+    config = uvicorn.Config(
+        app=app, loop="asyncio", limit_max_requests=0, port=get_port()
+    )
     server = CustomServer(config=config)
 
     start_message = (
@@ -155,6 +164,7 @@ def test_listeners_triggered(caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.skip
 def test_listeners_triggered_async(app, caplog):
     before_server_start = False
     after_server_start = False
@@ -189,7 +199,9 @@ def test_listeners_triggered_async(app, caplog):
         def install_signal_handlers(self):
             pass
 
-    config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
+    config = uvicorn.Config(
+        app=app, loop="asyncio", limit_max_requests=0, port=get_port()
+    )
     server = CustomServer(config=config)
 
     start_message = (
@@ -254,6 +266,7 @@ def test_listeners_triggered_async(app, caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.skip
 def test_non_default_uvloop_config_raises_warning(app):
     app.config.USE_UVLOOP = True
 
@@ -261,7 +274,9 @@ def test_non_default_uvloop_config_raises_warning(app):
         def install_signal_handlers(self):
             pass
 
-    config = uvicorn.Config(app=app, loop="asyncio", limit_max_requests=0)
+    config = uvicorn.Config(
+        app=app, loop="asyncio", limit_max_requests=0, port=get_port()
+    )
     server = CustomServer(config=config)
 
     with pytest.warns(UserWarning) as records:

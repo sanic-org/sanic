@@ -423,7 +423,7 @@ def test_request_middleware_exception_on_404(app: Sanic):
 
     @app.on_request
     def request_middleware(request):
-        value = next(counter)
+        next(counter)
         raise Exception
 
     @app.route("/")

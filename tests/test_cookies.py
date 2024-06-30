@@ -380,6 +380,67 @@ def test_cookie_jar_delete_cookie_encode():
     ]
 
 
+def test_cookie_jar_delete_nonsecure_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.delete_cookie("foo", domain="example.com", secure=False)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0',
+    ]
+
+
+def test_cookie_jar_delete_existing_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie(
+        "foo", "test", secure=True, domain="example.com", samesite="Strict"
+    )
+    jar.delete_cookie("foo", domain="example.com", secure=True)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    # deletion cookie contains samesite=Strict as was in original cookie
+    assert encoded == [
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0; SameSite=Strict; Secure',
+    ]
+
+
+def test_cookie_jar_delete_existing_nonsecure_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie(
+        "foo", "test", secure=False, domain="example.com", samesite="Strict"
+    )
+    jar.delete_cookie("foo", domain="example.com", secure=False)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    # deletion cookie contains samesite=Strict as was in original cookie
+    assert encoded == [
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0; SameSite=Strict',
+    ]
+
+
+def test_cookie_jar_delete_existing_nonsecure_cookie_bad_prefix():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie(
+        "foo", "test", secure=False, domain="example.com", samesite="Strict"
+    )
+    message = (
+        "Cannot set host_prefix on a cookie without "
+        "path='/', domain=None, and secure=True"
+    )
+    with pytest.raises(ServerError, match=message):
+        jar.delete_cookie(
+            "foo",
+            domain="example.com",
+            secure=False,
+            secure_prefix=True,
+            host_prefix=True,
+        )
+
+
 def test_cookie_jar_old_school_delete_encode():
     headers = Header()
     jar = CookieJar(headers)

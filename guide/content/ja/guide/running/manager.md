@@ -412,15 +412,11 @@ async def ready(app: Sanic, _):
 
 ### 追跡されていないプロセス
 
-.. new:: v23.12
+Sanicは全プロセスの状態を追跡します。 これは、 [multiplexer](./manager#access-to-the-multiplexer) オブジェクト、または [Inspector](./manager#inspector) からプロセスの状態にアクセスできることを意味します。
 
-```
-Out of the box, Sanic will track the state of all processes. This means that you can access the state of the process from the [multiplexer](./manager#access-to-the-multiplexer) object, or from the [Inspector](./manager#inspector).
+詳細は format@@0(./manager#worker-state) を参照してください。
 
-See [worker state](./manager#worker-state) for more information.
-
-Sometimes it is helpful to run background processes that are not long-running. You run them once until completion and then they exit. Upon completion, they will either be in `FAILED` or `COMPLETED` state.
-```
+バックグラウンドプロセスが長時間実行されていない場合もあります。 完了まで一度実行し、それらは終了します。 完了すると `FAILED` または `COMPLETED` のいずれかになります。
 
 .. 列::
 
@@ -447,11 +443,7 @@ _v23.12_ に追加されました
 
 ### 再起動可能なカスタムプロセス
 
-.. new:: v23.12
-
-```
-トランジェントであるカスタムプロセスは**常に起動可能**になります。つまり、自動再起動は想定どおりに動作します。 ただし、プロセスを手動で再起動できますが、オートリローダーで再起動できない場合はどうなりますか?
-```
+トランジェントであるカスタムプロセスは、**常に**再び起動可能になります。 つまり、自動再起動は想定どおりに動作します。 ただし、プロセスを手動で再起動できますが、オートリローダーで再起動できない場合はどうなりますか?
 
 .. 列::
 
@@ -495,11 +487,7 @@ _v23.12_ に追加されました
 
 ### オンザフライプロセス管理
 
-.. new:: v23.12
-
-```
-カスタムプロセスは通常 `main_process_ready` リスナーに追加されます。 ただし、アプリケーションの開始後にプロセスを追加したい場合があります。 例えば、リクエストハンドラからプロセスを追加することができます。multiplexer はこれを行うためのメソッドを提供します。
-```
+カスタムプロセスは通常 `main_process_ready` リスナーに追加されます。 ただし、アプリケーションの開始後にプロセスを追加したい場合があります。 たとえば、リクエストハンドラからプロセスを追加したい場合があります。 マルチプレクサはこれを行う方法を提供します。
 
 .. 列::
 

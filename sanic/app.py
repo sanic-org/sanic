@@ -1109,7 +1109,7 @@ class Sanic(
                 )
                 passes_pattern = pattern.match(supplied_param)
                 if not passes_pattern:
-                    if param_info.cast != str:
+                    if param_info.cast is not str:
                         msg = (
                             f'Value "{supplied_param}" '
                             f"for parameter `{param_info.name}` does "
@@ -1209,10 +1209,15 @@ class Sanic(
         # Request Middleware
         # -------------------------------------------- #
         if run_middleware:
-            middleware = (
-                request.route and request.route.extra.request_middleware
-            ) or self.request_middleware
-            response = await self._run_request_middleware(request, middleware)
+            try:
+                middleware = (
+                    request.route and request.route.extra.request_middleware
+                ) or self.request_middleware
+                response = await self._run_request_middleware(
+                    request, middleware
+                )
+            except Exception as e:
+                return await self.handle_exception(request, e, False)
         # No middleware results
         if not response:
             try:

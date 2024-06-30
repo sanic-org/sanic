@@ -28,7 +28,7 @@ app.config.LOGING = True
 
 ## 如何工作
 
-启用时，扩展将创建 `multoprocessing.Queue` 。 它将移除[默认 Sanic loggers](../../guide/best practices/logging.md) 上的所有处理程序，并将其替换为 [`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler)。 当消息被记录时，它将被处理器推送到队列。 并通过后台进程读取原有的日志处理程序。 这意味着您仍然可以将日志配置为正常，它应该“只能工作”。
+如果启用，扩展将创建 `multiprocessing.Queue` 。 它将移除[默认 Sanic loggers](../../guide/best practices/logging.md) 上的所有处理程序，并将其替换为 [`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler)。 当消息被记录时，它将被处理器推送到队列。 并通过后台进程读取原有的日志处理程序。 这意味着您仍然可以将日志配置为正常，它应该“只能工作”。
 
 ## 配置
 

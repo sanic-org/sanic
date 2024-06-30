@@ -402,7 +402,8 @@ def test_cookie_jar_delete_existing_cookie():
     encoded = [cookie.encode("ascii") for cookie in jar.cookies]
     # deletion cookie contains samesite=Strict as was in original cookie
     assert encoded == [
-        b'foo=""; Path=/; Domain=example.com; Max-Age=0; SameSite=Strict; Secure',
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0; '
+        b"SameSite=Strict; Secure",
     ]
 
 

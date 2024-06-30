@@ -412,15 +412,11 @@ async def ready(app: Sanic, _):
 
 ### Tracked v. untracked processes
 
-.. new:: v23.12
-
-```
 Out of the box, Sanic will track the state of all processes. This means that you can access the state of the process from the [multiplexer](./manager#access-to-the-multiplexer) object, or from the [Inspector](./manager#inspector).
 
 See [worker state](./manager#worker-state) for more information.
 
 Sometimes it is helpful to run background processes that are not long-running. You run them once until completion and then they exit. Upon completion, they will either be in `FAILED` or `COMPLETED` state.
-```
 
 .. column::
 
@@ -447,11 +443,7 @@ _Added in v23.12_
 
 ### Restartable custom processes
 
-.. new:: v23.12
-
-```
-A custom process that is transient will **always** be restartable. That means the auto-restart will work as expected. However, what if you want to be able to *manually* restart a process, but not have it be restarted by the auto-reloader?
-```
+A custom process that is transient will **always** be restartable. That means the auto-restart will work as expected. However, what if you want to be able to _manually_ restart a process, but not have it be restarted by the auto-reloader?
 
 .. column::
 
@@ -495,11 +487,7 @@ _Added in v23.12_
 
 ### On the fly process management
 
-.. new:: v23.12
-
-```
 Custom processes are usually added in the `main_process_ready` listener. However, there may be times when you want to add a process after the application has started. For example, you may want to add a process from a request handler. The multiplexer provides a method for doing this.
-```
 
 .. column::
 

@@ -1109,7 +1109,7 @@ class Sanic(
                 )
                 passes_pattern = pattern.match(supplied_param)
                 if not passes_pattern:
-                    if param_info.cast != str:
+                    if param_info.cast is not str:
                         msg = (
                             f'Value "{supplied_param}" '
                             f"for parameter `{param_info.name}` does "

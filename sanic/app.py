@@ -376,7 +376,7 @@ class Sanic(
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[Middleware]] = {}
         self.named_response_middleware: Dict[str, Deque[Middleware]] = {}
-        self.request_class: Type[Request] = request_class or Request  # type: ignore
+        self.request_class: Type[Request[Any, Any]] = request_class or Request
         self.request_middleware: Deque[Middleware] = deque()
         self.response_middleware: Deque[Middleware] = deque()
         self.router: Router = router or Router()

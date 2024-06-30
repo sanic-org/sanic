@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Generator
 
-from html5tagger import Builder, E, HTML
+from html5tagger import Builder, E
 
 from sanic import Request
 from webapp.display.layouts.elements.footer import do_footer
@@ -56,7 +56,8 @@ class HomeLayout(BaseLayout):
     def _sponsors(self) -> None:
         with self.builder.section(class_="sponsors"):
             self.builder(
-                "Secure, auto-document, and monetize your Sanic API with Zuplo",
+                "Secure, auto-document, and monetize "
+                "your Sanic API with Zuplo",
                 E.a(
                     "Start free",
                     href="https://zuplo.com",

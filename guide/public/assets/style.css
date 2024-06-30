@@ -12598,7 +12598,18 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
   .c1 {
     color: #4a4a4a; }
   .introduction-table .table tbody tr:last-child td {
-    border-bottom-width: 1px; } }
+    border-bottom-width: 1px; }
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px; }
+  ::-webkit-scrollbar-track {
+    background: #242424; }
+  ::-webkit-scrollbar-thumb {
+    background: #121212;
+    border-radius: 6px;
+    border: 3px solid #242424; }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #0a0a0a; } }
 
 .burger {
   display: none;

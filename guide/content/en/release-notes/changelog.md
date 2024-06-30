@@ -8,9 +8,34 @@ content_class: changelog
 🔷 In support LTS release
 
 
-## Version 23.12.0 🔶🔷
+## Version 24.4.0 🔶
 
 _Current version_
+
+### Features
+- [#2850](https://github.com/sanic-org/sanic/pull/2850) Unix sockets can now use `pathlib.Path`
+- [#2931](https://github.com/sanic-org/sanic/pull/2931) Logging improvements
+
+### Bugfixes
+- [#2919](https://github.com/sanic-org/sanic/pull/2919) Remove deprecation notice in websockets
+- [#2937](https://github.com/sanic-org/sanic/pull/2937) Resolve response streaming error when in ASGI mode
+
+### Deprecations and Removals
+- [#2899](https://github.com/sanic-org/sanic/pull/2899) Remove erroneous line from REPL impacting environments without HTTPX
+
+### Developer infrastructure
+- [#2882](https://github.com/sanic-org/sanic/pull/2882) [#2896](https://github.com/sanic-org/sanic/pull/2896) Apply dynamic port fixture for improving tests with port selection
+- [#2887](https://github.com/sanic-org/sanic/pull/2887) Updates to docker image builds
+- [#2932](https://github.com/sanic-org/sanic/pull/2932) Cleanup code base with Ruff
+
+### Improved Documentation
+- [#2924](https://github.com/sanic-org/sanic/pull/2924) Cleanup markdown on html5tagger page
+- [#2930](https://github.com/sanic-org/sanic/pull/2930) Cleanup typo on Sanic Extensions README.md
+- [#2934](https://github.com/sanic-org/sanic/pull/2934) Add more context to the health check documents
+- [#2936](https://github.com/sanic-org/sanic/pull/2936) Improve worker manager documentation
+
+
+## Version 23.12.0 🔷
 
 ### Features
 - [#2775](https://github.com/sanic-org/sanic/pull/2775) Start and restart arbitrary processes
@@ -32,8 +57,6 @@ _Current version_
 
 ### Bugfixes
 - [#2803](https://github.com/sanic-org/sanic/pull/2803) Fix MOTD display for extra data
-
-### Deprecations and Removals
 
 ### Developer infrastructure
 - [#2796](https://github.com/sanic-org/sanic/pull/2796) Refactor unit test cases

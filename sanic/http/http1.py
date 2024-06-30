@@ -273,9 +273,12 @@ class Http(Stream, metaclass=TouchUpMeta):
                 pos -= 2  # One CRLF stays in buffer
             else:
                 self.request_body = True
-                self.request_bytes_left = self.request_bytes = int(
-                    headers["content-length"]
-                )
+                try:
+                    self.request_bytes_left = self.request_bytes = (
+                        self._safe_int(headers["content-length"])
+                    )
+                except Exception:
+                    raise BadRequest("Bad content-length")
 
         # Remove header and its trailing CRLF
         del buf[: pos + 4]
@@ -514,7 +517,8 @@ class Http(Stream, metaclass=TouchUpMeta):
                 await self._receive_more()
 
             try:
-                size = int(buf[2:pos].split(b";", 1)[0].decode(), 16)
+                raw = buf[2:pos].split(b";", 1)[0].decode()
+                size = self._safe_int(raw, 16)
             except Exception:
                 self.keep_alive = False
                 raise BadRequest("Bad chunked encoding")
@@ -600,3 +604,9 @@ class Http(Stream, metaclass=TouchUpMeta):
             *sizes,
             cls.HEADER_CEILING,
         )
+
+    @staticmethod
+    def _safe_int(value: str, base: int = 10) -> int:
+        if "-" in value or "+" in value or "_" in value:
+            raise ValueError
+        return int(value, base)

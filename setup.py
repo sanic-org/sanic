@@ -109,11 +109,12 @@ requirements = [
     "html5tagger>=1.2.1",
     "tracerite>=1.0.0",
     "typing-extensions>=4.4.0",
+    "setuptools>=70.1.0",
 ]
 
 tests_require = [
     "sanic-testing>=23.6.0",
-    "pytest==7.1.*",
+    "pytest>=8.2.2",
     "coverage",
     "beautifulsoup4",
     "pytest-sanic",

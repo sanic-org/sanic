@@ -24,9 +24,7 @@ def test_request_cookies():
     assert c.getlist("foo") == ["one", "two"]
     assert c.getlist("abc") == ["xyz"]
     assert c.getlist("") == ["bare", "bare2"]
-    assert (
-        c.getlist("bare") is None
-    )  # [] might be sensible but we got None for now
+    assert c.getlist("bare") == []
 
 
 # ------------------------------------------------------------ #
@@ -382,6 +380,68 @@ def test_cookie_jar_delete_cookie_encode():
     ]
 
 
+def test_cookie_jar_delete_nonsecure_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.delete_cookie("foo", domain="example.com", secure=False)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    assert encoded == [
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0',
+    ]
+
+
+def test_cookie_jar_delete_existing_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie(
+        "foo", "test", secure=True, domain="example.com", samesite="Strict"
+    )
+    jar.delete_cookie("foo", domain="example.com", secure=True)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    # deletion cookie contains samesite=Strict as was in original cookie
+    assert encoded == [
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0; '
+        b"SameSite=Strict; Secure",
+    ]
+
+
+def test_cookie_jar_delete_existing_nonsecure_cookie():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie(
+        "foo", "test", secure=False, domain="example.com", samesite="Strict"
+    )
+    jar.delete_cookie("foo", domain="example.com", secure=False)
+
+    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    # deletion cookie contains samesite=Strict as was in original cookie
+    assert encoded == [
+        b'foo=""; Path=/; Domain=example.com; Max-Age=0; SameSite=Strict',
+    ]
+
+
+def test_cookie_jar_delete_existing_nonsecure_cookie_bad_prefix():
+    headers = Header()
+    jar = CookieJar(headers)
+    jar.add_cookie(
+        "foo", "test", secure=False, domain="example.com", samesite="Strict"
+    )
+    message = (
+        "Cannot set host_prefix on a cookie without "
+        "path='/', domain=None, and secure=True"
+    )
+    with pytest.raises(ServerError, match=message):
+        jar.delete_cookie(
+            "foo",
+            domain="example.com",
+            secure=False,
+            secure_prefix=True,
+            host_prefix=True,
+        )
+
+
 def test_cookie_jar_old_school_delete_encode():
     headers = Header()
     jar = CookieJar(headers)
@@ -461,10 +521,11 @@ def test_cookie_accessors(app: Sanic):
                     "four": request.cookies.get("four", "fallback"),
                 },
                 "getlist": {
-                    "one": request.cookies.getlist("one", ["fallback"]),
-                    "two": request.cookies.getlist("two", ["fallback"]),
-                    "three": request.cookies.getlist("three", ["fallback"]),
-                    "four": request.cookies.getlist("four", ["fallback"]),
+                    "one": request.cookies.getlist("one"),
+                    "two": request.cookies.getlist("two"),
+                    "three": request.cookies.getlist("three"),
+                    "four": request.cookies.getlist("four"),
+                    "five": request.cookies.getlist("five", ["fallback"]),
                 },
                 "getattr": {
                     "one": request.cookies.one,
@@ -500,7 +561,8 @@ def test_cookie_accessors(app: Sanic):
             "one": ["1"],
             "two": ["2"],
             "three": ["3"],
-            "four": ["fallback"],
+            "four": [],
+            "five": ["fallback"],
         },
         "getattr": {
             "one": "1",

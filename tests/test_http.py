@@ -16,8 +16,6 @@ from tests.client import RawClient
 parent_dir = Path(__file__).parent
 localhost_dir = parent_dir / "certs/localhost"
 
-PORT = 1234
-
 
 @pytest.fixture
 def test_app(app: Sanic):
@@ -36,8 +34,8 @@ def test_app(app: Sanic):
 
 
 @pytest.fixture
-def runner(test_app: Sanic):
-    client = ReusableClient(test_app, port=PORT)
+def runner(test_app: Sanic, port):
+    client = ReusableClient(test_app, port=port)
     client.run()
     yield client
     client.stop()
@@ -103,7 +101,7 @@ def test_transfer_chunked(client):
 def test_url_encoding(client):
     client.send(
         """
-        GET /invalid\xA0url HTTP/1.1
+        GET /invalid\xa0url HTTP/1.1
 
         """
     )
@@ -112,3 +110,84 @@ def test_url_encoding(client):
 
     assert b"400 Bad Request" in headers
     assert b"URL may only contain US-ASCII characters." in body
+
+
+@pytest.mark.parametrize(
+    "content_length",
+    (
+        b"-50",
+        b"+50",
+        b"5_0",
+        b"50.5",
+    ),
+)
+def test_invalid_content_length(content_length, client):
+    body = b"Hello" * 10
+    client.send(
+        b"POST /upload HTTP/1.1\r\n"
+        + b"content-length: "
+        + content_length
+        + b"\r\n\r\n"
+        + body
+        + b"\r\n\r\n"
+    )
+
+    response = client.recv()
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+
+    assert b"400 Bad Request" in headers
+    assert b"Bad content-length" in body
+
+
+@pytest.mark.parametrize(
+    "chunk_length",
+    (
+        b"-50",
+        b"+50",
+        b"5_0",
+        b"50.5",
+    ),
+)
+def test_invalid_chunk_length(chunk_length, client):
+    body = b"Hello" * 10
+    client.send(
+        b"POST /upload HTTP/1.1\r\n"
+        + b"transfer-encoding: chunked\r\n\r\n"
+        + chunk_length
+        + b"\r\n"
+        + body
+        + b"\r\n"
+        + b"0\r\n\r\n"
+    )
+
+    response = client.recv()
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+
+    assert b"400 Bad Request" in headers
+    assert b"Bad chunked encoding" in body
+
+
+def test_smuggle(client):
+    client.send(
+        """
+        POST /upload HTTP/1.1
+        Content-Length: 5
+        Transfer-Encoding: chunked
+        Transfer-Encoding: xchunked
+
+        5
+        hello
+        0
+
+        GET / HTTP/1.1
+        
+        """  # noqa
+    )
+
+    response = client.recv()
+    num_responses = response.count(b"HTTP/1.1")
+    assert num_responses == 1
+
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+    assert b"400 Bad Request" in headers
+    assert b"Bad Request" in body

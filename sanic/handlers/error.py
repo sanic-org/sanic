@@ -98,9 +98,9 @@ class ErrorHandler:
                 exception_key = (ancestor, name)
                 if exception_key in self.cached_handlers:
                     handler = self.cached_handlers[exception_key]
-                    self.cached_handlers[
-                        (exception_class, route_name)
-                    ] = handler
+                    self.cached_handlers[(exception_class, route_name)] = (
+                        handler
+                    )
                     return handler
 
                 if ancestor is BaseException:

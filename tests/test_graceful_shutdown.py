@@ -8,12 +8,9 @@ from pytest import LogCaptureFixture
 from sanic.response import empty
 
 
-PORT = 42101
-
-
 @pytest.mark.xfail(reason="This test runs fine locally, but fails on CI")
 def test_no_exceptions_when_cancel_pending_request(
-    app, caplog: LogCaptureFixture
+    app, caplog: LogCaptureFixture, port
 ):
     app.config.GRACEFUL_SHUTDOWN_TIMEOUT = 1
 
@@ -23,18 +20,18 @@ def test_no_exceptions_when_cancel_pending_request(
 
     @app.listener("after_server_start")
     async def _request(sanic, loop):
-        connect = asyncio.open_connection("127.0.0.1", 8000)
+        connect = asyncio.open_connection("127.0.0.1", port)
         _, writer = await connect
         writer.write(b"GET / HTTP/1.1\r\n\r\n")
         app.stop()
 
     with caplog.at_level(logging.INFO):
-        app.run(single_process=True, access_log=True)
+        app.run(single_process=True, access_log=True, port=port)
 
     assert "Request: GET http:/// stopped. Transport is closed." in caplog.text
 
 
-def test_completes_request(app, caplog: LogCaptureFixture):
+def test_completes_request(app, caplog: LogCaptureFixture, port):
     app.config.GRACEFUL_SHUTDOWN_TIMEOUT = 1
 
     @app.get("/")
@@ -44,13 +41,13 @@ def test_completes_request(app, caplog: LogCaptureFixture):
 
     @app.listener("after_server_start")
     async def _request(sanic, loop):
-        connect = asyncio.open_connection("127.0.0.1", 8000)
+        connect = asyncio.open_connection("127.0.0.1", port)
         _, writer = await connect
         writer.write(b"GET / HTTP/1.1\r\n\r\n")
         app.stop()
 
     with caplog.at_level(logging.INFO):
-        app.run(single_process=True, access_log=True)
+        app.run(single_process=True, access_log=True, port=port)
 
     assert ("sanic.access", 20, "") in caplog.record_tuples
 

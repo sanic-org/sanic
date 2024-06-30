@@ -80,8 +80,7 @@ RESERVED_NAMESPACES = {
 GENERIC_SIGNAL_FORMAT = "__generic__.__signal__.%s"
 
 
-def _blank():
-    ...
+def _blank(): ...
 
 
 class Signal(Route):

@@ -13,8 +13,7 @@ class BaseScheme(ABC):
         self.app = app
 
     @abstractmethod
-    def visitors(self) -> List[NodeTransformer]:
-        ...
+    def visitors(self) -> List[NodeTransformer]: ...
 
     def __init_subclass__(cls):
         BaseScheme._registry.add(cls)

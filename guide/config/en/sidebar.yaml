@@ -143,6 +143,10 @@ root:
                   path: plugins/sanic-testing/clients.html
     - label: Release Notes
       items:
+          - label: "2024"
+            items:
+                - label: Sanic 24.6
+                  path: release-notes/2024/v24.6.html
           - label: "2023"
             items:
                 - label: Sanic 23.12
@@ -257,7 +261,7 @@ root:
                   path: /api/sanic.compat.html
                 - label: sanic.helpers
                   path: /api/sanic.helpers.html
-                - label: sanic.log
-                  path: /api/sanic.log.html
+                - label: sanic.logging
+                  path: /api/sanic.logging.html
                 - label: sanic.utils
                   path: /api/sanic.utils.html

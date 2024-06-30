@@ -72,6 +72,7 @@ from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.logging.setup import setup_logging
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
@@ -247,8 +248,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -269,8 +269,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -291,8 +290,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def __init__(
@@ -313,8 +311,7 @@ class Sanic(
         inspector: bool = False,
         inspector_class: Optional[Type[Inspector]] = None,
         certloader_class: Optional[Type[CertLoader]] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __init__(
         self,
@@ -380,7 +377,7 @@ class Sanic(
         self.listeners: Dict[str, List[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: Dict[str, Deque[Middleware]] = {}
         self.named_response_middleware: Dict[str, Deque[Middleware]] = {}
-        self.request_class: Type[Request] = request_class or Request
+        self.request_class = request_class or Request
         self.request_middleware: Deque[Middleware] = deque()
         self.response_middleware: Deque[Middleware] = deque()
         self.router: Router = router or Router()
@@ -661,8 +658,7 @@ class Sanic(
         fail_not_found: bool = True,
         inline: Literal[True],
         reverse: bool = False,
-    ) -> Coroutine[Any, Any, Awaitable[Any]]:
-        ...
+    ) -> Coroutine[Any, Any, Awaitable[Any]]: ...
 
     @overload
     def dispatch(
@@ -674,8 +670,7 @@ class Sanic(
         fail_not_found: bool = True,
         inline: Literal[False] = False,
         reverse: bool = False,
-    ) -> Coroutine[Any, Any, Awaitable[Task]]:
-        ...
+    ) -> Coroutine[Any, Any, Awaitable[Task]]: ...
 
     def dispatch(
         self,
@@ -1114,7 +1109,7 @@ class Sanic(
                 )
                 passes_pattern = pattern.match(supplied_param)
                 if not passes_pattern:
-                    if param_info.cast != str:
+                    if param_info.cast is not str:
                         msg = (
                             f'Value "{supplied_param}" '
                             f"for parameter `{param_info.name}` does "
@@ -1214,10 +1209,15 @@ class Sanic(
         # Request Middleware
         # -------------------------------------------- #
         if run_middleware:
-            middleware = (
-                request.route and request.route.extra.request_middleware
-            ) or self.request_middleware
-            response = await self._run_request_middleware(request, middleware)
+            try:
+                middleware = (
+                    request.route and request.route.extra.request_middleware
+                ) or self.request_middleware
+                response = await self._run_request_middleware(
+                    request, middleware
+                )
+            except Exception as e:
+                return await self.handle_exception(request, e, False)
         # No middleware results
         if not response:
             try:
@@ -1778,18 +1778,19 @@ class Sanic(
             return None
 
     @overload
-    def get_task(self, name: str, *, raise_exception: Literal[True]) -> Task:
-        ...
+    def get_task(
+        self, name: str, *, raise_exception: Literal[True]
+    ) -> Task: ...
 
     @overload
     def get_task(
         self, name: str, *, raise_exception: Literal[False]
-    ) -> Optional[Task]:
-        ...
+    ) -> Optional[Task]: ...
 
     @overload
-    def get_task(self, name: str, *, raise_exception: bool) -> Optional[Task]:
-        ...
+    def get_task(
+        self, name: str, *, raise_exception: bool
+    ) -> Optional[Task]: ...
 
     def get_task(
         self, name: str, *, raise_exception: bool = True
@@ -1942,6 +1943,7 @@ class Sanic(
         details: https://asgi.readthedocs.io/en/latest
         """
         if scope["type"] == "lifespan":
+            setup_logging(self.state.is_debug, self.config.NO_COLOR)
             self.asgi = True
             self.motd("")
             self._asgi_lifespan = Lifespan(self, scope, receive, send)

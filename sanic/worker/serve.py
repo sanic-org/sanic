@@ -12,6 +12,7 @@ from sanic.application.constants import ServerStage
 from sanic.application.state import ApplicationServerInfo
 from sanic.http.constants import HTTP
 from sanic.log import error_logger
+from sanic.logging.setup import setup_logging
 from sanic.models.server_types import Signal
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.runners import _serve_http_1, _serve_http_3
@@ -58,6 +59,9 @@ def worker_serve(
 
         app.refresh(passthru)
         app.setup_loop()
+        setup_logging(
+            app.state.is_debug, app.config.NO_COLOR, app.config.LOG_EXTRA
+        )
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -82,7 +86,7 @@ def worker_serve(
         # When in a worker process, do some init
         worker_name = os.environ.get("SANIC_WORKER_NAME")
         if worker_name and worker_name.startswith(
-            Worker.WORKER_PREFIX + WorkerProcess.SERVER_LABEL
+            "-".join([Worker.WORKER_PREFIX, WorkerProcess.SERVER_LABEL])
         ):
             # Hydrate apps with any passed server info
 

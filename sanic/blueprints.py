@@ -391,7 +391,7 @@ class Blueprint(BaseSanic):
             name = future.name
             if opt_name_prefix:
                 name = f"{opt_name_prefix}_{future.name}"
-            name = app._generate_name(name)
+            name = app.generate_name(name)
             host = future.host or self.host
             if isinstance(host, list):
                 host = tuple(host)
@@ -779,12 +779,10 @@ class BlueprintGroup(bpg_base):
         return iter(self._blueprints)
 
     @overload
-    def __getitem__(self, item: int) -> Blueprint:
-        ...
+    def __getitem__(self, item: int) -> Blueprint: ...
 
     @overload
-    def __getitem__(self, item: slice) -> MutableSequence[Blueprint]:
-        ...
+    def __getitem__(self, item: slice) -> MutableSequence[Blueprint]: ...
 
     def __getitem__(
         self, item: Union[int, slice]
@@ -807,12 +805,10 @@ class BlueprintGroup(bpg_base):
         return self._blueprints[item]
 
     @overload
-    def __setitem__(self, index: int, item: Blueprint) -> None:
-        ...
+    def __setitem__(self, index: int, item: Blueprint) -> None: ...
 
     @overload
-    def __setitem__(self, index: slice, item: Iterable[Blueprint]) -> None:
-        ...
+    def __setitem__(self, index: slice, item: Iterable[Blueprint]) -> None: ...
 
     def __setitem__(
         self,
@@ -848,12 +844,10 @@ class BlueprintGroup(bpg_base):
             raise TypeError("Index must be int or slice")
 
     @overload
-    def __delitem__(self, index: int) -> None:
-        ...
+    def __delitem__(self, index: int) -> None: ...
 
     @overload
-    def __delitem__(self, index: slice) -> None:
-        ...
+    def __delitem__(self, index: slice) -> None: ...
 
     def __delitem__(self, index: Union[int, slice]) -> None:
         """Delete the Blueprint object at the specified index.

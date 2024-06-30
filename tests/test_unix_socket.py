@@ -4,6 +4,7 @@ import os
 import sys
 
 from asyncio import AbstractEventLoop, sleep
+from pathlib import Path
 from string import ascii_lowercase
 
 import httpcore
@@ -24,7 +25,7 @@ from sanic.response import text
 
 
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="UNIX only")
-SOCKPATH = "/tmp/sanictest.sock"
+SOCKPATH = Path("/tmp/sanictest.sock")
 SOCKPATH2 = "/tmp/sanictest2.sock"
 httpx_version = tuple(
     map(int, httpx.__version__.strip(ascii_lowercase).split("."))
@@ -92,8 +93,7 @@ def test_invalid_paths(path: str):
 
 
 def test_dont_replace_file():
-    with open(SOCKPATH, "w") as f:
-        f.write("File, not socket")
+    SOCKPATH.write_text("File, not socket")
 
     app = Sanic(name="test")
 

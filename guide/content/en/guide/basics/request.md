@@ -161,8 +161,6 @@ This can be constrasted with the `app.ctx` object which is shared across all req
 
 The `request.ctx` object by default is a `SimpleNamespace` object allowing you to set arbitrary attributes on it. Sanic will not use this object for anything, so you are free to use it however you want without worrying about name clashes.
 
-```python
-
 ### Typical use case
 
 This is often used to store items like authenticated user details. We will get more into [middleware](./middleware.md) later, but here is a simple example.

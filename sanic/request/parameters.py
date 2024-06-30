@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 
 class RequestParameters(dict):
@@ -19,15 +19,15 @@ class RequestParameters(dict):
         return super().get(name, [default])[0]
 
     def getlist(
-        self, name: str, default: Optional[Any] = None
-    ) -> Optional[Any]:
+        self, name: str, default: Optional[List[Any]] = None
+    ) -> List[Any]:
         """Return the entire list
 
         Args:
             name (str): The name of the parameter
-            default (Optional[Any], optional): The default value. Defaults to None.
+            default (Optional[List[Any]], optional): The default value. Defaults to None.
 
         Returns:
-            Optional[Any]: The entire list
+            list[Any]: The entire list of values or [] if not found
         """  # noqa: E501
-        return super().get(name, default)
+        return super().get(name, default) or []

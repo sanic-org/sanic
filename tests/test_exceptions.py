@@ -1,5 +1,7 @@
 import logging
 
+from itertools import count
+
 import pytest
 
 from bs4 import BeautifulSoup
@@ -398,3 +400,36 @@ def test_exception_aliases():
     assert MethodNotSupported is MethodNotAllowed
     assert ContentRangeError is RangeNotSatisfiable
     assert HeaderExpectationFailed is ExpectationFailed
+
+
+def test_exception_message_attribute():
+    assert ServerError("it failed").message == "it failed"
+    assert ServerError(b"it failed").message == "it failed"
+    assert (
+        ServerError().message == str(ServerError()) == "Internal Server Error"
+    )
+
+    class CustomError(SanicException):
+        message = "Something bad happened"
+
+    assert CustomError().message == CustomError.message == str(CustomError())
+    assert SanicException().message != ""
+    assert SanicException("").message == ""
+
+
+def test_request_middleware_exception_on_404(app: Sanic):
+    """See https://github.com/sanic-org/sanic/issues/2950"""
+    counter = count()
+
+    @app.on_request
+    def request_middleware(request):
+        next(counter)
+        raise Exception
+
+    @app.route("/")
+    async def handler(request): ...
+
+    _, response = app.test_client.get("/not-found")
+
+    assert response.status == 500
+    assert next(counter) == 1

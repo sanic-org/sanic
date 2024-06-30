@@ -238,9 +238,7 @@ Given the following setup, we should expect to see this in the console if we run
 
 ### Priority
 
-.. new:: v23.12
-
-    In v23.12, the `priority` keyword argument was added to listeners. This allows for fine-tuning the order of execution of listeners. The default priority is `0`. Listeners with a higher priority will be executed first. Listeners with the same priority will be executed in the order they were registered. Furthermore, listeners attached to the `app` instance will be executed before listeners attached to a `Blueprint` instance.
+In v23.12, the `priority` keyword argument was added to listeners. This allows for fine-tuning the order of execution of listeners. The default priority is `0`. Listeners with a higher priority will be executed first. Listeners with the same priority will be executed in the order they were registered. Furthermore, listeners attached to the `app` instance will be executed before listeners attached to a `Blueprint` instance.
 	
 Overall the rules for deciding the order of execution are as follows:
 

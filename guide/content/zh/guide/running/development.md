@@ -76,11 +76,7 @@ sanic path.to:app -r -R /path/to/one -R /path/to/two
 
 ## Development REPL
 
-.. 新：v23.12
-
-```
-Sanic CLI 带有一个 REPL (又名“读-写循环”)，可用来与您的应用程序进行交互。 这对调试和测试非常有用。REPL是你在没有任何参数的情况下运行python时得到的交互式外壳。
-```
+Sanic CLI 带有一个 REPL (又名“读-写循环”)，可用来与您的应用程序进行交互。 这对调试和测试非常有用。 一个 REPL 是当你在没有任何参数的情况下运行 `python` 时得到的交互式外壳。
 
 .. 列:
 
@@ -231,7 +227,7 @@ _添加于 v23.12_
 .. 列:
 
 ```
-如果你想要处于调试模式**和** 运行自动重新加载器，你可以通过 `dev=True`。 这相当于**调试+自动重新加载**。
+如果你想要处于调试模式**和** 运行自动重新加载器，你可以通过 `dev=True`。 这相当于**调试+自动重新加载+重新加载**。
 
 *添加于v22.3*
 ```
@@ -248,13 +244,10 @@ sanic path.to:app -d
 ```
 ````
 
-.. 新：v23.12
+在 v23.12 `--dev` 旗帜上添加了能够启动一个REPL 详见[Development REPL](./development.md#development-reply)部分。
 
-```
-Added to the `--dev` flag in v23.12 is the ability to start a REPL. See the [Development REPL](./development.md#development-repl) section for more information.
-
-As of v23.12, the `--dev` flag is roughly equivalent to `--debug --reload --repl`. Using `--dev` will require you to expressly begin the REPL by hitting "ENTER", while passing the `--repl` flag explicitly starts it.
-```
+到 v23.12，`--dev` 旗帜大致等于`--debug --reload --reload --repli`。 使用 "--dev" 将需要你明确开头点击 "ENTER"，然后通过 "--repli" 旗帜明确开头。
+在 v23.12之前，"--dev" 旗帜更类似于“--debug --reload\`”。
 
 .. 列:
 

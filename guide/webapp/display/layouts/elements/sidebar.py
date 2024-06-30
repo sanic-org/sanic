@@ -36,6 +36,20 @@ def _menu_items(request: Request) -> list[Builder]:
         .a("sanicbook.com", href="https://sanicbook.com", target="_blank")
         .br.img(src="https://sanicbook.com/images/SanicCoverFinal.png"),
         E.br.small("Book proceeds fund our journey"),
+        E.hr(),
+        E.p("Secure, auto-document, and monetize your Sanic API with:").a(
+            E.img(
+                src="/assets/images/zuplo.svg",
+                alt=(
+                    "Zuplo - Secure, auto-document, "
+                    "and monetize your Sanic API"
+                ),
+                style="width: 90%;",
+            ),
+            href="https://zuplo.com",
+            target="_blank",
+            rel="nofollow noopener noreferrer",
+        ),
     ]
 
 

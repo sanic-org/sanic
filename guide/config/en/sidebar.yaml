@@ -145,8 +145,8 @@ root:
       items:
           - label: "2024"
             items:
-                - label: Sanic 24.4
-                  path: release-notes/2024/v24.4.html
+                - label: Sanic 24.6
+                  path: release-notes/2024/v24.6.html
           - label: "2023"
             items:
                 - label: Sanic 23.12

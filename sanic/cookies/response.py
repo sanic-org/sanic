@@ -51,7 +51,7 @@ def _quote(str):  # no cov
 _is_legal_key = re.compile("[%s]+" % re.escape(LEGAL_CHARS)).fullmatch
 
 
-# In v24.3, we should remove this as being a subclass of dict
+# In v24.9, we should remove this as being a subclass of dict
 class CookieJar(dict):
     """A container to manipulate cookies.
 
@@ -111,82 +111,82 @@ class CookieJar(dict):
     def __iter__(self):  # no cov
         deprecation(
             "Iterating over the CookieJar has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: "
+            "removed in v24.9. To learn more, please see: "
             "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
-            24.3,
+            24.9,
         )
         return super().__iter__()
 
     def keys(self):  # no cov
-        """Deprecated in v24.3"""
+        """Deprecated in v24.9"""
         deprecation(
             "Accessing CookieJar.keys() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: "
+            "removed in v24.9. To learn more, please see: "
             "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
-            24.3,
+            24.9,
         )
         return super().keys()
 
     def values(self):  # no cov
-        """Deprecated in v24.3"""
+        """Deprecated in v24.9"""
         deprecation(
             "Accessing CookieJar.values() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: "
+            "removed in v24.9. To learn more, please see: "
             "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
-            24.3,
+            24.9,
         )
         return super().values()
 
     def items(self):  # no cov
-        """Deprecated in v24.3"""
+        """Deprecated in v24.9"""
         deprecation(
             "Accessing CookieJar.items() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: "
+            "removed in v24.9. To learn more, please see: "
             "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
-            24.3,
+            24.9,
         )
         return super().items()
 
     def get(self, *args, **kwargs):  # no cov
-        """Deprecated in v24.3"""
+        """Deprecated in v24.9"""
         deprecation(
             "Accessing cookies from the CookieJar using get is deprecated "
-            "and will be removed in v24.3. You should instead use the "
+            "and will be removed in v24.9. You should instead use the "
             "cookies.get_cookie method. To learn more, please see: "
             "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
-            24.3,
+            24.9,
         )
         return super().get(*args, **kwargs)
 
     def pop(self, key, *args, **kwargs):  # no cov
-        """Deprecated in v24.3"""
+        """Deprecated in v24.9"""
         deprecation(
             "Using CookieJar.pop() has been deprecated and will be "
-            "removed in v24.3. To learn more, please see: "
+            "removed in v24.9. To learn more, please see: "
             "https://sanic.dev/en/guide/release-notes/v23.3.html#response-cookies",  # noqa
-            24.3,
+            24.9,
         )
         self.delete(key)
         return super().pop(key, *args, **kwargs)
 
     @property
     def header_key(self):  # no cov
-        """Deprecated in v24.3"""
+        """Deprecated in v24.9"""
         deprecation(
             "The CookieJar.header_key property has been deprecated and will "
-            "be removed in version 24.3. Use CookieJar.HEADER_KEY. ",
-            24.3,
+            "be removed in version 24.9. Use CookieJar.HEADER_KEY. ",
+            24.9,
         )
         return CookieJar.HEADER_KEY
 
     @property
     def cookie_headers(self) -> Dict[str, str]:  # no cov
-        """Deprecated in v24.3"""
+        """Deprecated in v24.9"""
         deprecation(
             "The CookieJar.coookie_headers property has been deprecated "
-            "and will be removed in version 24.3. If you need to check if a "
+            "and will be removed in version 24.9. If you need to check if a "
             "particular cookie key has been set, use CookieJar.has_cookie.",
-            24.3,
+            24.9,
         )
         return {key: self.header_key for key in self}
 
@@ -352,7 +352,7 @@ class CookieJar(dict):
         )
         self.headers.add(self.HEADER_KEY, cookie)
 
-        # This should be removed in v24.3
+        # This should be removed in v24.9
         super().__setitem__(key, cookie)
 
         return cookie
@@ -413,7 +413,7 @@ class CookieJar(dict):
                 self.headers.add(self.HEADER_KEY, cookie)
             elif existing_cookie is None:
                 existing_cookie = cookie
-        # This should be removed in v24.3
+        # This should be removed in v24.9
         try:
             super().__delitem__(key)
         except KeyError:
@@ -449,7 +449,7 @@ class CookieJar(dict):
             )
 
 
-# In v24.3, we should remove this as being a subclass of dict
+# In v24.9, we should remove this as being a subclass of dict
 # Instead, it should be an object with __slots__
 # All of the current property accessors should be removed in favor
 # of actual slotted properties.
@@ -583,14 +583,14 @@ class Cookie(dict):
     def __setitem__(self, key, value):
         deprecation(
             "Setting values on a Cookie object as a dict has been deprecated. "
-            "This feature will be removed in v24.3. You should instead set "
+            "This feature will be removed in v24.9. You should instead set "
             f"values on cookies as object properties: cookie.{key}=... ",
-            24.3,
+            24.9,
         )
         self._set_value(key, value)
 
     # This is a temporary method for backwards compat and should be removed
-    # in v24.3 when this is no longer a dict
+    # in v24.9 when this is no longer a dict
     def _set_value(self, key: str, value: Any) -> None:
         if key not in self._keys:
             raise KeyError("Unknown cookie property: %s=%s" % (key, value))
@@ -619,7 +619,7 @@ class Cookie(dict):
         the cookies.
 
         .. warning::
-            Direct encoding of a Cookie object has been deprecated and will be removed in v24.3.
+            Direct encoding of a Cookie object has been deprecated and will be removed in v24.9.
 
         Args:
             encoding (str): The encoding type to be used.
@@ -629,8 +629,8 @@ class Cookie(dict):
         """  # noqa: E501
         deprecation(
             "Direct encoding of a Cookie object has been deprecated and will "
-            "be removed in v24.3.",
-            24.3,
+            "be removed in v24.9.",
+            24.9,
         )
         return str(self).encode(encoding)
 

@@ -395,13 +395,16 @@ class CookieJar(dict):
 
         # Host prefix can only be used on a cookie where
         # path=="/", domain==None, and secure==True
-        host_prefix = (
-            False
-            if not (secure and path == "/" and domain is None)
-            else host_prefix
-        )
-        # Secure prefix can only be used on a secure cookie
-        secure_prefix = False if not secure else secure_prefix
+
+        if host_prefix and not (secure and path == "/" and domain is None):
+            raise ServerError(
+                "Cannot set host_prefix on a cookie without "
+                "path='/', domain=None, and secure=True"
+            )
+        if secure_prefix and not secure:
+            raise ServerError(
+                "Cannot set secure_prefix on a cookie without secure=True"
+            )
 
         # remove it from header
         cookies: List[Cookie] = self.headers.popall(self.HEADER_KEY, [])
@@ -413,11 +416,10 @@ class CookieJar(dict):
                 or cookie.domain != domain
             ):
                 self.headers.add(self.HEADER_KEY, cookie)
-            else:
+            elif existing_cookie is None:
                 # Keep a snapshot of the cookie-to-be-deleted
                 # for reference when creating the deletion cookie
-                if existing_cookie is None:
-                    existing_cookie = cookie
+                existing_cookie = cookie
         # This should be removed in v24.3
         try:
             super().__delitem__(key)

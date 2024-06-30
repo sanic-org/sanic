@@ -427,20 +427,18 @@ def test_cookie_jar_delete_existing_nonsecure_cookie_bad_prefix():
     jar.add_cookie(
         "foo", "test", secure=False, domain="example.com", samesite="Strict"
     )
-    jar.delete_cookie(
-        "foo",
-        domain="example.com",
-        secure=False,
-        secure_prefix=True,
-        host_prefix=True,
-    )  # noqa
-
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
-    # Deletion cookie has secure_prefix and host_prefix, but original cookie
-    # is not secure so ignore those invalid options on delete cookie.
-    assert encoded == [
-        b'foo=""; Path=/; Domain=example.com; Max-Age=0; SameSite=Strict',
-    ]
+    message = (
+        "Cannot set host_prefix on a cookie without "
+        "path='/', domain=None, and secure=True"
+    )
+    with pytest.raises(ServerError, match=message):
+        jar.delete_cookie(
+            "foo",
+            domain="example.com",
+            secure=False,
+            secure_prefix=True,
+            host_prefix=True,
+        )
 
 
 def test_cookie_jar_old_school_delete_encode():

@@ -42,8 +42,7 @@ class Group:
             params = {args[0][2:].replace("-", "_"): None}
             group.set_defaults(**params)
 
-    def prepare(self, args) -> None:
-        ...
+    def prepare(self, args) -> None: ...
 
 
 class GeneralGroup(Group):
@@ -92,6 +91,10 @@ class ApplicationGroup(Group):
                 "Run Sanic as a Simple Server, and serve the contents of "
                 "a directory\n(module arg should be a path)"
             ),
+        )
+        self.add_bool_arguments(
+            "--repl",
+            help="Run the server with an interactive shell session",
         )
 
 
@@ -301,4 +304,5 @@ class OutputGroup(Group):
             "--noisy-exceptions",
             dest="noisy_exceptions",
             help="Output stack traces for all exceptions",
+            default=None,
         )

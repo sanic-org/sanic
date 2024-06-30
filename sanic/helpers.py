@@ -2,10 +2,22 @@
 
 import sys
 
+from functools import partial
 from importlib import import_module
 from inspect import ismodule
 from typing import Dict
 
+
+try:
+    from ujson import dumps as ujson_dumps
+
+    json_dumps = partial(ujson_dumps, escape_forward_slashes=False)
+except ImportError:
+    # This is done in order to ensure that the JSON response is
+    # kept consistent across both ujson and inbuilt json usage.
+    from json import dumps
+
+    json_dumps = partial(dumps, separators=(",", ":"))
 
 STATUS_CODES: Dict[int, bytes] = {
     100: b"Continue",
@@ -120,25 +132,6 @@ def is_entity_header(header):
 def is_hop_by_hop_header(header):
     """Checks if the given header is a Hop By Hop header"""
     return header.lower() in _HOP_BY_HOP_HEADERS
-
-
-def remove_entity_headers(headers, allowed=("content-location", "expires")):
-    """
-    Removes all the entity headers present in the headers given.
-    According to RFC 2616 Section 10.3.5,
-    Content-Location and Expires are allowed as for the
-    "strong cache validator".
-    https://tools.ietf.org/html/rfc2616#section-10.3.5
-
-    returns the headers without the entity headers
-    """
-    allowed = set([h.lower() for h in allowed])
-    headers = {
-        header: value
-        for header, value in headers.items()
-        if not is_entity_header(header) or header.lower() in allowed
-    }
-    return headers
 
 
 def import_string(module_name, package=None):

@@ -17,6 +17,8 @@ from sanic.config import DEFAULT_CONFIG, Config
 from sanic.constants import LocalCertCreator
 from sanic.exceptions import PyFileError
 
+from .conftest import get_port
+
 
 @contextmanager
 def temp_path():
@@ -132,8 +134,7 @@ def test_env_lowercase():
 
 
 def test_add_converter_multiple_times(caplog):
-    def converter():
-        ...
+    def converter(): ...
 
     message = (
         "Configuration value converter 'converter' has already been registered"
@@ -309,12 +310,12 @@ async def test_config_access_log_passing_in_create_server(app: Sanic):
         app.stop()
 
     await app.create_server(
-        port=1341, access_log=False, return_asyncio_server=True
+        port=get_port(), access_log=False, return_asyncio_server=True
     )
     assert app.config.ACCESS_LOG is False
 
     await app.create_server(
-        port=1342, access_log=True, return_asyncio_server=True
+        port=get_port(), access_log=True, return_asyncio_server=True
     )
     assert app.config.ACCESS_LOG is True
 

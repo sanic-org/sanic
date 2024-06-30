@@ -39,7 +39,7 @@ def create_context(
 
 
 def shorthand_to_ctx(
-    ctxdef: Union[None, ssl.SSLContext, dict, str]
+    ctxdef: Union[None, ssl.SSLContext, dict, str],
 ) -> Optional[ssl.SSLContext]:
     """Convert an ssl argument shorthand to an SSLContext object."""
     if ctxdef is None or isinstance(ctxdef, ssl.SSLContext):
@@ -55,7 +55,7 @@ def shorthand_to_ctx(
 
 
 def process_to_context(
-    ssldef: Union[None, ssl.SSLContext, dict, str, list, tuple]
+    ssldef: Union[None, ssl.SSLContext, dict, str, list, tuple],
 ) -> Optional[ssl.SSLContext]:
     """Process app.run ssl argument from easy formats to full SSLContext."""
     return (

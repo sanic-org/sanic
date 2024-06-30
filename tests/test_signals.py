@@ -1,7 +1,6 @@
 import asyncio
 
 from enum import Enum
-from inspect import isawaitable
 from itertools import count
 
 import pytest
@@ -14,8 +13,7 @@ from sanic.signals import Event
 
 
 def test_add_signal(app):
-    def sync_signal(*_):
-        ...
+    def sync_signal(*_): ...
 
     app.add_signal(sync_signal, "foo.bar.baz")
 
@@ -49,12 +47,10 @@ def test_add_signal_method_handler(app):
 
 def test_add_signal_decorator(app):
     @app.signal("foo.bar.baz")
-    def sync_signal(*_):
-        ...
+    def sync_signal(*_): ...
 
     @app.signal("foo.bar.baz")
-    async def async_signal(*_):
-        ...
+    async def async_signal(*_): ...
 
     assert len(app.signal_router.routes) == 2
     assert len(app.signal_router.dynamic_routes) == 1
@@ -65,7 +61,6 @@ def test_add_signal_decorator(app):
     (
         "<foo>.bar.bax",
         "foo.<bar>.baz",
-        "foo",
         "foo.bar",
         "foo.bar.baz.qux",
     ),
@@ -74,8 +69,49 @@ def test_invalid_signal(app, signal):
     with pytest.raises(InvalidSignal, match=f"Invalid signal event: {signal}"):
 
         @app.signal(signal)
-        def handler():
-            ...
+        def handler(): ...
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_event(app):
+    @app.signal("foo.bar.baz")
+    def sync_signal(*args):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(app.event("foo.bar.baz"))
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_correct_event(app):
+    # Check for https://github.com/sanic-org/sanic/issues/2826
+
+    @app.signal("foo.bar.baz")
+    def sync_signal_baz(*args):
+        pass
+
+    @app.signal("foo.bar.spam")
+    def sync_signal_spam(*args):
+        pass
+
+    app.signal_router.finalize()
+
+    baz_task = asyncio.create_task(app.event("foo.bar.baz"))
+    spam_task = asyncio.create_task(app.event("foo.bar.spam"))
+
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+
+    assert baz_task.done()
+    assert not spam_task.done()
+    baz_task.result()
+    spam_task.cancel()
 
 
 @pytest.mark.asyncio
@@ -95,6 +131,25 @@ async def test_dispatch_signal_with_enum_event(app):
 
     await app.dispatch("foo.bar.baz")
     assert counter == 1
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_with_enum_event_to_event(app):
+    class FooEnum(Enum):
+        FOO_BAR_BAZ = "foo.bar.baz"
+
+    @app.signal(FooEnum.FOO_BAR_BAZ)
+    def sync_signal(*args):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(app.event(FooEnum.FOO_BAR_BAZ))
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -121,22 +176,43 @@ async def test_dispatch_signal_triggers_multiple_handlers(app):
 
 
 @pytest.mark.asyncio
-async def test_dispatch_signal_triggers_triggers_event(app):
-    counter = 0
-
+async def test_dispatch_signal_triggers_multiple_events(app):
     @app.signal("foo.bar.baz")
-    def sync_signal(*args):
-        nonlocal app
-        nonlocal counter
-        group, *_ = app.signal_router.get("foo.bar.baz")
-        for signal in group:
-            counter += signal.ctx.event.is_set()
+    def sync_signal(*_):
+        pass
 
     app.signal_router.finalize()
 
-    await app.dispatch("foo.bar.baz")
+    event_task1 = asyncio.create_task(app.event("foo.bar.baz"))
+    event_task2 = asyncio.create_task(app.event("foo.bar.baz"))
 
-    assert counter == 1
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+
+    assert event_task1.done()
+    assert event_task2.done()
+    event_task1.result()  # Will raise if there was an exception
+    event_task2.result()  # Will raise if there was an exception
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_with_multiple_handlers_triggers_event_once(app):
+    @app.signal("foo.bar.baz")
+    def sync_signal(*_):
+        pass
+
+    @app.signal("foo.bar.baz")
+    async def async_signal(*_):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(app.event("foo.bar.baz"))
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -153,6 +229,38 @@ async def test_dispatch_signal_triggers_dynamic_route(app):
 
     await app.dispatch("foo.bar.9")
     assert counter == 9
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_parameterized_dynamic_route_event(app):
+    @app.signal("foo.bar.<baz:int>")
+    def sync_signal(baz):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(app.event("foo.bar.<baz:int>"))
+    await app.dispatch("foo.bar.9")
+    await asyncio.sleep(0)
+
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_starred_dynamic_route_event(app):
+    @app.signal("foo.bar.<baz:int>")
+    def sync_signal(baz):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(app.event("foo.bar.*"))
+    await app.dispatch("foo.bar.9")
+    await asyncio.sleep(0)
+
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -173,6 +281,27 @@ async def test_dispatch_signal_triggers_with_requirements(app):
 
 
 @pytest.mark.asyncio
+async def test_dispatch_signal_to_event_with_requirements(app):
+    @app.signal("foo.bar.baz")
+    def sync_signal(*_):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(
+        app.event("foo.bar.baz", condition={"one": "two"})
+    )
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+    assert not event_task.done()
+
+    await app.dispatch("foo.bar.baz", condition={"one": "two"})
+    await asyncio.sleep(0)
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
+
+
+@pytest.mark.asyncio
 async def test_dispatch_signal_triggers_with_requirements_exclusive(app):
     counter = 0
 
@@ -187,6 +316,31 @@ async def test_dispatch_signal_triggers_with_requirements_exclusive(app):
     assert counter == 1
     await app.dispatch("foo.bar.baz", condition={"one": "two"})
     assert counter == 2
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_to_event_with_requirements_exclusive(app):
+    @app.signal("foo.bar.baz")
+    def sync_signal(*_):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(
+        app.event("foo.bar.baz", condition={"one": "two"}, exclusive=False)
+    )
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
+
+    event_task = asyncio.create_task(
+        app.event("foo.bar.baz", condition={"one": "two"}, exclusive=False)
+    )
+    await app.dispatch("foo.bar.baz", condition={"one": "two"})
+    await asyncio.sleep(0)
+    assert event_task.done()
+    event_task.result()  # Will raise if there was an exception
 
 
 @pytest.mark.asyncio
@@ -205,6 +359,21 @@ async def test_dispatch_signal_triggers_with_context(app):
 
 
 @pytest.mark.asyncio
+async def test_dispatch_signal_to_event_with_context(app):
+    @app.signal("foo.bar.baz")
+    def sync_signal(**context):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(app.event("foo.bar.baz"))
+    await app.dispatch("foo.bar.baz", context={"amount": 9})
+    await asyncio.sleep(0)
+    assert event_task.done()
+    assert event_task.result()["amount"] == 9
+
+
+@pytest.mark.asyncio
 async def test_dispatch_signal_triggers_with_context_fail(app):
     counter = 0
 
@@ -217,6 +386,21 @@ async def test_dispatch_signal_triggers_with_context_fail(app):
 
     with pytest.raises(TypeError):
         await app.dispatch("foo.bar.baz", {"amount": 9})
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_to_dynamic_route_event(app):
+    @app.signal("foo.bar.<something>")
+    def sync_signal(**context):
+        pass
+
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(app.event("foo.bar.<something>"))
+    await app.dispatch("foo.bar.baz")
+    await asyncio.sleep(0)
+    assert event_task.done()
+    assert event_task.result()["something"] == "baz"
 
 
 @pytest.mark.asyncio
@@ -267,61 +451,112 @@ async def test_dispatch_signal_triggers_on_bp_alone(app):
 
 
 @pytest.mark.asyncio
-async def test_dispatch_signal_triggers_event(app):
-    app_counter = 0
-
-    @app.signal("foo.bar.baz")
-    def app_signal():
-        ...
-
-    async def do_wait():
-        nonlocal app_counter
-        await app.event("foo.bar.baz")
-        app_counter += 1
-
-    app.signal_router.finalize()
-
-    await app.dispatch("foo.bar.baz")
-    waiter = app.event("foo.bar.baz")
-    assert isawaitable(waiter)
-
-    fut = asyncio.ensure_future(do_wait())
-    await app.dispatch("foo.bar.baz")
-    await fut
-
-    assert app_counter == 1
-
-
-@pytest.mark.asyncio
 async def test_dispatch_signal_triggers_event_on_bp(app):
     bp = Blueprint("bp")
-    bp_counter = 0
+
+    @app.signal("foo.bar.baz")
+    def app_signal(): ...
 
     @bp.signal("foo.bar.baz")
-    def bp_signal():
-        ...
-
-    async def do_wait():
-        nonlocal bp_counter
-        await bp.event("foo.bar.baz")
-        bp_counter += 1
+    def bp_signal(): ...
 
     app.blueprint(bp)
     app.signal_router.finalize()
-    signal_group, *_ = app.signal_router.get(
-        "foo.bar.baz", condition={"blueprint": "bp"}
-    )
 
+    app_task = asyncio.create_task(app.event("foo.bar.baz"))
+    bp_task = asyncio.create_task(bp.event("foo.bar.baz"))
+    await asyncio.sleep(0)
+    await app.dispatch("foo.bar.baz")
+
+    # Allow a few event loop iterations for tasks to finish
+    for _ in range(5):
+        await asyncio.sleep(0)
+
+    assert app_task.done()
+    assert bp_task.done()
+    app_task.result()
+    bp_task.result()
+
+    app_task = asyncio.create_task(app.event("foo.bar.baz"))
+    bp_task = asyncio.create_task(bp.event("foo.bar.baz"))
+    await asyncio.sleep(0)
     await bp.dispatch("foo.bar.baz")
-    waiter = bp.event("foo.bar.baz")
-    assert isawaitable(waiter)
 
-    fut = do_wait()
-    for signal in signal_group:
-        signal.ctx.event.set()
-    await asyncio.gather(fut)
+    # Allow a few event loop iterations for tasks to finish
+    for _ in range(5):
+        await asyncio.sleep(0)
 
-    assert bp_counter == 1
+    assert bp_task.done()
+    assert not app_task.done()
+    bp_task.result()
+    app_task.cancel()
+
+
+@pytest.mark.asyncio
+async def test_dispatch_simple_signal_triggers(app):
+    counter = 0
+
+    @app.signal("foo")
+    def sync_signal():
+        nonlocal counter
+
+        counter += 1
+
+    app.signal_router.finalize()
+
+    await app.dispatch("foo")
+    assert counter == 1
+
+
+@pytest.mark.asyncio
+async def test_dispatch_simple_signal_triggers_dynamic_foo(app):
+    counter = 0
+
+    @app.signal("<foo:int>")
+    def sync_signal(foo):
+        nonlocal counter
+
+        counter += foo
+
+    app.signal_router.finalize()
+
+    await app.dispatch("9")
+    assert counter == 9
+
+
+@pytest.mark.asyncio
+async def test_dispatch_simple_signal_triggers_foo_bar(app):
+    counter = 0
+
+    @app.signal("foo.bar.<baz:int>")
+    def sync_signal(baz):
+        nonlocal counter
+
+        counter += baz
+
+    app.signal_router.finalize()
+
+    await app.dispatch("foo.bar.9")
+    assert counter == 9
+
+
+@pytest.mark.asyncio
+async def test_dispatch_signal_triggers_event_on_bp_with_context(app):
+    bp = Blueprint("bp")
+
+    @bp.signal("foo.bar.baz")
+    def bp_signal(): ...
+
+    app.blueprint(bp)
+    app.signal_router.finalize()
+
+    event_task = asyncio.create_task(bp.event("foo.bar.baz"))
+    await asyncio.sleep(0)
+    await app.dispatch("foo.bar.baz", context={"amount": 9})
+    for _ in range(5):
+        await asyncio.sleep(0)
+    assert event_task.done()
+    assert event_task.result()["amount"] == 9
 
 
 def test_bad_finalize(app):
@@ -367,8 +602,7 @@ async def test_event_not_exist_with_autoregister(app):
 @pytest.mark.asyncio
 async def test_dispatch_signal_triggers_non_exist_event_with_autoregister(app):
     @app.signal("some.stand.in")
-    async def signal_handler():
-        ...
+    async def signal_handler(): ...
 
     app.config.EVENT_AUTOREGISTER = True
     app_counter = 0
@@ -389,8 +623,7 @@ async def test_dispatch_signal_triggers_non_exist_event_with_autoregister(app):
 @pytest.mark.asyncio
 async def test_dispatch_not_exist(app):
     @app.signal("do.something.start")
-    async def signal_handler():
-        ...
+    async def signal_handler(): ...
 
     app.signal_router.finalize()
     await app.dispatch("does.not.exist")
@@ -400,8 +633,7 @@ def test_event_on_bp_not_registered():
     bp = Blueprint("bp")
 
     @bp.signal("foo.bar.baz")
-    def bp_signal():
-        ...
+    def bp_signal(): ...
 
     with pytest.raises(
         SanicException,
@@ -434,8 +666,7 @@ def test_signal_reservation(app, event, expected):
 @pytest.mark.asyncio
 async def test_report_exception(app: Sanic):
     @app.report_exception
-    async def catch_any_exception(app: Sanic, exception: Exception):
-        ...
+    async def catch_any_exception(app: Sanic, exception: Exception): ...
 
     @app.route("/")
     async def handler(request):
@@ -479,8 +710,7 @@ def test_report_exception_runs_once_inline(app: Sanic):
         next(c)
 
     @app.route("/")
-    async def handler(request):
-        ...
+    async def handler(request): ...
 
     @app.signal(Event.HTTP_ROUTING_AFTER.value)
     async def after_routing(**_):

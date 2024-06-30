@@ -59,9 +59,7 @@ def str_to_bool(val: str) -> bool:
 
 with open_local(["sanic", "__version__.py"], encoding="latin1") as fp:
     try:
-        version = re.findall(
-            r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M
-        )[0]
+        version = re.findall(r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M)[0]
     except IndexError:
         raise RuntimeError("Unable to determine version.")
 
@@ -96,14 +94,12 @@ setup_kwargs = {
     "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }
 
-env_dependency = (
-    '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
-)
+env_dependency = '; sys_platform != "win32" ' 'and implementation_name == "cpython"'
 ujson = "ujson>=1.35" + env_dependency
 uvloop = "uvloop>=0.15.0" + env_dependency
 types_ujson = "types-ujson" + env_dependency
 requirements = [
-    "sanic-routing>=23.6.0",
+    "sanic-routing>=23.12.0",
     "httptools>=0.0.10",
     uvloop,
     ujson,
@@ -124,14 +120,12 @@ tests_require = [
     "pytest-sanic",
     "pytest-benchmark",
     "chardet==3.*",
-    "flake8",
-    "black",
-    "isort>=5.0.0",
+    "ruff",
     "bandit",
     "mypy",
     "docutils",
     "pygments",
-    "uvicorn<0.15.0",
+    "uvicorn",
     "slotscheck>=0.8.0,<1",
     types_ujson,
 ]

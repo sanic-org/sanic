@@ -12,6 +12,7 @@ Setting ``app.config.FALLBACK_ERROR_FORMAT = "auto"`` will enable a switch that
 will attempt to provide an appropriate response format based upon the
 request type.
 """
+
 from __future__ import annotations
 
 import sys
@@ -391,8 +392,14 @@ def guess_mime(req: Request, fallback: str) -> str:
         format = CONFIG_BY_MIME[m.mime]
         source = formats[format]
         logger.debug(
-            f"The client accepts {m.header}, using '{format}' from {source}"
+            "Error Page: The client accepts %s, using '%s' from %s",
+            m.header,
+            format,
+            source,
         )
     else:
-        logger.debug(f"No format found, the client accepts {req.accept!r}")
+        logger.debug(
+            "Error Page: No format found, the client accepts %s",
+            repr(req.accept),
+        )
     return m.mime

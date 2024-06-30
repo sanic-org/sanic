@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -20,12 +19,7 @@ from sanic.compat import Header
 from sanic.cookies import CookieJar
 from sanic.cookies.response import Cookie, SameSite
 from sanic.exceptions import SanicException, ServerError
-from sanic.helpers import (
-    Default,
-    _default,
-    has_message_body,
-    remove_entity_headers,
-)
+from sanic.helpers import Default, _default, has_message_body, json_dumps
 from sanic.http import Http
 
 
@@ -35,18 +29,6 @@ if TYPE_CHECKING:
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
-
-
-try:
-    from ujson import dumps as ujson_dumps
-
-    json_dumps = partial(ujson_dumps, escape_forward_slashes=False)
-except ImportError:
-    # This is done in order to ensure that the JSON response is
-    # kept consistent across both ujson and inbuilt json usage.
-    from json import dumps
-
-    json_dumps = partial(dumps, separators=(",", ":"))
 
 
 class BaseHTTPResponse:
@@ -80,9 +62,7 @@ class BaseHTTPResponse:
     def _encode_body(self, data: Optional[AnyStr]):
         if data is None:
             return b""
-        return (
-            data.encode() if hasattr(data, "encode") else data  # type: ignore
-        )
+        return data.encode() if hasattr(data, "encode") else data  # type: ignore
 
     @property
     def cookies(self) -> CookieJar:
@@ -106,9 +86,6 @@ class BaseHTTPResponse:
         Returns:
             Iterator[Tuple[bytes, bytes]]: A list of header tuples encoded in bytes for sending
         """  # noqa: E501
-        # TODO: Make a blacklist set of header names and then filter with that
-        if self.status in (304, 412):  # Not Modified, Precondition Failed
-            self.headers = remove_entity_headers(self.headers)
         if has_message_body(self.status):
             self.headers.setdefault("content-type", self.content_type)
         # Encode headers into bytes
@@ -141,11 +118,7 @@ class BaseHTTPResponse:
                 "Response stream was ended, no more response data is "
                 "allowed to be sent."
             )
-        data = (
-            data.encode()  # type: ignore
-            if hasattr(data, "encode")
-            else data or b""
-        )
+        data = data.encode() if hasattr(data, "encode") else data or b""  # type: ignore
         await self.stream.send(
             data,  # type: ignore
             end_stream=end_stream or False,

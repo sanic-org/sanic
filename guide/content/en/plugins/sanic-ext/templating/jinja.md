@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Jinja
+---
+
 # Templating
 
 Sanic Extensions can easily help you integrate templates into your route handlers. 

@@ -65,7 +65,7 @@ class SanicException(Exception):
         quiet: Optional[bool] = None,
         context: Optional[Dict[str, Any]] = None,
         extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> None:
         self.context = context
         self.extra = extra
@@ -75,17 +75,22 @@ class SanicException(Exception):
         quiet = quiet or getattr(self.__class__, "quiet", None)
         headers = headers or getattr(self.__class__, "headers", {})
         if message is None:
-            if self.message:
-                message = self.message
-            elif status_code:
-                msg: bytes = STATUS_CODES.get(status_code, b"")
-                message = msg.decode("utf8")
+            message = self.message
+            if not message and status_code:
+                msg = STATUS_CODES.get(status_code, b"")
+                message = msg.decode()
+        elif isinstance(message, bytes):
+            message = message.decode()
 
         super().__init__(message)
 
         self.status_code = status_code or self.status_code
         self.quiet = quiet
         self.headers = headers
+        try:
+            self.message = message
+        except AttributeError:
+            ...
 
 
 class HTTPException(SanicException):

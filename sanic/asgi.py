@@ -166,7 +166,7 @@ class ASGIApp:
             # All servers send them separately
             url_bytes = b"%b?%b" % (url_bytes, query)
 
-        request_class = sanic_app.request_class or Request
+        request_class = sanic_app.request_class or Request  # type: ignore
         instance.request = request_class(
             url_bytes,
             headers,
@@ -219,19 +219,26 @@ class ASGIApp:
         return response
 
     async def send(self, data, end_stream):
-        self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
-        if self.response:
-            response, self.response = self.response, None
+        if self.stage is Stage.IDLE:
+            if not end_stream or data:
+                raise RuntimeError(
+                    "There is no request to respond to, either the "
+                    "response has already been sent or the "
+                    "request has not been received yet."
+                )
+            return
+        if self.response and self.stage is Stage.HANDLER:
             await self.transport.send(
                 {
                     "type": "http.response.start",
-                    "status": response.status,
-                    "headers": response.processed_headers,
+                    "status": self.response.status,
+                    "headers": self.response.processed_headers,
                 }
             )
-            response_body = getattr(response, "body", None)
+            response_body = getattr(self.response, "body", None)
             if response_body:
                 data = response_body + data if data else response_body
+        self.stage = Stage.IDLE if end_stream else Stage.RESPONSE
         await self.transport.send(
             {
                 "type": "http.response.body",

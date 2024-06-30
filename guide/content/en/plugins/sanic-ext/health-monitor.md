@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Health Monitor
+---
+
 # Health monitor
 
 The health monitor requires both `sanic>=22.9` and `sanic-ext>=22.9`.
@@ -8,12 +12,13 @@ You can setup Sanic Extensions to monitor the health of your worker processes. T
 
 .. column::
 
-    Out of the box, the health monitor is disabled. You will need to opt-in if you would like to use it.
+    Out of the box, the health monitor is disabled. You will need to opt-in and enable the endpoint if you would like to use it.
 
 .. column::
 
     ```python
     app.config.HEALTH = True
+    app.config.HEALTH_ENDPOINT = True
     ```
 
 ## How does it work

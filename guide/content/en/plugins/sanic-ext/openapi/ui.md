@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - OAS UI
+---
+
 # UI
 
 Sanic Extensions comes with both Redoc and Swagger interfaces. You have a choice to use one, or both of them. Out of the box, the following endpoints are setup for you, with the bare `/docs` displaying Redoc.

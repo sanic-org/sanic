@@ -18,8 +18,7 @@ from sanic.worker.reloader import Reloader
 
 
 @pytest.fixture
-def reloader():
-    ...
+def reloader(): ...
 
 
 @pytest.fixture
@@ -27,8 +26,7 @@ def app():
     app = Sanic("Test")
 
     @app.route("/")
-    def handler(_):
-        ...
+    def handler(_): ...
 
     return app
 
@@ -101,6 +99,7 @@ def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
     worker_process = WorkerProcess(
         lambda **_: current_process,
         "Test",
+        "TST",
         lambda **_: ...,
         {},
         {},
@@ -136,6 +135,7 @@ def test_reload_delayed(monkeypatch):
     worker_process = WorkerProcess(
         lambda **_: current_process,
         "Test",
+        "TST",
         lambda **_: ...,
         {},
         {},
@@ -213,6 +213,7 @@ def test_triggered(app_loader):
 def test_reloader_triggers_reload_listeners(app: Sanic, app_loader: AppLoader):
     before = Event()
     after = Event()
+    changed_files = set()
 
     def check_file(filename, mtimes):
         return not after.is_set()
@@ -222,8 +223,9 @@ def test_reloader_triggers_reload_listeners(app: Sanic, app_loader: AppLoader):
         before.set()
 
     @app.after_reload_trigger
-    async def after_reload_trigger(_):
+    async def after_reload_trigger(_, changed):
         after.set()
+        changed_files.update(changed)
 
     reloader = Reloader(Mock(), 0.1, set(), app_loader)
     reloader.check_file = check_file  # type: ignore
@@ -231,6 +233,8 @@ def test_reloader_triggers_reload_listeners(app: Sanic, app_loader: AppLoader):
 
     assert before.is_set()
     assert after.is_set()
+    assert len(changed_files) > 0
+    assert changed_files == set(reloader.files())
 
 
 def test_check_file(tmp_path):

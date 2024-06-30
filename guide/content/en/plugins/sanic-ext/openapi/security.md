@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - OAS Security Schemes
+---
+
 # Security Schemes
 
 To document authentication schemes, there are two steps.

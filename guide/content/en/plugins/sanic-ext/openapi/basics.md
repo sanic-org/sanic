@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Basic OAS
+---
+
 # Basics
 
 

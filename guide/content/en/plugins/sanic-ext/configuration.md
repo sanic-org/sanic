@@ -1,3 +1,7 @@
+---
+title: Sanic Extensions - Configuration
+---
+
 # Configuration
 
 Sanic Extensions can be configured in all of the same ways that [you can configure Sanic](../../guide/deployment/configuration.md). That makes configuring Sanic Extensions very easy.
@@ -219,7 +223,7 @@ However, there are a few more configuration options that should be considered.
 
 - **Type**: `str`
 - **Default**: `"/swagger-config"`
-- **Description**: Path to serve the Swagger configurtaion
+- **Description**: Path to serve the Swagger configuration
 
 ### `oas_uri_to_json`
 

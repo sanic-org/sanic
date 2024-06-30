@@ -4,6 +4,7 @@ import logging
 import os
 import random
 import re
+import socket
 import string
 import sys
 import uuid
@@ -20,6 +21,7 @@ from sanic_testing.testing import PORT
 
 from sanic import Sanic
 from sanic.constants import HTTP_METHODS
+from sanic.logging.formatter import AutoFormatter
 from sanic.router import Router
 from sanic.touchup.service import TouchUp
 
@@ -30,6 +32,19 @@ Sanic.test_mode = True
 
 if sys.platform in ["win32", "cygwin"]:
     collect_ignore = ["test_worker.py"]
+
+
+def get_port():
+    sock = socket.socket()
+    sock.bind(
+        ("", 0)
+    )  # Bind to 0 port, so os will pick available port for us.
+    return sock.getsockname()[1]
+
+
+@pytest.fixture(scope="function")
+def port():
+    yield get_port()
 
 
 async def _handler(request):
@@ -153,6 +168,10 @@ def app(request):
     for target, method_name in TouchUp._registry:
         setattr(target, method_name, CACHE[method_name])
     Sanic._app_registry.clear()
+    AutoFormatter.SETUP = False
+    AutoFormatter.LOG_EXTRA = False
+    os.environ.pop("SANIC_LOG_EXTRA", None)
+    os.environ.pop("SANIC_NO_COLOR", None)
 
 
 @pytest.fixture(scope="function")
@@ -214,12 +233,12 @@ def ext_instance():
 
 
 @pytest.fixture(autouse=True)  # type: ignore
-def sanic_ext(ext_instance):  # noqa
-    sanic_ext = MagicMock(__version__="1.2.3")
-    sanic_ext.Extend = MagicMock()
-    sanic_ext.Extend.return_value = ext_instance
-    sys.modules["sanic_ext"] = sanic_ext
-    yield sanic_ext
+def mock_sanic_ext(ext_instance):  # noqa
+    mock_sanic_ext = MagicMock(__version__="1.2.3")
+    mock_sanic_ext.Extend = MagicMock()
+    mock_sanic_ext.Extend.return_value = ext_instance
+    sys.modules["sanic_ext"] = mock_sanic_ext
+    yield mock_sanic_ext
     with suppress(KeyError):
         del sys.modules["sanic_ext"]
 

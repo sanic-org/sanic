@@ -8,7 +8,7 @@ from sanic.request.parameters import RequestParameters
 
 
 COOKIE_NAME_RESERVED_CHARS = re.compile(
-    '[\x00-\x1F\x7F-\xFF()<>@,;:\\\\"/[\\]?={} \x09]'
+    '[\x00-\x1f\x7f-\xff()<>@,;:\\\\"/[\\]?={} \x09]'
 )
 OCTAL_PATTERN = re.compile(r"\\[0-3][0-7][0-7]")
 QUOTE_PATTERN = re.compile(r"[\\].")
@@ -73,12 +73,17 @@ def parse_cookie(raw: str) -> Dict[str, List[str]]:
     cookies: Dict[str, List[str]] = {}
 
     for token in raw.split(";"):
-        name, __, value = token.partition("=")
+        name, sep, value = token.partition("=")
         name = name.strip()
         value = value.strip()
 
-        if not name:
-            continue
+        # Support cookies =value or plain value with no name
+        # https://github.com/httpwg/http-extensions/issues/159
+        if not sep:
+            if not name:
+                # Empty value like ;; or a cookie header with no value
+                continue
+            name, value = "", name
 
         if COOKIE_NAME_RESERVED_CHARS.search(name):  # no cov
             continue
@@ -150,8 +155,8 @@ class CookieRequestParameters(RequestParameters):
             return super().get(name, default)
 
     def getlist(
-        self, name: str, default: Optional[Any] = None
-    ) -> Optional[Any]:
+        self, name: str, default: Optional[List[Any]] = None
+    ) -> List[Any]:
         try:
             return self._get_prefixed_cookie(name)
         except KeyError:

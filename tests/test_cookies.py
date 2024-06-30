@@ -7,10 +7,24 @@ import pytest
 from sanic import Request, Sanic
 from sanic.compat import Header
 from sanic.cookies import Cookie, CookieJar
-from sanic.cookies.request import CookieRequestParameters
+from sanic.cookies.request import CookieRequestParameters, parse_cookie
 from sanic.exceptions import ServerError
 from sanic.response import text
 from sanic.response.convenience import json
+
+
+def test_request_cookies():
+    cdict = parse_cookie("foo=one; foo=two; abc = xyz;;bare;=bare2")
+    assert cdict == {
+        "foo": ["one", "two"],
+        "abc": ["xyz"],
+        "": ["bare", "bare2"],
+    }
+    c = CookieRequestParameters(cdict)
+    assert c.getlist("foo") == ["one", "two"]
+    assert c.getlist("abc") == ["xyz"]
+    assert c.getlist("") == ["bare", "bare2"]
+    assert c.getlist("bare") == []
 
 
 # ------------------------------------------------------------ #
@@ -445,10 +459,11 @@ def test_cookie_accessors(app: Sanic):
                     "four": request.cookies.get("four", "fallback"),
                 },
                 "getlist": {
-                    "one": request.cookies.getlist("one", ["fallback"]),
-                    "two": request.cookies.getlist("two", ["fallback"]),
-                    "three": request.cookies.getlist("three", ["fallback"]),
-                    "four": request.cookies.getlist("four", ["fallback"]),
+                    "one": request.cookies.getlist("one"),
+                    "two": request.cookies.getlist("two"),
+                    "three": request.cookies.getlist("three"),
+                    "four": request.cookies.getlist("four"),
+                    "five": request.cookies.getlist("five", ["fallback"]),
                 },
                 "getattr": {
                     "one": request.cookies.one,
@@ -484,7 +499,8 @@ def test_cookie_accessors(app: Sanic):
             "one": ["1"],
             "two": ["2"],
             "three": ["3"],
-            "four": ["fallback"],
+            "four": [],
+            "five": ["fallback"],
         },
         "getattr": {
             "one": "1",

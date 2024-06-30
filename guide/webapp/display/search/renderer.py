@@ -1,10 +1,10 @@
 from contextlib import contextmanager
 from urllib.parse import unquote
 
-from webapp.display.search.search import Searcher
-
 from html5tagger import Builder, E  # type: ignore
+
 from sanic import Request
+from webapp.display.search.search import Searcher
 
 from ..base import BaseRenderer
 from ..layouts.main import MainLayout

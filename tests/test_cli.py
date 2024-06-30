@@ -14,6 +14,8 @@ from sanic import __version__
 from sanic.__main__ import main
 from sanic.cli.inspector_client import InspectorClient
 
+from .conftest import get_port
+
 
 @pytest.fixture(scope="module", autouse=True)
 def tty():
@@ -23,14 +25,22 @@ def tty():
     sys.stdout.isatty = orig
 
 
-def capture(command: List[str], caplog):
-    caplog.clear()
+def capture(command: List[str], caplog=None, capsys=None):
+    if capsys:
+        capsys.readouterr()
+    if caplog:
+        caplog.clear()
     os.chdir(Path(__file__).parent)
     try:
         main(command)
     except SystemExit:
         ...
-    return [record.message for record in caplog.records]
+    if capsys:
+        captured_err = capsys.readouterr()
+        return captured_err
+    if caplog:
+        return [record.message for record in caplog.records]
+    return None
 
 
 def read_app_info(lines: List[str]):
@@ -50,16 +60,14 @@ def read_app_info(lines: List[str]):
     ),
 )
 def test_server_run(
-    appname: str,
-    extra: Optional[str],
-    caplog: pytest.LogCaptureFixture,
+    appname: str, extra: Optional[str], caplog: pytest.LogCaptureFixture, port
 ):
-    command = [appname]
+    command = [appname, f"-p={port}"]
     if extra:
         command.append(extra)
     lines = capture(command, caplog)
 
-    assert "Goin' Fast @ http://127.0.0.1:8000" in lines
+    assert f"Goin' Fast @ http://127.0.0.1:{port}" in lines
 
 
 @pytest.mark.parametrize(
@@ -69,17 +77,19 @@ def test_server_run(
         ["fake.server.create_app_with_args"],
     ),
 )
-def test_server_run_factory_with_args(caplog, command):
+def test_server_run_factory_with_args(caplog, command, port):
+    command.append(f"-p={port}")
     lines = capture(command, caplog)
 
     assert "target=fake.server.create_app_with_args" in lines
 
 
-def test_server_run_factory_with_args_arbitrary(caplog):
+def test_server_run_factory_with_args_arbitrary(caplog, port):
     command = [
         "fake.server.create_app_with_args",
         "--factory",
         "--foo=bar",
+        f"-p={port}",
     ]
     lines = capture(command, caplog)
 
@@ -104,16 +114,16 @@ def test_server_run_factory_with_args_arbitrary(caplog):
         ),
     ),
 )
-def test_tls_options(cmd: Tuple[str, ...], caplog):
+def test_tls_options(cmd: Tuple[str, ...], caplog, port):
     command = [
         "fake.server.app",
         *cmd,
-        "--port=9999",
+        f"--port={port}",
         "--debug",
         "--single-process",
     ]
     lines = capture(command, caplog)
-    assert "Goin' Fast @ https://127.0.0.1:9999" in lines
+    assert f"Goin' Fast @ https://127.0.0.1:{port}" in lines
 
 
 @pytest.mark.parametrize(
@@ -128,8 +138,8 @@ def test_tls_options(cmd: Tuple[str, ...], caplog):
         ("--tls-strict-host",),
     ),
 )
-def test_tls_wrong_options(cmd: Tuple[str, ...], caplog):
-    command = ["fake.server.app", *cmd, "-p=9999", "--debug"]
+def test_tls_wrong_options(cmd: Tuple[str, ...], caplog, port):
+    command = ["fake.server.app", *cmd, f"-p={port}", "--debug"]
     lines = capture(command, caplog)
 
     assert (
@@ -142,14 +152,15 @@ def test_tls_wrong_options(cmd: Tuple[str, ...], caplog):
 @pytest.mark.parametrize(
     "cmd",
     (
-        ("--host=localhost", "--port=9999"),
-        ("-H", "localhost", "-p", "9999"),
+        ("--host=localhost", "--port={port}"),
+        ("-H", "localhost", "-p", "{port}"),
     ),
 )
-def test_host_port_localhost(cmd: Tuple[str, ...], caplog):
+def test_host_port_localhost(cmd: Tuple[str, ...], caplog, port):
+    cmd = [c.format(port=str(port)) for c in cmd]
     command = ["fake.server.app", *cmd]
     lines = capture(command, caplog)
-    expected = "Goin' Fast @ http://localhost:9999"
+    expected = f"Goin' Fast @ http://localhost:{port}"
 
     assert expected in lines
 
@@ -158,28 +169,30 @@ def test_host_port_localhost(cmd: Tuple[str, ...], caplog):
     "cmd,expected",
     (
         (
-            ("--host=localhost", "--port=9999"),
-            "Goin' Fast @ http://localhost:9999",
+            ("--host=localhost", "--port={port}"),
+            "Goin' Fast @ http://localhost:{port}",
         ),
         (
-            ("-H", "localhost", "-p", "9999"),
-            "Goin' Fast @ http://localhost:9999",
+            ("-H", "localhost", "-p", "{port}"),
+            "Goin' Fast @ http://localhost:{port}",
         ),
         (
-            ("--host=127.0.0.127", "--port=9999"),
-            "Goin' Fast @ http://127.0.0.127:9999",
+            ("--host=127.0.0.1", "--port={port}"),
+            "Goin' Fast @ http://127.0.0.1:{port}",
         ),
         (
-            ("-H", "127.0.0.127", "-p", "9999"),
-            "Goin' Fast @ http://127.0.0.127:9999",
+            ("-H", "127.0.0.1", "-p", "{port}"),
+            "Goin' Fast @ http://127.0.0.1:{port}",
         ),
-        (("--host=::", "--port=9999"), "Goin' Fast @ http://[::]:9999"),
-        (("-H", "::", "-p", "9999"), "Goin' Fast @ http://[::]:9999"),
-        (("--host=::1", "--port=9999"), "Goin' Fast @ http://[::1]:9999"),
-        (("-H", "::1", "-p", "9999"), "Goin' Fast @ http://[::1]:9999"),
+        (("--host=::", "--port={port}"), "Goin' Fast @ http://[::]:{port}"),
+        (("-H", "::", "-p", "{port}"), "Goin' Fast @ http://[::]:{port}"),
+        (("--host=::1", "--port={port}"), "Goin' Fast @ http://[::1]:{port}"),
+        (("-H", "::1", "-p", "{port}"), "Goin' Fast @ http://[::1]:{port}"),
     ),
 )
-def test_host_port(cmd: Tuple[str, ...], expected: str, caplog):
+def test_host_port(cmd: Tuple[str, ...], expected: str, caplog, port):
+    cmd = [c.format(port=str(port)) for c in cmd]
+    expected = expected.format(port=str(port))
     command = ["fake.server.app", *cmd]
     lines = capture(command, caplog)
 
@@ -197,8 +210,8 @@ def test_host_port(cmd: Tuple[str, ...], expected: str, caplog):
         (4, ("-w", "4")),
     ),
 )
-def test_num_workers(num: int, cmd: Tuple[str, ...], caplog):
-    command = ["fake.server.app", *cmd]
+def test_num_workers(num: int, cmd: Tuple[str, ...], caplog, port):
+    command = ["fake.server.app", *cmd, f"-p={port}"]
     lines = capture(command, caplog)
 
     if num == 1:
@@ -210,8 +223,8 @@ def test_num_workers(num: int, cmd: Tuple[str, ...], caplog):
 
 
 @pytest.mark.parametrize("cmd", ("--debug",))
-def test_debug(cmd: str, caplog):
-    command = ["fake.server.app", cmd]
+def test_debug(cmd: str, caplog, port):
+    command = ["fake.server.app", cmd, f"-p={port}"]
     lines = capture(command, caplog)
     info = read_app_info(lines)
 
@@ -220,8 +233,8 @@ def test_debug(cmd: str, caplog):
 
 
 @pytest.mark.parametrize("cmd", ("--dev", "-d"))
-def test_dev(cmd: str, caplog):
-    command = ["fake.server.app", cmd]
+def test_dev(cmd: str, caplog, port):
+    command = ["fake.server.app", cmd, f"-p={port}"]
     lines = capture(command, caplog)
     info = read_app_info(lines)
 
@@ -230,13 +243,15 @@ def test_dev(cmd: str, caplog):
 
 
 @pytest.mark.parametrize("cmd", ("--auto-reload", "-r"))
-def test_auto_reload(cmd: str, caplog):
-    command = ["fake.server.app", cmd]
+def test_auto_reload(cmd: str, caplog, port):
+    command = ["fake.server.app", cmd, f"-p={port}"]
     lines = capture(command, caplog)
     info = read_app_info(lines)
 
-    assert info["debug"] is False
-    assert info["auto_reload"] is True
+    assert info["debug"] is False, f"Unexpected value of debug {info}"
+    assert (
+        info["auto_reload"] is True
+    ), f"Unexpected value of auto reload {info}"
 
 
 @pytest.mark.parametrize(
@@ -248,14 +263,18 @@ def test_auto_reload(cmd: str, caplog):
         ("--no-access-log", False),
     ),
 )
-def test_access_logs(cmd: str, expected: bool, caplog):
-    command = ["fake.server.app"]
+def test_access_logs(cmd: str, expected: bool, caplog, port):
+    command = ["fake.server.app", f"-p={port}"]
     if cmd:
         command.append(cmd)
     lines = capture(command, caplog)
+    print(lines)
     info = read_app_info(lines)
-
-    assert info["access_log"] is expected
+    if info["access_log"] != expected:
+        print(lines)
+    assert (
+        info["access_log"] is expected
+    ), f"Expected: {expected}. Received: {info}. Lines: {lines}"
 
 
 @pytest.mark.parametrize("cmd", ("--version", "-v"))
@@ -274,8 +293,8 @@ def test_version(cmd: str, caplog, capsys):
         ("--no-noisy-exceptions", False),
     ),
 )
-def test_noisy_exceptions(cmd: str, expected: bool, caplog):
-    command = ["fake.server.app", cmd]
+def test_noisy_exceptions(cmd: str, expected: bool, caplog, port):
+    command = ["fake.server.app", cmd, f"-p={port}"]
     lines = capture(command, caplog)
     info = read_app_info(lines)
 
@@ -327,3 +346,26 @@ def test_inspector_command(command, params):
             main()
 
     client.assert_called_once_with(command[0], **params)
+
+
+def test_server_run_with_repl(caplog, capsys):
+    record = (
+        "sanic.error",
+        40,
+        "Can't start REPL in non-interactive mode. "
+        "You can only run with --repl in a TTY.",
+    )
+
+    def run():
+        command = ["fake.server.app", "--repl", f"-p={get_port()}"]
+        return capture(command, capsys=capsys)
+
+    with patch("sanic.cli.app.is_atty", return_value=True):
+        result = run()
+
+    assert record not in caplog.record_tuples
+    assert "Welcome to the Sanic interactive console" in result.err
+    assert ">>> " in result.out
+
+    run()
+    assert record in caplog.record_tuples

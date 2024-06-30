@@ -126,11 +126,11 @@ class Header(CIMultiDict):
         if key.startswith("_"):
             return self.__getattribute__(key)
         key = key.rstrip("_").replace("_", "-")
-        return ",".join(self.getall(key, default=[]))
+        return ",".join(self.getall(key, []))
 
     def get_all(self, key: str):
         """Convenience method mapped to ``getall()``."""
-        return self.getall(key, default=[])
+        return self.getall(key, [])
 
 
 use_trio = sys.argv[0].endswith("hypercorn") and "trio" in sys.argv

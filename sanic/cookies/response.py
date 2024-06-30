@@ -392,10 +392,6 @@ class CookieJar(dict):
             This requires that secure=True, defaults to False
         :type secure_prefix: bool
         """
-
-        # Host prefix can only be used on a cookie where
-        # path=="/", domain==None, and secure==True
-
         if host_prefix and not (secure and path == "/" and domain is None):
             raise ServerError(
                 "Cannot set host_prefix on a cookie without "
@@ -406,7 +402,6 @@ class CookieJar(dict):
                 "Cannot set secure_prefix on a cookie without secure=True"
             )
 
-        # remove it from header
         cookies: List[Cookie] = self.headers.popall(self.HEADER_KEY, [])
         existing_cookie = None
         for cookie in cookies:
@@ -417,8 +412,6 @@ class CookieJar(dict):
             ):
                 self.headers.add(self.HEADER_KEY, cookie)
             elif existing_cookie is None:
-                # Keep a snapshot of the cookie-to-be-deleted
-                # for reference when creating the deletion cookie
                 existing_cookie = cookie
         # This should be removed in v24.3
         try:
@@ -541,9 +534,7 @@ class Cookie(dict):
                     "Cannot set host_prefix on a cookie without secure=True"
                 )
             if path != "/":
-                raise ServerError(
-                    "Cannot set host_prefix on a cookie unless path='/'"
-                )
+                raise ServerError("Cannot set host_prefix on a cookie unless path='/'")
             if domain:
                 raise ServerError(
                     "Cannot set host_prefix on a cookie with a defined domain"
@@ -645,9 +636,7 @@ class Cookie(dict):
         """Format as a Set-Cookie header value."""
         output = ["%s=%s" % (self.key, _quote(self.value))]
         key_index = list(self._keys)
-        for key, value in sorted(
-            self.items(), key=lambda x: key_index.index(x[0])
-        ):
+        for key, value in sorted(self.items(), key=lambda x: key_index.index(x[0])):
             if value is not None and value is not False:
                 if key == "max-age":
                     try:

@@ -363,6 +363,7 @@ class CookieJar(dict):
         *,
         path: str = "/",
         domain: Optional[str] = None,
+        secure: bool = True,
         host_prefix: bool = False,
         secure_prefix: bool = False,
     ) -> None:
@@ -381,6 +382,8 @@ class CookieJar(dict):
         :type path: Optional[str], optional
         :param domain: Domain of the cookie, defaults to None
         :type domain: Optional[str], optional
+        :param secure: Whether to delete a secure cookie. Defaults to True.
+        :param secure: bool
         :param host_prefix: Whether to add __Host- as a prefix to the key.
             This requires that path="/", domain=None, and secure=True,
             defaults to False
@@ -389,8 +392,18 @@ class CookieJar(dict):
             This requires that secure=True, defaults to False
         :type secure_prefix: bool
         """
-        # remove it from header
+        if host_prefix and not (secure and path == "/" and domain is None):
+            raise ServerError(
+                "Cannot set host_prefix on a cookie without "
+                "path='/', domain=None, and secure=True"
+            )
+        if secure_prefix and not secure:
+            raise ServerError(
+                "Cannot set secure_prefix on a cookie without secure=True"
+            )
+
         cookies: List[Cookie] = self.headers.popall(self.HEADER_KEY, [])
+        existing_cookie = None
         for cookie in cookies:
             if (
                 cookie.key != Cookie.make_key(key, host_prefix, secure_prefix)
@@ -398,23 +411,42 @@ class CookieJar(dict):
                 or cookie.domain != domain
             ):
                 self.headers.add(self.HEADER_KEY, cookie)
-
+            elif existing_cookie is None:
+                existing_cookie = cookie
         # This should be removed in v24.3
         try:
             super().__delitem__(key)
         except KeyError:
             ...
 
-        self.add_cookie(
-            key=key,
-            value="",
-            path=path,
-            domain=domain,
-            max_age=0,
-            samesite=None,
-            host_prefix=host_prefix,
-            secure_prefix=secure_prefix,
-        )
+        if existing_cookie is not None:
+            # Use all the same values as the cookie to be deleted
+            # except value="" and max_age=0
+            self.add_cookie(
+                key=key,
+                value="",
+                path=existing_cookie.path,
+                domain=existing_cookie.domain,
+                secure=existing_cookie.secure,
+                max_age=0,
+                httponly=existing_cookie.httponly,
+                partitioned=existing_cookie.partitioned,
+                samesite=existing_cookie.samesite,
+                host_prefix=host_prefix,
+                secure_prefix=secure_prefix,
+            )
+        else:
+            self.add_cookie(
+                key=key,
+                value="",
+                path=path,
+                domain=domain,
+                secure=secure,
+                max_age=0,
+                samesite=None,
+                host_prefix=host_prefix,
+                secure_prefix=secure_prefix,
+            )
 
 
 # In v24.3, we should remove this as being a subclass of dict

@@ -8,7 +8,7 @@ content_class: changelog
 🔷 In support LTS release
 
 
-## Version 24.4.0 🔶
+## Version 24.6.0 🔶
 
 _Current version_
 
@@ -19,6 +19,8 @@ _Current version_
 ### Bugfixes
 - [#2919](https://github.com/sanic-org/sanic/pull/2919) Remove deprecation notice in websockets
 - [#2937](https://github.com/sanic-org/sanic/pull/2937) Resolve response streaming error when in ASGI mode
+- [#2970](https://github.com/sanic-org/sanic/pull/2970) [#2978](https://github.com/sanic-org/sanic/pull/2978) Fix missing dependencies for 3.12
+- [#2976](https://github.com/sanic-org/sanic/pull/2976) Fix deleting a cookie that was created with `secure=False`
 
 ### Deprecations and Removals
 - [#2899](https://github.com/sanic-org/sanic/pull/2899) Remove erroneous line from REPL impacting environments without HTTPX

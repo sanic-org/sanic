@@ -112,3 +112,82 @@ def test_url_encoding(client):
 
     assert b"400 Bad Request" in headers
     assert b"URL may only contain US-ASCII characters." in body
+
+
+@pytest.mark.parametrize(
+    "content_length",
+    (
+        "-50",
+        "+50",
+        "5_0",
+        "50.5",
+    ),
+)
+def test_invalid_content_length(content_length, client):
+    body = "Hello" * 10
+    client.send(
+        f"""
+        POST /upload HTTP/1.1
+        content-length: {content_length}
+        {body}
+        """
+    )
+
+    response = client.recv()
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+
+    assert b"400 Bad Request" in headers
+    assert b"Bad content-length" in body
+
+
+@pytest.mark.parametrize(
+    "chunk_length",
+    (
+        "-50",
+        "+50",
+        "5_0",
+        "50.5",
+    ),
+)
+def test_invalid_chunk_length(chunk_length, client):
+    body = "Hello" * 10
+    client.send(
+        f"""
+        POST /upload HTTP/1.1
+        transfer-encoding: chunked
+        {chunk_length}
+        {body}
+        0
+        
+        """  # noqa
+    )
+
+    response = client.recv()
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+
+    assert b"400 Bad Request" in headers
+    assert b"Bad chunked encoding" in body
+
+
+def test_smuggle(client):
+    client.send(
+        """
+        POST /upload HTTP/1.1
+        Content-Length: 5
+        Transfer-Encoding: chunked
+        Transfer-Encoding: xchunked
+        5
+        hello
+        0
+        GET / HTTP/1.1
+        
+        """  # noqa
+    )
+
+    response = client.recv()
+    num_responses = response.count(b"HTTP/1.1")
+    assert num_responses == 1
+
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+    assert b"400 Bad Request" in headers
+    assert b"Bad Request" in body

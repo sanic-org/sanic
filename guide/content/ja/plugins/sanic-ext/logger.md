@@ -28,7 +28,7 @@ app.config.LOGGING = True
 
 ## どのように機能します
 
-有効にすると、拡張機能は `multoprocessing.Queue` を作成します。 format@@0(../../guide/best-practices/logging.md) 上のすべてのハンドラを削除し、[`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler) に置き換えます。 メッセージがログされると、ハンドラによってキューにプッシュされます。 バックグラウンドプロセスで元々あったログハンドラを読み取ることができます つまり、通常どおりにロギングを設定することができ、「ただ動作する」ことができます。
+有効にすると、拡張機能は `multiprocessing.Queue` を作成します。 format@@0(../../guide/best-practices/logging.md) 上のすべてのハンドラを削除し、[`QueueHandler`](https://docs.python.org/3/library/logging.handlers.html#queuehandler) に置き換えます。 メッセージがログされると、ハンドラによってキューにプッシュされます。 バックグラウンドプロセスで元々あったログハンドラを読み取ることができます つまり、通常どおりにロギングを設定することができ、「ただ動作する」ことができます。
 
 ## 設定
 

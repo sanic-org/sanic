@@ -115,20 +115,21 @@ def test_url_encoding(client):
 @pytest.mark.parametrize(
     "content_length",
     (
-        "-50",
-        "+50",
-        "5_0",
-        "50.5",
+        b"-50",
+        b"+50",
+        b"5_0",
+        b"50.5",
     ),
 )
 def test_invalid_content_length(content_length, client):
-    body = "Hello" * 10
+    body = b"Hello" * 10
     client.send(
-        f"""
-        POST /upload HTTP/1.1
-        content-length: {content_length}
-        {body}
-        """
+        b"POST /upload HTTP/1.1\r\n"
+        + b"content-length: "
+        + content_length
+        + b"\r\n\r\n"
+        + body
+        + b"\r\n\r\n"
     )
 
     response = client.recv()
@@ -141,23 +142,22 @@ def test_invalid_content_length(content_length, client):
 @pytest.mark.parametrize(
     "chunk_length",
     (
-        "-50",
-        "+50",
-        "5_0",
-        "50.5",
+        b"-50",
+        b"+50",
+        b"5_0",
+        b"50.5",
     ),
 )
 def test_invalid_chunk_length(chunk_length, client):
-    body = "Hello" * 10
+    body = b"Hello" * 10
     client.send(
-        f"""
-        POST /upload HTTP/1.1
-        transfer-encoding: chunked
-        {chunk_length}
-        {body}
-        0
-        
-        """  # noqa
+        b"POST /upload HTTP/1.1\r\n"
+        + b"transfer-encoding: chunked\r\n\r\n"
+        + chunk_length
+        + b"\r\n"
+        + body
+        + b"\r\n"
+        + b"0\r\n\r\n"
     )
 
     response = client.recv()

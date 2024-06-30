@@ -76,11 +76,7 @@ sanic path.to:app -r -R /path/to/one -R /path/to/two
 
 ## 開発REPL
 
-.. new:: v23.12
-
-```
-Sanic CLI には、アプリケーションとやり取りするために使用できる REPL (別名「read-eval-print loop」)が付属しています。 これはデバッグとテストに役立ちます。REPL は引数なしで `python` を実行するときに得られる対話型シェルです。
-```
+Sanic CLI には、アプリケーションとやり取りするために使用できる REPL (別名「read-eval-print loop」)が付属しています。 これはデバッグやテストに役立ちます。 REPL は引数なしで `python` を実行すると得られる対話型シェルです。
 
 .. 列::
 
@@ -231,9 +227,9 @@ _v23.12_ に追加されました
 .. 列::
 
 ```
-デバッグモードにしたい場合は、自動リロードを実行している**と**、`dev=True`を渡すことができます。 これは**debug + auto reload**と同等です。
+デバッグモードにしたい場合は、自動リロードを実行している**と**、`dev=True`を渡すことができます。 これは**debug + auto reload + REPL** と同等です。
 
-*v22.3*に追加されました
+*v22.3* に追加されました
 ```
 
 .. 列::
@@ -248,13 +244,10 @@ sanic path.to:app -d
  ``` も使用できます。
 ````
 
-.. new:: v23.12
+v23.12 の `--dev` フラグに追加すると、REPLを開始することができます。 詳細は、format@@0(./development.md#development-repl) セクションを参照してください。
 
-```
-`--dev` フラグに v23.12 を追加すると、REPLを開始することができます。format@@0()を参照してください。 詳細は development.md#development-repl) セクションを参照してください。
-
-V23 の時点。 2, `--dev` フラグは `--debug --reload --repl` とほぼ同じです。 `--dev` を使用すると、明示的に `--repl` フラグを渡すと、REPL を開始する必要があります。
-```
+v23.12 では、`--dev` フラグは `--debug --reload -repl` とほぼ同じです。 `--dev` を使用すると、明示的に `--repl` フラグを渡すと、REPL を開始する必要があります。
+v23.12 より前の `--dev` フラグは `--debug --reload` によく似ています。
 
 .. 列::
 

@@ -7,9 +7,51 @@ content_class: 更新日志
 :larg_orange_diamond: Current release
 :larg_blu_diamond: In support LTS release
 
-## Version 23.12.0 🔶🔷
+## 版本24.6.0 :larg_orange_diamond:
 
 _当前版本_
+
+### Features
+
+- [#2838](https://github.com/sanic-org/sanic/pull/2838) 简化请求 cookie `getlist`
+- [#2850](https://github.com/sanic-org/sanic/pull/2850) Unix sockets 现在可以使用 `pathlib.Path`
+- [#2931](https://github.com/sanic-org/sanic/pull/2931)[#2958](https://github.com/sanic-org/sanic/pull/2958) 日志改进
+- [#2947](https://github.com/sanic-org/sanic/pull/2947) 使异常的 .message 字段非空
+- [#2961](https://github.com/sanic-org/sanic/pull/2961) [#2964](https://github.com/sanic-org/pull/2964) 允许自定义名称生成
+
+### Bugfixes
+
+- [#2919](https://github.com/sanic-org/sanic/pull/2919) 移除websockets中的废弃通知
+- [#2937](https://github.com/sanic-org/sanic/pull/2937) 在ASGI 模式中解决流媒体响应错误
+- [#2959](https://github.com/sanic-org/sanic/pull/2959) 解析Python 3.12废弃噪音
+- [#2960](https://github.com/sanic-org/sanic/pull/2960)
+- [#2970](https://github.com/sanic-org/sanic/pull/2970)[#2978](https://github.com/sanic-org/sanic/pull/2978) 修复缺少的3.12依赖关系。
+- [#2971](https://github.com/sanic-org/sanic/pull/2971) 修复在未发现的路径上的中间件异常，中间件中出现错误
+- [#2973](https://github.com/sanic-org/sanic/pull/2973) 解析`transport.close`和`transport.abort`
+- [#2976](https://github.com/sanic-org/sanic/pull/2976) 修复删除由 `secure=False` 创建的 cookie
+- [#2979](https://github.com/sanic-org/sanic/pull/2979) 抛出错误的身体长度
+- [#2980](https://github.com/sanic-org/sanic/pull/2980) 丢弃错误的物体编码错误
+
+### Deprecations and Removals
+
+- [#2899](https://github.com/sanic-org/sanic/pull/2899) 从REPL中删除错误的行，从而影响没有HTTPX的环境
+- [#2962](https://github.com/sanic-org/sanic/pull/2962) 合并实体头部删除
+
+### 开发者基础设施
+
+- [#2882](https://github.com/sanic-org/sanic/pull/2882) [#2896](https://github.com/sanic-org/sanic/pull/2896) 应用动态端口固定来改进端口选择测试
+- [#2887](https://github.com/sanic-org/sanic/pull/2887) 更新到码头图像版本
+- [#2932](https://github.com/sanic-org/sanic/pull/2932) 用Ruff 清理代码库
+
+### Improved Documentation
+
+- [#2924](https://github.com/sanic-org/sanic/pull/2924) cleanup markdown on html5tagger page
+- [#2930](https://github.com/sanic-org/sanic/pull/2930) Sanic Extension README.md
+- [#2934](https://github.com/sanic-org/sanic/pull/2934)
+- [#2936](https://github.com/sanic-org/sanic/pull/2936)
+- [#2955](https://github.com/sanic-org/sanic/pull/2955) 修复了`request.md`中错误的格式化。
+
+## 版本23.12.0 :larg_blu_diamond:
 
 ### Features
 
@@ -34,9 +76,7 @@ _当前版本_
 
 - [#2803](https://github.com/sanic-org/sanic/pull/2803) Fix MOTD display for extra data
 
-### Deprecations and Removals
-
-### Developer infrastructure
+### 开发者基础设施
 
 - [#2796](https://github.com/sanic-org/sanic/pull/2796) Refactor unit test cases
 - [#2801](https://github.com/sanic-org/sanic/pull/2801) Fix `test_fast` when there is only one CPU
@@ -98,7 +138,7 @@ _Due to circumstances at the time, v.23.9 was skipped._
 
 - [#2777](https://github.com/sanic-org/sanic/pull/2777) Remove Python 3.7 support
 
-### 开发者基础设施
+### Developer infrastructure
 
 - [#2766](https://github.com/sanic-org/sanic/pull/2766) Unpin setuptools version
 - [#2779](https://github.com/sanic-org/sanic/pull/2779) Run keep alive tests in loop to get available port
@@ -224,7 +264,7 @@ _当前LTS版本_
 
 - [#2585](https://github.com/sanic-org/sanic/pull/2585) Improved error message when no applications have been registered
 
-### Bugfixes
+### 错误修正
 
 - [#2578](https://github.com/sanic-org/sanic/pull/2578) Add certificate loader for in process certificate creation
 - [#2591](https://github.com/sanic-org/sanic/pull/2591) Do not use sentinel identity for `spawn` compatibility
@@ -267,7 +307,7 @@ _当前LTS版本_
 - [#2546](https://github.com/sanic-org/sanic/pull/2546) Add deprecation warning filter
 - [#2550](https://github.com/sanic-org/sanic/pull/2550) Middleware priority and performance enhancements
 
-### 错误修正
+### Bugfixes
 
 - [#2495](https://github.com/sanic-org/sanic/pull/2495) Prevent directory traversion with static files
 - [#2515](https://github.com/sanic-org/sanic/pull/2515) Do not apply double slash to paths in certain static dirs in Blueprints
@@ -296,7 +336,7 @@ _当前LTS版本_
 
 ## Version 22.6.1
 
-### Bugfixes
+### 错误修正
 
 - [#2477](https://github.com/sanic-org/sanic/pull/2477) Sanic static directory fails when folder name ends with ".."
 
@@ -369,7 +409,7 @@ _当前LTS版本_
 - [sanic-routing#58](https://github.com/sanic-org/sanic-routing/pull/58) Default matching on non-empty strings only, and new `strorempty` pattern type
   - 🚨 _BREAKING CHANGE_: Previously a route with a dynamic string parameter (`/<foo>` or `/<foo:str>`) would match on any string, including empty strings. It will now **only** match a non-empty string. To retain the old behavior, you should use the new parameter type: `/<foo:strorempty>`.
 
-### 错误修正
+### Bugfixes
 
 - [#2373](https://github.com/sanic-org/sanic/pull/2373) Remove `error_logger` on websockets
 - [#2381](https://github.com/sanic-org/sanic/pull/2381) Fix newly assigned `None` in task registry
@@ -466,7 +506,7 @@ _当前LTS版本_
 - [#2336](https://github.com/sanic-org/sanic/pull/2336) Remove paths from coverage checks
 - [#2338](https://github.com/sanic-org/sanic/pull/2338) Cleanup ports on tests
 
-### Improved Documentation
+### 改进文档
 
 - [#2269](https://github.com/sanic-org/sanic/pull/2269), [#2329](https://github.com/sanic-org/sanic/pull/2329), [#2333](https://github.com/sanic-org/sanic/pull/2333) Cleanup typos and fix language
 
@@ -491,7 +531,7 @@ _Rerelease of v21.9.2 with some cleanup_
 
 ## Version 21.9.0
 
-### Features
+### 功能
 
 - [#2158](https://github.com/sanic-org/sanic/pull/2158), [#2248](https://github.com/sanic-org/sanic/pull/2248) Complete overhaul of I/O to websockets
 - [#2160](https://github.com/sanic-org/sanic/pull/2160) Add new 17 signals into server and request lifecycles
@@ -507,7 +547,7 @@ _Rerelease of v21.9.2 with some cleanup_
 - [#2244](https://github.com/sanic-org/sanic/pull/2244) Explicit static directive for serving file or dir (ex: `static(..., resource_type="file")`)
 - [#2245](https://github.com/sanic-org/sanic/pull/2245) Close HTTP loop when connection task cancelled
 
-### Bugfixes
+### 错误修正
 
 - [#2188](https://github.com/sanic-org/sanic/pull/2188) Fix the handling of the end of a chunked request
 - [#2195](https://github.com/sanic-org/sanic/pull/2195) Resolve unexpected error handling on static requests
@@ -518,7 +558,7 @@ _Rerelease of v21.9.2 with some cleanup_
 - [#2247](https://github.com/sanic-org/sanic/pull/2247) Fix logging of auto-reload status in debug mode
 - [#2246](https://github.com/sanic-org/sanic/pull/2246) Account for BP with exception handler but no routes
 
-### Developer infrastructure
+### 开发者基础设施
 
 - [#2194](https://github.com/sanic-org/sanic/pull/2194) HTTP unit tests with raw client
 - [#2199](https://github.com/sanic-org/sanic/pull/2199) Switch to codeclimate

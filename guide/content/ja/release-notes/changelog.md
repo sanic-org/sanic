@@ -7,9 +7,51 @@ content_class: 更新履歴
 🔶 現在のリリース\
 🔷 LTS リリース
 
-## バージョン23.12.0 🔶🔷
+## バージョン24.6.0 🔶
 
 _現在のバージョン_
+
+### 特徴
+
+- [#2838](https://github.com/sanic-org/sanic/pull/2838) リクエストクッキー「getlist」を簡素化する
+- [#2850](https://github.com/sanic-org/sanic/pull/2850) Unix ソケットは `pathlib.Path` を使用できるようになりました
+- [#2931](https://github.com/sanic-org/sanic/pull/2931) [#2958](https://github.com/sanic-org/sanic/pull/2958) ログの改善点
+- [#2947](https://github.com/sanic-org/sanic/pull/2947) .message フィールドを空ではない例外にする
+- [#2961](https://github.com/sanic-org/sanic/pull/2961) [#2964](https://github.com/sanic-org/sanic/pull/2964) カスタム名生成を許可する
+
+### バグ修正
+
+- [#2919](https://github.com/sanic-org/sanic/pull/2919) websockets で非推奨の通知を削除する
+- [#2937](https://github.com/sanic-org/sanic/pull/2937) ASGIモードで応答ストリーミングエラーを解決する
+- [#2959](https://github.com/sanic-org/sanic/pull/2959) Python 3.12 deprecation notic を解決する
+- [#2960](https://github.com/sanic-org/sanic/pull/2960) 騒々しい例外に対する適切な意図を確認する
+- [#2970](https://github.com/sanic-org/sanic/pull/2970) [#2978](https://github.com/sanic-org/sanic/pull/2978) 3.12 の不足している依存関係を修正します。
+- [#2971](https://github.com/sanic-org/sanic/pull/2971) ミドルウェアの例外が見つからないルートでエラーが発生した問題を修正しました。
+- [#2973](https://github.com/sanic-org/sanic/pull/2973) `transport.close`と`transport.abort`のchedulingロジックを解決します。
+- [#2976](https://github.com/sanic-org/sanic/pull/2976) `secure=False`で作成されたクッキーの削除を修正
+- [#2979](https://github.com/sanic-org/sanic/pull/2979) 体長が悪い場合にエラーを投げます
+- [#2980](https://github.com/sanic-org/sanic/pull/2980) ボディエンコーディングの不良時にエラーを投げる。
+
+### 非推奨と削除
+
+- [#2899](https://github.com/sanic-org/sanic/pull/2899) HTTPX が影響を受けない環境の REPL から誤った行を削除します
+- [#2962](https://github.com/sanic-org/sanic/pull/2962) マージエンティティヘッダーの削除
+
+### 開発者のインフラストラクチャ
+
+- [#2882](https://github.com/sanic-org/sanic/pull/2882) [#2896](https://github.com/sanic-org/sanic/pull/2896) ポート選択によるテストを改善するために動的なポートフィクスチャーを適用する
+- [#2887](https://github.com/sanic-org/sanic/pull/2887) docker image builds の更新
+- [#2932](https://github.com/sanic-org/sanic/pull/2932) Ruff を使ってコードベースをクリーンアップする
+
+### ドキュメントの改善
+
+- [#2924](https://github.com/sanic-org/sanic/pull/2924) html5tagger page
+- [#2930](https://github.com/sanic-org/sanic/pull/2930) Sanic Extensions README.md
+- [#2934](https://github.com/sanic-org/sanic/pull/2934) ヘルスチェック文書に文脈を追加する
+- [#2936](https://github.com/sanic-org/sanic/pull/2936) ワーカーマネージャーのドキュメントを改善する
+- [#2955](https://github.com/sanic-org/sanic/pull/2955) `request.md`のフォーマットが間違っているのを修正しました
+
+## バージョン23.12.0 🔷
 
 ### 特徴
 
@@ -33,8 +75,6 @@ _現在のバージョン_
 ### バグ修正
 
 - [#2803](https://github.com/sanic-org/sanic/pull/2803) MOTD の追加データ表示を修正する
-
-### 非推奨と削除
 
 ### 開発者のインフラストラクチャ
 

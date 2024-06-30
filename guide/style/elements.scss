@@ -387,3 +387,12 @@ h3 + .code-block { margin-top: 1rem; }
 	.li, .list-item { padding: 0; }
     }
 }
+
+.sponsors {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    padding: 0.25rem 0;
+    .button { margin-left: 1rem; }
+}

@@ -70,9 +70,7 @@ sanic server:app --host=0.0.0.0 --port=1234 --debug
 
 ## Development REPL
 
-.. new:: v23.12
-
-    The Sanic CLI comes with a REPL (aka "read-eval-print loop") that can be used to interact with your application. This is useful for debugging and testing. A REPL is the interactive shell that you get when you run `python` without any arguments.
+The Sanic CLI comes with a REPL (aka "read-eval-print loop") that can be used to interact with your application. This is useful for debugging and testing. A REPL is the interactive shell that you get when you run `python` without any arguments.
 
 .. column::
 
@@ -202,7 +200,7 @@ Or, by destructuring the tuple:
 
 .. column::
 
-    If you would like to be in debug mode **and** have the Automatic Reloader running, you can pass `dev=True`. This is equivalent to **debug + auto reload**.
+    If you would like to be in debug mode **and** have the Automatic Reloader running, you can pass `dev=True`. This is equivalent to **debug + auto reload + REPL**.
 
     *Added in v22.3*
 
@@ -216,11 +214,10 @@ Or, by destructuring the tuple:
     sanic path.to:app -d
     ```
 
-.. new:: v23.12
-
-    Added to the `--dev` flag in v23.12 is the ability to start a REPL. See the [Development REPL](./development.md#development-repl) section for more information.
+Added to the `--dev` flag in v23.12 is the ability to start a REPL. See the [Development REPL](./development.md#development-repl) section for more information.
     
-    As of v23.12, the `--dev` flag is roughly equivalent to `--debug --reload --repl`. Using `--dev` will require you to expressly begin the REPL by hitting "ENTER", while passing the `--repl` flag explicitly starts it.
+As of v23.12, the `--dev` flag is roughly equivalent to `--debug --reload --repl`. Using `--dev` will require you to expressly begin the REPL by hitting "ENTER", while passing the `--repl` flag explicitly starts it.
+Before v23.12, the `--dev` flag is more similar to `--debug --reload`.
 	
 .. column::
 

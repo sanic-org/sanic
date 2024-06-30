@@ -221,6 +221,10 @@ class Http(Stream, metaclass=TouchUpMeta):
                 name, value = h = name.lower(), value.lstrip()
 
                 if name in ("content-length", "transfer-encoding"):
+                    if request_body:
+                        raise ValueError(
+                            "Duplicate Content-Length or Transfer-Encoding"
+                        )
                     request_body = True
                 elif name == "connection":
                     self.keep_alive = value.lower() == "keep-alive"

@@ -70,8 +70,7 @@ class BasePage(ABC, metaclass=CSS):  # no cov
                 self.doc.div("DEBUG mode")
 
     @abstractmethod
-    def _body(self) -> None:
-        ...
+    def _body(self) -> None: ...
 
     def _sanic_logo(self) -> None:
         self.doc.a(

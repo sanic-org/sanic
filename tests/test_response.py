@@ -178,6 +178,10 @@ def json_app(app):
     async def unmodified_handler(request: Request):
         return json(JSON_DATA, status=304)
 
+    @app.get("/precondition")
+    async def precondition_handler(request: Request):
+        return json(JSON_DATA, status=412)
+
     @app.delete("/")
     async def delete_handler(request: Request):
         return json(None, status=204)
@@ -191,6 +195,10 @@ def test_json_response(json_app):
     request, response = json_app.test_client.get("/")
     assert response.status == 200
     assert response.text == json_dumps(JSON_DATA)
+    assert response.json == JSON_DATA
+
+    request, response = json_app.test_client.get("/precondition")
+    assert response.status == 412
     assert response.json == JSON_DATA
 
 

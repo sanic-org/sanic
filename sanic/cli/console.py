@@ -59,8 +59,7 @@ class REPLProtocol(TransportProtocol):
         response.stream = self
         return response
 
-    async def send(self, data, end_stream):
-        ...
+    async def send(self, data, end_stream): ...
 
 
 class Result(NamedTuple):
@@ -131,7 +130,6 @@ class SanicREPL(InteractiveConsole):
                 f"  - {Colors.BOLD + Colors.SANIC}client{Colors.END}: A client to access the Sanic app instance using httpx - {Colors.BOLD + Colors.BLUE}from httpx import Client{Colors.END}",  # noqa: E501
             )
         else:
-            del variable_descriptions[3]
             client_availability = (
                 f"\n{Colors.YELLOW}The HTTP client has been disabled. "
                 "To enable it, install httpx:\n\t"

@@ -118,9 +118,9 @@ def test_request_url(
 ):
     @app.websocket("/ws")
     async def ws_url_handler(request: Request, ws: Websocket):
-        request.headers[
-            "forwarded"
-        ] = "for=[2001:db8::1];proto=https;host=example.com;by=proxy"
+        request.headers["forwarded"] = (
+            "for=[2001:db8::1];proto=https;host=example.com;by=proxy"
+        )
 
         await ws.recv()
         await ws.send(request.url)

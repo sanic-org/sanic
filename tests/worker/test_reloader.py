@@ -18,8 +18,7 @@ from sanic.worker.reloader import Reloader
 
 
 @pytest.fixture
-def reloader():
-    ...
+def reloader(): ...
 
 
 @pytest.fixture
@@ -27,8 +26,7 @@ def app():
     app = Sanic("Test")
 
     @app.route("/")
-    def handler(_):
-        ...
+    def handler(_): ...
 
     return app
 

@@ -110,3 +110,58 @@ def test_url_encoding(client):
 
     assert b"400 Bad Request" in headers
     assert b"URL may only contain US-ASCII characters." in body
+
+
+@pytest.mark.parametrize(
+    "content_length",
+    (
+        b"-50",
+        b"+50",
+        b"5_0",
+        b"50.5",
+    ),
+)
+def test_invalid_content_length(content_length, client):
+    body = b"Hello" * 10
+    client.send(
+        b"POST /upload HTTP/1.1\r\n"
+        + b"content-length: "
+        + content_length
+        + b"\r\n\r\n"
+        + body
+        + b"\r\n\r\n"
+    )
+
+    response = client.recv()
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+
+    assert b"400 Bad Request" in headers
+    assert b"Bad content-length" in body
+
+
+@pytest.mark.parametrize(
+    "chunk_length",
+    (
+        b"-50",
+        b"+50",
+        b"5_0",
+        b"50.5",
+    ),
+)
+def test_invalid_chunk_length(chunk_length, client):
+    body = b"Hello" * 10
+    client.send(
+        b"POST /upload HTTP/1.1\r\n"
+        + b"transfer-encoding: chunked\r\n\r\n"
+        + chunk_length
+        + b"\r\n"
+        + body
+        + b"\r\n"
+        + b"0\r\n\r\n"
+    )
+
+    response = client.recv()
+    headers, body = response.rsplit(b"\r\n\r\n", 1)
+
+    assert b"400 Bad Request" in headers
+    assert b"Bad chunked encoding" in body

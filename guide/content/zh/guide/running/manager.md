@@ -412,15 +412,11 @@ async def ready(app: Sanic, _):
 
 ### 跟踪或未跟踪的进程
 
-.. 新：v23.12
+Sanic 将从盒子中追踪所有进程的状态。 这意味着您可以从 [multiplexer](./manager#access-to-the-multiplexer)对象或从 [Inspector](./manager#inspector)访问过程状态。
 
-```
-Out of the box, Sanic will track the state of all processes. This means that you can access the state of the process from the [multiplexer](./manager#access-to-the-multiplexer) object, or from the [Inspector](./manager#inspector).
+详见[工人状态](./manager#worker-state)。
 
-See [worker state](./manager#worker-state) for more information.
-
-Sometimes it is helpful to run background processes that are not long-running. You run them once until completion and then they exit. Upon completion, they will either be in `FAILED` or `COMPLETED` state.
-```
+有时运行并非长期运行的背景进程是有益的。 你运行一次，直到完成，然后他们退出。 完成后，它们将处于`FAILED`或`COMPLETED`状态。
 
 .. 列:
 
@@ -447,11 +443,7 @@ _添加于 v23.12_
 
 ### 可重新启动自定义进程
 
-.. 新：v23.12
-
-```
-临时性的自定义进程将**总是可以重启。这意味着自动重启将会如预期的那样正常工作。 然而，如果你想要能够*手动*重新启动一个过程，但它不会被自动重新加载器重新启动？
-```
+临时性的自定义进程将\*\*总是可以重启。 这意味着自动重启将按预期进行。 然而，如果你想要能够_手动_重新启动一个过程，但它不会被自动重新加载器重新启动？
 
 .. 列:
 
@@ -495,11 +487,7 @@ _添加于 v23.12_
 
 ### 飞行过程管理
 
-.. 新：v23.12
-
-```
-自定义进程通常在 `main_process_ready` 监听器中添加。 然而，有时候您想要在应用程序启动后添加一个过程。 例如，您可能想要从请求处理器中添加一个进程。多路程序提供了这样做的方法。
-```
+自定义进程通常在 `main_process_ready` 监听器中添加。 然而，有时候您想要在应用程序启动后添加一个过程。 例如，您可能想要从请求处理器中添加一个过程。 多路程序提供了这样做的方法。
 
 .. 列:
 

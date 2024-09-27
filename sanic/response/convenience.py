@@ -38,7 +38,7 @@ def json(
     status: int = 200,
     headers: Optional[Dict[str, str]] = None,
     content_type: str = "application/json",
-    dumps: Optional[Callable[..., str]] = None,
+    dumps: Optional[Callable[..., AnyStr]] = None,
     **kwargs: Any,
 ) -> JSONResponse:
     """Returns response object with body in json format.
@@ -48,7 +48,7 @@ def json(
         status (int, optional): HTTP response code. Defaults to `200`.
         headers (Dict[str, str], optional): Custom HTTP headers. Defaults to `None`.
         content_type (str, optional): The content type (string) of the response. Defaults to `"application/json"`.
-        dumps (Callable[..., str], optional): A custom json dumps function. Defaults to `None`.
+        dumps (Callable[..., AnyStr], optional): A custom json dumps function. Defaults to `None`.
         **kwargs (Any): Remaining arguments that are passed to the json encoder.
 
     Returns:

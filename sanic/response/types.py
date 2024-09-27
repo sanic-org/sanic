@@ -59,7 +59,7 @@ class BaseHTTPResponse:
         class_name = self.__class__.__name__
         return f"<{class_name}: {self.status} {self.content_type}>"
 
-    def _encode_body(self, data: Optional[AnyStr]):
+    def _encode_body(self, data: Optional[str | bytes]):
         if data is None:
             return b""
         return data.encode() if hasattr(data, "encode") else data  # type: ignore
@@ -264,7 +264,7 @@ class JSONResponse(HTTPResponse):
         status (int, optional): HTTP response number. Defaults to `200`.
         headers (Optional[Union[Header, Dict[str, str]]], optional): Headers to be returned. Defaults to `None`.
         content_type (str, optional): Content type to be returned (as a header). Defaults to `"application/json"`.
-        dumps (Optional[Callable[..., str]], optional): The function to use for json encoding. Defaults to `None`.
+        dumps (Optional[Callable[..., AnyStr]], optional): The function to use for json encoding. Defaults to `None`.
         **kwargs (Any, optional): The kwargs to pass to the json encoding function. Defaults to `{}`.
     """  # noqa: E501
 
@@ -283,13 +283,15 @@ class JSONResponse(HTTPResponse):
         status: int = 200,
         headers: Optional[Union[Header, Dict[str, str]]] = None,
         content_type: str = "application/json",
-        dumps: Optional[Callable[..., str]] = None,
+        dumps: Optional[Callable[..., AnyStr]] = None,
         **kwargs: Any,
     ):
         self._initialized = False
         self._body_manually_set = False
 
-        self._use_dumps = dumps or BaseHTTPResponse._dumps
+        self._use_dumps: Callable[..., str | bytes] = (
+            dumps or BaseHTTPResponse._dumps
+        )
         self._use_dumps_kwargs = kwargs
 
         self._raw_body = body
@@ -352,7 +354,7 @@ class JSONResponse(HTTPResponse):
     def set_body(
         self,
         body: Any,
-        dumps: Optional[Callable[..., str]] = None,
+        dumps: Optional[Callable[..., AnyStr]] = None,
         **dumps_kwargs: Any,
     ) -> None:
         """Set the response body to the given value, using the given dumps function
@@ -363,7 +365,7 @@ class JSONResponse(HTTPResponse):
 
         Args:
             body (Any): The body to set
-            dumps (Optional[Callable[..., str]], optional): The function to use for json encoding. Defaults to `None`.
+            dumps (Optional[Callable[..., AnyStr]], optional): The function to use for json encoding. Defaults to `None`.
             **dumps_kwargs (Any, optional): The kwargs to pass to the json encoding function. Defaults to `{}`.
 
         Examples:

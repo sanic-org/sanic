@@ -60,7 +60,7 @@ class HomeLayout(BaseLayout):
                 "your Sanic API with Zuplo",
                 E.a(
                     "Start free",
-                    href="https://zuplo.com",
+                    href="https://zuplo.com/integrations/sanic?utm_source=sanic&utm_medium=web&utm_campaign=opensource",
                     target="_blank",
                     class_="button is-primary is-small",
                 ),

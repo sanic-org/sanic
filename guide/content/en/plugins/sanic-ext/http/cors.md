@@ -68,7 +68,7 @@ The true power of CORS protection, however, comes into play once you start confi
 
     The values that can be overridden with this decorator are:
 
-    - `origins`
+    - `origin`
     - `expose_headers`
     - `allow_headers`
     - `allow_methods`
@@ -83,7 +83,7 @@ The true power of CORS protection, however, comes into play once you start confi
     app.config.CORS_ORIGINS = "https://foo.com"
 
     @app.get("/", host="bar.com")
-    @cors(origins="https://bar.com")
+    @cors(origin="https://bar.com")
     async def hello_world(request):
         return text("Hello, world.")
     ```

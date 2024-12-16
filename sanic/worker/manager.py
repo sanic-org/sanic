@@ -372,7 +372,10 @@ class WorkerManager:
         for process in self.processes:
             logger.info("Killing %s [%s]", process.name, process.pid)
             with suppress(ProcessLookupError):
-                os.kill(process.pid, SIGKILL)
+                try:
+                    os.killpg(os.getpgid(process.pid), SIGKILL)
+                except OSError:
+                    os.kill(process.pid, SIGKILL)
         raise ServerKilled
 
     def shutdown_signal(self, signal, frame):
@@ -381,6 +384,7 @@ class WorkerManager:
             logger.info("Shutdown interrupted. Killing.")
             with suppress(ServerKilled):
                 self.kill()
+            return
 
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         self.monitor_publisher.send(None)

@@ -19,7 +19,7 @@ from sanic import Blueprint, Sanic
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import ServerError
 from sanic.request import RequestParameters
-from sanic.response import html, json, text
+from sanic.response import BaseHTTPResponse, html, json, text
 
 
 def encode_basic_auth_credentials(username, password):
@@ -2253,8 +2253,9 @@ def test_conflicting_body_methods_overload(app: Sanic):
             {"name": request.route.name, "body": str(request.body), "foo": foo}
         )
 
+    dumps = BaseHTTPResponse._dumps
     payload = {"test": "OK"}
-    data = str(json_dumps(payload).encode())
+    data = str(dumps(payload).encode())
 
     _, response = app.test_client.put("/", json=payload)
     assert response.status == 200

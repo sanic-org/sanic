@@ -30,11 +30,6 @@ def _add_shared(parser: ArgumentParser) -> None:
         action="store_true",
         help="Whether to output the raw response information",
     )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Whether to output the response as JSON",
-    )
 
 
 class InspectorSubParser(ArgumentParser):
@@ -63,6 +58,16 @@ def make_inspector_parser(parser: ArgumentParser) -> None:
         ),
         title="  Subcommands",
         parser_class=InspectorSubParser,
+    )
+    info = subparsers.add_parser(
+        "info",
+        help="Display information about the application instance",
+        formatter_class=SanicHelpFormatter,
+    )
+    info.add_argument(
+        "--json",
+        action="store_true",
+        help="Output the information in JSON format",
     )
     reloader = subparsers.add_parser(
         "reload",

@@ -41,9 +41,9 @@ class InspectorClient:
                 self.scheme = scheme
                 self.host = self.host[len(full) :]  # noqa E203
 
-    def do(self, action: str, **kwargs: Any) -> None:
+    def do(self, action: str, *, as_json: bool = False, **kwargs: Any) -> None:
         if action == "info":
-            self.info()
+            self.info(as_json)
             return
         result = self.request(action, **kwargs).get("result")
         if result:
@@ -54,13 +54,33 @@ class InspectorClient:
             )
             sys.stdout.write(out + "\n")
 
-    def info(self) -> None:
+    def info(self, as_json: bool = False) -> None:
         response = self.request("", "GET")
         if self.raw or not response:
             return
         data = response["result"]
         display = data.pop("info")
         nodes = data.pop("nodes", {})
+        if as_json:
+            data = {
+                "info": display,
+                **data,
+            }
+            if nodes:
+                data["nodes"] = {
+                    node: _data["info"] for node, _data in nodes.items()
+                }
+                data["workers"] = {
+                    f"{name} (Hub)": {"node": "Hub", **info}
+                    for name, info in data["workers"].items()
+                } | {
+                    f"{name} ({node})": {"node": node, **info}
+                    for node, _data in nodes.items()
+                    for name, info in _data["workers"].items()
+                }
+            sys.stdout.write(dumps(data) + "\n")
+
+            return
         self._display_info(display)
         self._display_workers(data["workers"], None if not nodes else "Hub")
         if nodes:

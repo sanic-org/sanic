@@ -145,7 +145,7 @@ class HTTPMethodView:
     def dispatch_request(self, request: Request, *args, **kwargs):
         """Dispatch request to appropriate handler method."""
         method = request.method.lower()
-        handler = getattr(self, method)
+        handler = getattr(self, method, None)
 
         if not handler and method == "head":
             handler = getattr(self, "get")

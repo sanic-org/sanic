@@ -2244,18 +2244,26 @@ def test_conflicting_body_methods_overload(app: Sanic):
     @app.put("/p/<foo>", name="three")
     async def put(request, foo=None):
         return json(
-            {"name": request.route.name, "body": str(request.body), "foo": foo}
+            {
+                "name": request.route.name,
+                "body": str(request.body).replace(" ", ""),
+                "foo": foo,
+            }
         )
 
     @app.delete("/p/<foo>")
     async def delete(request, foo):
         return json(
-            {"name": request.route.name, "body": str(request.body), "foo": foo}
+            {
+                "name": request.route.name,
+                "body": str(request.body).replace(" ", ""),
+                "foo": foo,
+            }
         )
 
     dumps = BaseHTTPResponse._dumps
     payload = {"test": "OK"}
-    data = str(dumps(payload).encode())
+    data = str(dumps(payload).encode()).replace(" ", "")
 
     _, response = app.test_client.put("/", json=payload)
     assert response.status == 200

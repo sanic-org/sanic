@@ -69,9 +69,9 @@ _上記の「リスト[str]」と書かれている簡潔さのために、`リ�
 .. 列::
 
 ```
-It may sometimes be necessary to override app-wide settings for a specific route. To allow for this, you can use the `@sanic_ext.cors()` decorator to set different route-specific values.
+特定のルートのアプリ全体の設定を上書きする必要がある場合もあります。 これを可能にするには、 `@sanic_ext.cors()` デコレータを使用して、ルート固有の値を設定します。
 
-The values that can be overridden with this decorator are:
+このデコレータで上書きできる値は次のとおりです。
 
 - `origin`
 - `expose_headers`

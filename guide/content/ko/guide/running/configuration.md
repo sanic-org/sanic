@@ -256,7 +256,7 @@ app = Sanic(..., config=Config(converters=[UUID]))
 | INSPECTOR_HOST                                                    | localhost            | The host for the Inspector                                                                                                            |
 | INSPECTOR_PORT                                                    | 6457                 | The port for the Inspector                                                                                                            |
 | INSPECTOR_TLS_KEY                            | -                    | The TLS key for the Inspector                                                                                                         |
-| INSPECTOR_TLS_CERT                           | *                    | The TLS certificate for the Inspector                                                                                                 |
+| INSPECTOR_TLS_CERT                           | -                    | The TLS certificate for the Inspector                                                                                                 |
 | INSPECTOR_API_KEY                            | -                    | The API key for the Inspector                                                                                                         |
 | KEEP_ALIVE_TIMEOUT                           | 120                  | How long to hold a TCP connection open (sec)                                                                       |
 | KEEP_ALIVE                                                        | True                 | Disables keep-alive when False                                                                                                        |

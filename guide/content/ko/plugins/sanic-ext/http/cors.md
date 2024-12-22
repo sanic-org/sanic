@@ -73,7 +73,7 @@ It may sometimes be necessary to override app-wide settings for a specific route
 
 The values that can be overridden with this decorator are:
 
-- `origins`
+- `origin`
 - `expose_headers`
 - `allow_headers`
 - `allow_methods`
@@ -90,7 +90,7 @@ from sanic_ext import cors
 app.config.CORS_ORIGINS = "https://foo.com"
 
 @app.get("/", host="bar.com")
-@cors(origins="https://bar.com")
+@cors(origin="https://bar.com")
 async def hello_world(request):
     return text("Hello, world.")
 ```

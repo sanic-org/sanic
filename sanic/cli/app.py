@@ -146,11 +146,14 @@ Or, a path to a directory to run as a simple HTTP server:
         action = kwargs.pop("action") or "info"
         api_key = kwargs.pop("api_key")
         positional = kwargs.pop("positional", None)
+        as_json = kwargs.pop("json", False)
         if action == "<custom>" and positional:
             action = positional[0]
             if len(positional) > 1:
                 kwargs["args"] = positional[1:]
-        InspectorClient(host, port, secure, raw, api_key).do(action, **kwargs)
+        InspectorClient(host, port, secure, raw, api_key).do(
+            action, as_json=as_json, **kwargs
+        )
 
     def _repl(self, app: Sanic):
         if is_atty():

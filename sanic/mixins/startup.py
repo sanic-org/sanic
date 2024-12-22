@@ -1137,8 +1137,12 @@ class StartupMixin(metaclass=SanicMeta):
                     primary.config.INSPECTOR_API_KEY,
                     primary.config.INSPECTOR_TLS_KEY,
                     primary.config.INSPECTOR_TLS_CERT,
+                    primary.config.INSPECTOR_HUB_MODE,
+                    primary.config.INSPECTOR_HUB_HOST,
+                    primary.config.INSPECTOR_HUB_PORT,
                 )
-                manager.manage("Inspector", inspector, {}, transient=False)
+                # TODO: Change back to false
+                manager.manage("Inspector", inspector, {}, transient=True)
 
             primary._inspector = inspector
             primary._manager = manager

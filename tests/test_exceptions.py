@@ -417,6 +417,21 @@ def test_exception_message_attribute():
     assert SanicException("").message == ""
 
 
+def test_exception_quiet_attribute():
+    class SilentException(SanicException):
+        quiet = True
+
+    class NoisyException(SanicException):
+        quiet = False
+
+    assert SilentException().quiet
+    assert not NoisyException().quiet
+    assert SilentException(quiet=True).quiet
+    assert NoisyException(quiet=True).quiet
+    assert not SilentException(quiet=False).quiet
+    assert not NoisyException(quiet=False).quiet
+
+
 def test_request_middleware_exception_on_404(app: Sanic):
     """See https://github.com/sanic-org/sanic/issues/2950"""
     counter = count()

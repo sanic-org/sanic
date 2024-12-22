@@ -1672,14 +1672,15 @@ class Sanic(
         name: Optional[str] = None,
         register: bool = True,
     ) -> Task:
+        tsk: Task = task
         if not isinstance(task, Future):
             prepped = cls._prep_task(task, app, loop)
-            task = loop.create_task(prepped, name=name)
+            tsk = loop.create_task(prepped, name=name)
 
         if name and register:
-            app._task_registry[name] = task
+            app._task_registry[name] = tsk
 
-        return task
+        return tsk
 
     @staticmethod
     async def dispatch_delayed_tasks(
@@ -1708,7 +1709,7 @@ class Sanic(
     async def run_delayed_task(
         app: Sanic,
         loop: AbstractEventLoop,
-        task: Task[Any],
+        task: Union[Future[Any], Task[Any], Awaitable[Any]],
     ) -> None:
         """Executes a delayed task within the context of a given app and loop.
 

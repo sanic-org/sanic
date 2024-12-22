@@ -69,12 +69,12 @@ _For the sake of brevity, where the above says `List[str]` any instance of a `li
 .. 列:
 
 ```
-有时可能需要覆盖特定路由的应用程序设置。 为了允许这一点，您可以使用 `@sanic_ext.cors()` 装饰符来设置不同的路径特定值。
+It may sometimes be necessary to override app-wide settings for a specific route. To allow for this, you can use the `@sanic_ext.cors()` decorator to set different route-specific values.
 
-此装饰符可以覆盖的值是：
+The values that can be overridden with this decorator are:
 
-- `origins`
-- `expose_headers'
+- `origin`
+- `expose_headers`
 - `allow_headers`
 - `allow_methods`
 - `supports_credentials`
@@ -90,7 +90,7 @@ from sanic_ext import cors
 app.config.CORS_ORIGINS = "https://foo.com"
 
 @app.get("/", host="bar.com")
-@cors(origins="https://bar.com")
+@cors(origin="https://bar.com")
 async def hello_world(request):
     return text("Hello, world.")
 ```

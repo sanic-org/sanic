@@ -256,7 +256,7 @@ app = Sanic(..., config=Config(converters=[UUID]))
 | INSPECTOR_HOST                                                    | 本地主机                  | 检查专员的主机                                                                         |
 | INSPECTOR_PORT                                                    | 6457                  | 检查员的端口                                                                          |
 | INSPECTOR_TLS_TITLE                          | -                     | 检查员的TLS密钥                                                                       |
-| INSPECTOR_TLS_CERT                           | *                     | 检查员的TLS证书                                                                       |
+| INSPECTOR_TLS_CERT                           | -                     | 检查员的TLS证书                                                                       |
 | INSPECTOR_API_KEY                            | -                     | 检查员的 API 密钥                                                                     |
 | KEEP_ALIVEUT                                                      | 120                   | 保持TCP连接打开多长时间(秒)                                             |
 | KEEP_ALIVE                                                        | 真的                    | False 时禁用保持生命值                                                                  |

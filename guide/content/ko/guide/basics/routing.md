@@ -469,14 +469,14 @@ async def handler(request, foo: str, ext: str):
 ```
 ````
 
-| definition                                               | example                                                     | filename | extension  |
-| -------------------------------------------------------- | ----------------------------------------------------------- | -------- | ---------- |
-| \file:ext                                | page.txt                                    | `"page"` | `"txt"`    |
-| \file:ext=jpg                            | cat.jpg                                     | `"cat"`  | `"jpg"`    |
-| \file:ext=jpg\\\|png\\\|gif\\\|svg | cat.jpg                                     | `"cat"`  | `"jpg"`    |
-| \<file=int:ext>                          | 123.txt                                     | `123`    | `"txt"`    |
-| \<file=int:ext=jpg\\|png\\|gif\\|svg> | 123.svg                                     | `123`    | `"svg"`    |
-| \<file=float:ext=tar.gz> | 3.14.tar.gz | `3.14`   | `"tar.gz"` |
+| definition                                                                           | example                                                     | filename | extension  |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------- | -------- | ---------- |
+| \<file:ext>                                | page.txt                                    | `"page"` | `"txt"`    |
+| \<file:ext=jpg>                            | cat.jpg                                     | `"cat"`  | `"jpg"`    |
+| \<file:ext=jpg\\\|png\\\|gif\\\|svg> | cat.jpg                                     | `"cat"`  | `"jpg"`    |
+| <file=int:ext>                              | 123.txt                                     | `123`    | `"txt"`    |
+| <file=int:ext=jpg\\|png\\|gif\\|svg>     | 123.svg                                     | `123`    | `"svg"`    |
+| <file=float:ext=tar.gz>     | 3.14.tar.gz | `3.14`   | `"tar.gz"` |
 
 File extensions can be matched using the special `ext` parameter type. It uses a special format that allows you to specify other types of parameter types as the file name, and one or more specific extensions as shown in the example table above.
 

@@ -30,6 +30,11 @@ def _add_shared(parser: ArgumentParser) -> None:
         action="store_true",
         help="Whether to output the raw response information",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Whether to output the response as JSON",
+    )
 
 
 class InspectorSubParser(ArgumentParser):

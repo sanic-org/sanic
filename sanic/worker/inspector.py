@@ -32,6 +32,12 @@ from typing import (
 from websockets import WebSocketException, connection
 from websockets.legacy.client import Connect, WebSocketClientProtocol
 
+
+try:
+    from websockets.connection import State
+except ImportError:
+    from websockets.protocol import State
+
 from sanic.exceptions import Unauthorized
 from sanic.helpers import Default, _default
 from sanic.log import logger
@@ -131,7 +137,7 @@ class NodeClient:
                         self._heartbeat(ws, state_getter)
                     )
                     self._command_task = loop.create_task(self._command(ws))
-                    while self._run:
+                    while self._run and ws.state is State.OPEN:
                         await sleep(1)
                 except WebSocketException:
                     logger.debug("Connection to hub dropped")

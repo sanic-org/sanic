@@ -524,7 +524,7 @@ uvicorn myapp:app
 使用ASGI时要注意的几件事：
 
 1. 当使用 Sanic 网络服务器时，websockets 将使用 `websockets` 软件包运行。 在 ASGI 模式下，没有必要使用这个软件包，因为websockets 是在 ASGI 服务器上管理的。
-2. ASGI 生命周期协议 https://asgi.readthedocs.io/en/latest/specs/lifespan.html，只支持两个服务器事件：启动和关机。 萨里语有四个：启动前、启动后、关闭前和关机。 因此，以ASGI模式， 启动和关闭事件将连续运行，而不是围绕服务器进程开始和结束(因为现在是由 ASGI 服务器控制的)。 因此，最好使用 `after _server_start` 和 `previ_server_stop` 。
+2. ASGI 生命周期协议 <https://asgi.readthedocs.io/en/latest/specs/lifespan.html>，只支持两个服务器事件：启动和关机。 萨里语有四个：启动前、启动后、关闭前和关机。 因此，以ASGI模式， 启动和关闭事件将连续运行，而不是围绕服务器进程开始和结束(因为现在是由 ASGI 服务器控制的)。 因此，最好使用 `after _server_start` 和 `previ_server_stop` 。
 
 ### 特里奥文
 

@@ -130,6 +130,11 @@ class DocsRenderer(HTMLRenderer):
         return f"<{tag} {attrs}>{text}</{tag}>"
 
 
+class SanicTableOfContents(TableOfContents):
+    def generate_heading_id(self, token, index):
+        return slugify(token["text"])
+
+
 RST_CODE_BLOCK_PATTERN = re.compile(
     r"\.\.\scode-block::\s(\w+)\n\n((?:\n|(?:\s\s\s\s[^\n]*))+)"
 )
@@ -142,7 +147,7 @@ _render_markdown = create_markdown(
                 # Admonition(),
                 Attributes(),
                 Notification(),
-                TableOfContents(),
+                SanicTableOfContents(),
                 Column(),
                 Mermaid(),
                 Tabs(),

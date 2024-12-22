@@ -12598,7 +12598,18 @@ a.has-text-danger-dark:hover, a.has-text-danger-dark:focus {
   .c1 {
     color: #4a4a4a; }
   .introduction-table .table tbody tr:last-child td {
-    border-bottom-width: 1px; } }
+    border-bottom-width: 1px; }
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px; }
+  ::-webkit-scrollbar-track {
+    background: #242424; }
+  ::-webkit-scrollbar-thumb {
+    background: #121212;
+    border-radius: 6px;
+    border: 3px solid #242424; }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #0a0a0a; } }
 
 .burger {
   display: none;
@@ -13106,6 +13117,15 @@ h3 + .code-block {
 
 .changelog .ol .li, .changelog .ol .list-item, .changelog .ul .li, .changelog .ul .list-item, .changelog .list .li, .changelog .list .list-item {
   padding: 0; }
+
+.sponsors {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  padding: 0.25rem 0; }
+  .sponsors .button {
+    margin-left: 1rem; }
 
 @media screen and (min-width: 769px) {
   .hero.is-large .hero-body {

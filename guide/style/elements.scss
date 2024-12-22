@@ -381,9 +381,17 @@ h3 + .code-block { margin-top: 1rem; }
     opacity: 0.5;
   }
 }
-
 .changelog {
     .ol, .ul, .list {
 	.li, .list-item { padding: 0; }
     }
+}
+
+.sponsors {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    padding: 0.25rem 0;
+    .button { margin-left: 1rem; }
 }

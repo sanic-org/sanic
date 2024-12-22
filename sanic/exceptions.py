@@ -72,7 +72,11 @@ class SanicException(Exception):
         status_code = status_code or getattr(
             self.__class__, "status_code", None
         )
-        quiet = quiet or getattr(self.__class__, "quiet", None)
+        quiet = (
+            quiet
+            if quiet is not None
+            else getattr(self.__class__, "quiet", None)
+        )
         headers = headers or getattr(self.__class__, "headers", {})
         if message is None:
             message = self.message

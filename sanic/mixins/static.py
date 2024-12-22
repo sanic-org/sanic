@@ -112,7 +112,7 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
             ```
         """  # noqa: E501
 
-        name = self._generate_name(name)
+        name = self.generate_name(name)
 
         if strict_slashes is None and self.strict_slashes is not None:
             strict_slashes = self.strict_slashes
@@ -248,7 +248,7 @@ class StaticHandleMixin(metaclass=SanicMeta):
         self,
         request: Request,
         *,
-        file_or_directory: PathLike,
+        file_or_directory: str,
         use_modified_since: bool,
         use_content_range: bool,
         stream_large_files: Union[bool, int],
@@ -258,7 +258,7 @@ class StaticHandleMixin(metaclass=SanicMeta):
     ):
         not_found = FileNotFound(
             "File not found",
-            path=file_or_directory,
+            path=Path(file_or_directory),
             relative_url=__file_uri__,
         )
 

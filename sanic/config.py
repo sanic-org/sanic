@@ -44,6 +44,7 @@ DEFAULT_CONFIG = {
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
     "FORWARDED_SECRET": None,
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,
+    "GRACEFUL_TCP_CLOSE_TIMEOUT": 5.0,
     "INSPECTOR": False,
     "INSPECTOR_HOST": "localhost",
     "INSPECTOR_PORT": 6457,
@@ -59,6 +60,7 @@ DEFAULT_CONFIG = {
     "LOCAL_TLS_KEY": _default,
     "LOCAL_TLS_CERT": _default,
     "LOCALHOST": "localhost",
+    "LOG_EXTRA": _default,
     "MOTD": True,
     "MOTD_DISPLAY": {},
     "NO_COLOR": False,
@@ -106,6 +108,7 @@ class Config(dict, metaclass=DescriptorMeta):
     FORWARDED_FOR_HEADER: str
     FORWARDED_SECRET: Optional[str]
     GRACEFUL_SHUTDOWN_TIMEOUT: float
+    GRACEFUL_TCP_CLOSE_TIMEOUT: float
     INSPECTOR: bool
     INSPECTOR_HOST: str
     INSPECTOR_PORT: int
@@ -121,6 +124,7 @@ class Config(dict, metaclass=DescriptorMeta):
     LOCAL_TLS_KEY: Union[Path, str, Default]
     LOCAL_TLS_CERT: Union[Path, str, Default]
     LOCALHOST: str
+    LOG_EXTRA: Union[Default, bool]
     MOTD: bool
     MOTD_DISPLAY: Dict[str, str]
     NO_COLOR: bool

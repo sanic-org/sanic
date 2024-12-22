@@ -16,6 +16,7 @@ class HomeLayout(BaseLayout):
     def layout(
         self, request: Request, full: bool = True
     ) -> Generator[None, None, None]:
+        self._sponsors()
         self._hero(request.ctx.language)
         with self.builder.div(class_="home container"):
             yield
@@ -51,6 +52,19 @@ class HomeLayout(BaseLayout):
                 target="_blank",
             )
         return builder
+
+    def _sponsors(self) -> None:
+        with self.builder.section(class_="sponsors"):
+            self.builder(
+                "Secure, auto-document, and monetize "
+                "your Sanic API with Zuplo",
+                E.a(
+                    "Start free",
+                    href="https://zuplo.com",
+                    target="_blank",
+                    class_="button is-primary is-small",
+                ),
+            )
 
     def _footer(self, request: Request) -> None:
         do_footer(

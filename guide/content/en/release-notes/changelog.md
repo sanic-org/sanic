@@ -8,9 +8,46 @@ content_class: changelog
 🔷 In support LTS release
 
 
-## Version 23.12.0 🔶🔷
+## Version 24.6.0 🔶
 
 _Current version_
+
+### Features
+- [#2838](https://github.com/sanic-org/sanic/pull/2838) Simplify request cookies `getlist`
+- [#2850](https://github.com/sanic-org/sanic/pull/2850) Unix sockets can now use `pathlib.Path`
+- [#2931](https://github.com/sanic-org/sanic/pull/2931) [#2958](https://github.com/sanic-org/sanic/pull/2958) Logging improvements
+- [#2947](https://github.com/sanic-org/sanic/pull/2947) Make the .message field on exceptions non-empty
+- [#2961](https://github.com/sanic-org/sanic/pull/2961) [#2964](https://github.com/sanic-org/sanic/pull/2964) Allow for custom name generation
+
+### Bugfixes
+- [#2919](https://github.com/sanic-org/sanic/pull/2919) Remove deprecation notice in websockets
+- [#2937](https://github.com/sanic-org/sanic/pull/2937) Resolve response streaming error when in ASGI mode
+- [#2959](https://github.com/sanic-org/sanic/pull/2959) Resolve Python 3.12 deprecation notic
+- [#2960](https://github.com/sanic-org/sanic/pull/2960) Ensure proper intent for noisy exceptions
+- [#2970](https://github.com/sanic-org/sanic/pull/2970) [#2978](https://github.com/sanic-org/sanic/pull/2978) Fix missing dependencies for 3.12
+- [#2971](https://github.com/sanic-org/sanic/pull/2971) Fix middleware exceptions on Not Found routes with error in middleware
+- [#2973](https://github.com/sanic-org/sanic/pull/2973) Resolve cheduling logic for `transport.close` and `transport.abort`
+- [#2976](https://github.com/sanic-org/sanic/pull/2976) Fix deleting a cookie that was created with `secure=False`
+- [#2979](https://github.com/sanic-org/sanic/pull/2979) Throw error on bad body length
+- [#2980](https://github.com/sanic-org/sanic/pull/2980) Throw error on bad body encoding
+
+### Deprecations and Removals
+- [#2899](https://github.com/sanic-org/sanic/pull/2899) Remove erroneous line from REPL impacting environments without HTTPX
+- [#2962](https://github.com/sanic-org/sanic/pull/2962) Merge entity header removal
+
+### Developer infrastructure
+- [#2882](https://github.com/sanic-org/sanic/pull/2882) [#2896](https://github.com/sanic-org/sanic/pull/2896) Apply dynamic port fixture for improving tests with port selection
+- [#2887](https://github.com/sanic-org/sanic/pull/2887) Updates to docker image builds
+- [#2932](https://github.com/sanic-org/sanic/pull/2932) Cleanup code base with Ruff
+
+### Improved Documentation
+- [#2924](https://github.com/sanic-org/sanic/pull/2924) Cleanup markdown on html5tagger page
+- [#2930](https://github.com/sanic-org/sanic/pull/2930) Cleanup typo on Sanic Extensions README.md
+- [#2934](https://github.com/sanic-org/sanic/pull/2934) Add more context to the health check documents
+- [#2936](https://github.com/sanic-org/sanic/pull/2936) Improve worker manager documentation
+- [#2955](https://github.com/sanic-org/sanic/pull/2955) Fixed wrong formatting in `request.md`
+
+## Version 23.12.0 🔷
 
 ### Features
 - [#2775](https://github.com/sanic-org/sanic/pull/2775) Start and restart arbitrary processes
@@ -32,8 +69,6 @@ _Current version_
 
 ### Bugfixes
 - [#2803](https://github.com/sanic-org/sanic/pull/2803) Fix MOTD display for extra data
-
-### Deprecations and Removals
 
 ### Developer infrastructure
 - [#2796](https://github.com/sanic-org/sanic/pull/2796) Refactor unit test cases

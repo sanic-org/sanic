@@ -128,13 +128,13 @@ class CookieRequestParameters(RequestParameters):
     def __getitem__(self, key: str) -> Optional[str]:
         deprecation(
             f"You are accessing cookie key '{key}', which is currently in "
-            "compat mode returning a single cookie value. Starting in v24.3 "
+            "compat mode returning a single cookie value. Starting in v24.9 "
             "accessing a cookie value like this will return a list of values. "
             "To avoid this behavior and continue accessing a single value, "
             f"please upgrade from request.cookies['{key}'] to "
             f"request.cookies.get('{key}'). See more details: "
             "https://sanic.dev/en/guide/release-notes/v23.3.html#request-cookies",  # noqa
-            24.3,
+            24.9,
         )
         try:
             value = self._get_prefixed_cookie(key)
@@ -155,8 +155,8 @@ class CookieRequestParameters(RequestParameters):
             return super().get(name, default)
 
     def getlist(
-        self, name: str, default: Optional[Any] = None
-    ) -> Optional[Any]:
+        self, name: str, default: Optional[List[Any]] = None
+    ) -> List[Any]:
         try:
             return self._get_prefixed_cookie(name)
         except KeyError:

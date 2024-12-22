@@ -256,7 +256,7 @@ app = Sanic(..., config=Config(converters=[UUID]))
 | INSPECTOR_HOST                          | localhost            | インスペクタのホスト                                                                                   |
 | インポートします。                                                    | 6457                 | インスペクターのポート                                                                                  |
 | キー                                                           | -                    | インスペクタの TLS キー                                                                               |
-| INSPECTOR_TLS_CERT | *                    | インスペクタの TLS 証明書                                                                              |
+| INSPECTOR_TLS_CERT | -                    | インスペクタの TLS 証明書                                                                              |
 | INSPECTOR_API_KEY  | -                    | インスペクタの API キー                                                                               |
 | ALIVE_TIMEOUT                           | 120                  | TCPコネクションを保持する期間 (秒)                                                      |
 | 保持します。                                                       | True                 | Falseのときは生き残りを無効にします                                                                         |

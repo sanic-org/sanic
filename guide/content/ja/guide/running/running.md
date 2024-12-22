@@ -524,7 +524,7 @@ hypercorn myapp:app
 ASGIを使用する場合、いくつか注意すべきことがあります:
 
 1. Sanic ウェブサーバを使用する場合、websocketsは`websockets`パッケージを使用して実行されます。 ASGI モードでは、ウェブソケットは ASGI サーバで管理されるため、このパッケージは必要ありません。
-2. ASGIの寿命プロトコル https://asgi.readthedocs.io/en/latest/specs/lifespan.htmlは、起動とシャットダウンの2つのサーバーイベントのみをサポートしています。 Sanicは、起動前、起動後、シャットダウン前、シャットダウン後の4つを持っています。 したがって、ASGIモードで 起動イベントとシャットダウンイベントは連続して実行され、実際にはサーバープロセスの開始と終了の周りには実行されません(それ以降はASGIサーバーによって制御されます)。 ですから、`after_server_start` と `before_server_stop` を使うのがベストです。
+2. ASGIの寿命プロトコル <https://asgi.readthedocs.io/en/latest/specs/lifespan.html>は、起動とシャットダウンの2つのサーバーイベントのみをサポートしています。 Sanicは、起動前、起動後、シャットダウン前、シャットダウン後の4つを持っています。 したがって、ASGIモードで 起動イベントとシャットダウンイベントは連続して実行され、実際にはサーバープロセスの開始と終了の周りには実行されません(それ以降はASGIサーバーによって制御されます)。 ですから、`after_server_start` と `before_server_stop` を使うのがベストです。
 
 ### トリオ
 

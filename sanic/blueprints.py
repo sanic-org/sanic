@@ -511,6 +511,11 @@ class Blueprint(BaseSanic):
                 ),
             )
 
+        if self._future_commands:
+            raise SanicException(
+                "Registering commands with blueprints is not supported."
+            )
+
     async def dispatch(self, *args, **kwargs):
         """Dispatch a signal event
 

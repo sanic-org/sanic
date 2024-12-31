@@ -1,5 +1,5 @@
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 from sanic import Request
 from webapp.display.layouts.elements.footer import do_footer

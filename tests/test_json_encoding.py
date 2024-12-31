@@ -4,7 +4,6 @@ from dataclasses import asdict, dataclass
 from functools import partial
 from json import dumps as sdumps
 from string import ascii_lowercase
-from typing import Dict
 
 import pytest
 
@@ -67,7 +66,7 @@ def test_change_encoder_to_some_custom():
 
 
 @pytest.mark.skipif(NO_UJSON is True, reason="ujson not installed")
-def test_json_response_ujson(payload: Dict[str, Foo]):
+def test_json_response_ujson(payload: dict[str, Foo]):
     """ujson will look at __json__"""
     response = json(payload)
     assert response.body == b'{"foo":{"bar":"bar"}}'

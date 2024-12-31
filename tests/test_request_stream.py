@@ -573,7 +573,7 @@ def test_streaming_echo():
 
     async def client(app, reader, writer):
         # httpx doesn't support 2-way streaming,so do it by hand.
-        host = "host: localhost:8000\r\n".encode()
+        host = b"host: localhost:8000\r\n"
         writer.write(
             b"POST /echo HTTP/1.1\r\n" + host + b"content-length: 2\r\n"
             b"content-type: text/plain; charset=utf-8\r\n"

@@ -24,7 +24,7 @@ class TestSanicRouteResolution:
         router, simple_routes = sanic_router(route_details=simple_routes)
         route_to_call = choice(simple_routes)
         request = Request(
-            "/{}".format(route_to_call[-1]).encode(),
+            f"/{route_to_call[-1]}".encode(),
             {"host": "localhost"},
             "v1",
             route_to_call[0],
@@ -58,9 +58,9 @@ class TestSanicRouteResolution:
             template=route_to_call[-1]
         )
 
-        print("{} -> {}".format(route_to_call[-1], url))
+        print(f"{route_to_call[-1]} -> {url}")
         request = Request(
-            "/{}".format(url).encode(),
+            f"/{url}".encode(),
             {"host": "localhost"},
             "v1",
             route_to_call[0],

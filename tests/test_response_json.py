@@ -117,7 +117,7 @@ def test_custom_dumps_and_kwargs(json_app: Sanic):
         return json_response(JSON_BODY, dumps=custom_dumps, prry="platypus")
 
     _, resp = json_app.test_client.get("/json-custom")
-    assert resp.body == "custom".encode()
+    assert resp.body == b"custom"
     custom_dumps.assert_called_once_with(JSON_BODY, prry="platypus")
 
 
@@ -135,7 +135,7 @@ def test_override_dumps_and_kwargs(json_app: Sanic):
 
     _, resp = json_app.test_client.get("/json-custom")
 
-    assert resp.body == "custom2".encode()
+    assert resp.body == b"custom2"
     custom_dumps_1.assert_called_once_with(JSON_BODY, prry="platypus")
     custom_dumps_2.assert_called_once_with(JSON_BODY, platypus="prry")
 

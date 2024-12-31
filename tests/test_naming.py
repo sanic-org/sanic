@@ -1,9 +1,8 @@
-from typing import Type
 
 from sanic import Blueprint, Sanic, text
 
 
-def factory(sanic_cls: Type[Sanic], blueprint_cls: Type[Blueprint]):
+def factory(sanic_cls: type[Sanic], blueprint_cls: type[Blueprint]):
     app = sanic_cls("Foo")
     bp = blueprint_cls("Bar", url_prefix="/bar")
 

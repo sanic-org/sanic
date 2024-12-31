@@ -2291,7 +2291,7 @@ def test_conflicting_body_methods_overload(app: Sanic):
     assert response.json == {
         "name": "test_conflicting_body_methods_overload.delete",
         "foo": "test",
-        "body": str("".encode()),
+        "body": str(b""),
     }
 
 

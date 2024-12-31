@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Iterable, List, NamedTuple, Optional, Union
+from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Union
 
 from sanic.handlers.directory import DirectoryHandler
 from sanic.models.handler_types import (
@@ -70,3 +70,8 @@ class FutureSignal(NamedTuple):
 
 
 class FutureRegistry(set): ...
+
+
+class FutureCommand(NamedTuple):
+    name: str
+    func: Callable

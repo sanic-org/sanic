@@ -179,15 +179,16 @@ class StaticHandleMixin(metaclass=SanicMeta):
         Register a static directory handler with Sanic by adding a route to the
         router and registering a handler.
         """
+        file_or_directory: PathLike
 
         if isinstance(static.file_or_directory, bytes):
-            file_or_directory = static.file_or_directory.decode("utf-8")
+            file_or_directory = Path(static.file_or_directory.decode("utf-8"))
         elif isinstance(static.file_or_directory, PurePath):
-            file_or_directory = str(static.file_or_directory)
-        elif not isinstance(static.file_or_directory, str):
-            raise ValueError("Invalid file path string.")
-        else:
             file_or_directory = static.file_or_directory
+        elif isinstance(static.file_or_directory, str):
+            file_or_directory = Path(static.file_or_directory)
+        else:
+            raise ValueError("Invalid file path string.")
 
         uri = static.uri
         name = static.name
@@ -224,7 +225,7 @@ class StaticHandleMixin(metaclass=SanicMeta):
         _handler = wraps(self._static_request_handler)(
             partial(
                 self._static_request_handler,
-                file_or_directory=file_or_directory,
+                file_or_directory=str(file_or_directory),
                 use_modified_since=static.use_modified_since,
                 use_content_range=static.use_content_range,
                 stream_large_files=static.stream_large_files,

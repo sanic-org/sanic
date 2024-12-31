@@ -97,6 +97,7 @@ class Blueprint(BaseSanic):
 
     __slots__ = (
         "_apps",
+        "_future_commands",
         "_future_routes",
         "_future_statics",
         "_future_middleware",
@@ -508,6 +509,11 @@ class Blueprint(BaseSanic):
                     self._future_listeners,
                     self._future_signals,
                 ),
+            )
+
+        if self._future_commands:
+            raise SanicException(
+                "Registering commands with blueprints is not supported."
             )
 
     async def dispatch(self, *args, **kwargs):

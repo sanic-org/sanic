@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Type
 
 from frontmatter import parse
 
@@ -16,7 +15,7 @@ from .docobject import organize_docobjects
 _PAGE_CACHE: dict[
     str, dict[str, tuple[Page | None, Page | None, Page | None]]
 ] = {}
-_LAYOUTS_CACHE: dict[str, Type[BaseLayout]] = {
+_LAYOUTS_CACHE: dict[str, type[BaseLayout]] = {
     "home": HomeLayout,
     "main": MainLayout,
 }
@@ -45,7 +44,7 @@ class Page:
 
     DEFAULT_LANGUAGE = _DEFAULT
 
-    def get_layout(self) -> Type[BaseLayout]:
+    def get_layout(self) -> type[BaseLayout]:
         return _LAYOUTS_CACHE[self.meta.layout]
 
     @property

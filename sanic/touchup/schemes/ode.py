@@ -1,5 +1,5 @@
 from ast import Attribute, Await, Expr, NodeTransformer
-from typing import Any, List
+from typing import Any
 
 from sanic.log import logger
 
@@ -18,7 +18,7 @@ class OptionalDispatchEvent(BaseScheme):
             signal.name for signal in app.signal_router.routes
         ]
 
-    def visitors(self) -> List[NodeTransformer]:
+    def visitors(self) -> list[NodeTransformer]:
         return [RemoveDispatch(self._registered_events)]
 
     def _sync_events(self):

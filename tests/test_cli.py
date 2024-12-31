@@ -3,7 +3,7 @@ import os
 import sys
 
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -25,7 +25,7 @@ def tty():
     sys.stdout.isatty = orig
 
 
-def capture(command: List[str], caplog=None, capsys=None):
+def capture(command: list[str], caplog=None, capsys=None):
     if capsys:
         capsys.readouterr()
     if caplog:
@@ -43,7 +43,7 @@ def capture(command: List[str], caplog=None, capsys=None):
     return None
 
 
-def read_app_info(lines: List[str]):
+def read_app_info(lines: list[str]):
     for line in lines:
         if line.startswith("{") and line.endswith("}"):  # type: ignore
             return json.loads(line)
@@ -114,7 +114,7 @@ def test_server_run_factory_with_args_arbitrary(caplog, port):
         ),
     ),
 )
-def test_tls_options(cmd: Tuple[str, ...], caplog, port):
+def test_tls_options(cmd: tuple[str, ...], caplog, port):
     command = [
         "fake.server.app",
         *cmd,
@@ -138,7 +138,7 @@ def test_tls_options(cmd: Tuple[str, ...], caplog, port):
         ("--tls-strict-host",),
     ),
 )
-def test_tls_wrong_options(cmd: Tuple[str, ...], caplog, port):
+def test_tls_wrong_options(cmd: tuple[str, ...], caplog, port):
     command = ["fake.server.app", *cmd, f"-p={port}", "--debug"]
     lines = capture(command, caplog)
 
@@ -156,7 +156,7 @@ def test_tls_wrong_options(cmd: Tuple[str, ...], caplog, port):
         ("-H", "localhost", "-p", "{port}"),
     ),
 )
-def test_host_port_localhost(cmd: Tuple[str, ...], caplog, port):
+def test_host_port_localhost(cmd: tuple[str, ...], caplog, port):
     cmd = [c.format(port=str(port)) for c in cmd]
     command = ["fake.server.app", *cmd]
     lines = capture(command, caplog)
@@ -190,7 +190,7 @@ def test_host_port_localhost(cmd: Tuple[str, ...], caplog, port):
         (("-H", "::1", "-p", "{port}"), "Goin' Fast @ http://[::1]:{port}"),
     ),
 )
-def test_host_port(cmd: Tuple[str, ...], expected: str, caplog, port):
+def test_host_port(cmd: tuple[str, ...], expected: str, caplog, port):
     cmd = [c.format(port=str(port)) for c in cmd]
     expected = expected.format(port=str(port))
     command = ["fake.server.app", *cmd]
@@ -210,7 +210,7 @@ def test_host_port(cmd: Tuple[str, ...], expected: str, caplog, port):
         (4, ("-w", "4")),
     ),
 )
-def test_num_workers(num: int, cmd: Tuple[str, ...], caplog, port):
+def test_num_workers(num: int, cmd: tuple[str, ...], caplog, port):
     command = ["fake.server.app", *cmd, f"-p={port}"]
     lines = capture(command, caplog)
 

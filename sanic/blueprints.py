@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import sys
 
 from collections import defaultdict
-from collections.abc import MutableSequence
+from collections.abc import Iterable, Iterator, MutableSequence, Sequence
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import isfunction
@@ -14,14 +13,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
     Union,
     overload,
 )
@@ -124,7 +116,7 @@ class Blueprint(BaseSanic):
         self,
         name: str,
         url_prefix: Optional[str] = None,
-        host: Optional[Union[List[str], str]] = None,
+        host: Optional[Union[list[str], str]] = None,
         version: Optional[Union[int, str, float]] = None,
         strict_slashes: Optional[bool] = None,
         version_prefix: str = "/v",
@@ -162,7 +154,7 @@ class Blueprint(BaseSanic):
         return f"Blueprint({args})"
 
     @property
-    def apps(self) -> Set[Sanic]:
+    def apps(self) -> set[Sanic]:
         """Get the set of apps that this blueprint is registered to.
 
         Returns:
@@ -197,14 +189,14 @@ class Blueprint(BaseSanic):
 
     def reset(self) -> None:
         """Reset the blueprint to its initial state."""
-        self._apps: Set[Sanic] = set()
+        self._apps: set[Sanic] = set()
         self._allow_route_overwrite = False
-        self.exceptions: List[RouteHandler] = []
-        self.listeners: Dict[str, List[ListenerType[Any]]] = {}
-        self.middlewares: List[MiddlewareType] = []
-        self.routes: List[Route] = []
-        self.statics: List[RouteHandler] = []
-        self.websocket_routes: List[Route] = []
+        self.exceptions: list[RouteHandler] = []
+        self.listeners: dict[str, list[ListenerType[Any]]] = {}
+        self.middlewares: list[MiddlewareType] = []
+        self.routes: list[Route] = []
+        self.statics: list[RouteHandler] = []
+        self.websocket_routes: list[Route] = []
 
     def copy(
         self,
@@ -535,7 +527,7 @@ class Blueprint(BaseSanic):
         event: str,
         timeout: Optional[Union[int, float]] = None,
         *,
-        condition: Optional[Dict[str, Any]] = None,
+        condition: Optional[dict[str, Any]] = None,
     ):
         """Wait for a signal event to be dispatched.
 
@@ -600,7 +592,7 @@ class Blueprint(BaseSanic):
 
     @staticmethod
     def register_futures(
-        apps: Set[Sanic], bp: Blueprint, futures: Sequence[Tuple[Any, ...]]
+        apps: set[Sanic], bp: Blueprint, futures: Sequence[tuple[Any, ...]]
     ):
         """Register futures to the apps.
 
@@ -612,13 +604,10 @@ class Blueprint(BaseSanic):
         """
 
         for app in apps:
-            app._future_registry.update(set((bp, item) for item in futures))
+            app._future_registry.update({(bp, item) for item in futures})
 
 
-if sys.version_info < (3, 9):
-    bpg_base = MutableSequence
-else:
-    bpg_base = MutableSequence[Blueprint]
+bpg_base = MutableSequence[Blueprint]
 
 
 class BlueprintGroup(bpg_base):
@@ -710,7 +699,7 @@ class BlueprintGroup(bpg_base):
         version_prefix: str = "/v",
         name_prefix: Optional[str] = "",
     ):
-        self._blueprints: List[Blueprint] = []
+        self._blueprints: list[Blueprint] = []
         self._url_prefix = url_prefix
         self._version = version
         self._version_prefix = version_prefix
@@ -728,7 +717,7 @@ class BlueprintGroup(bpg_base):
         return self._url_prefix
 
     @property
-    def blueprints(self) -> List[Blueprint]:
+    def blueprints(self) -> list[Blueprint]:
         """A list of all the available blueprints under this group.
 
         Returns:

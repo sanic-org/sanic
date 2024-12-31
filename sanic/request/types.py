@@ -8,11 +8,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     DefaultDict,
-    Dict,
     Generic,
-    List,
     Optional,
-    Tuple,
     Union,
     cast,
 )
@@ -181,7 +178,7 @@ class Request(Generic[sanic_type, ctx_type]):
         self._ctx: Optional[ctx_type] = None
         self.parsed_accept: Optional[AcceptList] = None
         self.parsed_args: DefaultDict[
-            Tuple[bool, bool, str, str], RequestParameters
+            tuple[bool, bool, str, str], RequestParameters
         ] = defaultdict(RequestParameters)
         self.parsed_cookies: Optional[RequestParameters] = None
         self.parsed_credentials: Optional[Credentials] = None
@@ -190,7 +187,7 @@ class Request(Generic[sanic_type, ctx_type]):
         self.parsed_forwarded: Optional[Options] = None
         self.parsed_json = None
         self.parsed_not_grouped_args: DefaultDict[
-            Tuple[bool, bool, str, str], List[Tuple[str, str]]
+            tuple[bool, bool, str, str], list[tuple[str, str]]
         ] = defaultdict(list)
         self.parsed_token: Optional[str] = None
         self._request_middleware_started = False
@@ -198,7 +195,7 @@ class Request(Generic[sanic_type, ctx_type]):
         self.responded: bool = False
         self.route: Optional[Route] = None
         self.stream: Optional[Stream] = None
-        self._match_info: Dict[str, Any] = {}
+        self._match_info: dict[str, Any] = {}
         self._protocol: Optional[BaseProtocol] = None
 
     def __repr__(self):
@@ -326,7 +323,7 @@ class Request(Generic[sanic_type, ctx_type]):
         response: Optional[BaseHTTPResponse] = None,
         *,
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        headers: Optional[Union[Header, dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
         """Respond to the request without returning.
@@ -839,7 +836,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.headers.getone("content-type", DEFAULT_HTTP_CONTENT_TYPE)
 
     @property
-    def match_info(self) -> Dict[str, Any]:
+    def match_info(self) -> dict[str, Any]:
         """Matched path parameters after resolving route
 
         Returns:
@@ -870,7 +867,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.conn_info.client_port if self.conn_info else 0
 
     @property
-    def socket(self) -> Union[Tuple[str, int], Tuple[None, None]]:
+    def socket(self) -> Union[tuple[str, int], tuple[None, None]]:
         """Information about the connected socket if available
 
         Returns:
@@ -894,7 +891,7 @@ class Request(Generic[sanic_type, ctx_type]):
         return self._parsed_url.path.decode("utf-8")
 
     @property
-    def network_paths(self) -> Optional[List[Any]]:
+    def network_paths(self) -> Optional[list[Any]]:
         """Access the network paths if available
 
         Returns:

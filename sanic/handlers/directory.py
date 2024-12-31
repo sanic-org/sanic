@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
 from stat import S_ISDIR
-from typing import Dict, Iterable, Optional, Sequence, Union, cast
+from typing import Optional, Union, cast
 
 from sanic.exceptions import NotFound
 from sanic.pages.directory_page import DirectoryPage, FileInfo
@@ -80,7 +81,7 @@ class DirectoryHandler:
         page = DirectoryPage(self._iter_files(location), path, debug)
         return html(page.render())
 
-    def _prepare_file(self, path: Path) -> Dict[str, Union[int, str]]:
+    def _prepare_file(self, path: Path) -> dict[str, Union[int, str]]:
         stat = path.stat()
         modified = (
             datetime.fromtimestamp(stat.st_mtime)

@@ -24,29 +24,26 @@ jobs:
       fail-fast: true
       matrix:
         config:
-          - { python-version: "3.8",  tox-env: security }
           - { python-version: "3.9",  tox-env: security }
           - { python-version: "3.10", tox-env: security }
           - { python-version: "3.11", tox-env: security }
           - { python-version: "3.10", tox-env: lint }
           # - { python-version: "3.10", tox-env: docs }
-          - { python-version: "3.8",  tox-env: type-checking }
           - { python-version: "3.9",  tox-env: type-checking }
           - { python-version: "3.10", tox-env: type-checking }
           - { python-version: "3.11", tox-env: type-checking }
-          - { python-version: "3.8",  tox-env: py38,          max-attempts: 3 }
-          - { python-version: "3.8",  tox-env: py38-no-ext,   max-attempts: 3 }
           - { python-version: "3.9",  tox-env: py39,          max-attempts: 3 }
           - { python-version: "3.9",  tox-env: py39-no-ext,   max-attempts: 3 }
           - { python-version: "3.10", tox-env: py310,         max-attempts: 3 }
           - { python-version: "3.10", tox-env: py310-no-ext,  max-attempts: 3 }
           - { python-version: "3.11", tox-env: py311,         max-attempts: 3 }
           - { python-version: "3.12", tox-env: py312,         max-attempts: 3 }
-          - { python-version: "3.11", tox-env: py311-no-ext,  max-attempts: 3 }
-          - { python-version: "3.8",  tox-env: py38-no-ext,   platform: windows-latest, ignore-errors: true }
+          - { python-version: "3.12", tox-env: py312-no-ext,  max-attempts: 3 }
+          - { python-version: "3.13", tox-env: py313,         max-attempts: 3 }
+          - { python-version: "3.13", tox-env: py313-no-ext,  max-attempts: 3 }
           - { python-version: "3.9",  tox-env: py39-no-ext,   platform: windows-latest, ignore-errors: true }
           - { python-version: "3.10", tox-env: py310-no-ext,  platform: windows-latest, ignore-errors: true }
-          - { python-version: "3.11", tox-env: py310-no-ext,  platform: windows-latest, ignore-errors: true }
+          - { python-version: "3.11", tox-env: py311-no-ext,  platform: windows-latest, ignore-errors: true }
     steps:
       - name: Run tests
         uses: sanic-org/simple-tox-action@v1

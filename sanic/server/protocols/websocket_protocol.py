@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, cast
+from collections.abc import Sequence
+from typing import Optional, cast
 
 
 try:  # websockets >= 11.0

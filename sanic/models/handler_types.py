@@ -1,5 +1,6 @@
 from asyncio.events import AbstractEventLoop
-from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
+from collections.abc import Coroutine
+from typing import Any, Callable, Optional, TypeVar, Union
 
 import sanic
 

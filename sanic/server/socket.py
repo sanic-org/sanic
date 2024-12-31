@@ -6,7 +6,7 @@ import stat
 
 from ipaddress import ip_address
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
@@ -97,7 +97,7 @@ def remove_unix_socket(path: Optional[Union[Path, str]]) -> None:
 
 
 def configure_socket(
-    server_settings: Dict[str, Any],
+    server_settings: dict[str, Any],
 ) -> Optional[socket.SocketType]:
     # Create a listening socket or use the one in settings
     if server_settings.get("version") is HTTP.VERSION_3:

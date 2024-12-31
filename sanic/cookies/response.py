@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import re
 import string
-import sys
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from sanic.exceptions import ServerError
 from sanic.log import deprecation
@@ -14,19 +13,17 @@ from sanic.log import deprecation
 if TYPE_CHECKING:
     from sanic.compat import Header
 
-if sys.version_info < (3, 8):  # no cov
-    SameSite = str
-else:  # no cov
-    from typing import Literal
+from typing import Literal
 
-    SameSite = Union[
-        Literal["Strict"],
-        Literal["Lax"],
-        Literal["None"],
-        Literal["strict"],
-        Literal["lax"],
-        Literal["none"],
-    ]
+
+SameSite = Union[
+    Literal["Strict"],
+    Literal["Lax"],
+    Literal["None"],
+    Literal["strict"],
+    Literal["lax"],
+    Literal["none"],
+]
 
 DEFAULT_MAX_AGE = 0
 SAMESITE_VALUES = ("strict", "lax", "none")
@@ -180,7 +177,7 @@ class CookieJar(dict):
         return CookieJar.HEADER_KEY
 
     @property
-    def cookie_headers(self) -> Dict[str, str]:  # no cov
+    def cookie_headers(self) -> dict[str, str]:  # no cov
         """Deprecated in v24.9"""
         deprecation(
             "The CookieJar.coookie_headers property has been deprecated "
@@ -191,7 +188,7 @@ class CookieJar(dict):
         return {key: self.header_key for key in self}
 
     @property
-    def cookies(self) -> List[Cookie]:
+    def cookies(self) -> list[Cookie]:
         """A list of cookies in the CookieJar.
 
         Returns:
@@ -402,7 +399,7 @@ class CookieJar(dict):
                 "Cannot set secure_prefix on a cookie without secure=True"
             )
 
-        cookies: List[Cookie] = self.headers.popall(self.HEADER_KEY, [])
+        cookies: list[Cookie] = self.headers.popall(self.HEADER_KEY, [])
         existing_cookie = None
         for cookie in cookies:
             if (
@@ -593,7 +590,7 @@ class Cookie(dict):
     # in v24.9 when this is no longer a dict
     def _set_value(self, key: str, value: Any) -> None:
         if key not in self._keys:
-            raise KeyError("Unknown cookie property: %s=%s" % (key, value))
+            raise KeyError("Unknown cookie property: {}={}".format(key, value))
 
         if value is not None:
             if key.lower() == "max-age" and not str(value).isdigit():
@@ -636,7 +633,7 @@ class Cookie(dict):
 
     def __str__(self):
         """Format as a Set-Cookie header value."""
-        output = ["%s=%s" % (self.key, _quote(self.value))]
+        output = ["{}={}".format(self.key, _quote(self.value))]
         key_index = list(self._keys)
         for key, value in sorted(
             self.items(), key=lambda x: key_index.index(x[0])
@@ -646,7 +643,7 @@ class Cookie(dict):
                     try:
                         output.append("%s=%d" % (self._keys[key], value))
                     except TypeError:
-                        output.append("%s=%s" % (self._keys[key], value))
+                        output.append("{}={}".format(self._keys[key], value))
                 elif key == "expires":
                     output.append(
                         "%s=%s"
@@ -658,7 +655,7 @@ class Cookie(dict):
                 elif key in self._flags:
                     output.append(self._keys[key])
                 else:
-                    output.append("%s=%s" % (self._keys[key], value))
+                    output.append("{}={}".format(self._keys[key], value))
 
         return "; ".join(output)
 

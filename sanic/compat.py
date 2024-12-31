@@ -4,9 +4,10 @@ import platform
 import signal
 import sys
 
+from collections.abc import Awaitable
 from contextlib import contextmanager
 from enum import Enum
-from typing import Awaitable, Union
+from typing import Literal, Union
 
 from multidict import CIMultiDict  # type: ignore
 
@@ -14,14 +15,9 @@ from sanic.helpers import Default
 from sanic.log import error_logger
 
 
-if sys.version_info < (3, 8):  # no cov
-    StartMethod = Union[Default, str]
-else:  # no cov
-    from typing import Literal
-
-    StartMethod = Union[
-        Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]
-    ]
+StartMethod = Union[
+    Default, Literal["fork"], Literal["forkserver"], Literal["spawn"]
+]
 
 OS_IS_WINDOWS = os.name == "nt"
 PYPY_IMPLEMENTATION = platform.python_implementation() == "PyPy"

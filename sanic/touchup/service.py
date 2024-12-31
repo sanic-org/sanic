@@ -1,11 +1,10 @@
 from inspect import getmembers, getmodule
-from typing import Set, Tuple, Type
 
 from .schemes import BaseScheme
 
 
 class TouchUp:
-    _registry: Set[Tuple[Type, str]] = set()
+    _registry: set[tuple[type, str]] = set()
 
     @classmethod
     def run(cls, app):

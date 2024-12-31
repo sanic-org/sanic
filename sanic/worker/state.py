@@ -1,6 +1,6 @@
-from collections.abc import Mapping
-from typing import Any, Dict, ItemsView, Iterator, KeysView, List, ValuesView
-from typing import Mapping as MappingType
+from collections.abc import ItemsView, Iterator, KeysView, Mapping, ValuesView
+from collections.abc import Mapping as MappingType
+from typing import Any
 
 
 dict
@@ -18,7 +18,7 @@ class WorkerState(Mapping):
         "state",
     )
 
-    def __init__(self, state: Dict[str, Any], current: str) -> None:
+    def __init__(self, state: dict[str, Any], current: str) -> None:
         self._name = current
         self._state = state
 
@@ -74,10 +74,10 @@ class WorkerState(Mapping):
     def pop(self) -> None:
         raise NotImplementedError
 
-    def full(self) -> Dict[str, Any]:
+    def full(self) -> dict[str, Any]:
         return dict(self._state)
 
-    def _write_error(self, keys: List[str]) -> None:
+    def _write_error(self, keys: list[str]) -> None:
         raise LookupError(
             f"Cannot set restricted key{'s' if len(keys) > 1 else ''} on "
             f"WorkerState: {', '.join(keys)}"

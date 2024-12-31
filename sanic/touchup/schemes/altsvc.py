@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ast import Assign, Constant, NodeTransformer, Subscript
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any
 
 from sanic.http.constants import HTTP
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class AltSvcCheck(BaseScheme):
     ident = "ALTSVC"
 
-    def visitors(self) -> List[NodeTransformer]:
+    def visitors(self) -> list[NodeTransformer]:
         return [RemoveAltSvc(self.app, self.app.state.verbosity)]
 
 

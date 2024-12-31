@@ -117,7 +117,7 @@ def load_module_from_file_location(
                         compile(config_file.read(), location, "exec"),
                         module.__dict__,
                     )
-            except IOError as e:
+            except OSError as e:
                 e.strerror = "Unable to load configuration file (e.strerror)"
                 raise
             except Exception as e:
@@ -128,4 +128,4 @@ def load_module_from_file_location(
         try:
             return import_string(location)
         except ValueError:
-            raise IOError("Unable to load configuration %s" % str(location))
+            raise OSError("Unable to load configuration %s" % str(location))

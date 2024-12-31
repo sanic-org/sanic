@@ -2,18 +2,18 @@ from abc import ABC, abstractmethod
 from ast import NodeTransformer, parse
 from inspect import getsource
 from textwrap import dedent
-from typing import Any, Dict, List, Set, Type
+from typing import Any
 
 
 class BaseScheme(ABC):
     ident: str
-    _registry: Set[Type] = set()
+    _registry: set[type] = set()
 
     def __init__(self, app) -> None:
         self.app = app
 
     @abstractmethod
-    def visitors(self) -> List[NodeTransformer]: ...
+    def visitors(self) -> list[NodeTransformer]: ...
 
     def __init_subclass__(cls):
         BaseScheme._registry.add(cls)
@@ -32,6 +32,6 @@ class BaseScheme(ABC):
                 node = visitor.visit(node)
 
         compiled_src = compile(node, method.__name__, "exec")
-        exec_locals: Dict[str, Any] = {}
+        exec_locals: dict[str, Any] = {}
         exec(compiled_src, module_globals, exec_locals)  # nosec
         return exec_locals[method.__name__]

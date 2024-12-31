@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from socket import socket
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from sanic.application.constants import Mode, Server, ServerStage
 from sanic.log import VerbosityFilter, logger
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class ApplicationServerInfo:
     """Information about a server instance."""
 
-    settings: Dict[str, Any]
+    settings: dict[str, Any]
     stage: ServerStage = field(default=ServerStage.STOPPED)
     server: Optional[AsyncioServer] = field(default=None)
 
@@ -44,7 +44,7 @@ class ApplicationState:
     sock: Optional[socket] = field(default=None)
     unix: Optional[str] = field(default=None)
     mode: Mode = field(default=Mode.PRODUCTION)
-    reload_dirs: Set[Path] = field(default_factory=set)
+    reload_dirs: set[Path] = field(default_factory=set)
     auto_reload: bool = field(default=False)
     server: Server = field(default=Server.SANIC)
     is_running: bool = field(default=False)
@@ -53,7 +53,7 @@ class ApplicationState:
     verbosity: int = field(default=0)
     workers: int = field(default=0)
     primary: bool = field(default=True)
-    server_info: List[ApplicationServerInfo] = field(default_factory=list)
+    server_info: list[ApplicationServerInfo] = field(default_factory=list)
 
     # This property relates to the ApplicationState instance and should
     # not be changed except in the __post_init__ method

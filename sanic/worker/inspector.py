@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 from inspect import isawaitable
 from multiprocessing.connection import Connection
 from os import environ
 from pathlib import Path
-from typing import Any, Dict, Mapping, Union
+from typing import Any, Union
 
 from sanic.exceptions import Unauthorized
 from sanic.helpers import Default
@@ -39,7 +40,7 @@ class Inspector:
     def __init__(
         self,
         publisher: Connection,
-        app_info: Dict[str, Any],
+        app_info: dict[str, Any],
         worker_state: Mapping[str, Any],
         host: str,
         port: int,
@@ -106,13 +107,13 @@ class Inspector:
         name = request.match_info.get("action", "info")
         return json({"meta": {"action": name}, "result": output})
 
-    def _state_to_json(self) -> Dict[str, Any]:
+    def _state_to_json(self) -> dict[str, Any]:
         output = {"info": self.app_info}
         output["workers"] = self._make_safe(dict(self.worker_state))
         return output
 
     @staticmethod
-    def _make_safe(obj: Dict[str, Any]) -> Dict[str, Any]:
+    def _make_safe(obj: dict[str, Any]) -> dict[str, Any]:
         for key, value in obj.items():
             if isinstance(value, dict):
                 obj[key] = Inspector._make_safe(value)

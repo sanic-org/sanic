@@ -5,7 +5,6 @@ import sys
 from functools import partial
 from importlib import import_module
 from inspect import ismodule
-from typing import Dict
 
 
 try:
@@ -19,7 +18,7 @@ except ImportError:
 
     json_dumps = partial(dumps, separators=(",", ":"))
 
-STATUS_CODES: Dict[int, bytes] = {
+STATUS_CODES: dict[int, bytes] = {
     100: b"Continue",
     101: b"Switching Protocols",
     102: b"Processing",

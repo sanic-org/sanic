@@ -11,7 +11,7 @@ import uuid
 
 from contextlib import suppress
 from logging import LogRecord
-from typing import Any, Dict, List, Tuple
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -71,7 +71,7 @@ TYPE_TO_GENERATOR_MAP = {
     "uuid": lambda: str(uuid.uuid1()),
 }
 
-CACHE: Dict[str, Any] = {}
+CACHE: dict[str, Any] = {}
 
 
 class RouteStringGenerator:
@@ -126,7 +126,7 @@ class RouteStringGenerator:
 @pytest.fixture(scope="function")
 def sanic_router(app):
     # noinspection PyProtectedMember
-    def _setup(route_details: tuple) -> Tuple[Router, tuple]:
+    def _setup(route_details: tuple) -> tuple[Router, tuple]:
         router = Router()
         router.ctx.app = app
         added_router = []
@@ -214,7 +214,7 @@ def run_multi(caplog):
 
 @pytest.fixture(scope="function")
 def message_in_records():
-    def msg_in_log(records: List[LogRecord], msg: str):
+    def msg_in_log(records: list[LogRecord], msg: str):
         error_captured = False
         for record in records:
             if msg in record.message:

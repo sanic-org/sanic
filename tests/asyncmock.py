@@ -13,7 +13,7 @@ class AsyncMock(Mock):
 
     def __call__(self, *args, **kwargs):
         self.call_count += 1
-        parent = super(AsyncMock, self)
+        parent = super()
 
         async def dummy():
             self.await_count += 1

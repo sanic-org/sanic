@@ -3,7 +3,6 @@ import re
 from typing import Any, Optional
 
 from sanic.cookies.response import Cookie
-from sanic.log import deprecation
 from sanic.request.parameters import RequestParameters
 
 
@@ -126,21 +125,11 @@ class CookieRequestParameters(RequestParameters):
     """  # noqa: E501
 
     def __getitem__(self, key: str) -> Optional[str]:
-        deprecation(
-            f"You are accessing cookie key '{key}', which is currently in "
-            "compat mode returning a single cookie value. Starting in v24.9 "
-            "accessing a cookie value like this will return a list of values. "
-            "To avoid this behavior and continue accessing a single value, "
-            f"please upgrade from request.cookies['{key}'] to "
-            f"request.cookies.get('{key}'). See more details: "
-            "https://sanic.dev/en/guide/release-notes/v23.3.html#request-cookies",  # noqa
-            24.9,
-        )
         try:
             value = self._get_prefixed_cookie(key)
         except KeyError:
             value = super().__getitem__(key)
-        return value[0]
+        return value
 
     def __getattr__(self, key: str) -> str:
         if key.startswith("_"):

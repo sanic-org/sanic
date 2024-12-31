@@ -1,4 +1,3 @@
-
 from sanic import Blueprint, Sanic, text
 
 

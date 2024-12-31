@@ -298,8 +298,8 @@ def test_stream_response_with_cookies(app):
     async def test(request: Request):
         headers = Header()
         cookies = CookieJar(headers)
-        cookies["test"] = "modified"
-        cookies["test"] = "pass"
+        cookies.add_cookie("test", "modified")
+        cookies.add_cookie("test", "pass")
         response = await request.respond(
             content_type="text/csv", headers=headers
         )

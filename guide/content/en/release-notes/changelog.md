@@ -7,10 +7,31 @@ content_class: changelog
 🔶 Current release  
 🔷 In support LTS release
 
-
-## Version 24.6.0 🔶
+## Version 24.12.0 🔶🔷
 
 _Current version_
+
+### Features
+- [#3019](https://github.com/sanic-org/sanic/pull/3019) Add custom commands to `sanic` CLI
+
+### Bugfixes
+- [#2992](https://github.com/sanic-org/sanic/pull/2992) Fix `mixins.startup.serve` UnboundLocalError
+- [#3000](https://github.com/sanic-org/sanic/pull/3000) Fix type annocation for `JSONResponse` method for return type `bytes` allowed for `dumps` callable
+- [#3009](https://github.com/sanic-org/sanic/pull/3009) Fix `SanicException.quiet` attribute handling when set to `False`
+- [#3014](https://github.com/sanic-org/sanic/pull/3014) Cleanup some typing
+- [#3015](https://github.com/sanic-org/sanic/pull/3015) Kill the entire process group if applicable
+- [#3016](https://github.com/sanic-org/sanic/pull/3016) Fix incompatible type annotation of get method in the HTTPMethodView class
+
+### Deprecations and Removals
+- [#3020](https://github.com/sanic-org/sanic/pull/3020) Remove Python 3.8 support
+
+### Developer infrastructure
+- [#3017](https://github.com/sanic-org/sanic/pull/3017) Cleanup setup.cfg
+
+### Improved Documentation
+- [#3007](https://github.com/sanic-org/sanic/pull/3007) Fix typo in documentation for `sanic-ext`
+
+## Version 24.6.0
 
 ### Features
 - [#2838](https://github.com/sanic-org/sanic/pull/2838) Simplify request cookies `getlist`
@@ -193,7 +214,7 @@ From that list, the items to highlight in the release notes:
 - [#2712](https://github.com/sanic-org/sanic/pull/2712) Improved example using ``'https'`` to create the redirect
 
 
-## Version 22.12.0 🔷
+## Version 22.12.0
 
 _Current LTS version_
 

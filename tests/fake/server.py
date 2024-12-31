@@ -52,3 +52,18 @@ def create_app_with_args(args):
         logger.info(f"target={args.target}")
 
     return app
+
+
+@app.command
+async def foo(one, two: str, three: str = "..."):
+    logger.info(f"FOO {one=} {two=} {three=}")
+
+
+@app.command
+def bar():
+    logger.info("BAR")
+
+
+@app.command(name="qqq")
+async def baz():
+    logger.info("BAZ")

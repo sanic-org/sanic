@@ -97,6 +97,7 @@ class Blueprint(BaseSanic):
 
     __slots__ = (
         "_apps",
+        "_future_commands",
         "_future_routes",
         "_future_statics",
         "_future_middleware",

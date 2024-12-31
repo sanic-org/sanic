@@ -369,3 +369,38 @@ def test_server_run_with_repl(caplog, capsys):
 
     run()
     assert record in caplog.record_tuples
+
+
+def test_command_no_args(caplog):
+    args = ["fake.server.app", "exec", "foo"]
+    with patch("sys.argv", ["sanic", *args]):
+        lines = capture(args, caplog)
+    assert "FOO one=None two=None three='...'" in lines
+
+
+def test_command_with_args(caplog):
+    args = [
+        "fake.server.app",
+        "exec",
+        "foo",
+        "--one=1",
+        "--two=2",
+        "--three=3",
+    ]
+    with patch("sys.argv", ["sanic", *args]):
+        lines = capture(args, caplog)
+    assert "FOO one='1' two='2' three='3'" in lines
+
+
+def test_command_with_sync_handler(caplog):
+    args = ["fake.server.app", "exec", "bar"]
+    with patch("sys.argv", ["sanic", *args]):
+        lines = capture(args, caplog)
+    assert "BAR" in lines
+
+
+def test_command_with_renamed_command(caplog):
+    args = ["fake.server.app", "exec", "qqq"]
+    with patch("sys.argv", ["sanic", *args]):
+        lines = capture(args, caplog)
+    assert "BAZ" in lines

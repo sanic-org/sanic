@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import SanicException
+from sanic.mixins.commands import CommandMixin
 from sanic.mixins.exceptions import ExceptionMixin
 from sanic.mixins.listeners import ListenerMixin
 from sanic.mixins.middleware import MiddlewareMixin
@@ -22,6 +23,7 @@ class BaseSanic(
     ListenerMixin,
     ExceptionMixin,
     SignalMixin,
+    CommandMixin,
     metaclass=SanicMeta,
 ):
     __slots__ = ("name",)

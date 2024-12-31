@@ -68,6 +68,21 @@ class GeneralGroup(Group):
             ),
         )
 
+        self.container.add_argument(
+            "action",
+            nargs="?",
+            default="serve",
+            choices=[
+                "serve",
+                "exec",
+            ],
+            help=(
+                "Action to perform.\n"
+                "\tserve: Run the Sanic app\n"
+                "\texec: Execute a command in the Sanic app context\n"
+            ),
+        )
+
 
 class ApplicationGroup(Group):
     name = "Application"

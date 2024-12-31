@@ -74,6 +74,7 @@ from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
 from sanic.logging.setup import setup_logging
 from sanic.middleware import Middleware, MiddlewareLocation
+from sanic.mixins.commands import CommandMixin
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
 from sanic.mixins.static import StaticHandleMixin
@@ -119,6 +120,7 @@ class Sanic(
     StaticHandleMixin,
     BaseSanic,
     StartupMixin,
+    CommandMixin,
     metaclass=TouchUpMeta,
 ):
     """The main application instance
@@ -189,6 +191,7 @@ class Sanic(
         "_blueprint_order",
         "_delayed_tasks",
         "_ext",
+        "_future_commands",
         "_future_exceptions",
         "_future_listeners",
         "_future_middleware",

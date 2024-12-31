@@ -12,6 +12,7 @@ from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
 from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
 from sanic.cli.console import SanicREPL
+from sanic.cli.executor import Executor, make_executor_parser
 from sanic.cli.inspector import make_inspector_parser
 from sanic.cli.inspector_client import InspectorClient
 from sanic.helpers import _default, is_atty
@@ -64,11 +65,11 @@ Or, a path to a directory to run as a simple HTTP server:
         )
         self.args: Namespace = Namespace()
         self.groups: List[Group] = []
-        self.inspecting = False
+        self.run_mode = "serve"
 
     def attach(self):
         if len(sys.argv) > 1 and sys.argv[1] == "inspect":
-            self.inspecting = True
+            self.run_mode = "inspect"
             self.parser.description = get_logo(True)
             make_inspector_parser(self.parser)
             return
@@ -78,8 +79,13 @@ Or, a path to a directory to run as a simple HTTP server:
             instance.attach()
             self.groups.append(instance)
 
+        if len(sys.argv) > 2 and sys.argv[2] == "exec":
+            self.run_mode = "exec"
+            self.parser.description = get_logo(True)
+            make_executor_parser(self.parser)
+
     def run(self, parse_args=None):
-        if self.inspecting:
+        if self.run_mode == "inspect":
             self._inspector()
             return
 
@@ -92,13 +98,22 @@ Or, a path to a directory to run as a simple HTTP server:
             parse_args = ["--version"]
 
         if not legacy_version:
+            if self.run_mode == "exec":
+                parse_args = [
+                    a
+                    for a in (parse_args or sys.argv[1:])
+                    if a not in "-h --help".split()
+                ]
             parsed, unknown = self.parser.parse_known_args(args=parse_args)
             if unknown and parsed.factory:
                 for arg in unknown:
                     if arg.startswith("--"):
                         self.parser.add_argument(arg.split("=")[0])
 
-        self.args = self.parser.parse_args(args=parse_args)
+        if self.run_mode == "exec":
+            self.args, _ = self.parser.parse_known_args(args=parse_args)
+        else:
+            self.args = self.parser.parse_args(args=parse_args)
         self._precheck()
         app_loader = AppLoader(
             self.args.target, self.args.factory, self.args.simple, self.args
@@ -110,6 +125,12 @@ Or, a path to a directory to run as a simple HTTP server:
         except ValueError as e:
             error_logger.exception(f"Failed to run app: {e}")
         else:
+            if self.run_mode == "exec":
+                self._executor(app, kwargs)
+                return
+            elif self.run_mode != "serve":
+                raise ValueError(f"Unknown run mode: {self.run_mode}")
+
             if self.args.repl:
                 self._repl(app)
             for http_version in self.args.http:
@@ -151,6 +172,10 @@ Or, a path to a directory to run as a simple HTTP server:
             if len(positional) > 1:
                 kwargs["args"] = positional[1:]
         InspectorClient(host, port, secure, raw, api_key).do(action, **kwargs)
+
+    def _executor(self, app: Sanic, kwargs: dict):
+        args = sys.argv[3:]
+        Executor(app, kwargs).run(self.args.command, args)
 
     def _repl(self, app: Sanic):
         if is_atty():

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Coroutine
 from enum import Enum
-from typing import Any, Callable, Coroutine, Dict, Optional, Set, Union
+from typing import Any, Callable, Optional, Union
 
 from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureSignal
@@ -12,7 +13,7 @@ from sanic.types import HashableDict
 
 class SignalMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
-        self._future_signals: Set[FutureSignal] = set()
+        self._future_signals: set[FutureSignal] = set()
 
     def _apply_signal(self, signal: FutureSignal) -> Signal:
         raise NotImplementedError  # noqa
@@ -22,7 +23,7 @@ class SignalMixin(metaclass=SanicMeta):
         event: Union[str, Enum],
         *,
         apply: bool = True,
-        condition: Optional[Dict[str, Any]] = None,
+        condition: Optional[dict[str, Any]] = None,
         exclusive: bool = True,
         priority: int = 0,
     ) -> Callable[[SignalHandler], SignalHandler]:
@@ -71,7 +72,7 @@ class SignalMixin(metaclass=SanicMeta):
         self,
         handler: Optional[Callable[..., Any]],
         event: Union[str, Enum],
-        condition: Optional[Dict[str, Any]] = None,
+        condition: Optional[dict[str, Any]] = None,
         exclusive: bool = True,
     ) -> Callable[..., Any]:
         """Registers a signal handler for a specific event.

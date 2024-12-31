@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 import ssl
 
-from typing import Any, Dict, Iterable, Optional, Union
+from collections.abc import Iterable
+from typing import Any, Optional, Union
 
 from sanic.log import logger
 
@@ -142,7 +143,7 @@ def server_name_callback(
 
 
 class SanicSSLContext(ssl.SSLContext):
-    sanic: Dict[str, os.PathLike]
+    sanic: dict[str, os.PathLike]
 
     @classmethod
     def create_from_ssl_context(cls, context: ssl.SSLContext):
@@ -153,7 +154,7 @@ class SanicSSLContext(ssl.SSLContext):
 class CertSimple(SanicSSLContext):
     """A wrapper for creating SSLContext with a sanic attribute."""
 
-    sanic: Dict[str, Any]
+    sanic: dict[str, Any]
 
     def __new__(cls, cert, key, **kw):
         # try common aliases, rename to cert/key

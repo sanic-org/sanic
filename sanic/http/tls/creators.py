@@ -9,7 +9,7 @@ from contextlib import suppress
 from pathlib import Path
 from tempfile import mkdtemp
 from types import ModuleType
-from typing import TYPE_CHECKING, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Optional, Union, cast
 
 from sanic.application.constants import Mode
 from sanic.application.spinner import loading
@@ -128,8 +128,8 @@ class CertCreator(ABC):
     ) -> CertCreator:
         creator: Optional[CertCreator] = None
 
-        cert_creator_options: Tuple[
-            Tuple[Type[CertCreator], LocalCertCreator], ...
+        cert_creator_options: tuple[
+            tuple[type[CertCreator], LocalCertCreator], ...
         ] = (
             (MkcertCreator, LocalCertCreator.MKCERT),
             (TrustmeCreator, LocalCertCreator.TRUSTME),
@@ -161,7 +161,7 @@ class CertCreator(ABC):
     def _try_select(
         app: Sanic,
         creator: Optional[CertCreator],
-        creator_class: Type[CertCreator],
+        creator_class: type[CertCreator],
         creator_requirement: LocalCertCreator,
         creator_requested: LocalCertCreator,
         local_tls_key,

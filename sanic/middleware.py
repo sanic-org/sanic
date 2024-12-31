@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Sequence
 from enum import IntEnum, auto
 from itertools import count
-from typing import Deque, Sequence, Union
+from typing import Deque, Union
 
 from sanic.models.handler_types import MiddlewareType
 

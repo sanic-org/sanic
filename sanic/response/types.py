@@ -1,16 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Coroutine, Iterator
 from datetime import datetime
 from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
     Callable,
-    Coroutine,
-    Dict,
-    Iterator,
     Optional,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -78,7 +75,7 @@ class BaseHTTPResponse:
         return self._cookies
 
     @property
-    def processed_headers(self) -> Iterator[Tuple[bytes, bytes]]:
+    def processed_headers(self) -> Iterator[tuple[bytes, bytes]]:
         """Obtain a list of header tuples encoded in bytes for sending.
 
         Add and remove headers based on status and content_type.
@@ -230,7 +227,7 @@ class HTTPResponse(BaseHTTPResponse):
         self,
         body: Optional[Any] = None,
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        headers: Optional[Union[Header, dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
         super().__init__()
@@ -281,7 +278,7 @@ class JSONResponse(HTTPResponse):
         self,
         body: Optional[Any] = None,
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        headers: Optional[Union[Header, dict[str, str]]] = None,
         content_type: str = "application/json",
         dumps: Optional[Callable[..., AnyStr]] = None,
         **kwargs: Any,
@@ -505,7 +502,7 @@ class ResponseStream:
             Coroutine[Any, Any, None],
         ],
         status: int = 200,
-        headers: Optional[Union[Header, Dict[str, str]]] = None,
+        headers: Optional[Union[Header, dict[str, str]]] = None,
         content_type: Optional[str] = None,
     ):
         if headers is None:

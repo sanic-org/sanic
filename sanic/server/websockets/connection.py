@@ -1,10 +1,7 @@
+from collections.abc import Awaitable, MutableMapping
 from typing import (
     Any,
-    Awaitable,
     Callable,
-    Dict,
-    List,
-    MutableMapping,
     Optional,
     Union,
 )
@@ -29,14 +26,14 @@ class WebSocketConnection:
         self,
         send: Callable[[ASGIMessage], Awaitable[None]],
         receive: Callable[[], Awaitable[ASGIMessage]],
-        subprotocols: Optional[List[str]] = None,
+        subprotocols: Optional[list[str]] = None,
     ) -> None:
         self._send = send
         self._receive = receive
         self._subprotocols = subprotocols or []
 
     async def send(self, data: Union[str, bytes], *args, **kwargs) -> None:
-        message: Dict[str, Union[str, bytes]] = {"type": "websocket.send"}
+        message: dict[str, Union[str, bytes]] = {"type": "websocket.send"}
 
         if isinstance(data, bytes):
             message.update({"bytes": data})
@@ -63,7 +60,7 @@ class WebSocketConnection:
 
     receive = recv
 
-    async def accept(self, subprotocols: Optional[List[str]] = None) -> None:
+    async def accept(self, subprotocols: Optional[list[str]] = None) -> None:
         subprotocol = None
         if subprotocols:
             for subp in subprotocols:
@@ -86,5 +83,5 @@ class WebSocketConnection:
         return self._subprotocols
 
     @subprotocols.setter
-    def subprotocols(self, subprotocols: Optional[List[str]] = None):
+    def subprotocols(self, subprotocols: Optional[list[str]] = None):
         self._subprotocols = subprotocols or []

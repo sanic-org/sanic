@@ -1,5 +1,4 @@
 import asyncio
-import sys
 
 from os import getenv
 
@@ -59,7 +58,7 @@ def try_windows_loop():
         )
         return
 
-    if sys.version_info >= (3, 8) and not isinstance(
+    if not isinstance(
         asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
     ):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

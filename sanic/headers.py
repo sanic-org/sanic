@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+from collections.abc import Iterable
+from typing import Any, Optional, Union
 from urllib.parse import unquote
 
 from sanic.exceptions import InvalidHeader
@@ -12,10 +13,10 @@ from sanic.helpers import STATUS_CODES
 # TODO:
 # - the Options object should be a typed object to allow for less casting
 #   across the application (in request.py for example)
-HeaderIterable = Iterable[Tuple[str, Any]]  # Values convertible to str
-HeaderBytesIterable = Iterable[Tuple[bytes, bytes]]
-Options = Dict[str, Union[int, str]]  # key=value fields in various headers
-OptionsIterable = Iterable[Tuple[str, str]]  # May contain duplicate keys
+HeaderIterable = Iterable[tuple[str, Any]]  # Values convertible to str
+HeaderBytesIterable = Iterable[tuple[bytes, bytes]]
+Options = dict[str, Union[int, str]]  # key=value fields in various headers
+OptionsIterable = Iterable[tuple[str, str]]  # May contain duplicate keys
 
 _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
 _param = re.compile(rf";\s*{_token}=(?:{_token}|{_quoted})", re.ASCII)
@@ -151,12 +152,10 @@ class MediaType:
         if not type_ or not subtype:
             raise ValueError(f"Invalid media type: {mtype}")
 
-        params = dict(
-            [
-                (key.strip(), value.strip())
-                for key, value in (param.split("=", 1) for param in raw_params)
-            ]
-        )
+        params = {
+            key.strip(): value.strip()
+            for key, value in (param.split("=", 1) for param in raw_params)
+        }
 
         return cls(type_.lstrip(), subtype.rstrip(), **params)
 
@@ -200,7 +199,7 @@ class Matched:
             )
         )
 
-    def _compare(self, other) -> Tuple[bool, Matched]:
+    def _compare(self, other) -> tuple[bool, Matched]:
         if isinstance(other, str):
             parsed = Matched.parse(other)
             if self.mime == other:
@@ -327,7 +326,7 @@ def parse_accept(accept: Optional[str]) -> AcceptList:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
 
 
-def parse_content_header(value: str) -> Tuple[str, Options]:
+def parse_content_header(value: str) -> tuple[str, Options]:
     """Parse content-type and content-disposition header values.
 
     E.g. `form-data; name=upload; filename="file.txt"` to
@@ -346,7 +345,7 @@ def parse_content_header(value: str) -> Tuple[str, Options]:
     """
     pos = value.find(";")
     if pos == -1:
-        options: Dict[str, Union[int, str]] = {}
+        options: dict[str, Union[int, str]] = {}
     else:
         options = {
             m.group(1).lower(): (m.group(2) or m.group(3))
@@ -380,7 +379,7 @@ def parse_forwarded(headers, config) -> Optional[Options]:
         return None
     # Loop over <separator><key>=<value> elements from right to left
     sep = pos = None
-    options: List[Tuple[str, str]] = []
+    options: list[tuple[str, str]] = []
     found = False
     for m in _rparam.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
@@ -451,7 +450,7 @@ def fwd_normalize(fwd: OptionsIterable) -> Options:
     Returns:
         Options: A dict of normalized key-value pairs.
     """
-    ret: Dict[str, Union[int, str]] = {}
+    ret: dict[str, Union[int, str]] = {}
     for key, val in fwd:
         if val is not None:
             try:
@@ -488,7 +487,7 @@ def fwd_normalize_address(addr: str) -> str:
     return addr.lower()
 
 
-def parse_host(host: str) -> Tuple[Optional[str], Optional[int]]:
+def parse_host(host: str) -> tuple[Optional[str], Optional[int]]:
     """Split host:port into hostname and port.
 
     Args:
@@ -531,8 +530,8 @@ def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
 
 def parse_credentials(
     header: Optional[str],
-    prefixes: Optional[Union[List, Tuple, Set]] = None,
-) -> Tuple[Optional[str], Optional[str]]:
+    prefixes: Optional[Union[list, tuple, set]] = None,
+) -> tuple[Optional[str], Optional[str]]:
     """Parses any header with the aim to retrieve any credentials from it.
 
     Args:

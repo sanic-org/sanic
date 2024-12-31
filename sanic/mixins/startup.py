@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import platform
-import sys
 
 from asyncio import (
     AbstractEventLoop,
@@ -13,6 +12,7 @@ from asyncio import (
     get_running_loop,
     new_event_loop,
 )
+from collections.abc import Mapping
 from contextlib import suppress
 from functools import partial
 from importlib import import_module
@@ -33,13 +33,8 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    Dict,
-    List,
-    Mapping,
+    Literal,
     Optional,
-    Set,
-    Tuple,
-    Type,
     Union,
     cast,
 )
@@ -82,20 +77,16 @@ if TYPE_CHECKING:
 
 SANIC_PACKAGES = ("sanic-routing", "sanic-testing", "sanic-ext")
 
-if sys.version_info < (3, 8):  # no cov
-    HTTPVersion = Union[HTTP, int]
-else:  # no cov
-    from typing import Literal
 
-    HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
+HTTPVersion = Union[HTTP, Literal[1], Literal[3]]
 
 
 class StartupMixin(metaclass=SanicMeta):
-    _app_registry: ClassVar[Dict[str, Sanic]]
+    _app_registry: ClassVar[dict[str, Sanic]]
     name: str
     asgi: bool
     config: Config
-    listeners: Dict[str, List[ListenerType[Any]]]
+    listeners: dict[str, list[ListenerType[Any]]]
     state: ApplicationState
     websocket_enabled: bool
     multiplexer: WorkerMultiplexer
@@ -172,18 +163,18 @@ class StartupMixin(metaclass=SanicMeta):
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[type[Protocol]] = None,
         backlog: int = 100,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         loop: Optional[AbstractEventLoop] = None,
-        reload_dir: Optional[Union[List[str], str]] = None,
+        reload_dir: Optional[Union[list[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
         motd: bool = True,
         fast: bool = False,
         verbosity: int = 0,
-        motd_display: Optional[Dict[str, str]] = None,
+        motd_display: Optional[dict[str, str]] = None,
         auto_tls: bool = False,
         single_process: bool = False,
     ) -> None:
@@ -302,18 +293,18 @@ class StartupMixin(metaclass=SanicMeta):
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
         workers: int = 1,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[type[Protocol]] = None,
         backlog: int = 100,
         register_sys_signals: bool = True,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         loop: Optional[AbstractEventLoop] = None,
-        reload_dir: Optional[Union[List[str], str]] = None,
+        reload_dir: Optional[Union[list[str], str]] = None,
         noisy_exceptions: Optional[bool] = None,
         motd: bool = True,
         fast: bool = False,
         verbosity: int = 0,
-        motd_display: Optional[Dict[str, str]] = None,
+        motd_display: Optional[dict[str, str]] = None,
         coffee: bool = False,
         auto_tls: bool = False,
         single_process: bool = False,
@@ -480,12 +471,12 @@ class StartupMixin(metaclass=SanicMeta):
         debug: bool = False,
         ssl: Union[None, SSLContext, dict, str, list, tuple] = None,
         sock: Optional[socket] = None,
-        protocol: Optional[Type[Protocol]] = None,
+        protocol: Optional[type[Protocol]] = None,
         backlog: int = 100,
         access_log: Optional[bool] = None,
         unix: Optional[str] = None,
         return_asyncio_server: bool = True,
-        asyncio_server_kwargs: Optional[Dict[str, Any]] = None,
+        asyncio_server_kwargs: Optional[dict[str, Any]] = None,
         noisy_exceptions: Optional[bool] = None,
     ) -> Optional[AsyncioServer]:
         """
@@ -649,12 +640,12 @@ class StartupMixin(metaclass=SanicMeta):
         unix: Optional[str] = None,
         workers: int = 1,
         loop: Optional[AbstractEventLoop] = None,
-        protocol: Type[Protocol] = HttpProtocol,
+        protocol: type[Protocol] = HttpProtocol,
         backlog: int = 100,
         register_sys_signals: bool = True,
         run_async: bool = False,
         auto_tls: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Helper function used by `run` and `create_server`."""
         if self.config.PROXIES_COUNT and self.config.PROXIES_COUNT < 0:
             raise ValueError(
@@ -731,7 +722,7 @@ class StartupMixin(metaclass=SanicMeta):
 
     def motd(
         self,
-        server_settings: Optional[Dict[str, Any]] = None,
+        server_settings: Optional[dict[str, Any]] = None,
     ) -> None:
         """Outputs the message of the day (MOTD).
 
@@ -760,8 +751,8 @@ class StartupMixin(metaclass=SanicMeta):
             MOTD.output(logo, serve_location, display, extra)
 
     def get_motd_data(
-        self, server_settings: Optional[Dict[str, Any]] = None
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        self, server_settings: Optional[dict[str, Any]] = None
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Retrieves the message of the day (MOTD) data.
 
         Args:
@@ -849,7 +840,7 @@ class StartupMixin(metaclass=SanicMeta):
 
     @staticmethod
     def get_server_location(
-        server_settings: Optional[Dict[str, Any]] = None,
+        server_settings: Optional[dict[str, Any]] = None,
     ) -> str:
         """Using the server settings, retrieve the server location.
 
@@ -888,7 +879,7 @@ class StartupMixin(metaclass=SanicMeta):
         port: Optional[int],
         version: HTTPVersion = HTTP.VERSION_1,
         auto_tls: bool = False,
-    ) -> Tuple[str, int]:
+    ) -> tuple[str, int]:
         """Retrieve the host address and port, with default values based on the given parameters.
 
         Args:
@@ -1058,7 +1049,7 @@ class StartupMixin(metaclass=SanicMeta):
             primary_server_info.settings["run_multiple"] = True
             monitor_sub, monitor_pub = Pipe(True)
             worker_state = sync_manager.dict()
-            kwargs: Dict[str, Any] = {
+            kwargs: dict[str, Any] = {
                 **primary_server_info.settings,
                 "monitor_publisher": monitor_pub,
                 "worker_state": worker_state,
@@ -1110,7 +1101,7 @@ class StartupMixin(metaclass=SanicMeta):
                 worker_state,
             )
             if cls.should_auto_reload():
-                reload_dirs: Set[Path] = primary.state.reload_dirs.union(
+                reload_dirs: set[Path] = primary.state.reload_dirs.union(
                     *(app.state.reload_dirs for app in apps)
                 )
                 reloader = Reloader(monitor_pub, 0, reload_dirs, app_loader)
@@ -1196,7 +1187,7 @@ class StartupMixin(metaclass=SanicMeta):
             os._exit(exit_code)
 
     @staticmethod
-    def _get_process_states(worker_state) -> List[str]:
+    def _get_process_states(worker_state) -> list[str]:
         return [
             state
             for s in worker_state.values()
@@ -1306,7 +1297,7 @@ class StartupMixin(metaclass=SanicMeta):
         self,
         primary: Sanic,
         _,
-        apps: List[Sanic],
+        apps: list[Sanic],
     ) -> None:
         for app in apps:
             if (
@@ -1351,7 +1342,7 @@ class StartupMixin(metaclass=SanicMeta):
                     if not server_info.settings["loop"]:
                         server_info.settings["loop"] = get_running_loop()
 
-                    serve_args: Dict[str, Any] = {
+                    serve_args: dict[str, Any] = {
                         **server_info.settings,
                         "run_async": True,
                         "reuse_port": bool(primary.state.workers - 1),

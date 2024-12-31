@@ -1,16 +1,12 @@
 from ast import NodeVisitor, Return, parse
+from collections.abc import Iterable
 from contextlib import suppress
 from inspect import getsource, signature
 from textwrap import dedent
 from typing import (
     Any,
     Callable,
-    Dict,
-    Iterable,
-    List,
     Optional,
-    Set,
-    Tuple,
     Union,
     cast,
 )
@@ -27,30 +23,30 @@ from sanic.types import HashableDict
 
 
 RouteWrapper = Callable[
-    [RouteHandler], Union[RouteHandler, Tuple[Route, RouteHandler]]
+    [RouteHandler], Union[RouteHandler, tuple[Route, RouteHandler]]
 ]
 
 
 class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
-        self._future_routes: Set[FutureRoute] = set()
-        self._future_statics: Set[FutureStatic] = set()
+        self._future_routes: set[FutureRoute] = set()
+        self._future_statics: set[FutureStatic] = set()
 
-    def _apply_route(self, route: FutureRoute) -> List[Route]:
+    def _apply_route(self, route: FutureRoute) -> list[Route]:
         raise NotImplementedError  # noqa
 
     def route(
         self,
         uri: str,
         methods: Optional[Iterable[str]] = None,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         ignore_body: bool = False,
         apply: bool = True,
-        subprotocols: Optional[List[str]] = None,
+        subprotocols: Optional[list[str]] = None,
         websocket: bool = False,
         unquote: bool = False,
         static: bool = False,
@@ -219,7 +215,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         handler: RouteHandler,
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
@@ -313,7 +309,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def get(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
@@ -366,7 +362,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def post(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
         version: Optional[Union[int, str, float]] = None,
@@ -417,7 +413,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def put(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream: bool = False,
         version: Optional[Union[int, str, float]] = None,
@@ -468,7 +464,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def head(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
@@ -521,7 +517,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def options(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
@@ -574,7 +570,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def patch(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         stream=False,
         version: Optional[Union[int, str, float]] = None,
@@ -625,7 +621,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def delete(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
@@ -675,9 +671,9 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def websocket(
         self,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
-        subprotocols: Optional[List[str]] = None,
+        subprotocols: Optional[list[str]] = None,
         version: Optional[Union[int, str, float]] = None,
         name: Optional[str] = None,
         apply: bool = True,
@@ -729,7 +725,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         self,
         handler,
         uri: str,
-        host: Optional[Union[str, List[str]]] = None,
+        host: Optional[Union[str, list[str]]] = None,
         strict_slashes: Optional[bool] = None,
         subprotocols=None,
         version: Optional[Union[int, str, float]] = None,
@@ -807,7 +803,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
 
         return types
 
-    def _build_route_context(self, raw: Dict[str, Any]) -> HashableDict:
+    def _build_route_context(self, raw: dict[str, Any]) -> HashableDict:
         ctx_kwargs = {
             key.replace("ctx_", ""): raw.pop(key)
             for key in {**raw}.keys()

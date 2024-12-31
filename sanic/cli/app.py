@@ -5,7 +5,7 @@ import sys
 from argparse import Namespace
 from functools import partial
 from textwrap import indent
-from typing import List, Union
+from typing import Union
 
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
@@ -64,7 +64,7 @@ Or, a path to a directory to run as a simple HTTP server:
             os.environ.get("SANIC_RELOADER_PROCESS", "") != "true"
         )
         self.args: Namespace = Namespace()
-        self.groups: List[Group] = []
+        self.groups: list[Group] = []
         self.run_mode = "serve"
 
     def attach(self):

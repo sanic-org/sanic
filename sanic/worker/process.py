@@ -6,7 +6,7 @@ from multiprocessing.context import BaseContext
 from signal import SIGINT
 from threading import Thread
 from time import sleep
-from typing import Any, Dict, Set
+from typing import Any
 
 from sanic.log import Colors, logger
 from sanic.worker.constants import ProcessState, RestartOrder
@@ -238,7 +238,7 @@ class Worker:
         serve,
         server_settings,
         context: BaseContext,
-        worker_state: Dict[str, Any],
+        worker_state: dict[str, Any],
         num: int = 1,
         restartable: bool = False,
         tracked: bool = True,
@@ -251,7 +251,7 @@ class Worker:
         self.serve = serve
         self.server_settings = server_settings
         self.worker_state = worker_state
-        self.processes: Set[WorkerProcess] = set()
+        self.processes: set[WorkerProcess] = set()
         self.restartable = restartable
         self.tracked = tracked
         self.auto_start = auto_start

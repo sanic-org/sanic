@@ -2,13 +2,9 @@ import asyncio
 import random
 import struct
 
+from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 from typing import (
-    AsyncIterator,
-    Dict,
-    Iterable,
-    Mapping,
     Optional,
-    Sequence,
     Union,
 )
 
@@ -51,7 +47,7 @@ class WebsocketImplProtocol:
     ping_timeout: Optional[float]
     assembler: WebsocketFrameAssembler
     # Dict[bytes, asyncio.Future[None]]
-    pings: Dict[bytes, asyncio.Future]
+    pings: dict[bytes, asyncio.Future]
     conn_mutex: asyncio.Lock
     recv_lock: asyncio.Lock
     recv_cancel: Optional[asyncio.Future]

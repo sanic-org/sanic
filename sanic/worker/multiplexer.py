@@ -1,6 +1,6 @@
 from multiprocessing.connection import Connection
 from os import environ, getpid
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 from sanic.log import Colors, logger
 from sanic.worker.process import ProcessState
@@ -21,7 +21,7 @@ class WorkerMultiplexer:
     def __init__(
         self,
         monitor_publisher: Connection,
-        worker_state: Dict[str, Any],
+        worker_state: dict[str, Any],
     ):
         self._monitor_publisher = monitor_publisher
         self._state = WorkerState(worker_state, self.name)
@@ -43,7 +43,7 @@ class WorkerMultiplexer:
         self,
         ident: str,
         func: Callable[..., Any],
-        kwargs: Dict[str, Any],
+        kwargs: dict[str, Any],
         transient: bool = False,
         restartable: Optional[bool] = None,
         tracked: bool = False,
@@ -162,6 +162,6 @@ class WorkerMultiplexer:
         return self._state
 
     @property
-    def workers(self) -> Dict[str, Any]:
+    def workers(self) -> dict[str, Any]:
         """The state of all workers."""
         return self.state.full()

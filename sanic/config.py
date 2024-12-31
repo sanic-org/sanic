@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import sys
-
 from abc import ABCMeta
+from collections.abc import Sequence
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Literal, Optional, Union
 from warnings import filterwarnings
 
 from sanic.constants import LocalCertCreator
@@ -17,19 +16,14 @@ from sanic.log import error_logger
 from sanic.utils import load_module_from_file_location, str_to_bool
 
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-
-    FilterWarningType = Union[
-        Literal["default"],
-        Literal["error"],
-        Literal["ignore"],
-        Literal["always"],
-        Literal["module"],
-        Literal["once"],
-    ]
-else:
-    FilterWarningType = str
+FilterWarningType = Union[
+    Literal["default"],
+    Literal["error"],
+    Literal["ignore"],
+    Literal["always"],
+    Literal["module"],
+    Literal["once"],
+]
 
 SANIC_PREFIX = "SANIC_"
 
@@ -120,7 +114,7 @@ class Config(dict, metaclass=DescriptorMeta):
     LOCALHOST: str
     LOG_EXTRA: Union[Default, bool]
     MOTD: bool
-    MOTD_DISPLAY: Dict[str, str]
+    MOTD_DISPLAY: dict[str, str]
     NO_COLOR: bool
     NOISY_EXCEPTIONS: bool
     PROXIES_COUNT: Optional[int]
@@ -142,7 +136,7 @@ class Config(dict, metaclass=DescriptorMeta):
     def __init__(
         self,
         defaults: Optional[
-            Dict[str, Union[str, bool, int, float, None]]
+            dict[str, Union[str, bool, int, float, None]]
         ] = None,
         env_prefix: Optional[str] = SANIC_PREFIX,
         keep_alive: Optional[bool] = None,
@@ -215,7 +209,7 @@ class Config(dict, metaclass=DescriptorMeta):
             ```
         """
         kwargs.update({k: v for item in other for k, v in dict(item).items()})
-        setters: Dict[str, Any] = {
+        setters: dict[str, Any] = {
             k: kwargs.pop(k)
             for k in {**kwargs}.keys()
             if k in self.__class__.__setters__

@@ -7,9 +7,36 @@ content_class: 更新履歴
 🔶 現在のリリース\
 🔷 LTS リリース
 
-## バージョン24.6.0 🔶
+## バージョン24.12.0 🔶🔷
 
 _現在のバージョン_
+
+### 特徴
+
+- [#3019](https://github.com/sanic-org/sanic/pull/3019) `sanic` CLI にカスタムコマンドを追加する
+
+### バグ修正
+
+- [#2992](https://github.com/sanic-org/sanic/pull/2992) `mixins.startup.serve` UnboundLocalError を修正
+- [#3000](https://github.com/sanic-org/sanic/pull/3000) `dumps`呼び出し可能な戻り値タイプの`bytes`に対する`JSONResponse`メソッドの型迷惑を修正しました
+- [#3009](https://github.com/sanic-org/sanic/pull/3009) `False`に設定すると、`SanicException.quiet`属性の処理を修正します。
+- [#3014](https://github.com/sanic-org/sanic/pull/3014) 入力内容をクリーンアップする
+- [#3015](https://github.com/sanic-org/sanic/pull/3015) 該当する場合、プロセスグループ全体を倒す
+- [#3016](https://github.com/sanic-org/sanic/pull/3016) HTTPMethodView クラスで get メソッドの互換性のない型注釈を修正しました
+
+### 非推奨と削除
+
+- [#3020](https://github.com/sanic-org/sanic/pull/3020) Python 3.8 サポートを削除
+
+### 開発者のインフラストラクチャ
+
+- [#3017](https://github.com/sanic-org/sanic/pull/3017) Cleanup setup.cfg
+
+### ドキュメントの改善
+
+- [#3007](https://github.com/sanic-org/sanic/pull/3007) `sanic-ext`のドキュメントでtypoを修正する
+
+## バージョン 24.6.0
 
 ### 特徴
 
@@ -206,7 +233,7 @@ _当時の状況により、v.23.9はスキップされました。 _
 
 - [#2712](https://github.com/sanic-org/sanic/pull/2712) リダイレクトを作成するために `'https'` を使用した例を改善しました
 
-## バージョン22.12.0 🔷
+## バージョン 22.12.0
 
 現在のLTSバージョン_
 

@@ -34,20 +34,20 @@ class ContentRangeHandler(Range):
         unit, _, value = tuple(map(str.strip, _range.partition("=")))
         if unit != "bytes":
             raise InvalidRangeType(
-                "%s is not a valid Range Type" % (unit,), self
+                "{} is not a valid Range Type".format(unit), self
             )
         start_b, _, end_b = tuple(map(str.strip, value.partition("-")))
         try:
             self.start = int(start_b) if start_b else None
         except ValueError:
             raise RangeNotSatisfiable(
-                "'%s' is invalid for Content Range" % (start_b,), self
+                "'{}' is invalid for Content Range".format(start_b), self
             )
         try:
             self.end = int(end_b) if end_b else None
         except ValueError:
             raise RangeNotSatisfiable(
-                "'%s' is invalid for Content Range" % (end_b,), self
+                "'{}' is invalid for Content Range".format(end_b), self
             )
         if self.end is None:
             if self.start is None:

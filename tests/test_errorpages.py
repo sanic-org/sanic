@@ -545,9 +545,9 @@ def test_guess_mime_logging(
     with caplog.at_level(logging.DEBUG, logger="sanic.root"):
         guess_mime(fake_request, fallback)
 
-    (logmsg,) = [
+    (logmsg,) = (
         r.message for r in caplog.records if r.funcName == "guess_mime"
-    ]
+    )
 
     assert logmsg == f"Error Page: {expected}"
 

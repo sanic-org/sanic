@@ -1,12 +1,13 @@
 import os
 
+from collections.abc import Iterable
 from contextlib import suppress
 from enum import IntEnum, auto
 from itertools import chain, count
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
@@ -66,8 +67,8 @@ class WorkerManager:
     ):
         self.num_server = number
         self.context = context
-        self.transient: Dict[str, Worker] = {}
-        self.durable: Dict[str, Worker] = {}
+        self.transient: dict[str, Worker] = {}
+        self.durable: dict[str, Worker] = {}
         self.restarter = Restarter()
         self.monitor_publisher, self.monitor_subscriber = monitor_pubsub
         self.worker_state = worker_state
@@ -90,7 +91,7 @@ class WorkerManager:
         self,
         name: str,
         func: Callable[..., Any],
-        kwargs: Dict[str, Any],
+        kwargs: dict[str, Any],
         transient: bool = False,
         restartable: Optional[bool] = None,
         tracked: bool = True,
@@ -233,7 +234,7 @@ class WorkerManager:
 
     def restart(
         self,
-        process_names: Optional[List[str]] = None,
+        process_names: Optional[list[str]] = None,
         restart_order=RestartOrder.SHUTDOWN_FIRST,
         **kwargs,
     ):
@@ -337,12 +338,12 @@ class WorkerManager:
                 self.kill()
 
     @property
-    def workers(self) -> List[Worker]:
+    def workers(self) -> list[Worker]:
         """Get all of the workers."""
         return list(self.transient.values()) + list(self.durable.values())
 
     @property
-    def all_workers(self) -> Iterable[Tuple[str, Worker]]:
+    def all_workers(self) -> Iterable[tuple[str, Worker]]:
         return chain(self.transient.items(), self.durable.items())
 
     @property
@@ -358,14 +359,12 @@ class WorkerManager:
     def transient_processes(self):
         """Get all of the transient processes."""
         for worker in self.transient.values():
-            for process in worker.processes:
-                yield process
+            yield from worker.processes
 
     @property
     def durable_processes(self):
         for worker in self.durable.values():
-            for process in worker.processes:
-                yield process
+            yield from worker.processes
 
     def kill(self):
         """Kill all of the processes."""
@@ -489,7 +488,7 @@ class WorkerManager:
 
         processes = split_message[0]
         reloaded_files = split_message[1] if len(split_message) > 1 else None
-        process_names: Optional[List[str]] = [
+        process_names: Optional[list[str]] = [
             name.strip() for name in processes.split(",")
         ]
         if process_names and "__ALL_PROCESSES__" in process_names:
@@ -511,7 +510,7 @@ class WorkerManager:
         self,
         name: str,
         func: Callable[..., Any],
-        kwargs: Dict[str, Any],
+        kwargs: dict[str, Any],
         transient: bool,
         restartable: Optional[bool],
         tracked: bool,

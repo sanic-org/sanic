@@ -10,7 +10,7 @@ from logging import ERROR, LogRecord
 from mimetypes import guess_type
 from pathlib import Path
 from random import choice
-from typing import Callable, List, Union
+from typing import Callable, Union
 from urllib.parse import unquote
 
 import pytest
@@ -601,7 +601,7 @@ async def test_direct_response_stream_asgi(app: Sanic):
 def test_multiple_responses(
     app: Sanic,
     caplog: LogCaptureFixture,
-    message_in_records: Callable[[List[LogRecord], str], bool],
+    message_in_records: Callable[[list[LogRecord], str], bool],
 ):
     @app.route("/1")
     async def handler1(request: Request):
@@ -701,7 +701,7 @@ def test_multiple_responses(
 def test_send_response_after_eof_should_fail(
     app: Sanic,
     caplog: LogCaptureFixture,
-    message_in_records: Callable[[List[LogRecord], str], bool],
+    message_in_records: Callable[[list[LogRecord], str], bool],
 ):
     @app.get("/")
     async def handler(request: Request):
@@ -733,7 +733,7 @@ def test_send_response_after_eof_should_fail(
 async def test_send_response_after_eof_should_fail_asgi(
     app: Sanic,
     caplog: LogCaptureFixture,
-    message_in_records: Callable[[List[LogRecord], str], bool],
+    message_in_records: Callable[[list[LogRecord], str], bool],
 ):
     @app.get("/")
     async def handler(request: Request):

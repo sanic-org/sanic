@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 from inspect import isawaitable
-from typing import Callable, Optional, Set, Union
+from typing import Callable, Optional, Union
 
 from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureCommand
@@ -10,7 +10,7 @@ from sanic.models.futures import FutureCommand
 
 class CommandMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
-        self._future_commands: Set[FutureCommand] = set()
+        self._future_commands: set[FutureCommand] = set()
 
     def command(
         self, maybe_func: Optional[Callable] = None, *, name: str = ""

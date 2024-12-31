@@ -7,8 +7,9 @@ import traceback
 from ast import PyCF_ALLOW_TOP_LEVEL_AWAIT
 from asyncio import iscoroutine, new_event_loop
 from code import InteractiveConsole
+from collections.abc import Sequence
 from types import FunctionType
-from typing import Any, Dict, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import Any, NamedTuple, Optional, Union
 
 import sanic
 
@@ -69,7 +70,7 @@ class Result(NamedTuple):
 
 def make_request(
     url: str = "/",
-    headers: Optional[Union[Dict[str, Any], Sequence[Tuple[str, str]]]] = None,
+    headers: Optional[Union[dict[str, Any], Sequence[tuple[str, str]]]] = None,
     method: str = "GET",
     body: Optional[str] = None,
 ):
@@ -100,7 +101,7 @@ async def respond(request) -> HTTPResponse:
 
 async def do(
     url: str = "/",
-    headers: Optional[Union[Dict[str, Any], Sequence[Tuple[str, str]]]] = None,
+    headers: Optional[Union[dict[str, Any], Sequence[tuple[str, str]]]] = None,
     method: str = "GET",
     body: Optional[str] = None,
 ) -> Result:

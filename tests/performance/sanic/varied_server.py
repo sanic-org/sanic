@@ -28,7 +28,7 @@ def test_json_response(request):
 
 @app.route("/text/<name>/<butt:int>")
 def rtext(request, name, butt):
-    return text("yeehaww {} {}".format(name, butt))
+    return text(f"yeehaww {name} {butt}")
 
 
 @app.route("/exception")

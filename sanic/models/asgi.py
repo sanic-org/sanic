@@ -1,6 +1,7 @@
 import asyncio
 
-from typing import Any, Awaitable, Callable, MutableMapping, Optional, Union
+from collections.abc import Awaitable, MutableMapping
+from typing import Any, Callable, Optional, Union
 
 from sanic.exceptions import BadRequest
 from sanic.models.protocol_types import TransportProtocol

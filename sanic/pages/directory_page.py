@@ -1,25 +1,18 @@
-import sys
-
-from typing import Dict, Iterable
+from collections.abc import Iterable
+from typing import TypedDict
 
 from html5tagger import E
 
 from .base import BasePage
 
 
-if sys.version_info < (3, 8):  # no cov
-    FileInfo = Dict
+class FileInfo(TypedDict):
+    """Type for file info."""
 
-else:
-    from typing import TypedDict
-
-    class FileInfo(TypedDict):
-        """Type for file info."""
-
-        icon: str
-        file_name: str
-        file_access: str
-        file_size: str
+    icon: str
+    file_name: str
+    file_access: str
+    file_size: str
 
 
 class DirectoryPage(BasePage):  # no cov

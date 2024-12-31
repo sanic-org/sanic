@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Iterable,
-    List,
     Optional,
     Union,
 )
@@ -115,7 +114,7 @@ class HTTPMethodView:
         to `"/v"`.
     """
 
-    decorators: List[Callable[[Callable[..., Any]], Callable[..., Any]]] = []
+    decorators: list[Callable[[Callable[..., Any]], Callable[..., Any]]] = []
 
     def __init_subclass__(
         cls,

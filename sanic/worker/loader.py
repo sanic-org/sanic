@@ -8,7 +8,7 @@ from importlib import import_module
 from inspect import isfunction
 from pathlib import Path
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union, cast
 
 from sanic.http.tls.context import process_to_context
 from sanic.http.tls.creators import MkcertCreator, TrustmeCreator
@@ -135,7 +135,7 @@ class CertLoader:
     def __init__(
         self,
         ssl_data: Optional[
-            Union[SSLContext, Dict[str, Union[str, os.PathLike]]]
+            Union[SSLContext, dict[str, Union[str, os.PathLike]]]
         ],
     ):
         self._ssl_data = ssl_data

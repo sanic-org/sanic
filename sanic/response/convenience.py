@@ -6,7 +6,7 @@ from mimetypes import guess_type
 from os import path
 from pathlib import PurePath
 from time import time
-from typing import Any, AnyStr, Callable, Dict, Optional, Union
+from typing import Any, AnyStr, Callable, Optional, Union
 from urllib.parse import quote_plus
 
 from sanic.compat import Header, open_async, stat_async
@@ -19,7 +19,7 @@ from .types import HTTPResponse, JSONResponse, ResponseStream
 
 
 def empty(
-    status: int = 204, headers: Optional[Dict[str, str]] = None
+    status: int = 204, headers: Optional[dict[str, str]] = None
 ) -> HTTPResponse:
     """Returns an empty response to the client.
 
@@ -36,7 +36,7 @@ def empty(
 def json(
     body: Any,
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
     content_type: str = "application/json",
     dumps: Optional[Callable[..., AnyStr]] = None,
     **kwargs: Any,
@@ -67,7 +67,7 @@ def json(
 def text(
     body: str,
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
     content_type: str = "text/plain; charset=utf-8",
 ) -> HTTPResponse:
     """Returns response object with body in text format.
@@ -97,7 +97,7 @@ def text(
 def raw(
     body: Optional[AnyStr],
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
     content_type: str = DEFAULT_HTTP_CONTENT_TYPE,
 ) -> HTTPResponse:
     """Returns response object without encoding the body.
@@ -122,7 +122,7 @@ def raw(
 def html(
     body: Union[str, bytes, HTMLProtocol],
     status: int = 200,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
 ) -> HTTPResponse:
     """Returns response object with body in html format.
 
@@ -209,7 +209,7 @@ async def file(
     request_headers: Optional[Header] = None,
     validate_when_requested: bool = True,
     mime_type: Optional[str] = None,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
     filename: Optional[str] = None,
     last_modified: Optional[Union[datetime, float, int, Default]] = _default,
     max_age: Optional[Union[float, int]] = None,
@@ -301,7 +301,7 @@ async def file(
 
 def redirect(
     to: str,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
     status: int = 302,
     content_type: str = "text/html; charset=utf-8",
 ) -> HTTPResponse:
@@ -334,7 +334,7 @@ async def file_stream(
     status: int = 200,
     chunk_size: int = 4096,
     mime_type: Optional[str] = None,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[dict[str, str]] = None,
     filename: Optional[str] = None,
     _range: Optional[Range] = None,
 ) -> ResponseStream:

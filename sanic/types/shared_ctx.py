@@ -1,7 +1,8 @@
 import os
 
+from collections.abc import Iterable
 from types import SimpleNamespace
-from typing import Any, Iterable
+from typing import Any
 
 from sanic.log import Colors, error_logger
 

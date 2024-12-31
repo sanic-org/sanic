@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Set, Type, Union
+from typing import Any, Callable, Union
 
 from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureException
@@ -6,14 +6,14 @@ from sanic.models.futures import FutureException
 
 class ExceptionMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
-        self._future_exceptions: Set[FutureException] = set()
+        self._future_exceptions: set[FutureException] = set()
 
     def _apply_exception_handler(self, handler: FutureException):
         raise NotImplementedError  # noqa
 
     def exception(
         self,
-        *exceptions: Union[Type[Exception], List[Type[Exception]]],
+        *exceptions: Union[type[Exception], list[type[Exception]]],
         apply: bool = True,
     ) -> Callable:
         """Decorator used to register an exception handler for the current application or blueprint instance.

@@ -1,7 +1,7 @@
 import logging
 import os
 
-from typing import Type, Union
+from typing import Union
 
 from sanic.helpers import Default, _default
 from sanic.log import (
@@ -55,8 +55,8 @@ def setup_logging(
 
 def _auto_format(
     logger: logging.Logger,
-    auto_class: Type[AutoFormatter],
-    formatter_class: Type[AutoFormatter],
+    auto_class: type[AutoFormatter],
+    formatter_class: type[AutoFormatter],
 ) -> None:
     for handler in logger.handlers:
         if type(handler.formatter) is auto_class:

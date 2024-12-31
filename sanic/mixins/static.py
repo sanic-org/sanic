@@ -1,9 +1,10 @@
+from collections.abc import Sequence
 from email.utils import formatdate
 from functools import partial, wraps
 from mimetypes import guess_type
 from os import PathLike, path
 from pathlib import Path, PurePath
-from typing import Optional, Sequence, Set, Union
+from typing import Optional, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route
@@ -23,7 +24,7 @@ from sanic.response import HTTPResponse, file, file_stream, validate_file
 
 class StaticMixin(BaseMixin, metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
-        self._future_statics: Set[FutureStatic] = set()
+        self._future_statics: set[FutureStatic] = set()
 
     def _apply_static(self, static: FutureStatic) -> Route:
         raise NotImplementedError  # noqa

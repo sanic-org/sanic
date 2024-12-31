@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from typing import Callable, List
+from typing import Callable
 from unittest.mock import Mock
 
 import pytest
@@ -228,7 +228,7 @@ def test_error_handler_noisy_log(
 def test_exception_handler_response_was_sent(
     app: Sanic,
     caplog: LogCaptureFixture,
-    message_in_records: Callable[[List[logging.LogRecord], str], bool],
+    message_in_records: Callable[[list[logging.LogRecord], str], bool],
 ):
     exception_handler_ran = False
 

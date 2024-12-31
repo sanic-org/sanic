@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 from inspect import isawaitable
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 from sanic_routing import BaseRouter, Route, RouteGroup
 from sanic_routing.exceptions import NotFound
@@ -94,7 +94,7 @@ class SignalWaiter:
     signal: Signal
     event_definition: str
     trigger: str = ""
-    requirements: Optional[Dict[str, str]] = None
+    requirements: Optional[dict[str, str]] = None
     exclusive: bool = True
 
     future: Optional[asyncio.Future] = None
@@ -156,7 +156,7 @@ class SignalRouter(BaseRouter):
     def get(  # type: ignore
         self,
         event: Union[str, Enum],
-        condition: Optional[Dict[str, str]] = None,
+        condition: Optional[dict[str, str]] = None,
     ):
         """Get the handlers for a signal
 
@@ -182,7 +182,7 @@ class SignalRouter(BaseRouter):
             )
         except NotFound:
             message = "Could not find signal %s"
-            terms: List[Union[str, Optional[Dict[str, str]]]] = [event]
+            terms: list[Union[str, Optional[dict[str, str]]]] = [event]
             if extra:
                 message += " with %s"
                 terms.append(extra)
@@ -205,8 +205,8 @@ class SignalRouter(BaseRouter):
     async def _dispatch(
         self,
         event: str,
-        context: Optional[Dict[str, Any]] = None,
-        condition: Optional[Dict[str, str]] = None,
+        context: Optional[dict[str, Any]] = None,
+        condition: Optional[dict[str, str]] = None,
         fail_not_found: bool = True,
         reverse: bool = False,
     ) -> Any:
@@ -266,8 +266,8 @@ class SignalRouter(BaseRouter):
         self,
         event: Union[str, Enum],
         *,
-        context: Optional[Dict[str, Any]] = None,
-        condition: Optional[Dict[str, str]] = None,
+        context: Optional[dict[str, Any]] = None,
+        condition: Optional[dict[str, str]] = None,
         fail_not_found: bool = True,
         inline: bool = False,
         reverse: bool = False,
@@ -309,7 +309,7 @@ class SignalRouter(BaseRouter):
     def get_waiter(
         self,
         event: Union[str, Enum],
-        condition: Optional[Dict[str, Any]] = None,
+        condition: Optional[dict[str, Any]] = None,
         exclusive: bool = True,
     ) -> Optional[SignalWaiter]:
         event_definition = self.format_event(event)
@@ -328,7 +328,7 @@ class SignalRouter(BaseRouter):
             exclusive=bool(exclusive),
         )
 
-    def _get_event_parts(self, event: str) -> Tuple[str, str, str]:
+    def _get_event_parts(self, event: str) -> tuple[str, str, str]:
         parts = self._build_event_parts(event)
         if parts[2].startswith("<"):
             name = ".".join([*parts[:-1], "*"])
@@ -346,7 +346,7 @@ class SignalRouter(BaseRouter):
         self,
         handler: SignalHandler,
         event: Union[str, Enum],
-        condition: Optional[Dict[str, Any]] = None,
+        condition: Optional[dict[str, Any]] = None,
         exclusive: bool = True,
         *,
         priority: int = 0,
@@ -394,7 +394,7 @@ class SignalRouter(BaseRouter):
 
         return super().finalize(do_compile=do_compile, do_optimize=do_optimize)
 
-    def _build_event_parts(self, event: str) -> Tuple[str, str, str]:
+    def _build_event_parts(self, event: str) -> tuple[str, str, str]:
         parts = path_to_parts(event, self.delimiter)
         if (
             len(parts) != 3

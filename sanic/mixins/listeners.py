@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from functools import partial
-from typing import Callable, List, Optional, Union, cast, overload
+from typing import Callable, Optional, Union, cast, overload
 
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import BadRequest
@@ -27,7 +27,7 @@ class ListenerEvent(str, Enum):
 
 class ListenerMixin(metaclass=SanicMeta):
     def __init__(self, *args, **kwargs) -> None:
-        self._future_listeners: List[FutureListener] = []
+        self._future_listeners: list[FutureListener] = []
 
     def _apply_listener(self, listener: FutureListener):
         raise NotImplementedError  # noqa

@@ -1,6 +1,7 @@
 from asyncio import CancelledError
+from collections.abc import Sequence
 from os import PathLike
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Optional, Union
 
 from sanic.helpers import STATUS_CODES
 from sanic.models.protocol_types import Range
@@ -54,7 +55,7 @@ class SanicException(Exception):
 
     status_code: int = 500
     quiet: Optional[bool] = False
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
     message: str = ""
 
     def __init__(
@@ -63,9 +64,9 @@ class SanicException(Exception):
         status_code: Optional[int] = None,
         *,
         quiet: Optional[bool] = None,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        context: Optional[dict[str, Any]] = None,
+        extra: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
     ) -> None:
         self.context = context
         self.extra = extra
@@ -105,9 +106,9 @@ class HTTPException(SanicException):
         message: Optional[Union[str, bytes]] = None,
         *,
         quiet: Optional[bool] = None,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
+        extra: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ) -> None:
         super().__init__(
             message,
@@ -191,9 +192,9 @@ class MethodNotAllowed(HTTPException):
         allowed_methods: Optional[Sequence[str]] = None,
         *,
         quiet: Optional[bool] = None,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
+        extra: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             message,
@@ -312,9 +313,9 @@ class FileNotFound(NotFound):
         relative_url: Optional[str] = None,
         *,
         quiet: Optional[bool] = None,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
+        extra: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             message,
@@ -441,9 +442,9 @@ class RangeNotSatisfiable(HTTPException):
         content_range: Optional[Range] = None,
         *,
         quiet: Optional[bool] = None,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
+        extra: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             message,
@@ -532,9 +533,9 @@ class PyFileError(SanicException):
         status_code: Optional[int] = None,
         *,
         quiet: Optional[bool] = None,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
+        extra: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             "could not execute config file %s" % file,
@@ -615,9 +616,9 @@ class Unauthorized(HTTPException):
         scheme: Optional[str] = None,
         *,
         quiet: Optional[bool] = None,
-        context: Optional[Dict[str, Any]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        context: Optional[dict[str, Any]] = None,
+        extra: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
         **challenges,
     ):
         super().__init__(
@@ -630,9 +631,7 @@ class Unauthorized(HTTPException):
 
         # if auth-scheme is specified, set "WWW-Authenticate" header
         if scheme is not None:
-            values = [
-                '{!s}="{!s}"'.format(k, v) for k, v in challenges.items()
-            ]
+            values = [f'{k!s}="{v!s}"' for k, v in challenges.items()]
             challenge = ", ".join(values)
 
             self.headers = {

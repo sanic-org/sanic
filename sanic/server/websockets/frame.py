@@ -1,7 +1,8 @@
 import asyncio
 import codecs
 
-from typing import TYPE_CHECKING, AsyncIterator, List, Optional
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Optional
 
 from websockets.frames import Frame, Opcode
 from websockets.typing import Data
@@ -47,7 +48,7 @@ class WebsocketFrameAssembler:
         get_in_progress: bool
         decoder: Optional[codecs.IncrementalDecoder]
         # For streaming chunks rather than messages:
-        chunks: List[Data]
+        chunks: list[Data]
         chunks_queue: Optional[asyncio.Queue[Optional[Data]]]
         paused: bool
 

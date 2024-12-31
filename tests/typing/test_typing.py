@@ -3,7 +3,6 @@
 import subprocess
 
 from pathlib import Path
-from typing import List, Tuple
 
 import pytest
 
@@ -20,9 +19,8 @@ def run_check(path_location: str) -> str:
 
     process = subprocess.run(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
+        capture_output=True,
+        text=True,
     )
     output = process.stdout + process.stderr
     return output
@@ -96,7 +94,7 @@ def run_check(path_location: str) -> str:
     ),
 )
 def test_check_app_default(
-    path_location: str, expected: List[Tuple[str, int]]
+    path_location: str, expected: list[tuple[str, int]]
 ) -> None:
     output = run_check(f"samples/{path_location}")
 

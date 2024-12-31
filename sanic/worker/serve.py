@@ -6,7 +6,7 @@ import warnings
 from functools import partial
 from multiprocessing.connection import Connection
 from ssl import SSLContext
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional, Union
 
 from sanic.application.constants import ServerStage
 from sanic.application.state import ApplicationServerInfo
@@ -27,16 +27,16 @@ def worker_serve(
     app_name: str,
     monitor_publisher: Optional[Connection],
     app_loader: AppLoader,
-    worker_state: Optional[Dict[str, Any]] = None,
-    server_info: Optional[Dict[str, List[ApplicationServerInfo]]] = None,
+    worker_state: Optional[dict[str, Any]] = None,
+    server_info: Optional[dict[str, list[ApplicationServerInfo]]] = None,
     ssl: Optional[
-        Union[SSLContext, Dict[str, Union[str, os.PathLike]]]
+        Union[SSLContext, dict[str, Union[str, os.PathLike]]]
     ] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
     reuse_port: bool = False,
     loop=None,
-    protocol: Type[asyncio.Protocol] = HttpProtocol,
+    protocol: type[asyncio.Protocol] = HttpProtocol,
     backlog: int = 100,
     register_sys_signals: bool = True,
     run_multiple: bool = False,
@@ -47,7 +47,7 @@ def worker_serve(
     asyncio_server_kwargs=None,
     version=HTTP.VERSION_1,
     config=None,
-    passthru: Optional[Dict[str, Any]] = None,
+    passthru: Optional[dict[str, Any]] = None,
 ):
     try:
         from sanic import Sanic

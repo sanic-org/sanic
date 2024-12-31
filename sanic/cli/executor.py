@@ -3,7 +3,7 @@ import shutil
 from argparse import ArgumentParser
 from asyncio import run
 from inspect import signature
-from typing import Callable, Dict, List
+from typing import Callable
 
 from sanic import Sanic
 from sanic.application.logo import get_logo
@@ -35,7 +35,7 @@ class Executor:
         self.commands = self._make_commands()
         self.parser = self._make_parser()
 
-    def run(self, command: str, args: List[str]) -> None:
+    def run(self, command: str, args: list[str]) -> None:
         if command == "exec":
             args = ["--help"]
         parsed_args = self.parser.parse_args(args)
@@ -45,7 +45,7 @@ class Executor:
         parsed_kwargs.pop("command")
         run(self.commands[command](**parsed_kwargs))
 
-    def _make_commands(self) -> Dict[str, Callable]:
+    def _make_commands(self) -> dict[str, Callable]:
         commands = {c.name: c.func for c in self.app._future_commands}
         return commands
 

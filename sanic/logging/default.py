@@ -1,9 +1,9 @@
 import sys
 
-from typing import Any, Dict
+from typing import Any
 
 
-LOGGING_CONFIG_DEFAULTS: Dict[str, Any] = dict(  # no cov
+LOGGING_CONFIG_DEFAULTS: dict[str, Any] = dict(  # no cov
     version=1,
     disable_existing_loggers=False,
     loggers={

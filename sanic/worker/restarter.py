@@ -1,4 +1,4 @@
-from typing import List, Optional, Set
+from typing import Optional
 
 from sanic.log import error_logger
 from sanic.worker.constants import RestartOrder
@@ -8,9 +8,9 @@ from sanic.worker.process import ProcessState, WorkerProcess
 class Restarter:
     def restart(
         self,
-        transient_processes: List[WorkerProcess],
-        durable_processes: List[WorkerProcess],
-        process_names: Optional[List[str]] = None,
+        transient_processes: list[WorkerProcess],
+        durable_processes: list[WorkerProcess],
+        process_names: Optional[list[str]] = None,
         restart_order=RestartOrder.SHUTDOWN_FIRST,
         **kwargs,
     ) -> None:
@@ -42,12 +42,12 @@ class Restarter:
 
     def _restart_transient(
         self,
-        processes: List[WorkerProcess],
-        process_names: List[str],
+        processes: list[WorkerProcess],
+        process_names: list[str],
         restart_order: RestartOrder,
         **kwargs,
-    ) -> Set[str]:
-        restarted: Set[str] = set()
+    ) -> set[str]:
+        restarted: set[str] = set()
         for process in processes:
             if not process.restartable or (
                 process_names and process.name not in process_names
@@ -59,12 +59,12 @@ class Restarter:
 
     def _restart_durable(
         self,
-        processes: List[WorkerProcess],
-        process_names: List[str],
+        processes: list[WorkerProcess],
+        process_names: list[str],
         restart_order: RestartOrder,
         **kwargs,
-    ) -> Set[str]:
-        restarted: Set[str] = set()
+    ) -> set[str]:
+        restarted: set[str] = set()
         if not process_names:
             return restarted
         for process in processes:

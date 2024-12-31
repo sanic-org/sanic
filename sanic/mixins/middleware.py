@@ -1,7 +1,7 @@
 from collections import deque
 from functools import partial
 from operator import attrgetter
-from typing import Callable, List, Union, overload
+from typing import Callable, Union, overload
 
 from sanic.base.meta import SanicMeta
 from sanic.middleware import Middleware, MiddlewareLocation
@@ -13,7 +13,7 @@ class MiddlewareMixin(metaclass=SanicMeta):
     router: Router
 
     def __init__(self, *args, **kwargs) -> None:
-        self._future_middleware: List[FutureMiddleware] = []
+        self._future_middleware: list[FutureMiddleware] = []
 
     def _apply_middleware(self, middleware: FutureMiddleware):
         raise NotImplementedError  # noqa

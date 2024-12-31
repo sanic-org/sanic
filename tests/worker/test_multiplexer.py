@@ -2,7 +2,7 @@ import sys
 
 from multiprocessing import Event
 from os import environ, getpid
-from typing import Any, Dict, Type, Union
+from typing import Any, Union
 from unittest.mock import Mock
 
 import pytest
@@ -76,7 +76,7 @@ def test_not_have_multiplexer_single(app: Sanic):
     assert not event.is_set()
 
 
-def test_ack(worker_state: Dict[str, Any], m: WorkerMultiplexer):
+def test_ack(worker_state: dict[str, Any], m: WorkerMultiplexer):
     worker_state["Test"] = {"foo": "bar"}
     m.ack()
     assert worker_state["Test"] == {"foo": "bar", "state": "ACKED"}
@@ -115,7 +115,7 @@ def test_manage(monitor_publisher: Mock, m: WorkerMultiplexer):
 
 
 def test_properties(
-    monitor_publisher: Mock, worker_state: Dict[str, Any], m: WorkerMultiplexer
+    monitor_publisher: Mock, worker_state: dict[str, Any], m: WorkerMultiplexer
 ):
     assert m.reload == m.restart
     assert m.pid == getpid()
@@ -147,8 +147,8 @@ def test_properties(
 def test_restart_params(
     monitor_publisher: Mock,
     m: WorkerMultiplexer,
-    params: Dict[str, Any],
-    expected: Union[str, Type[Exception]],
+    params: dict[str, Any],
+    expected: Union[str, type[Exception]],
 ):
     if isinstance(expected, str):
         m.restart(**params)

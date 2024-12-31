@@ -115,8 +115,6 @@ class HTTPMethodView:
         to `"/v"`.
     """
 
-    get: Optional[Callable[..., Any]]
-
     decorators: List[Callable[[Callable[..., Any]], Callable[..., Any]]] = []
 
     def __init_subclass__(
@@ -146,9 +144,11 @@ class HTTPMethodView:
 
     def dispatch_request(self, request: Request, *args, **kwargs):
         """Dispatch request to appropriate handler method."""
-        handler = getattr(self, request.method.lower(), None)
-        if not handler and request.method == "HEAD":
-            handler = self.get
+        method = request.method.lower()
+        handler = getattr(self, method, None)
+
+        if not handler and method == "head":
+            handler = getattr(self, "get")
         if not handler:
             # The router will never allow us to get here, but this is
             # included as a fallback and for completeness.

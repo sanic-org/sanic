@@ -43,6 +43,8 @@ root:
                   path: guide/advanced/versioning.html
                 - label: Signals
                   path: guide/advanced/signals.html
+                - label: Custom CLI Commands
+                  path: guide/advanced/commands.html
           - label: Best Practices
             items:
                 - label: Blueprints
@@ -145,6 +147,8 @@ root:
       items:
           - label: "2024"
             items:
+                - label: Sanic 24.12
+                  path: release-notes/2024/v24.12.html
                 - label: Sanic 24.6
                   path: release-notes/2024/v24.6.html
           - label: "2023"

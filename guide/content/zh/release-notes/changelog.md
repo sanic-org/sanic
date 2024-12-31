@@ -7,9 +7,36 @@ content_class: 更新日志
 :larg_orange_diamond: Current release
 :larg_blu_diamond: In support LTS release
 
-## 版本24.6.0 :larg_orange_diamond:
+## 版本24.12.0 :larg_orange_diamond::larg_blu_diamond:
 
 _当前版本_
+
+### Features
+
+- [#3019](https://github.com/sanic-org/sanic/pull/3019) 在 `sanic` CLI 中添加自定义命令
+
+### Bugfixes
+
+- [#2992](https://github.com/sanic-org/sanic/pull/2992) 修复`mixins.startup.serve` UnboundLocalError
+- [#3000](https://github.com/sanic-org/sanic/pull/3000)
+- [#3009](https://github.com/sanic-org/sanic/pull/3009) Fix `SanicException.quet` 属性处理设置为 `False`
+- [#3014](https://github.com/sanic-org/sanic/pull/3014) 清理一些输入
+- [#3015](https://github.com/sanic-org/sanic/pull/3015) 如果适用，则杀死整个流程组
+- [#3016](https://github.com/sanic-org/sanic/pull/3016) 修复在 HTTPMethodView 类中获取方法的不兼容类型注释
+
+### Deprecations and Removals
+
+- [#3020](https://github.com/sanic-org/sanic/pull/3020) 删除 Python 3.8 支持
+
+### 开发者基础设施
+
+- [#3017](https://github.com/sanic-org/sanic/pull/3017) Cleanup setup.cfg
+
+### Improved Documentation
+
+- [#3007](https://github.com/sanic-org/sanic/pull/3007) 修复`sanic-ext`的文档类型
+
+## 版本24.6.0
 
 ### Features
 
@@ -32,7 +59,7 @@ _当前版本_
 - [#2979](https://github.com/sanic-org/sanic/pull/2979) 抛出错误的身体长度
 - [#2980](https://github.com/sanic-org/sanic/pull/2980) 丢弃错误的物体编码错误
 
-### Deprecations and Removals
+### 废弃和移除
 
 - [#2899](https://github.com/sanic-org/sanic/pull/2899) 从REPL中删除错误的行，从而影响没有HTTPX的环境
 - [#2962](https://github.com/sanic-org/sanic/pull/2962) 合并实体头部删除
@@ -76,7 +103,7 @@ _当前版本_
 
 - [#2803](https://github.com/sanic-org/sanic/pull/2803) Fix MOTD display for extra data
 
-### 开发者基础设施
+### Developer infrastructure
 
 - [#2796](https://github.com/sanic-org/sanic/pull/2796) Refactor unit test cases
 - [#2801](https://github.com/sanic-org/sanic/pull/2801) Fix `test_fast` when there is only one CPU
@@ -198,7 +225,7 @@ _Due to circumstances at the time, v.23.9 was skipped._
 - [#2651](https://github.com/sanic-org/sanic/pull/2651) ASGI websocket to pass thru bytes as is
 - [#2697](https://github.com/sanic-org/sanic/pull/2697) Fix comparison between datetime aware and naive in `file` when using `If-Modified-Since`
 
-### 废弃和移除
+### Deprecations and Removals
 
 - [#2666](https://github.com/sanic-org/sanic/pull/2666) Remove deprecated `__blueprintname__` property
 
@@ -206,7 +233,7 @@ _Due to circumstances at the time, v.23.9 was skipped._
 
 - [#2712](https://github.com/sanic-org/sanic/pull/2712) Improved example using `'https'` to create the redirect
 
-## Version 22.12.0 🔷
+## 版本22.12.0
 
 _当前LTS版本_
 
@@ -238,7 +265,7 @@ _当前LTS版本_
 - [#2639](https://github.com/sanic-org/sanic/pull/2639) Add `unquote` to `add_route` method
 - [#2640](https://github.com/sanic-org/sanic/pull/2640) ASGI websockets to receive `text` or `bytes`
 
-### Bugfixes
+### 错误修正
 
 - [#2607](https://github.com/sanic-org/sanic/pull/2607) Force socket shutdown before close to allow rebinding
 - [#2590](https://github.com/sanic-org/sanic/pull/2590) Use actual `StrEnum` in Python 3.11+
@@ -246,7 +273,7 @@ _当前LTS版本_
 - [#2627](https://github.com/sanic-org/sanic/pull/2627) Crash ASGI application on lifespan failure
 - [#2635](https://github.com/sanic-org/sanic/pull/2635) Resolve error with low-level server creation on Windows
 
-### Deprecations and Removals
+### 废弃和移除
 
 - [#2608](https://github.com/sanic-org/sanic/pull/2608) [#2630](https://github.com/sanic-org/sanic/pull/2630) Signal conditions and triggers saved on `signal.extra`
 - [#2626](https://github.com/sanic-org/sanic/pull/2626) Move to HTTP Inspector
@@ -264,7 +291,7 @@ _当前LTS版本_
 
 - [#2585](https://github.com/sanic-org/sanic/pull/2585) Improved error message when no applications have been registered
 
-### 错误修正
+### Bugfixes
 
 - [#2578](https://github.com/sanic-org/sanic/pull/2578) Add certificate loader for in process certificate creation
 - [#2591](https://github.com/sanic-org/sanic/pull/2591) Do not use sentinel identity for `spawn` compatibility
@@ -330,7 +357,7 @@ _当前LTS版本_
 
 ## Version 22.6.2
 
-### Bugfixes
+### 错误修正
 
 - [#2522](https://github.com/sanic-org/sanic/pull/2522) Always show server location in ASGI
 
@@ -358,7 +385,7 @@ _当前LTS版本_
 - [#2453](https://github.com/sanic-org/sanic/pull/2453) Move verbosity filtering to logger
 - [#2475](https://github.com/sanic-org/sanic/pull/2475) Expose getter for current request using `Request.get_current()`
 
-### 错误修正
+### Bugfixes
 
 - [#2448](https://github.com/sanic-org/sanic/pull/2448) Fix to allow running with `pythonw.exe` or places where there is no `sys.stdout`
 - [#2451](https://github.com/sanic-org/sanic/pull/2451) Trigger `http.lifecycle.request` signal in ASGI mode
@@ -432,7 +459,7 @@ _当前LTS版本_
 - [#2405](https://github.com/sanic-org/sanic/pull/2405) Upgrade tests for `sanic-routing` changes
 - [sanic-testing#35](https://github.com/sanic-org/sanic-testing/pull/35) Allow for httpx v0.22
 
-### Improved Documentation
+### 改进文档
 
 - [#2350](https://github.com/sanic-org/sanic/pull/2350) Fix link in README for ASGI
 - [#2398](https://github.com/sanic-org/sanic/pull/2398) Document middleware on_request and on_response
@@ -453,7 +480,7 @@ _当前LTS版本_
 
 ## Version 21.12.0
 
-### Features
+### 功能
 
 - [#2260](https://github.com/sanic-org/sanic/pull/2260) Allow early Blueprint registrations to still apply later added objects
 - [#2262](https://github.com/sanic-org/sanic/pull/2262) Noisy exceptions - force logging of all exceptions
@@ -476,13 +503,13 @@ _当前LTS版本_
 - [#2332](https://github.com/sanic-org/sanic/pull/2332) Make all deprecation notices consistent
 - [#2335](https://github.com/sanic-org/sanic/pull/2335) Allow underscore to start instance names
 
-### Bugfixes
+### 错误修正
 
 - [#2273](https://github.com/sanic-org/sanic/pull/2273) Replace assignation by typing for `websocket_handshake`
 - [#2285](https://github.com/sanic-org/sanic/pull/2285) Fix IPv6 display in startup logs
 - [#2299](https://github.com/sanic-org/sanic/pull/2299) Dispatch `http.lifecyle.response` from exception handler
 
-### Deprecations and Removals
+### 废弃和移除
 
 - [#2306](https://github.com/sanic-org/sanic/pull/2306) Removal of deprecated items
   - `Sanic` and `Blueprint` may no longer have arbitrary properties attached to them
@@ -496,7 +523,7 @@ _当前LTS版本_
     - _NOTE:_ the `stream()` response method (where you pass a callable streaming function) has been deprecated and will be removed in v22.6. You should upgrade all streaming responses to the new style: https://sanicframework.org/en/guide/advanced/streaming.html#response-streaming
 - [#2320](https://github.com/sanic-org/sanic/pull/2320) Remove app instance from Config for error handler setting
 
-### Developer infrastructure
+### 开发者基础设施
 
 - [#2251](https://github.com/sanic-org/sanic/pull/2251) Change dev install command
 - [#2286](https://github.com/sanic-org/sanic/pull/2286) Change codeclimate complexity threshold from 5 to 10

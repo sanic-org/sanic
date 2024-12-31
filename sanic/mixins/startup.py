@@ -1033,6 +1033,7 @@ class StartupMixin(metaclass=SanicMeta):
 
         socks = []
         sync_manager = Manager()
+        worker_state: Mapping[str, Any] = {"state": "NONE"}
         setup_ext(primary)
         exit_code = 0
         try:
@@ -1056,7 +1057,7 @@ class StartupMixin(metaclass=SanicMeta):
             ]
             primary_server_info.settings["run_multiple"] = True
             monitor_sub, monitor_pub = Pipe(True)
-            worker_state: Mapping[str, Any] = sync_manager.dict()
+            worker_state = sync_manager.dict()
             kwargs: Dict[str, Any] = {
                 **primary_server_info.settings,
                 "monitor_publisher": monitor_pub,

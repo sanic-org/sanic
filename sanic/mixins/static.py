@@ -225,7 +225,7 @@ class StaticHandleMixin(metaclass=SanicMeta):
         _handler = wraps(self._static_request_handler)(
             partial(
                 self._static_request_handler,
-                file_or_directory=file_or_directory,
+                file_or_directory=str(file_or_directory),
                 use_modified_since=static.use_modified_since,
                 use_content_range=static.use_content_range,
                 stream_large_files=static.stream_large_files,

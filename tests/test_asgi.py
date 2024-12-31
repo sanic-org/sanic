@@ -452,11 +452,8 @@ async def test_cookie_customization(app):
     @app.get("/cookie")
     def get_cookie(request):
         response = text("There's a cookie up in this response")
-        response.cookies["test"] = "Cookie1"
-        response.cookies["test"]["httponly"] = True
-
-        response.cookies["c2"] = "Cookie2"
-        response.cookies["c2"]["httponly"] = False
+        response.add_cookie("test", "Cookie1", httponly=True)
+        response.add_cookie("c2", "Cookie2", httponly=False)
 
         return response
 

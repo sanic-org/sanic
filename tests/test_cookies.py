@@ -37,14 +37,14 @@ def test_cookies(app):
     def handler(request):
         cookie_value = request.cookies["test"]
         response = text(f"Cookies are: {cookie_value}")
-        response.cookies["right_back"] = "at you"
+        response.add_cookie("right_back", "at you")
         return response
 
     request, response = app.test_client.get("/", cookies={"test": "working!"})
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get("Set-Cookie", {}))
 
-    assert response.text == "Cookies are: working!"
+    assert response.text == "Cookies are: ['working!']"
     assert response_cookies["right_back"].value == "at you"
 
 
@@ -54,7 +54,7 @@ async def test_cookies_asgi(app):
     def handler(request):
         cookie_value = request.cookies["test"]
         response = text(f"Cookies are: {cookie_value}")
-        response.cookies["right_back"] = "at you"
+        response.add_cookie("right_back", "at you")
         return response
 
     request, response = await app.asgi_client.get(
@@ -63,22 +63,23 @@ async def test_cookies_asgi(app):
     response_cookies = SimpleCookie()
     response_cookies.load(response.headers.get("set-cookie", {}))
 
-    assert response.body == b"Cookies are: working!"
+    assert response.body == b"Cookies are: ['working!']"
     assert response_cookies["right_back"].value == "at you"
 
 
-@pytest.mark.parametrize("httponly,expected", [(False, False), (True, True)])
+@pytest.mark.parametrize(
+    "httponly,expected", [(False, "False"), (True, "True")]
+)
 def test_false_cookies_encoded(app, httponly, expected):
     @app.route("/")
     def handler(request):
         response = text("hello cookies")
-        response.cookies["hello"] = "world"
-        response.cookies["hello"]["httponly"] = httponly
-        return text(response.cookies["hello"].encode("utf8").decode())
+        response.add_cookie("hello", "world", httponly=httponly)
+        return text(str(response.cookies.get_cookie("hello").httponly))
 
     request, response = app.test_client.get("/")
 
-    assert ("HttpOnly" in response.text) == expected
+    assert response.text == expected
 
 
 @pytest.mark.parametrize("httponly,expected", [(False, False), (True, True)])
@@ -86,8 +87,7 @@ def test_false_cookies(app, httponly, expected):
     @app.route("/")
     def handler(request):
         response = text("hello cookies")
-        response.cookies["right_back"] = "at you"
-        response.cookies["right_back"]["httponly"] = httponly
+        response.add_cookie("right_back", "at you", httponly=httponly)
         return response
 
     request, response = app.test_client.get("/")
@@ -107,17 +107,18 @@ def test_http2_cookies(app):
     headers = {"cookie": "test=working!"}
     request, response = app.test_client.get("/", headers=headers)
 
-    assert response.text == "Cookies are: working!"
+    assert response.text == "Cookies are: ['working!']"
 
 
 def test_cookie_options(app):
     @app.route("/")
     def handler(request):
         response = text("OK")
-        response.cookies["test"] = "at you"
-        response.cookies["test"]["httponly"] = True
-        response.cookies["test"]["expires"] = datetime.now() + timedelta(
-            seconds=10
+        response.add_cookie(
+            "test",
+            "at you",
+            httponly=True,
+            expires=datetime.now() + timedelta(seconds=10),
         )
         return response
 
@@ -136,9 +137,9 @@ def test_cookie_deletion(app):
     def handler(request):
         nonlocal cookie_jar
         response = text("OK")
-        del response.cookies["one"]
-        response.cookies["two"] = "testing"
-        del response.cookies["two"]
+        response.delete_cookie("one")
+        response.add_cookie("two", "testing")
+        response.delete_cookie("two")
         cookie_jar = response.cookies
         return response
 
@@ -161,21 +162,14 @@ def test_cookie_illegal_key_format():
         assert e.message == "Cookie key contains illegal characters"
 
 
-def test_cookie_set_unknown_property():
-    c = Cookie("test_cookie", "value")
-    with pytest.raises(expected_exception=KeyError) as e:
-        c["invalid"] = "value"
-        assert e.message == "Unknown cookie property"
-
-
 def test_cookie_set_same_key(app):
     cookies = {"test": "wait"}
 
     @app.get("/")
     def handler(request):
         response = text("pass")
-        response.cookies["test"] = "modified"
-        response.cookies["test"] = "pass"
+        response.add_cookie("test", "modified")
+        response.add_cookie("test", "pass")
         return response
 
     request, response = app.test_client.get("/", cookies=cookies)
@@ -190,8 +184,7 @@ def test_cookie_max_age(app, max_age):
     @app.get("/")
     def handler(request):
         response = text("pass")
-        response.cookies["test"] = "pass"
-        response.cookies["test"]["max-age"] = max_age
+        response.add_cookie("test", "pass", max_age=max_age)
         return response
 
     request, response = app.test_client.get(
@@ -232,8 +225,7 @@ def test_cookie_bad_max_age(app, max_age):
     @app.get("/")
     def handler(request):
         response = text("pass")
-        response.cookies["test"] = "pass"
-        response.cookies["test"]["max-age"] = max_age
+        response.add_cookie("test", "pass", max_age=max_age)
         return response
 
     request, response = app.test_client.get(
@@ -250,8 +242,7 @@ def test_cookie_expires(app: Sanic, expires: timedelta):
     @app.get("/")
     def handler(request):
         response = text("pass")
-        response.cookies["test"] = "pass"
-        response.cookies["test"]["expires"] = expires_time
+        response.add_cookie("test", "pass", expires=expires_time)
         return response
 
     request, response = app.test_client.get(
@@ -280,7 +271,7 @@ def test_request_with_duplicate_cookie_key(value):
     headers = Header({"Cookie": value})
     request = Request(b"/", headers, "1.1", "GET", Mock(), Mock())
 
-    assert request.cookies["foo"] == "one"
+    assert request.cookies["foo"] == ["one", "two"]
     assert request.cookies.get("foo") == "one"
     assert request.cookies.getlist("foo") == ["one", "two"]
     assert request.cookies.get("bar") is None
@@ -338,32 +329,34 @@ def test_cookie_jar_add_cookie_encode():
     jar.add_cookie("foo", "four", host_prefix=True)
     jar.add_cookie("foo", "five", host_prefix=True, partitioned=True)
 
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    encoded = [str(cookie) for cookie in jar.cookies]
     assert encoded == [
-        b"foo=one; Path=/; SameSite=Lax; Secure",
-        b"foo=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
-        b"__Secure-foo=three; Path=/; SameSite=Lax; Secure",
-        b"__Host-foo=four; Path=/; SameSite=Lax; Secure",
-        b"__Host-foo=five; Path=/; SameSite=Lax; Secure; Partitioned",
+        "foo=one; Path=/; SameSite=Lax; Secure",
+        "foo=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
+        "__Secure-foo=three; Path=/; SameSite=Lax; Secure",
+        "__Host-foo=four; Path=/; SameSite=Lax; Secure",
+        "__Host-foo=five; Path=/; SameSite=Lax; Secure; Partitioned",
     ]
 
 
 def test_cookie_jar_old_school_cookie_encode():
     headers = Header()
     jar = CookieJar(headers)
-    jar["foo"] = "one"
-    jar["bar"] = "two"
-    jar["bar"]["domain"] = "example.com"
-    jar["bar"]["path"] = "/something"
-    jar["bar"]["secure"] = True
-    jar["bar"]["max-age"] = 999
-    jar["bar"]["httponly"] = True
-    jar["bar"]["samesite"] = "strict"
+    jar.add_cookie("foo", "one")
+    jar.add_cookie(
+        "bar",
+        "two",
+        domain="example.com",
+        path="/something",
+        secure=True,
+        max_age=999,
+        httponly=True,
+        samesite="strict",
+    )
 
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
-    assert encoded == [
-        b"foo=one; Path=/",
-        b"bar=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
+    assert [str(cookie) for cookie in jar.cookies] == [
+        "foo=one; Path=/; SameSite=Lax; Secure",
+        "bar=two; Path=/something; Domain=example.com; Max-Age=999; SameSite=Strict; Secure; HttpOnly",  # noqa
     ]
 
 
@@ -373,10 +366,10 @@ def test_cookie_jar_delete_cookie_encode():
     jar.delete_cookie("foo")
     jar.delete_cookie("foo", domain="example.com")
 
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    encoded = [str(cookie) for cookie in jar.cookies]
     assert encoded == [
-        b'foo=""; Path=/; Max-Age=0; Secure',
-        b'foo=""; Path=/; Domain=example.com; Max-Age=0; Secure',
+        'foo=""; Path=/; Max-Age=0; Secure',
+        'foo=""; Path=/; Domain=example.com; Max-Age=0; Secure',
     ]
 
 
@@ -385,9 +378,9 @@ def test_cookie_jar_delete_nonsecure_cookie():
     jar = CookieJar(headers)
     jar.delete_cookie("foo", domain="example.com", secure=False)
 
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    encoded = [str(cookie) for cookie in jar.cookies]
     assert encoded == [
-        b'foo=""; Path=/; Domain=example.com; Max-Age=0',
+        'foo=""; Path=/; Domain=example.com; Max-Age=0',
     ]
 
 
@@ -399,11 +392,11 @@ def test_cookie_jar_delete_existing_cookie():
     )
     jar.delete_cookie("foo", domain="example.com", secure=True)
 
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    encoded = [str(cookie) for cookie in jar.cookies]
     # deletion cookie contains samesite=Strict as was in original cookie
     assert encoded == [
-        b'foo=""; Path=/; Domain=example.com; Max-Age=0; '
-        b"SameSite=Strict; Secure",
+        'foo=""; Path=/; Domain=example.com; '
+        "Max-Age=0; SameSite=Strict; Secure"
     ]
 
 
@@ -415,10 +408,10 @@ def test_cookie_jar_delete_existing_nonsecure_cookie():
     )
     jar.delete_cookie("foo", domain="example.com", secure=False)
 
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    encoded = [str(cookie) for cookie in jar.cookies]
     # deletion cookie contains samesite=Strict as was in original cookie
     assert encoded == [
-        b'foo=""; Path=/; Domain=example.com; Max-Age=0; SameSite=Strict',
+        'foo=""; Path=/; Domain=example.com; Max-Age=0; SameSite=Strict',
     ]
 
 
@@ -445,11 +438,11 @@ def test_cookie_jar_delete_existing_nonsecure_cookie_bad_prefix():
 def test_cookie_jar_old_school_delete_encode():
     headers = Header()
     jar = CookieJar(headers)
-    del jar["foo"]
+    jar.delete_cookie("foo")
 
-    encoded = [cookie.encode("ascii") for cookie in jar.cookies]
+    encoded = [str(cookie) for cookie in jar.cookies]
     assert encoded == [
-        b'foo=""; Path=/; Max-Age=0; Secure',
+        'foo=""; Path=/; Max-Age=0; Secure',
     ]
 
 
@@ -547,9 +540,9 @@ def test_cookie_accessors(app: Sanic):
 
     assert response.json == {
         "getitem": {
-            "one": "1",
-            "two": "2",
-            "three": "3",
+            "one": ["1"],
+            "two": ["2"],
+            "three": ["3"],
         },
         "get": {
             "one": "1",

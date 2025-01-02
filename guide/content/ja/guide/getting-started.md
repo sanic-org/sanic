@@ -1,6 +1,6 @@
 # はじめに
 
-始める前に、Python 3.8 以上を実行していることを確認してください。 現在、SanicはPythonバージョン3.8 - 3.11で動作します。
+Before we begin, make sure you are running Python 3.9 or higher. Currently, Sanic is works with Python versions 3.9 – 3.13.
 
 ## インストール
 

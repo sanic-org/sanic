@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 79
 
 [tool.ruff.lint]

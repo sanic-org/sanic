@@ -38,7 +38,7 @@ class BaseRenderer:
             E.meta(
                 name="description",
                 content=(
-                    "Sanic is a Python 3.8+ web server and "
+                    "Sanic is a Python 3.9+ web server and "
                     "web framework that's written to go fast."
                 ),
             ),

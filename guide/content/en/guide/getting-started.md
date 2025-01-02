@@ -1,6 +1,6 @@
 # Getting Started
 
-Before we begin, make sure you are running Python 3.8 or higher. Currently, Sanic is works with Python versions 3.8 – 3.11.
+Before we begin, make sure you are running Python 3.9 or higher. Currently, Sanic is works with Python versions 3.9 – 3.13.
 
 ## Install
 

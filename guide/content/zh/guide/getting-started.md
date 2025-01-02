@@ -1,6 +1,6 @@
 # 快速上手
 
-在我们开始之前，请确保您正在运行 Python 3.8或更高版本。 目前，Sanic可以运行在Python 版本 3.8 - 3.11上。
+Before we begin, make sure you are running Python 3.9 or higher. Currently, Sanic is works with Python versions 3.9 – 3.13.
 
 ## 安装（Install）
 

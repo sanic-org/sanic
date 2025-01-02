@@ -1,6 +1,6 @@
 # 介绍(Introduction)
 
-Sanic 是 Python3.8+ Web 服务器和 Web 框架，旨在提高性能。 它允许使用 Python3.5 中添加的 <code>async</code>/<code>await</code> 异步语法，这使得您的代码有效地避免阻塞从而达到提升响应速度的目的。
+Sanic is a Python 3.9+ web server and web framework that’s written to go fast. 它允许使用 Python3.5 中添加的 <code>async</code>/<code>await</code> 异步语法，这使得您的代码有效地避免阻塞从而达到提升响应速度的目的。
 
 .. attrs::
 :class: introduction-table

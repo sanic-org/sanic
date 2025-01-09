@@ -31,5 +31,5 @@ class REPLContext:
         return iter(self._locals)
 
     @staticmethod
-    def _truncate(s: str, limit: int = 40):
+    def _truncate(s: str, limit: int = 40) -> str:
         return s[:limit] + "..." if len(s) > limit else s

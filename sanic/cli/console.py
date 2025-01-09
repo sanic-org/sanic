@@ -119,12 +119,25 @@ class SanicREPL(InteractiveConsole):
             "sanic": sanic,
             "do": do,
         }
+
+        user_locals = {
+            user_local.name: user_local.var for user_local in app.repl_ctx
+        }
+
         client_availability = ""
         variable_descriptions = [
             f"  - {Colors.BOLD + Colors.SANIC}app{Colors.END}: The Sanic application instance - {Colors.BOLD + Colors.BLUE}{str(app)}{Colors.END}",  # noqa: E501
             f"  - {Colors.BOLD + Colors.SANIC}sanic{Colors.END}: The Sanic module - {Colors.BOLD + Colors.BLUE}import sanic{Colors.END}",  # noqa: E501
             f"  - {Colors.BOLD + Colors.SANIC}do{Colors.END}: An async function to fake a request to the application - {Colors.BOLD + Colors.BLUE}Result(request, response){Colors.END}",  # noqa: E501
         ]
+
+        user_locals_descriptions = [
+            f"  - {Colors.SANIC}{user_local.name}{Colors.END} "
+            f"{Colors.GREY}{type(user_local.var)}{Colors.END} : "
+            f"{user_local.desc}"
+            for user_local in app.repl_ctx
+        ]
+
         if HTTPX_AVAILABLE:
             locals_available["client"] = SanicClient(app)
             variable_descriptions.append(
@@ -136,7 +149,7 @@ class SanicREPL(InteractiveConsole):
                 "To enable it, install httpx:\n\t"
                 f"pip install httpx{Colors.END}\n"
             )
-        super().__init__(locals=locals_available)
+        super().__init__(locals={**locals_available, **user_locals})
         self.compile.compiler.flags |= PyCF_ALLOW_TOP_LEVEL_AWAIT
         self.loop = new_event_loop()
         self._start = start
@@ -163,6 +176,8 @@ class SanicREPL(InteractiveConsole):
                 client_availability,
                 "The following objects are available for your convenience:",  # noqa: E501
                 *variable_descriptions,
+                "\nREPL Context:",
+                *user_locals_descriptions,
                 "\nThe async/await keywords are available for use here.",  # noqa: E501
                 f"To exit, press {Colors.BOLD}CTRL+C{Colors.END}, "
                 f"{Colors.BOLD}CTRL+D{Colors.END}, or type {Colors.BOLD}exit(){Colors.END}.\n",  # noqa: E501

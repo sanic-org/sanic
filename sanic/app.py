@@ -70,6 +70,7 @@ from sanic.mixins.commands import CommandMixin
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
 from sanic.mixins.static import StaticHandleMixin
+from sanic.models.ctx_types import REPLContext
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -219,6 +220,7 @@ class Sanic(
         "strict_slashes",
         "websocket_enabled",
         "websocket_tasks",
+        "repl_ctx",
     )
 
     _app_registry: ClassVar[dict[str, Sanic]] = {}
@@ -382,6 +384,7 @@ class Sanic(
         self.strict_slashes: bool = strict_slashes
         self.websocket_enabled: bool = False
         self.websocket_tasks: set[Future[Any]] = set()
+        self.repl_ctx = REPLContext()
 
         # Register alternative method names
         self.go_fast = self.run

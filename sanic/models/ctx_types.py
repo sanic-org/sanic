@@ -11,12 +11,19 @@ class REPLContext:
     def __init__(self):
         self._locals: set[REPLLocal] = set()
 
-    def add_local(
+    def add(
         self,
         var: Any,
         name: Optional[str] = None,
         desc: Optional[str] = None,
     ):
+        """Add a local variable to be available in REPL context.
+
+        Args:
+            var (Any): A module, class, object or a class.
+            name (Optional[str], optional): An alias for the local. Defaults to None.
+            desc (Optional[str], optional): A brief description for the local. Defaults to None.
+        """  # noqa: E501
         if name is None:
             name = var.__name__
 

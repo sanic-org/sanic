@@ -28,7 +28,7 @@ class REPLContext:
             name = var.__name__
 
         if desc is None:
-            desc = var.__doc__
+            desc = var.__doc__ or ""
 
         desc = self._truncate(desc)
 

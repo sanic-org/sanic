@@ -441,7 +441,7 @@ Pydantic models have the ability to [generate OpenAPI schema](https://pydantic-d
     from sanic_ext import validate, openapi
     from pydantic import BaseModel, Field
 
-    @openapi.component
+    @openapi.component()
     class Item(BaseModel):
         name: str
         description: str = None
@@ -456,7 +456,7 @@ Pydantic models have the ability to [generate OpenAPI schema](https://pydantic-d
     @app.get("/")
     @openapi.definition(
         body={
-            "application/json": ItemList.schema(
+            "application/json": ItemList.model_json_schema(
                 ref_template="#/components/schemas/{model}"
             )
         },

@@ -892,7 +892,8 @@ class StartupMixin(metaclass=SanicMeta):
             Tuple[str, int]: Tuple containing the host and port
         """  # noqa: E501
         host = host or "127.0.0.1"
-        port = port or (8443 if (version == 3 or auto_tls) else 8000)
+        if port is None:
+            port = 8443 if (version == 3 or auto_tls) else 8000
         return host, port
 
     @classmethod

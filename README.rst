@@ -77,7 +77,7 @@ Check out `open collective <https://opencollective.com/sanic-org>`_ to learn mor
 Installation
 ------------
 
-``pip3 install sanic``
+``pip install sanic``
 
     Sanic makes use of ``uvloop`` and ``ujson`` to help with performance. If you do not want to use those packages, simply add an environmental variable ``SANIC_NO_UVLOOP=true`` or ``SANIC_NO_UJSON=true`` at install time.
 
@@ -85,7 +85,7 @@ Installation
 
        $ export SANIC_NO_UVLOOP=true
        $ export SANIC_NO_UJSON=true
-       $ pip3 install --no-binary :all: sanic
+       $ pip install --no-binary :all: sanic
 
 
 .. note::
@@ -108,10 +108,7 @@ Hello World Example
     async def test(request):
         return json({'hello': 'world'})
 
-    if __name__ == '__main__':
-        app.run()
-
-Sanic can now be easily run using ``sanic hello.app``.
+Sanic can now be easily run from CLI using ``sanic hello.app``.
 
 .. code::
 
@@ -132,7 +129,7 @@ And, we can verify it is working: ``curl localhost:8000 -i``
 
 **Now, let's go build something fast!**
 
-Minimum Python version is 3.8. If you need Python 3.7 support, please use v22.12LTS.
+Minimum Python version is 3.9.
 
 Documentation
 -------------

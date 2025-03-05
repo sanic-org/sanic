@@ -70,6 +70,7 @@ from sanic.mixins.commands import CommandMixin
 from sanic.mixins.listeners import ListenerEvent
 from sanic.mixins.startup import StartupMixin
 from sanic.mixins.static import StaticHandleMixin
+from sanic.models.ctx_types import REPLContext
 from sanic.models.futures import (
     FutureException,
     FutureListener,
@@ -209,6 +210,7 @@ class Sanic(
         "multiplexer",
         "named_request_middleware",
         "named_response_middleware",
+        "repl_ctx",
         "request_class",
         "request_middleware",
         "response_middleware",
@@ -372,6 +374,7 @@ class Sanic(
         self.listeners: dict[str, list[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: dict[str, Deque[Middleware]] = {}
         self.named_response_middleware: dict[str, Deque[Middleware]] = {}
+        self.repl_ctx: REPLContext = REPLContext()
         self.request_class = request_class or Request
         self.request_middleware: Deque[Middleware] = deque()
         self.response_middleware: Deque[Middleware] = deque()

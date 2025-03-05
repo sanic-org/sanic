@@ -210,6 +210,7 @@ class Sanic(
         "multiplexer",
         "named_request_middleware",
         "named_response_middleware",
+        "repl_ctx",
         "request_class",
         "request_middleware",
         "response_middleware",
@@ -220,7 +221,6 @@ class Sanic(
         "strict_slashes",
         "websocket_enabled",
         "websocket_tasks",
-        "repl_ctx",
     )
 
     _app_registry: ClassVar[dict[str, Sanic]] = {}
@@ -374,6 +374,7 @@ class Sanic(
         self.listeners: dict[str, list[ListenerType[Any]]] = defaultdict(list)
         self.named_request_middleware: dict[str, Deque[Middleware]] = {}
         self.named_response_middleware: dict[str, Deque[Middleware]] = {}
+        self.repl_ctx: REPLContext = REPLContext()
         self.request_class = request_class or Request
         self.request_middleware: Deque[Middleware] = deque()
         self.response_middleware: Deque[Middleware] = deque()
@@ -384,7 +385,6 @@ class Sanic(
         self.strict_slashes: bool = strict_slashes
         self.websocket_enabled: bool = False
         self.websocket_tasks: set[Future[Any]] = set()
-        self.repl_ctx = REPLContext()
 
         # Register alternative method names
         self.go_fast = self.run

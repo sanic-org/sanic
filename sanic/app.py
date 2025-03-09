@@ -56,6 +56,7 @@ from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support
 from sanic.config import SANIC_PREFIX, Config
 from sanic.exceptions import (
     BadRequest,
+    PayloadTooLarge,
     SanicException,
     ServerError,
     URLBuildError,
@@ -1342,9 +1343,11 @@ class Sanic(
                 and request.stream.request_body
                 and not route.extra.ignore_body
             ):
+
                 if hasattr(handler, "is_stream"):
-                    # Streaming handler: lift the size limit
-                    request.stream.request_max_size = float("inf")
+                    rq_len = request.stream.request_bytes
+                    if rq_len and rq_len > request.stream.request_max_size:
+                        raise PayloadTooLarge("Request body exceeds the size limit")
                 else:
                     # Non-streaming handler: preload body
                     await request.receive_body()

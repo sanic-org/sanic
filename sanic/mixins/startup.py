@@ -862,7 +862,7 @@ class StartupMixin(metaclass=SanicMeta):
         if server_settings.get("ssl") is not None:
             proto = "https"
         if server_settings.get("unix"):
-            serve_location = f'{server_settings["unix"]} {proto}://...'
+            serve_location = f"{server_settings['unix']} {proto}://..."
         elif server_settings.get("sock"):
             host, port, *_ = server_settings["sock"].getsockname()
 

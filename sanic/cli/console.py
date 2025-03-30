@@ -18,6 +18,7 @@ from sanic.compat import Header
 from sanic.helpers import Default
 from sanic.http.constants import Stage
 from sanic.log import Colors
+from sanic.models.ctx_types import REPLContext
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response.types import HTTPResponse
 
@@ -110,6 +111,13 @@ async def do(
     return Result(request, response)
 
 
+def _variable_description(name: str, desc: str, type_desc: str) -> str:
+    return (
+        f"  - {Colors.BOLD + Colors.SANIC}{name}{Colors.END}: {desc} - "
+        f"{Colors.BOLD + Colors.BLUE}{type_desc}{Colors.END}"
+    )
+
+
 class SanicREPL(InteractiveConsole):
     def __init__(self, app: Sanic, start: Optional[Default] = None):
         global repl_app
@@ -119,16 +127,39 @@ class SanicREPL(InteractiveConsole):
             "sanic": sanic,
             "do": do,
         }
+
+        user_locals = {
+            user_local.name: user_local.var for user_local in app.repl_ctx
+        }
+
         client_availability = ""
         variable_descriptions = [
-            f"  - {Colors.BOLD + Colors.SANIC}app{Colors.END}: The Sanic application instance - {Colors.BOLD + Colors.BLUE}{str(app)}{Colors.END}",  # noqa: E501
-            f"  - {Colors.BOLD + Colors.SANIC}sanic{Colors.END}: The Sanic module - {Colors.BOLD + Colors.BLUE}import sanic{Colors.END}",  # noqa: E501
-            f"  - {Colors.BOLD + Colors.SANIC}do{Colors.END}: An async function to fake a request to the application - {Colors.BOLD + Colors.BLUE}Result(request, response){Colors.END}",  # noqa: E501
+            _variable_description(
+                "app", REPLContext.BUILTINS["app"], str(app)
+            ),
+            _variable_description(
+                "sanic", REPLContext.BUILTINS["sanic"], "import sanic"
+            ),
+            _variable_description(
+                "do", REPLContext.BUILTINS["do"], "Result(request, response)"
+            ),
         ]
+
+        user_locals_descriptions = [
+            _variable_description(
+                user_local.name, user_local.desc, str(type(user_local.var))
+            )
+            for user_local in app.repl_ctx
+        ]
+
         if HTTPX_AVAILABLE:
             locals_available["client"] = SanicClient(app)
             variable_descriptions.append(
-                f"  - {Colors.BOLD + Colors.SANIC}client{Colors.END}: A client to access the Sanic app instance using httpx - {Colors.BOLD + Colors.BLUE}from httpx import Client{Colors.END}",  # noqa: E501
+                _variable_description(
+                    "client",
+                    REPLContext.BUILTINS["client"],
+                    "from httpx import Client",
+                ),
             )
         else:
             client_availability = (
@@ -136,7 +167,7 @@ class SanicREPL(InteractiveConsole):
                 "To enable it, install httpx:\n\t"
                 f"pip install httpx{Colors.END}\n"
             )
-        super().__init__(locals=locals_available)
+        super().__init__(locals={**locals_available, **user_locals})
         self.compile.compiler.flags |= PyCF_ALLOW_TOP_LEVEL_AWAIT
         self.loop = new_event_loop()
         self._start = start
@@ -163,6 +194,16 @@ class SanicREPL(InteractiveConsole):
                 client_availability,
                 "The following objects are available for your convenience:",  # noqa: E501
                 *variable_descriptions,
+            ]
+            + (
+                [
+                    "\nREPL Context:",
+                    *user_locals_descriptions,
+                ]
+                if user_locals_descriptions
+                else []
+            )
+            + [
                 "\nThe async/await keywords are available for use here.",  # noqa: E501
                 f"To exit, press {Colors.BOLD}CTRL+C{Colors.END}, "
                 f"{Colors.BOLD}CTRL+D{Colors.END}, or type {Colors.BOLD}exit(){Colors.END}.\n",  # noqa: E501

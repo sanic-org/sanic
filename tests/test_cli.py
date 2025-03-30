@@ -13,6 +13,7 @@ from sanic_routing import __version__ as __routing_version__
 from sanic import __version__
 from sanic.__main__ import main
 from sanic.cli.inspector_client import InspectorClient
+from sanic.models.ctx_types import REPLLocal
 
 from .conftest import get_port
 
@@ -404,3 +405,50 @@ def test_command_with_renamed_command(caplog):
     with patch("sys.argv", ["sanic", *args]):
         lines = capture(args, caplog)
     assert "BAZ" in lines
+
+
+def test_add_local_method(app):
+    def foo(): ...
+    def bar():
+        """bar method docstring."""
+
+    class Luffy: ...
+
+    import os
+
+    app.repl_ctx.add(foo)
+    app.repl_ctx.add(bar)
+    app.repl_ctx.add(Luffy)
+    app.repl_ctx.add(os, desc="Standard os module.")
+
+    assert REPLLocal(foo, "foo", "") in app.repl_ctx._locals
+    assert (
+        REPLLocal(bar, "bar", "bar method docstring.") in app.repl_ctx._locals
+    )
+    assert REPLLocal(Luffy, "Luffy", "") in app.repl_ctx._locals
+    assert REPLLocal(os, "os", "Standard os module.") in app.repl_ctx._locals
+
+
+def test_add_local_attr(app):
+    def foo(): ...
+    def bar():
+        """bar method docstring."""
+
+    class Luffy: ...
+
+    import os
+
+    app.repl_ctx.foo = foo
+    app.repl_ctx.bar = bar
+    app.repl_ctx.Luffy = Luffy
+    app.repl_ctx.os = os
+
+    assert REPLLocal(foo, "foo", "") in app.repl_ctx._locals
+    assert (
+        REPLLocal(bar, "bar", "bar method docstring.") in app.repl_ctx._locals
+    )
+    assert REPLLocal(Luffy, "Luffy", "") in app.repl_ctx._locals
+    assert any(
+        isinstance(item, REPLLocal) and item.var == os and item.name == "os"
+        for item in app.repl_ctx._locals
+    )

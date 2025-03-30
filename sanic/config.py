@@ -332,7 +332,7 @@ class Config(dict, metaclass=DescriptorMeta):
                 except ValueError:
                     pass
 
-    def update_config(self, config: Union[bytes, str, dict, Any]):
+    def update_config(self, config: Union[bytes, str, dict[str, Any], Any]):
         """Update app.config.
 
         .. note::

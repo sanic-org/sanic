@@ -17,6 +17,7 @@ from sanic.worker.process import ProcessState, Worker, WorkerProcess
 from sanic.worker.restarter import Restarter
 
 
+SIGKILL: int
 if not OS_IS_WINDOWS:
     from signal import SIGKILL
 else:

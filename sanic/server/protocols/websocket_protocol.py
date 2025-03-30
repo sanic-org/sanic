@@ -147,7 +147,7 @@ class WebSocketProtocol(HttpProtocol):
                 "".join([f"{k}: {v}\r\n" for k, v in resp.headers.items()])
             ).encode()
             rbody += b"\r\n"
-            if resp.body is not None:
+            if resp.body:
                 rbody += resp.body
                 rbody += b"\r\n\r\n"
             await super().send(rbody)

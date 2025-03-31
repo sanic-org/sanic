@@ -127,7 +127,9 @@ class HTTPMethodView:
         name: Optional[str] = None,
         stream: bool = False,
         version_prefix: str = "/v",
+        **kwargs: Any,
     ) -> None:
+        super().__init_subclass__(**kwargs)
         if attach:
             cls.attach(
                 attach,

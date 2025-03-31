@@ -193,3 +193,4 @@ def foobar(maybe_func=None, *, arg1=None, arg2=None):
     return decorator(maybe_func) if maybe_func else decorator
 ```
 ````
+

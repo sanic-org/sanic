@@ -7,9 +7,29 @@ content_class: changelog
 🔶 Current release  
 🔷 In support LTS release
 
-## Version 24.12.0 🔶🔷
+## Version 25.3.0 🔶
 
 _Current version_
+
+### Features
+- [#3030](https://github.com/sanic-org/sanic/pull/3030) Improve `websockets` import ordering
+- [#3042](https://github.com/sanic-org/sanic/pull/3042) Add REPL context
+- [#3046](https://github.com/sanic-org/sanic/pull/3046) Support latest v14 `websockets`
+- [#3049](https://github.com/sanic-org/sanic/pull/3049) Subclassing `HTTPMethodView` to allow generics
+
+### Bugfixes
+- [#3047](https://github.com/sanic-org/sanic/pull/3047) Add default to `response.cookies`
+- [#3048](https://github.com/sanic-org/sanic/pull/3048) Add exception logging on connection auto close
+
+
+### Developer infrastructure
+- [#3023](https://github.com/sanic-org/sanic/pull/3023) Cleanup from Python 3.8 removal
+- [#3024](https://github.com/sanic-org/sanic/pull/3024) Improve type hinting
+- [#3028](https://github.com/sanic-org/sanic/pull/3028) Add missing tests
+- [#3041](https://github.com/sanic-org/sanic/pull/3041) Improve GitHub Actions checks
+
+
+## Version 24.12.0 🔷
 
 ### Features
 - [#3019](https://github.com/sanic-org/sanic/pull/3019) Add custom commands to `sanic` CLI

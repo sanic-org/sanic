@@ -145,6 +145,10 @@ root:
                   path: plugins/sanic-testing/clients.html
     - label: Release Notes
       items:
+          - label: "2025"
+            items:
+                - label: Sanic 25.3
+                  path: release-notes/2025/v25.3.html
           - label: "2024"
             items:
                 - label: Sanic 24.12

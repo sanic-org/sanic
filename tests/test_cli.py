@@ -250,9 +250,9 @@ def test_auto_reload(cmd: str, caplog, port):
     info = read_app_info(lines)
 
     assert info["debug"] is False, f"Unexpected value of debug {info}"
-    assert (
-        info["auto_reload"] is True
-    ), f"Unexpected value of auto reload {info}"
+    assert info["auto_reload"] is True, (
+        f"Unexpected value of auto reload {info}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -273,9 +273,9 @@ def test_access_logs(cmd: str, expected: bool, caplog, port):
     info = read_app_info(lines)
     if info["access_log"] != expected:
         print(lines)
-    assert (
-        info["access_log"] is expected
-    ), f"Expected: {expected}. Received: {info}. Lines: {lines}"
+    assert info["access_log"] is expected, (
+        f"Expected: {expected}. Received: {info}. Lines: {lines}"
+    )
 
 
 @pytest.mark.parametrize("cmd", ("--version", "-v"))

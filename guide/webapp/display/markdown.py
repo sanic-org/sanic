@@ -56,7 +56,7 @@ class DocsRenderer(HTMLRenderer):
             {
                 "id": ident,
                 "class": (
-                    f"is-size-{level}-desktop " f"is-size-{level+2}-touch"
+                    f"is-size-{level}-desktop is-size-{level + 2}-touch"
                 ),
             },
             text,

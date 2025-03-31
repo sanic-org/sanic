@@ -50,5 +50,5 @@ class Tabs(DirectivePlugin):
             else ""
         )
         content = f'<div class="tab-content">{text}</div>\n'
-        tab = f'<li><a>{attrs["title"]}</a>{content}</li>\n'
+        tab = f"<li><a>{attrs['title']}</a>{content}</li>\n"
         return start + tab + end

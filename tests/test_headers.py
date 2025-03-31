@@ -386,12 +386,10 @@ def test_accept_misc():
     )
     a = headers.parse_accept(header)
     assert repr(a) == (
-        "[*/plain;param=123, text/plain, text/*, "
-        "foo/bar;q=0.5, foo/bar;q=0.0]"
+        "[*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0]"
     )  # noqa: E501
     assert str(a) == (
-        "*/plain;param=123, text/plain, text/*, "
-        "foo/bar;q=0.5, foo/bar;q=0.0"
+        "*/plain;param=123, text/plain, text/*, foo/bar;q=0.5, foo/bar;q=0.0"
     )  # noqa: E501
     # q=1 types don't match foo/bar but match the two others,
     # text/* comes first and matches */plain because it

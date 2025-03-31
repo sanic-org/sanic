@@ -73,7 +73,7 @@ class CookieJar:
         Returns:
             List[Cookie]: A list of cookies in the CookieJar.
         """
-        return self.headers.getall(self.HEADER_KEY)
+        return self.headers.getall(self.HEADER_KEY, [])
 
     def get_cookie(
         self,

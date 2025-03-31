@@ -7,9 +7,30 @@ content_class: 更新履歴
 🔶 現在のリリース\
 🔷 LTS リリース
 
-## バージョン24.12.0 🔶🔷
+## バージョン25.3.0 🔶
 
 _現在のバージョン_
+
+### 特徴
+
+- [#3030](https://github.com/sanic-org/sanic/pull/3030) `websockets` のインポート順序が改善されました
+- [#3042](https://github.com/sanic-org/sanic/pull/3042) REPL コンテキストを追加
+- [#3046](https://github.com/sanic-org/sanic/pull/3046) 最新の v14 `websockets` をサポート
+- [#3049](https://github.com/sanic-org/sanic/pull/3049) ジェネリックを許可する `HTTPMethodView` のサブクラス化
+
+### バグ修正
+
+- [#3047](https://github.com/sanic-org/sanic/pull/3047) `response.cookies`にデフォルトを追加する
+- [#3048](https://github.com/sanic-org/sanic/pull/3048) 接続自動クローズ時に例外ログインを追加する
+
+### 開発者のインフラストラクチャ
+
+- [#3023](https://github.com/sanic-org/sanic/pull/3023) Python 3.8 削除からのクリーンアップ
+- [#3024](https://github.com/sanic-org/sanic/pull/3024) 型ヒントを改善
+- [#3028](https://github.com/sanic-org/sanic/pull/3028) 不足しているテストを追加
+- [#3041](https://github.com/sanic-org/sanic/pull/3041) GitHub のアクションチェックを改善
+
+## バージョン24.12.0 🔷
 
 ### 特徴
 

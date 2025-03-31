@@ -157,9 +157,9 @@ tox -e 文档
 7. 如果您决定从任何通用接口中移除/更改任何内容，则应根据我们的[废弃政策](https://sanicframework.org/en/guide/project/policies.html#disposition)随附一个废弃的消息。
 8. 如果你实现了一个新功能，你应该至少有一个单元测试来伴随它。
 9. 一个例子必须是：
-   - 如何使用 Sanic 的例子
-   - 如何使用 Sanic 扩展
-   - 如何使用 Sanic 和异步库的例子
+    - 如何使用 Sanic 的例子
+    - 如何使用 Sanic 扩展
+    - 如何使用 Sanic 和异步库的例子
 
 ## 文件
 

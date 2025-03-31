@@ -30,10 +30,10 @@ Two more important items to note:
 
 1. You almost _never_ will want to use :class:`sanic.response.HTTPresponse` directly. It is much simpler to use one of the [convenience methods](./response#methods).
 
-   - `from sanic import json`
-   - `from sanic import html`
-   - `from sanic import redirect`
-   - _etc_
+    - `from sanic import json`
+    - `from sanic import html`
+    - `from sanic import redirect`
+    - _etc_
 2. As we will see in [the streaming section](../advanced/streaming#response-streaming), you do not always need to return an object. If you use this lower-level API, you can control the flow of the response from within the handler, and a return object is not used.
 
 .. tip:: Heads up

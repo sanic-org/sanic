@@ -634,3 +634,4 @@ print("Caught exception:)
 ```
 
 _V23.6_に追加されました
+

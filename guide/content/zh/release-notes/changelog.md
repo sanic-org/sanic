@@ -7,9 +7,30 @@ content_class: 更新日志
 :larg_orange_diamond: Current release
 :larg_blu_diamond: In support LTS release
 
-## 版本24.12.0 :larg_orange_diamond::larg_blu_diamond:
+## 版本25.3.0 :larg_orange_diamond:
 
 _当前版本_
+
+### Features
+
+- [#3030](https://github.com/sanic-org/sanic/pull/3030) Improve `websockets` import ordering
+- [#3042](https://github.com/sanic-org/sanic/pull/3042) Add REPL context
+- [#3046](https://github.com/sanic-org/sanic/pull/3046) Support latest v14 `websockets`
+- [#3049](https://github.com/sanic-org/sanic/pull/3049) Subclassing `HTTPMethodView` to allow generics
+
+### Bugfixes
+
+- [#3047](https://github.com/sanic-org/sanic/pull/3047) Add default to `response.cookies`
+- [#3048](https://github.com/sanic-org/sanic/pull/3048) Add exception logging on connection auto close
+
+### 开发者基础设施
+
+- [#3023](https://github.com/sanic-org/sanic/pull/3023) Cleanup from Python 3.8 removal
+- [#3024](https://github.com/sanic-org/sanic/pull/3024) Improve type hinting
+- [#3028](https://github.com/sanic-org/sanic/pull/3028) 添加缺失测试
+- [#3041](https://github.com/sanic-org/sanic/pull/3041) Improve GitHub Actions checks
+
+## 版本24.12.0 :larg_blu_diamond:
 
 ### Features
 
@@ -64,7 +85,7 @@ _当前版本_
 - [#2899](https://github.com/sanic-org/sanic/pull/2899) 从REPL中删除错误的行，从而影响没有HTTPX的环境
 - [#2962](https://github.com/sanic-org/sanic/pull/2962) 合并实体头部删除
 
-### 开发者基础设施
+### Developer infrastructure
 
 - [#2882](https://github.com/sanic-org/sanic/pull/2882) [#2896](https://github.com/sanic-org/sanic/pull/2896) 应用动态端口固定来改进端口选择测试
 - [#2887](https://github.com/sanic-org/sanic/pull/2887) 更新到码头图像版本
@@ -220,7 +241,7 @@ _Due to circumstances at the time, v.23.9 was skipped._
 - [#2722](https://github.com/sanic-org/sanic/pull/2722) Add `CertLoader` as application option for directly controlling `SSLContext` objects
 - [#2725](https://github.com/sanic-org/sanic/pull/2725) Worker sync state tolerance on race condition
 
-### Bugfixes
+### 错误修正
 
 - [#2651](https://github.com/sanic-org/sanic/pull/2651) ASGI websocket to pass thru bytes as is
 - [#2697](https://github.com/sanic-org/sanic/pull/2697) Fix comparison between datetime aware and naive in `file` when using `If-Modified-Since`
@@ -265,7 +286,7 @@ _当前LTS版本_
 - [#2639](https://github.com/sanic-org/sanic/pull/2639) Add `unquote` to `add_route` method
 - [#2640](https://github.com/sanic-org/sanic/pull/2640) ASGI websockets to receive `text` or `bytes`
 
-### 错误修正
+### Bugfixes
 
 - [#2607](https://github.com/sanic-org/sanic/pull/2607) Force socket shutdown before close to allow rebinding
 - [#2590](https://github.com/sanic-org/sanic/pull/2590) Use actual `StrEnum` in Python 3.11+
@@ -287,7 +308,7 @@ _当前LTS版本_
 
 ## Version 22.9.1
 
-### Features
+### 功能
 
 - [#2585](https://github.com/sanic-org/sanic/pull/2585) Improved error message when no applications have been registered
 
@@ -334,7 +355,7 @@ _当前LTS版本_
 - [#2546](https://github.com/sanic-org/sanic/pull/2546) Add deprecation warning filter
 - [#2550](https://github.com/sanic-org/sanic/pull/2550) Middleware priority and performance enhancements
 
-### Bugfixes
+### 错误修正
 
 - [#2495](https://github.com/sanic-org/sanic/pull/2495) Prevent directory traversion with static files
 - [#2515](https://github.com/sanic-org/sanic/pull/2515) Do not apply double slash to paths in certain static dirs in Blueprints
@@ -363,7 +384,7 @@ _当前LTS版本_
 
 ## Version 22.6.1
 
-### 错误修正
+### Bugfixes
 
 - [#2477](https://github.com/sanic-org/sanic/pull/2477) Sanic static directory fails when folder name ends with ".."
 
@@ -415,7 +436,7 @@ _当前LTS版本_
 
 ## Version 22.3.0
 
-### Features
+### 功能
 
 - [#2347](https://github.com/sanic-org/sanic/pull/2347) API for multi-application server
   - 🚨 _BREAKING CHANGE_: The old `sanic.worker.GunicornWorker` has been **removed**. To run Sanic with `gunicorn`, you should use it thru `uvicorn` [as described in their docs](https://www.uvicorn.org/#running-with-gunicorn).
@@ -436,7 +457,7 @@ _当前LTS版本_
 - [sanic-routing#58](https://github.com/sanic-org/sanic-routing/pull/58) Default matching on non-empty strings only, and new `strorempty` pattern type
   - 🚨 _BREAKING CHANGE_: Previously a route with a dynamic string parameter (`/<foo>` or `/<foo:str>`) would match on any string, including empty strings. It will now **only** match a non-empty string. To retain the old behavior, you should use the new parameter type: `/<foo:strorempty>`.
 
-### Bugfixes
+### 错误修正
 
 - [#2373](https://github.com/sanic-org/sanic/pull/2373) Remove `error_logger` on websockets
 - [#2381](https://github.com/sanic-org/sanic/pull/2381) Fix newly assigned `None` in task registry
@@ -453,7 +474,7 @@ _当前LTS版本_
   5. Unused websocket protocol args removed
 - [#2344](https://github.com/sanic-org/sanic/pull/2344) Deprecate loading of lowercase environment variables
 
-### Developer infrastructure
+### 开发者基础设施
 
 - [#2363](https://github.com/sanic-org/sanic/pull/2363) Revert code coverage back to Codecov
 - [#2405](https://github.com/sanic-org/sanic/pull/2405) Upgrade tests for `sanic-routing` changes
@@ -958,7 +979,7 @@ Notes
 
 ## Version 20.9.1
 
-**Bugfixes**
+**错误修复**
 
 - [#1954](https://github.com/sanic-org/sanic/pull/1954) Fix static
   route registration on blueprints

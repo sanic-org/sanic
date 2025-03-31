@@ -632,3 +632,4 @@ async def handler(request: CustomRequest):
 format@@0(./request#custom-request-context) セクションを参照してください。
 
 _V23.6_に追加されました
+

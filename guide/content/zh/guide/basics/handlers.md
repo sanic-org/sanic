@@ -30,10 +30,10 @@ async def i_am_ALSO_a_handler(request):
 
 1. 你可以不用直接使用 :class:`sanic.response.HTTPresponse` 实例去返回数据 使用一些内置封装好的[便捷方法](./response#methods)，将会变的更加简单。
 
-   - `from sanic import json`
-   - `from sanic import html`
-   - `from sanic import redirect`
-   - _etc_
+    - `from sanic import json`
+    - `from sanic import html`
+    - `from sanic import redirect`
+    - _etc_
 2. 我们会在[流媒体部分](../advanced/streaming#response-streaming)中看到的，您并不总是需要返回一个对象。 如果您使用这个底层的 API，您可以在处理程序内部控制响应的流程，并且不需要使用返回对象。
 
 .. tip:: 提示

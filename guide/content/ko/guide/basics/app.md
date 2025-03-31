@@ -632,3 +632,4 @@ async def handler(request: CustomRequest):
 See more information in the [custom request context](./request#custom-request-context) section.
 
 _Added in v23.6_
+

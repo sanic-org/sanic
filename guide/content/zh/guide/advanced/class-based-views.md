@@ -225,3 +225,4 @@ class SpecialClassView(HTTPMethodView):
 app.add_route(SpecialClassView.as_view(), "/special_class_view")
 ```
 ````
+

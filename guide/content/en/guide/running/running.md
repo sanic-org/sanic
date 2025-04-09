@@ -515,7 +515,7 @@ See the [Gunicorn Docs](http://docs.gunicorn.org/en/latest/settings.html#max-req
 
     Sanic will also perform fastest if you turn off `access_log`.
 
-    If you still require access logs, but want to enjoy this performance boost, consider using [Nginx as a proxy](./nginx.md), and letting that handle your access logging. It will be much faster than anything Python can handle.
+    If you still require access logs, but want to enjoy this performance boost, consider using [Nginx as a proxy](./../deployment/nginx.md), and letting that handle your access logging. It will be much faster than anything Python can handle.
 
 .. column::
 

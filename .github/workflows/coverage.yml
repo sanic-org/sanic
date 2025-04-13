@@ -32,3 +32,7 @@ jobs:
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
+      - name: Upload test results for Test Analytics
+        uses: codecov/test-results-action@v1
+        with:
+          files: test-results.xml

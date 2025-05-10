@@ -18,7 +18,7 @@ non_ascii_phrases = {
     'Hejdå', 'À bientôt', 'Bis später', 'Adjø',
     'じゃね', 'またね', '안녕히 계세요', '잘 가', 'שלום',
     'להתראות', 'مع السلامة', 'إلى اللقاء', 'وداعاً', 'अलविदा',
-    'फिर मिलेंगे',
+    'फिर मिलेंगे', "Güle güle",
 }
 
 all_phrases = ascii_phrases | non_ascii_phrases

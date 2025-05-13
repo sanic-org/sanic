@@ -293,7 +293,7 @@ class WorkerManager:
         while True:
             try:
                 cycle = self._poll_monitor()
-                if cycle is MonitorCycle.BREAK:
+                if self._shutting_down or cycle is MonitorCycle.BREAK:
                     break
                 elif cycle is MonitorCycle.CONTINUE:
                     continue
@@ -314,7 +314,7 @@ class WorkerManager:
             "If this problem persists, please check out the documentation "
             "https://sanic.dev/en/guide/deployment/manager.html#worker-ack."
         )
-        while not self._all_workers_ack():
+        while not self._shutting_down and not self._all_workers_ack():
             if self.monitor_subscriber.poll(0.1):
                 monitor_msg = self.monitor_subscriber.recv()
                 if monitor_msg != "__TERMINATE_EARLY__":

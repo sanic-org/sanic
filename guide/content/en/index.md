@@ -78,7 +78,7 @@ features:
     
     After installing, Sanic has all the tools you need for a scalable, production-grade server—out of the box!
 
-    Including [full TLS support](/en/guide/how-to/tls).
+    Including [full TLS support](/en/guide/how-to/tls.md).
 
     ```python
     from sanic import Sanic
@@ -306,6 +306,6 @@ features:
     - **One server** - Develop locally in DEV mode on the same server that will run your PRODUCTION application
     - **Auto reload** - Reload running applications every time you save a Python file, but also auto-reload **on any arbitrary directory** like HTML template directories
     - **Debugging tools** - Super helpful (and beautiful) [error pages](/en/guide/best-practices/exceptions) that help you traverse the trace stack easily
-    - **Auto TLS** - Running a localhost website with `https` can be difficult, [Sanic makes it easy](/en/guide/how-to/tls)
+    - **Auto TLS** - Running a localhost website with `https` can be difficult, [Sanic makes it easy](/en/guide/how-to/tls.md)
     - **Streamlined testing** - Built-in testing capabilities, making it easier for developers to create and run tests, ensuring the quality and reliability of their services
     - **Modern Python** - Thoughtful use of type hints to help the developer IDE experience

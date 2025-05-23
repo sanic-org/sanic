@@ -218,7 +218,7 @@ As you can see, the `request.ctx` object is a great place to store information t
 
 ### Custom Request Objects
 
-As dicussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. This is useful for adding additional attributes or methods that are specific to your application.
+As discussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. This is useful for adding additional attributes or methods that are specific to your application.
 
 .. column::
 

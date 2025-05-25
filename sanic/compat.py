@@ -81,7 +81,7 @@ def pypy_os_module_patch() -> None:
     with 'os.path.realpath', which serves the same purpose.
     """
     if hasattr(os, "readlink"):
-        error_logger.debug(
+        error_logger.warning(
             "PyPy: Skipping patching of the os module as it appears the "
             "'readlink' function has been added."
         )

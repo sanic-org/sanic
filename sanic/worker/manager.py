@@ -438,6 +438,8 @@ class WorkerManager:
                 continue
             if not process.is_alive():
                 state = "FAILED" if process.exitcode else "COMPLETED"
+                self.terminate()
+                raise Exception( "One or more processes is terminated." )
             if state and process.state.name != state:
                 process.set_state(ProcessState[state], True)
 

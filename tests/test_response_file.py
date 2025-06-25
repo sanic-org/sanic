@@ -4,7 +4,7 @@ from logging import INFO
 import pytest
 
 from sanic.compat import Header
-from sanic.response.convenience import validate_file
+from sanic.response.convenience import guess_content_type, validate_file
 
 
 @pytest.mark.parametrize(
@@ -53,3 +53,40 @@ async def test_file_timestamp_validation(
     else:
         record = records[0]
         assert expected in record.message
+
+
+@pytest.mark.parametrize(
+    "file_path,expected",
+    (
+        ("test.html", "text/html; charset=UTF-8"),
+        ("test.txt", "text/plain; charset=UTF-8"),
+        ("test.css", "text/css; charset=UTF-8"),
+        ("test.js", "text/javascript; charset=UTF-8"),
+        ("test.xml", "application/xml"),
+        ("test.csv", "text/csv; charset=UTF-8"),
+        ("test.json", "application/json"),
+        ("test.pdf", "application/pdf"),
+        ("test.png", "image/png"),
+        ("test.jpg", "image/jpeg"),
+        ("test.unknown", "application/octet-stream"),
+        ("no_extension", "application/octet-stream"),
+    ),
+)
+def test_guess_content_type(file_path, expected):
+    """Test that guess_content_type correctly adds charset for text types."""
+    result = guess_content_type(file_path)
+    assert result == expected
+
+
+def test_guess_content_type_with_custom_fallback():
+    """Test that guess_content_type uses custom fallback for unknown types."""
+    result = guess_content_type("unknown.xyz", fallback="custom/type")
+    assert result == "custom/type"
+
+
+def test_guess_content_type_with_pathlib():
+    """Test that guess_content_type works with pathlib Path objects."""
+    from pathlib import Path
+
+    result = guess_content_type(Path("test.html"))
+    assert result == "text/html; charset=UTF-8"

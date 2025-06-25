@@ -1002,3 +1002,30 @@ def test_stream_response_with_default_headers(app: Sanic):
     assert response.text == "foo"
     assert response.headers["Transfer-Encoding"] == "chunked"
     assert response.headers["Content-Type"] == "text/csv"
+
+
+@pytest.mark.parametrize(
+    "file_name,expected_content_type",
+    [
+        ("decode me.txt", "text/plain; charset=UTF-8"),
+        ("test.html", "text/html; charset=UTF-8"),
+        ("python.png", "image/png"),
+        ("test.file", "application/octet-stream"),
+    ],
+)
+def test_file_response_content_type_with_charset(
+    app: Sanic, file_name, expected_content_type, static_file_directory
+):
+    """Test that file responses automatically include charset for text."""
+    @app.route("/files/<filename>", methods=["GET"])
+    def file_route(request, filename):
+        file_path = os.path.join(static_file_directory, filename)
+        file_path = os.path.abspath(unquote(file_path))
+        return file(file_path)
+
+    request, response = app.test_client.get(f"/files/{file_name}")
+    assert response.status == 200
+    assert response.headers["Content-Type"] == expected_content_type
+
+
+@pytest.mark.parametrize("file_name", ["test.file", "decode me.txt"])

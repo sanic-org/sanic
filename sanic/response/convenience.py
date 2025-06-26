@@ -291,7 +291,7 @@ async def file(
             out_stream = await f.read()
 
     content_type = mime_type or guess_content_type(
-        filename, fallback="text/plain"
+        filename, fallback="text/plain; charset=utf-8"
     )
     return HTTPResponse(
         body=out_stream,
@@ -408,5 +408,5 @@ def guess_content_type(
     if mediatype is None:
         return fallback
     if mediatype.startswith("text/"):
-        return f"{mediatype}; charset=UTF-8"
+        return f"{mediatype}; charset=utf-8"
     return mediatype

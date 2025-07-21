@@ -1,4 +1,5 @@
 import os
+import signal
 
 from collections.abc import Iterable
 from contextlib import suppress
@@ -372,11 +373,14 @@ class WorkerManager:
         for process in self.processes:
             logger.info("Killing %s [%s]", process.name, process.pid)
             with suppress(ProcessLookupError):
-                try:
-                    os.killpg(os.getpgid(process.pid), SIGKILL)
-                except (OSError, AttributeError):
-                    # AttributeError is for Windows, where there is no killpg
-                    os.kill(process.pid, SIGKILL)
+                if os.name == "nt":
+                    # Windows has no os.killpg and SIGKILL doesn't seem to work
+                    os.kill(process.pid, signal.CTRL_C_EVENT)
+                else:
+                    try:
+                        os.killpg(os.getpgid(process.pid), SIGKILL)
+                    except OSError:
+                        os.kill(process.pid, SIGKILL)
         raise ServerKilled
 
     def shutdown_signal(self, signal, frame):

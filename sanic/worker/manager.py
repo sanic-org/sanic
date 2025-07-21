@@ -374,7 +374,8 @@ class WorkerManager:
             with suppress(ProcessLookupError):
                 try:
                     os.killpg(os.getpgid(process.pid), SIGKILL)
-                except OSError:
+                except (OSError, AttributeError):
+                    # AttributeError is for Windows, where there is no killpg
                     os.kill(process.pid, SIGKILL)
         raise ServerKilled
 

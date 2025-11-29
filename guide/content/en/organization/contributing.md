@@ -24,24 +24,14 @@ uv run sanic path.to.app:app
 If you prefer to work in an activated virtual environment, you can sync all dependencies:
 
 ```sh
-uv sync --all-extras
+uv sync
 ```
 
-Then activate the virtual environment (`.venv/bin/activate`) to run commands directly without `uv run`.
+Activate the virtual environment (`.venv/bin/activate`) to run commands directly without `uv run`.
 
-## Dependency Changes
+## Dependency Management
 
-`Sanic` doesn't use `requirements*.txt` files to manage any kind of dependencies. All dependencies are managed in the `pyproject.toml` file.
-
-| Dependency Type                 | Usage                                             | How to Use with uv                 |
-| ------------------------------- | ------------------------------------------------- | ---------------------------------- |
-| dependencies                    | Bare minimum dependencies required for sanic to function | Automatically installed with `uv run` |
-| optional-dependencies.test      | Dependencies required to run the Unit Tests for `sanic` | `uv run --extra test <command>`    |
-| optional-dependencies.dev       | Additional Development requirements for contributing | `uv run --extra dev <command>`     |
-| optional-dependencies.docs      | Dependencies required for building documentation | `uv run --extra docs <command>`    |
-| optional-dependencies.all       | All optional dependencies                         | `uv sync --all-extras`             |
-
-In most cases, `uv run nox` will automatically install the necessary dependencies for the task you're running.
+All extra dependencies are managed in `pyproject.toml`. When using `uv`, the dev dependencies are automatically installed as needed—you don't need to manually manage them.
 
 ## Running all tests
 

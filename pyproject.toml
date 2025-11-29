@@ -37,6 +37,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+    "sanic[test]",
+    "cryptography",
+    "towncrier",
+    "nox",
+]
 test = [
     "sanic-testing>=23.6.0",
     "pytest>=8.2.2",
@@ -54,11 +60,11 @@ test = [
     "slotscheck>=0.8.0,<1",
     "types-ujson; sys_platform != 'win32' and implementation_name == 'cpython'",
 ]
-dev = [
-    "sanic[test]",
-    "cryptography",
-    "towncrier",
-    "nox",
+ext = [
+    "sanic-ext",
+]
+http3 = [
+    "aioquic",
 ]
 docs = [
     "sphinx>=2.1.2",
@@ -69,15 +75,6 @@ docs = [
     "enum-tools[sphinx]",
     "mistune<2.0.0",
     "autodocsumm>=0.2.11",
-]
-all = [
-    "sanic[dev,docs]",
-]
-ext = [
-    "sanic-ext",
-]
-http3 = [
-    "aioquic",
 ]
 
 [project.urls]

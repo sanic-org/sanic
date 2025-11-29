@@ -26,8 +26,6 @@ RUFF_TARGETS = ["sanic", "examples", "scripts", "tests", "guide", "docs"]
 @nox.session(python=PYTHON_VERSIONS + PYPY_VERSIONS)
 def tests(session):
     """Run tests with coverage for each Python version."""
-    session.install(".[test,http3]", "httpx>=0.23", "setuptools")
-    
     # If no args provided, default to "tests" directory
     test_args = session.posargs if session.posargs else ["tests"]
     
@@ -47,8 +45,6 @@ def tests(session):
 @nox.session(python=TOOLS_PYTHON)
 def lint(session):
     """Run linting checks with ruff."""
-    session.install(".[test]", "ruff", "slotscheck>=0.8.0,<1")
-    
     session.run("ruff", "check", *RUFF_TARGETS)
     session.run("ruff", "format", "--check", *RUFF_TARGETS)
     session.run("slotscheck", "--verbose", "-m", "sanic")
@@ -57,25 +53,19 @@ def lint(session):
 @nox.session(python=TOOLS_PYTHON)
 def format(session):
     """Format code with ruff."""
-    session.install("ruff")
-    
-    session.run("ruff", "format", *RUFF_TARGETS)
     session.run("ruff", "check", "--fix", *RUFF_TARGETS)
+    session.run("ruff", "format", *RUFF_TARGETS)
 
 
 @nox.session(python=TOOLS_PYTHON)
 def type_checking(session):
     """Run type checking with mypy."""
-    session.install(".[test]", "mypy")
-    
     session.run("mypy", "sanic")
 
 
 @nox.session(python=TOOLS_PYTHON)
 def security(session):
     """Run security checks with bandit."""
-    session.install("bandit")
-    
     session.run(
         "bandit",
         "--recursive", "sanic",
@@ -86,8 +76,6 @@ def security(session):
 @nox.session(python=TOOLS_PYTHON)
 def docs(session):
     """Build documentation (dummy check for syntax errors)."""
-    session.install(".[docs,http3]")
-    
     session.run("sphinx-build", "-b", "dummy", "docs", "docs/_build/dummy")
     session.log("Documentation syntax check passed")
 
@@ -95,8 +83,6 @@ def docs(session):
 @nox.session(python=TOOLS_PYTHON)
 def docs_html(session):
     """Build HTML documentation."""
-    session.install(".[docs,http3]")
-    
     session.run("sphinx-build", "-b", "html", "docs", "docs/_build/html")
     session.log("Documentation built in docs/_build/html/")
 
@@ -118,8 +104,6 @@ def docs_clean(session):
 @nox.session(python=TOOLS_PYTHON)
 def docs_serve(session):
     """Serve documentation with live reload."""
-    session.install(".[docs,http3]", "sphinx-autobuild")
-    
     session.run(
         "sphinx-autobuild",
         "docs", "docs/_build/html",
@@ -131,8 +115,6 @@ def docs_serve(session):
 @nox.session(python=TOOLS_PYTHON)
 def docs_linkcheck(session):
     """Check external links in documentation."""
-    session.install(".[docs,http3]")
-    
     session.run("sphinx-build", "-b", "linkcheck", "docs", "docs/_build/linkcheck")
     session.log("Link check complete; check docs/_build/linkcheck/output.txt for results")
 
@@ -140,8 +122,6 @@ def docs_linkcheck(session):
 @nox.session(python=TOOLS_PYTHON)
 def docs_doctest(session):
     """Run doctests in documentation."""
-    session.install(".[docs,http3]")
-    
     session.run("sphinx-build", "-b", "doctest", "docs", "docs/_build/doctest")
     session.log("Doctest complete; check docs/_build/doctest/output.txt for results")
 
@@ -149,8 +129,6 @@ def docs_doctest(session):
 @nox.session(python=TOOLS_PYTHON)
 def coverage_report(session):
     """Generate coverage reports from previously collected data."""
-    session.install("coverage")
-    
     # Generate reports from combined coverage data
     session.run("coverage", "report", "-m", "-i")
     session.run("coverage", "html", "-i")
@@ -160,8 +138,6 @@ def coverage_report(session):
 @nox.session(python=TOOLS_PYTHON)
 def coverage_xml(session):
     """Generate coverage XML report for CI from previously collected data."""
-    session.install("coverage")
-    
     # Generate XML report from combined coverage data
     session.run("coverage", "xml", "-i")
     session.log("Coverage XML report generated: coverage.xml")
@@ -170,8 +146,6 @@ def coverage_xml(session):
 @nox.session(python=TOOLS_PYTHON)
 def build(session):
     """Build distribution packages."""
-    session.install("build", "hatchling")
-    
     session.run("python", "-m", "build")
 
 
@@ -216,8 +190,6 @@ def clean(session):
 @nox.session(python=TOOLS_PYTHON, name="test-quick")
 def test_quick(session):
     """Run tests quickly on the latest Python version only (for rapid development)."""
-    session.install(".[test,http3]", "httpx>=0.23", "setuptools")
-    
     # If no args provided, default to "tests" directory
     test_args = session.posargs if session.posargs else ["tests"]
     
@@ -231,33 +203,19 @@ def test_quick(session):
 @nox.session(python=TOOLS_PYTHON)
 def benchmark(session):
     """Run benchmark tests using standalone script."""
-    session.install(".")
-    
     session.run("python", "scripts/benchmark.py")
     session.log("Benchmark tests completed successfully")
 
 
 @nox.session(python=TOOLS_PYTHON)
-def dev(session):
-    """Install the package with all extras for development."""
-    session.install("-e", ".[dev,docs,http3]", "httpx>=0.23")
-    session.log("Development environment ready!")
-    session.log("Installed with all extras: dev, docs, http3")
-
-
-@nox.session(python=TOOLS_PYTHON)
 def changelog(session):
     """Generate changelog for Sanic to prepare for new release."""
-    session.install("towncrier")
-    
     session.run("python", "scripts/changelog.py")
 
 
 @nox.session(python=TOOLS_PYTHON)
 def release(session):
     """Prepare Sanic for a new release by version bump and changelog."""
-    session.install("towncrier")
-    
     # Check if version argument is provided via posargs
     if session.posargs and len(session.posargs) > 0:
         session.run(
@@ -275,8 +233,6 @@ def release(session):
 @nox.session(python=TOOLS_PYTHON)
 def guide_serve(session):
     """Serve the user guide with live reload."""
-    session.install(".")
-    
     session.run(
         "sanic", "server:app",
         "-r",
@@ -308,8 +264,6 @@ def docker_test(session):
 @nox.session(python=TOOLS_PYTHON)
 def view_coverage(session):
     """View coverage report using sanic."""
-    session.install(".")
-    
     session.run("sanic", "./coverage", "--simple", external=True)
 
 

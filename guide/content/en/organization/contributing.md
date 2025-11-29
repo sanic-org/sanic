@@ -24,84 +24,52 @@ uv run sanic path.to.app:app
 If you prefer to work in an activated virtual environment, you can sync all dependencies:
 
 ```sh
-uv sync
+# Install all development dependencies
+uv sync --dev
+
+# Or install development and documentation dependencies
+uv sync --group dev --group docs
 ```
 
 Activate the virtual environment (`.venv/bin/activate`) to run commands directly without `uv run`.
 
 ## Dependency Management
 
-All extra dependencies are managed in `pyproject.toml`. When using `uv`, the dev dependencies are automatically installed as needed—you don't need to manually manage them.
+Dependencies are managed in `pyproject.toml`:
 
-## Running all tests
+- **`[project.dependencies]`** - Core runtime dependencies required by Sanic
+- **`[project.optional-dependencies]`** - Installable extras `sanic[ext]` and `sanic[http3]`
+- **`[dependency-groups]`** - Development-only dependencies (testing, linting, docs)
+  - `dev` - All testing and development tools
+  - `docs` - Documentation building tools
 
-To run the tests for Sanic it is recommended to use nox like so:
+When using `uv run` or nox sessions, dependencies are automatically installed as needed.
+
+## Running all checks
+
+To run development actions for Sanic, use nox:
 
 ```sh
 uv run nox
 ```
 
-This will run all the checks, including the test suite with each supported Python version in separate venvs. It takes a few minutes to complete.
+By default, this runs the complete CI pipeline:
+1. **Format** - Auto-format code with `ruff`
+2. **Lint** - Check code style and quality
+3. **Type checking** - Run `mypy` type checks
+4. **Security** - Run `bandit` security checks
+5. **Tests** - Run the full test suite across all supported Python versions
+6. **Docs** - Build documentation
 
-`noxfile.py` contains different sessions. Running `nox` without any arguments will
-run all test sessions across all supported Python versions.
+This takes a long time to complete. Use `nox -l` to see all available sessions that can be used individually with `nox -s <name>`, including ones not included in the default pipeline.
 
-## Run unittests
+## Quick development testing
 
-To execute only unittests for a specific Python version, run `nox` with a session like so:
-
-```sh
-uv run nox -s tests-3.13
-# or for a specific test file
-uv run nox -s tests-3.13 -- tests/test_config.py
-```
-
-To run tests across all Python versions:
+A `test-quick` session is available to only run tests with the most recent Python version, rather than all of them like `test`. Both options can pass additional options to pytest, e.g. to run just a single test module:
 
 ```sh
-uv run nox -s tests
+uv run nox -s test-quick -- tests/test_app.py
 ```
-
-## Run lint checks
-
-Perform `ruff` checks (linting, formatting, and import sorting) and `slotscheck`.
-
-```sh
-uv run nox -s lint
-```
-
-## Run type annotation checks
-
-Perform `mypy` checks.
-
-```sh
-uv run nox -s type_checking
-```
-
-## Format code
-
-Automatically format code with `ruff`.
-
-```sh
-uv run nox -s format
-```
-
-## Run Static Analysis
-
-Perform static analysis security scan with `bandit`.
-
-```sh
-uv run nox -s security
-```
-
-## Run Documentation sanity check
-
-Perform sanity check on documentation.
-
-```sh
-uv run nox -s docs
-```
-## Code Style
 
 To maintain the code consistency, Sanic uses the following tools:
 

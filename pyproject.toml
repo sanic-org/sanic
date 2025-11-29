@@ -37,44 +37,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "sanic[test]",
-    "cryptography",
-    "towncrier",
-    "nox",
-]
-test = [
-    "sanic-testing>=23.6.0",
-    "pytest>=8.2.2",
-    "coverage",
-    "beautifulsoup4",
-    "pytest-sanic",
-    "pytest-benchmark",
-    "chardet==3.*",
-    "ruff",
-    "bandit",
-    "mypy",
-    "docutils",
-    "pygments",
-    "uvicorn",
-    "slotscheck>=0.8.0,<1",
-    "types-ujson; sys_platform != 'win32' and implementation_name == 'cpython'",
-]
 ext = [
     "sanic-ext",
 ]
 http3 = [
     "aioquic",
-]
-docs = [
-    "sphinx>=2.1.2",
-    "sphinx_rtd_theme>=0.4.3",
-    "docutils",
-    "pygments",
-    "m2r2",
-    "enum-tools[sphinx]",
-    "mistune<2.0.0",
-    "autodocsumm>=0.2.11",
 ]
 
 [project.urls]
@@ -114,7 +81,8 @@ select = [
     "W",    # pycodestyle warnings
 ]
 ignore = [
-    "E203",
+    "E203",  # whitespace before punctuation
+    "E501",  # line too long (handled by formatter where possible)
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -132,6 +100,9 @@ known-third-party = ["pytest"]
 lines-after-imports = 2
 lines-between-types = 1
 
+[tool.mypy]
+disable_error_code = ["annotation-unchecked"]
+
 [[tool.mypy.overrides]]
 module = [
     "httptools.*",
@@ -146,4 +117,31 @@ ignore_missing_imports = true
 [dependency-groups]
 dev = [
     "nox>=2025.11.12",
+    "cryptography",
+    "towncrier",
+    "sanic-testing>=23.6.0",
+    "pytest>=8.2.2",
+    "coverage",
+    "beautifulsoup4",
+    "pytest-sanic",
+    "pytest-benchmark",
+    "chardet==3.*",
+    "ruff",
+    "bandit",
+    "mypy",
+    "docutils",
+    "pygments",
+    "uvicorn",
+    "slotscheck>=0.8.0,<1",
+    "types-ujson; sys_platform != 'win32' and implementation_name == 'cpython'",
+]
+docs = [
+    "sphinx>=2.1.2",
+    "sphinx_rtd_theme>=0.4.3",
+    "docutils",
+    "pygments",
+    "m2r2",
+    "enum-tools[sphinx]",
+    "mistune<2.0.0",
+    "autodocsumm>=0.2.11",
 ]

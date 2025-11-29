@@ -6,143 +6,141 @@ We are committed to providing a friendly, safe and welcoming environment for all
 
 ## Installation
 
-To develop on Sanic (and mainly to just run the tests) it is highly recommend to install from sources.
+To develop on Sanic, it is highly recommended to use `uv` which automatically manages virtual environments and dependencies.
 
-So assume you have already cloned the repo and are in the working directory with a virtual environment already set up, then run:
+After cloning the repo, you don't need a separate install step! Simply use `uv run` to execute commands:
 
 ```sh
-pip install -e ".[dev]"
+# Run tests - uv will automatically set up the environment
+uv run nox -s test-quick
+
+# Run any script with dependencies automatically installed
+uv run pytest tests/test_app.py
+
+# Run sanic itself
+uv run sanic path.to.app:app
 ```
+
+If you prefer to work in an activated virtual environment, you can sync all dependencies:
+
+```sh
+uv sync --all-extras
+```
+
+Then activate the virtual environment (`.venv/bin/activate`) to run commands directly without `uv run`.
 
 ## Dependency Changes
 
-`Sanic` doesn't use `requirements*.txt` files to manage any kind of dependencies related to it in order to simplify the effort required in managing the dependencies. Please make sure you have read and understood the following section of the document that explains the way `sanic` manages dependencies inside the `setup.py` file.
+`Sanic` doesn't use `requirements*.txt` files to manage any kind of dependencies. All dependencies are managed in the `pyproject.toml` file.
 
-| Dependency Type                 | Usage                                             | Installation                 |
-| ------------------------------- | ------------------------------------------------- | ---------------------------- |
-| requirements                    | Bare minimum dependencies required for sanic to function | `pip3 install -e .`         |
-| tests_require / extras_require['test'] | Dependencies required to run the Unit Tests for `sanic` | `pip3 install -e '.[test]'` |
-| extras_require['dev']           | Additional Development requirements to add contributing | `pip3 install -e '.[dev]'`  |
-| extras_require['docs']          | Dependencies required to enable building and enhancing sanic documentation | `pip3 install -e '.[docs]'` |
+| Dependency Type                 | Usage                                             | How to Use with uv                 |
+| ------------------------------- | ------------------------------------------------- | ---------------------------------- |
+| dependencies                    | Bare minimum dependencies required for sanic to function | Automatically installed with `uv run` |
+| optional-dependencies.test      | Dependencies required to run the Unit Tests for `sanic` | `uv run --extra test <command>`    |
+| optional-dependencies.dev       | Additional Development requirements for contributing | `uv run --extra dev <command>`     |
+| optional-dependencies.docs      | Dependencies required for building documentation | `uv run --extra docs <command>`    |
+| optional-dependencies.all       | All optional dependencies                         | `uv sync --all-extras`             |
+
+In most cases, `uv run nox` will automatically install the necessary dependencies for the task you're running.
 
 ## Running all tests
 
-To run the tests for Sanic it is recommended to use tox like so:
+To run the tests for Sanic it is recommended to use nox like so:
 
 ```sh
-tox
+uv run nox
 ```
 
-See it's that simple!
+This will run all the checks, including the test suite with each supported Python version in separate venvs. It takes a few minutes to complete.
 
-`tox.ini` contains different environments. Running `tox` without any arguments will
-run all unittests, perform lint and other checks.
+`noxfile.py` contains different sessions. Running `nox` without any arguments will
+run all test sessions across all supported Python versions.
 
 ## Run unittests
 
-`tox` environment -> `[testenv]`
-
-To execute only unittests, run `tox` with environment like so:
+To execute only unittests for a specific Python version, run `nox` with a session like so:
 
 ```sh
+uv run nox -s tests-3.13
+# or for a specific test file
+uv run nox -s tests-3.13 -- tests/test_config.py
+```
 
-tox -e py37 -v -- tests/test_config.py
-# or
-tox -e py310 -v -- tests/test_config.py
+To run tests across all Python versions:
+
+```sh
+uv run nox -s tests
 ```
 
 ## Run lint checks
 
-`tox` environment -> `[testenv:lint]`
-
-Permform `flake8`\ , `black` and `isort` checks.
-
+Perform `ruff` checks (linting, formatting, and import sorting) and `slotscheck`.
 
 ```sh
-tox -e lint
+uv run nox -s lint
 ```
 
 ## Run type annotation checks
 
-`tox` environment -> `[testenv:type-checking]`
-
-Permform `mypy` checks.
+Perform `mypy` checks.
 
 ```sh
-tox -e type-checking
+uv run nox -s type_checking
 ```
 
-## Run other checks
+## Format code
 
-`tox` environment -> `[testenv:check]`
-
-Perform other checks.
+Automatically format code with `ruff`.
 
 ```sh
-tox -e check
+uv run nox -s format
 ```
 
 ## Run Static Analysis
 
-`tox` environment -> `[testenv:security]`
-
-Perform static analysis security scan
+Perform static analysis security scan with `bandit`.
 
 ```sh
-tox -e security
+uv run nox -s security
 ```
 
 ## Run Documentation sanity check
 
-`tox` environment -> `[testenv:docs]`
-
-Perform sanity check on documentation
+Perform sanity check on documentation.
 
 ```sh
-tox -e docs
+uv run nox -s docs
 ```
 ## Code Style
 
 To maintain the code consistency, Sanic uses the following tools:
 
-1. [isort](https://github.com/timothycrosley/isort)
-2. [black](https://github.com/python/black)
-3. [flake8](https://github.com/PyCQA/flake8)
-4. [slotscheck](https://github.com/ariebovenberg/slotscheck)
+1. [ruff](https://github.com/astral-sh/ruff) - for linting, formatting, and import sorting
+2. [slotscheck](https://github.com/ariebovenberg/slotscheck) - for `__slots__` validation
 
-### isort
+### ruff
 
-`isort` sorts Python imports. It divides imports into three categories sorted each in alphabetical order:
+`ruff` is an extremely fast Python linter and formatter that replaces multiple tools:
 
-1. built-in
-2. third-party
-3. project-specific
+- **Linting**: Replaces flake8, pylint, and related plugins
+- **Formatting**: Replaces black
+- **Import sorting**: Replaces isort
 
-### black
-
-`black` is a Python code formatter.
-
-### flake8
-
-`flake8` is a Python style guide that wraps the following tools into one:
-
-1. PyFlakes
-2. pycodestyle
-3. Ned Batchelder's McCabe script
+`ruff` provides a unified toolchain for code quality and consistency.
 
 ### slotscheck
 
 `slotscheck` ensures that there are no problems with `__slots__` (e.g., overlaps, or missing slots in base classes).
 
-`isort`, `black`, `flake8`, and `slotscheck` checks are performed during `tox` lint checks.
+All code style checks are performed during `nox` lint sessions.
 
 The **easiest** way to make your code conform is to run the following before committing:
 
 ```bash
-make pretty
+uv run nox -s format
 ```
 
-Refer to [tox documentation](https://tox.readthedocs.io/en/latest/index.html) for more details.
+Refer to [nox documentation](https://nox.thea.codes/) for more details.
 
 ## Pull requests
 
@@ -150,13 +148,12 @@ So the pull request approval rules are pretty simple:
 
 1. All pull requests must pass unit tests.
 2. All pull requests must be reviewed and approved by at least one current member of the Core Developer team.
-3. All pull requests must pass flake8 checks.
-4. All pull requests must match `isort` and `black` requirements.
-5. All pull requests must be **PROPERLY** type annotated, unless exemption is given.
-6. All pull requests must be consistent with the existing code.
-7. If you decide to remove/change anything from any common interface a deprecation message should accompany it in accordance with our [deprecation policy](https://sanicframework.org/en/guide/project/policies.html#deprecation).
-8. If you implement a new feature you should have at least one unit test to accompany it.
-9. An example must be one of the following:
+3. All pull requests must pass `ruff` checks (linting, formatting, and import sorting).
+4. All pull requests must be **PROPERLY** type annotated, unless exemption is given.
+5. All pull requests must be consistent with the existing code.
+6. If you decide to remove/change anything from any common interface a deprecation message should accompany it in accordance with our [deprecation policy](https://sanicframework.org/en/guide/project/policies.html#deprecation).
+7. If you implement a new feature you should have at least one unit test to accompany it.
+8. An example must be one of the following:
     * Example of how to use Sanic
     * Example of how to use Sanic extensions
     * Example of how to use Sanic and asynchronous library

@@ -1,26 +1,66 @@
+# Editor/system files
 *~
-*.egg-info
-*.egg
-*.eggs
-*.pyc
+
+# Dotfiles (with exceptions)
+.*
+!.appveyor.yml
+!.coveragerc
+!.gitattributes
+!.github
+!.gitignore
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Build artifacts
+/build
+/dist
+*.egg-info/
+
+# Python environments
+/venv
+/.venv
+/env
+/ENV
+/pip-wheel-metadata
+
+# Coverage
+/coverage
+coverage.xml
 .coverage
 .coverage.*
-coverage
-coverage.xml
-.tox
-settings.py
-.idea/*
-.cache/*
+htmlcov/
+
+# Testing
+.pytest_cache/
+.tox/
+.nox/
+
+# Type checking
 .mypy_cache/
-.python-version
-docs/_build/
-docs/_api/
-build/*
-.DS_Store
-dist/*
-pip-wheel-metadata/
-.pytest_cache/*
-.venv/*
-venv/*
-.vscode/*
-guide/node_modules/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Documentation
+/docs/_build
+/docs/_api
+
+# Dependencies
+/guide/node_modules
+
+# Lock files
+/*.lock
+
+# Local settings
+settings.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

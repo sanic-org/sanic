@@ -21,12 +21,14 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: Run coverage
-        uses: sanic-org/simple-tox-action@v1
-        with:
-          python-version: "3.11"
-          tox-env: coverage
-          ignore-errors: true
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Run tests with coverage
+        run: uv run --python 3.13 nox -s tests-3.13
+      - name: Generate coverage XML
+        run: uv run --python 3.13 nox -s coverage_xml
+        if: success()
       - name: Run Codecov
         uses: codecov/codecov-action@v3
         with:

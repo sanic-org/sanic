@@ -79,13 +79,7 @@ Installation
 
 ``pip install sanic``
 
-    Sanic makes use of ``uvloop`` and ``ujson`` to help with performance. If you do not want to use those packages, simply add an environmental variable ``SANIC_NO_UVLOOP=true`` or ``SANIC_NO_UJSON=true`` at install time.
-
-    .. code:: shell
-
-       $ export SANIC_NO_UVLOOP=true
-       $ export SANIC_NO_UJSON=true
-       $ pip install --no-binary :all: sanic
+    Sanic makes use of ``uvloop`` and ``ujson`` to help with performance on supported platforms (non-Windows, CPython).
 
 
 .. note::

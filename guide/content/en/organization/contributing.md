@@ -6,143 +6,99 @@ We are committed to providing a friendly, safe and welcoming environment for all
 
 ## Installation
 
-To develop on Sanic (and mainly to just run the tests) it is highly recommend to install from sources.
+To develop on Sanic, it is highly recommended to use `uv` which automatically manages virtual environments and dependencies.
 
-So assume you have already cloned the repo and are in the working directory with a virtual environment already set up, then run:
-
-```sh
-pip install -e ".[dev]"
-```
-
-## Dependency Changes
-
-`Sanic` doesn't use `requirements*.txt` files to manage any kind of dependencies related to it in order to simplify the effort required in managing the dependencies. Please make sure you have read and understood the following section of the document that explains the way `sanic` manages dependencies inside the `setup.py` file.
-
-| Dependency Type                 | Usage                                             | Installation                 |
-| ------------------------------- | ------------------------------------------------- | ---------------------------- |
-| requirements                    | Bare minimum dependencies required for sanic to function | `pip3 install -e .`         |
-| tests_require / extras_require['test'] | Dependencies required to run the Unit Tests for `sanic` | `pip3 install -e '.[test]'` |
-| extras_require['dev']           | Additional Development requirements to add contributing | `pip3 install -e '.[dev]'`  |
-| extras_require['docs']          | Dependencies required to enable building and enhancing sanic documentation | `pip3 install -e '.[docs]'` |
-
-## Running all tests
-
-To run the tests for Sanic it is recommended to use tox like so:
+After cloning the repo, you don't need a separate install step! Simply use `uv run` to execute commands:
 
 ```sh
-tox
+# Run tests - uv will automatically set up the environment
+uv run nox -s test-quick
+
+# Run any script with dependencies automatically installed
+uv run pytest tests/test_app.py
+
+# Run sanic itself
+uv run sanic path.to.app:app
 ```
 
-See it's that simple!
-
-`tox.ini` contains different environments. Running `tox` without any arguments will
-run all unittests, perform lint and other checks.
-
-## Run unittests
-
-`tox` environment -> `[testenv]`
-
-To execute only unittests, run `tox` with environment like so:
+If you prefer to work in an activated virtual environment, you can sync all dependencies:
 
 ```sh
+# Install all development dependencies
+uv sync --dev
 
-tox -e py37 -v -- tests/test_config.py
-# or
-tox -e py310 -v -- tests/test_config.py
+# Or install development and documentation dependencies
+uv sync --group dev --group docs
 ```
 
-## Run lint checks
+Activate the virtual environment (`.venv/bin/activate`) to run commands directly without `uv run`.
 
-`tox` environment -> `[testenv:lint]`
+## Dependency Management
 
-Permform `flake8`\ , `black` and `isort` checks.
+Dependencies are managed in `pyproject.toml`:
 
+- **`[project.dependencies]`** - Core runtime dependencies required by Sanic
+- **`[project.optional-dependencies]`** - Installable extras `sanic[ext]` and `sanic[http3]`
+- **`[dependency-groups]`** - Development-only dependencies (testing, linting, docs)
+  - `dev` - All testing and development tools
+  - `docs` - Documentation building tools
+
+When using `uv run` or nox sessions, dependencies are automatically installed as needed.
+
+## Running all checks
+
+To run development actions for Sanic, use nox:
 
 ```sh
-tox -e lint
+uv run nox
 ```
 
-## Run type annotation checks
+By default, this runs the complete CI pipeline:
+1. **Format** - Auto-format code with `ruff`
+2. **Lint** - Check code style and quality
+3. **Type checking** - Run `mypy` type checks
+4. **Security** - Run `bandit` security checks
+5. **Tests** - Run the full test suite across all supported Python versions
+6. **Docs** - Build documentation
 
-`tox` environment -> `[testenv:type-checking]`
+This takes a long time to complete. Use `nox -l` to see all available sessions that can be used individually with `nox -s <name>`, including ones not included in the default pipeline.
 
-Permform `mypy` checks.
+## Quick development testing
+
+A `test-quick` session is available to only run tests with the most recent Python version, rather than all of them like `test`. Both options can pass additional options to pytest, e.g. to run just a single test module:
 
 ```sh
-tox -e type-checking
+uv run nox -s test-quick -- tests/test_app.py
 ```
-
-## Run other checks
-
-`tox` environment -> `[testenv:check]`
-
-Perform other checks.
-
-```sh
-tox -e check
-```
-
-## Run Static Analysis
-
-`tox` environment -> `[testenv:security]`
-
-Perform static analysis security scan
-
-```sh
-tox -e security
-```
-
-## Run Documentation sanity check
-
-`tox` environment -> `[testenv:docs]`
-
-Perform sanity check on documentation
-
-```sh
-tox -e docs
-```
-## Code Style
 
 To maintain the code consistency, Sanic uses the following tools:
 
-1. [isort](https://github.com/timothycrosley/isort)
-2. [black](https://github.com/python/black)
-3. [flake8](https://github.com/PyCQA/flake8)
-4. [slotscheck](https://github.com/ariebovenberg/slotscheck)
+1. [ruff](https://github.com/astral-sh/ruff) - for linting, formatting, and import sorting
+2. [slotscheck](https://github.com/ariebovenberg/slotscheck) - for `__slots__` validation
 
-### isort
+### ruff
 
-`isort` sorts Python imports. It divides imports into three categories sorted each in alphabetical order:
+`ruff` is an extremely fast Python linter and formatter that replaces multiple tools:
 
-1. built-in
-2. third-party
-3. project-specific
+- **Linting**: Replaces flake8, pylint, and related plugins
+- **Formatting**: Replaces black
+- **Import sorting**: Replaces isort
 
-### black
-
-`black` is a Python code formatter.
-
-### flake8
-
-`flake8` is a Python style guide that wraps the following tools into one:
-
-1. PyFlakes
-2. pycodestyle
-3. Ned Batchelder's McCabe script
+`ruff` provides a unified toolchain for code quality and consistency.
 
 ### slotscheck
 
 `slotscheck` ensures that there are no problems with `__slots__` (e.g., overlaps, or missing slots in base classes).
 
-`isort`, `black`, `flake8`, and `slotscheck` checks are performed during `tox` lint checks.
+All code style checks are performed during `nox` lint sessions.
 
 The **easiest** way to make your code conform is to run the following before committing:
 
 ```bash
-make pretty
+uv run nox -s format
 ```
 
-Refer to [tox documentation](https://tox.readthedocs.io/en/latest/index.html) for more details.
+Refer to [nox documentation](https://nox.thea.codes/) for more details.
 
 ## Pull requests
 
@@ -150,13 +106,12 @@ So the pull request approval rules are pretty simple:
 
 1. All pull requests must pass unit tests.
 2. All pull requests must be reviewed and approved by at least one current member of the Core Developer team.
-3. All pull requests must pass flake8 checks.
-4. All pull requests must match `isort` and `black` requirements.
-5. All pull requests must be **PROPERLY** type annotated, unless exemption is given.
-6. All pull requests must be consistent with the existing code.
-7. If you decide to remove/change anything from any common interface a deprecation message should accompany it in accordance with our [deprecation policy](https://sanicframework.org/en/guide/project/policies.html#deprecation).
-8. If you implement a new feature you should have at least one unit test to accompany it.
-9. An example must be one of the following:
+3. All pull requests must pass `ruff` checks (linting, formatting, and import sorting).
+4. All pull requests must be **PROPERLY** type annotated, unless exemption is given.
+5. All pull requests must be consistent with the existing code.
+6. If you decide to remove/change anything from any common interface a deprecation message should accompany it in accordance with our [deprecation policy](https://sanicframework.org/en/guide/project/policies.html#deprecation).
+7. If you implement a new feature you should have at least one unit test to accompany it.
+8. An example must be one of the following:
     * Example of how to use Sanic
     * Example of how to use Sanic extensions
     * Example of how to use Sanic and asynchronous library

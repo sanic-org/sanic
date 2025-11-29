@@ -98,20 +98,15 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-
-    - name: Install dependencies
-      run: pip install build twine
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
 
     - name: Update package version
       run: |
         echo "__version__ = \"${{ needs.generate_info.outputs.pypi-version }}\"" > sanic/__version__.py
 
     - name: Build a binary wheel and a source tarball
-      run: python -m build --sdist --wheel --outdir dist/ .
+      run: uv build
 
     - name: Publish package distribution
       uses: pypa/gh-action-pypi-publish@release/v1
@@ -126,7 +121,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

@@ -100,7 +100,7 @@ class AppLoader:
                         "to a global instance of Sanic(), or a callable that "
                         "will return a Sanic() application instance."
                     )
-                if self.as_factory or isfunction(app):
+                if app and (self.as_factory or isfunction(app)):
                     try:
                         app = app(self.args)
                     except TypeError:

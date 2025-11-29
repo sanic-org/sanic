@@ -1,6 +1,72 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sanic"
+dynamic = ["version"]
+description = "A web server and web framework that's written to go fast. Build fast. Run fast."
+readme = "README.rst"
+license = {text = "MIT"}
+authors = [
+    {name = "Sanic Community", email = "admhpkns@gmail.com"}
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "sanic-routing>=23.12.0",
+    "httptools>=0.0.10",
+    "uvloop>=0.15.0; sys_platform != 'win32' and implementation_name == 'cpython'",
+    "ujson>=1.35; sys_platform != 'win32' and implementation_name == 'cpython'",
+    "aiofiles>=0.6.0",
+    "websockets>=10.0",
+    "multidict>=5.0,<7.0",
+    "html5tagger>=1.2.1",
+    "tracerite>=1.0.0",
+    "typing-extensions>=4.4.0",
+    "setuptools>=70.1.0",
+]
+
+[project.optional-dependencies]
+ext = [
+    "sanic-ext",
+]
+http3 = [
+    "aioquic",
+]
+
+[project.urls]
+Homepage = "http://github.com/sanic-org/sanic/"
+
+[project.scripts]
+sanic = "sanic.__main__:main"
+
+[tool.hatch.version]
+path = "sanic/__version__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/sanic",
+    "/tests",
+    "/LICENSE",
+    "/README.rst",
+    "/pyproject.toml",
+    "/NOX_COMMANDS.md",
+    "/noxfile.py",
+    "/.coveragerc",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["sanic"]
 
 
 [tool.ruff]
@@ -15,7 +81,8 @@ select = [
     "W",    # pycodestyle warnings
 ]
 ignore = [
-    "E203",
+    "E203",  # whitespace before punctuation
+    "E501",  # line too long (handled by formatter where possible)
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -33,6 +100,9 @@ known-third-party = ["pytest"]
 lines-after-imports = 2
 lines-between-types = 1
 
+[tool.mypy]
+disable_error_code = ["annotation-unchecked"]
+
 [[tool.mypy.overrides]]
 module = [
     "httptools.*",
@@ -43,3 +113,35 @@ module = [
     "tracerite.*",
 ]
 ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "nox>=2025.11.12",
+    "cryptography",
+    "towncrier",
+    "sanic-testing>=23.6.0",
+    "pytest>=8.2.2",
+    "coverage",
+    "beautifulsoup4",
+    "pytest-sanic",
+    "pytest-benchmark",
+    "chardet==3.*",
+    "ruff",
+    "bandit",
+    "mypy",
+    "docutils",
+    "pygments",
+    "uvicorn",
+    "slotscheck>=0.8.0,<1",
+    "types-ujson; sys_platform != 'win32' and implementation_name == 'cpython'",
+]
+docs = [
+    "sphinx>=2.1.2",
+    "sphinx_rtd_theme>=0.4.3",
+    "docutils",
+    "pygments",
+    "m2r2",
+    "enum-tools[sphinx]",
+    "mistune<2.0.0",
+    "autodocsumm>=0.2.11",
+]

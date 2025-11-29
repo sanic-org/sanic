@@ -1,5 +1,7 @@
 # Editor/system files
 *~
+*.swp
+*.swo
 
 # Dotfiles (with exceptions)
 .*
@@ -22,7 +24,6 @@ __pycache__/
 
 # Python environments
 /venv
-/.venv
 /env
 /ENV
 /pip-wheel-metadata
@@ -30,21 +31,7 @@ __pycache__/
 # Coverage
 /coverage
 coverage.xml
-.coverage
-.coverage.*
 htmlcov/
-
-# Testing
-.pytest_cache/
-.tox/
-.nox/
-
-# Type checking
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-.pytype/
 
 # Documentation
 /docs/_build
@@ -58,9 +45,3 @@ dmypy.json
 
 # Local settings
 settings.py
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo

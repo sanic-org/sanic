@@ -25,7 +25,7 @@ SameSite = Union[
 ]
 
 DEFAULT_MAX_AGE = 0
-SAMESITE_VALUES = ("strict", "lax", "none")
+SAMESITE_VALUES = ("Strict", "Lax", "None")
 
 LEGAL_CHARS = string.ascii_letters + string.digits + "!#$%&'*+-.^_`|~:"
 UNESCAPED_CHARS = LEGAL_CHARS + " ()/<=>?@[]{}"
@@ -440,9 +440,9 @@ class Cookie:
         self._secure = secure
         self._httponly = httponly
         self._partitioned = partitioned
-        self._expires = None
-        self._max_age = None
-        self._samesite = None
+        self._expires: datetime | None = None
+        self._max_age: int | None = None
+        self._samesite: SameSite | None = None
 
         if expires is not None:
             self.expires = expires
@@ -495,8 +495,8 @@ class Cookie:
         return self._expires
 
     @expires.setter
-    def expires(self, value: datetime) -> None:  # no cov
-        if not isinstance(value, datetime):
+    def expires(self, value: datetime | None) -> None:  # no cov
+        if value is not None and not isinstance(value, datetime):
             raise TypeError("Cookie 'expires' property must be a datetime")
         self._expires = value
 
@@ -524,8 +524,8 @@ class Cookie:
         return self._max_age
 
     @max_age.setter
-    def max_age(self, value: int) -> None:  # no cov
-        if not str(value).isdigit():
+    def max_age(self, value: int | None) -> None:  # no cov
+        if value is not None and not str(value).isdigit():
             raise ValueError("Cookie max-age must be an integer")
         self._max_age = value
 
@@ -553,13 +553,19 @@ class Cookie:
         return self._samesite
 
     @samesite.setter
-    def samesite(self, value: SameSite) -> None:  # no cov
-        if value.lower() not in SAMESITE_VALUES:
-            raise TypeError(
-                "Cookie 'samesite' property must "
-                f"be one of: {','.join(SAMESITE_VALUES)}"
-            )
-        self._samesite = value.title()
+    def samesite(self, value: SameSite | None) -> None:  # no cov
+        if value is None:
+            self._samesite = None
+        else:
+            from typing import cast
+
+            capitalized = value.capitalize()
+            if capitalized not in SAMESITE_VALUES:
+                raise TypeError(
+                    "Cookie 'samesite' property must "
+                    f"be one of: {', '.join(SAMESITE_VALUES)}"
+                )
+            self._samesite = cast(SameSite, capitalized)
 
     @property
     def partitioned(self) -> bool:  # no cov

@@ -44,7 +44,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
 
 ### 代理头(Proxy headers)
 
-Sanic 对于代理头（proxy headers）信息有特别的处理方式。 更多详情请参阅[代理头](/zh/guide/advanced/proxy-headers.md)章节。
+Sanic 对于代理头（proxy headers）信息有特别的处理方式。 See the [proxy headers](../advanced/proxy-headers.md) section for more details.
 
 ### 主机标头和动态URL的构建(Host header and dynamic URL construction)
 

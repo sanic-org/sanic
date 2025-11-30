@@ -69,8 +69,8 @@ YY.MMM.MMRO
 | 0.1.9 | 2016-12-25 |           | ⚪   |
 | 0.1.0 | 2016-10-16 |           | ⚪   |
 
-☑️ = security fixes\
-:check_mark_buton: = 完全支持\
+☑️ = security fixes  
+:check_mark_buton: = 完全支持  
 ⚪ = 不支持
 
 ## 废弃的

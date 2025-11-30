@@ -701,7 +701,7 @@ async def handler(request, ws):
 ```
 ````
 
-请阅读[WebSocket 部分](/zh/guide/advanced/websockets.md)，了解更多关于它们如何工作的内容。
+阅读[websockets部分](../advanced/websockets.md) 以了解更多关于它们如何工作的信息。
 
 ## 严格匹配分隔符(Strict slashes)
 

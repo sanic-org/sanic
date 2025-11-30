@@ -369,7 +369,7 @@ bp.static("/web/path", "/folder/to/server", name="uploads")
 .. 列::
 
 ```
-これは `url_for()` を使用して取得できます。詳細は [routing](/guide/basics/routing.md) を参照してください。
+それは `url_for()` を使用して取得できます。詳細は [routing](../basics/routing.md) を参照してください。
 ```
 
 .. 列::
@@ -386,7 +386,7 @@ bp.static("/web/path", "/folder/to/server", name="uploads")
 .. 列::
 
 ```
-ブループリントは [listeners](/guide/basics/listeners.md) も実装できます。
+設計図は [listeners](../basics/listeners.md ) を実装することもできます。
 ```
 
 .. 列::
@@ -405,7 +405,7 @@ async def after_server_stop(app, loop):
 
 ## Versioning
 
-[versioning section](/guide/advanced/version.md) で説明されているように、設計図は異なるバージョンの Web API を実装するために使用できます。
+[versioning section](../advanced/versioning.md)で説明されているように、設計図は異なるバージョンの Web API を実装するために使用できます。
 
 .. 列::
 

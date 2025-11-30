@@ -4,7 +4,7 @@ import re
 import string
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, cast
 
 from sanic.exceptions import ServerError
 
@@ -440,9 +440,9 @@ class Cookie:
         self._secure = secure
         self._httponly = httponly
         self._partitioned = partitioned
-        self._expires = None
-        self._max_age = None
-        self._samesite = None
+        self._expires: datetime | None = None
+        self._max_age: int | None = None
+        self._samesite: SameSite | None = None
 
         if expires is not None:
             self.expires = expires
@@ -559,7 +559,7 @@ class Cookie:
                 "Cookie 'samesite' property must "
                 f"be one of: {','.join(SAMESITE_VALUES)}"
             )
-        self._samesite = value.title()
+        self._samesite = cast(SameSite, value.title())
 
     @property
     def partitioned(self) -> bool:  # no cov

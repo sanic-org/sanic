@@ -82,9 +82,9 @@ features:
 .. tab:: 生产级别（Production-grade）
 
 ````
-开箱即用，在安装后，Sanic 为您提供创建高扩展性、生产级服务器需的所有工具！
+After installing, Sanic has all the tools you need for a scalable, production-grade server—out of the box!
 
-甚至包括[完整的 TLS 支持](/zh/guide/how-to/tls)。
+Including [full TLS support](/en/guide/how-to/tls.md).
 
 ```python
 from sanic import Sanic
@@ -322,14 +322,14 @@ sanic inspect migrations
 .. tab:: 开发体验（Developer Experience）
 
 ```
-Sanic **为构建而生**。
+Sanic is **built for building**.
 
-从安装的那一刻起，Sanic 就包含帮助开发人员完成工作的有用工具。
+From the moment it is installed, Sanic includes helpful tools to help the developer get their job done.
 
-- **单个服务器** - 在将运行生产应用程序的同一服务器上以开发模式进行本地开发
-- **自动重载** - 每次保存 Python 文件时重载正在运行的应用程序，也可在**任意目录**下自动重载，如 HTML 模板目录。
-- **调试工具** - 超级有用（而且漂亮）的[错误页面](/zh/guide/best-practices/exceptions)，帮助你轻松遍历跟踪堆栈
-- **自动 TLS** - 使用 "https" 运行本地主机网站可能很困难，但是 [Sanic 让它变得简单](/zh/guide/how-to/tls)
-- **简化测试** - 内置测试功能，使开发人员更容易创建和运行测试，确保服务的质量和可靠性
-- **现代 Python**- 体贴地使用类型提示，帮助开发人员获得集成开发环境体验
+- **One server** - Develop locally in DEV mode on the same server that will run your PRODUCTION application
+- **Auto reload** - Reload running applications every time you save a Python file, but also auto-reload **on any arbitrary directory** like HTML template directories
+- **Debugging tools** - Super helpful (and beautiful) [error pages](/en/guide/best-practices/exceptions) that help you traverse the trace stack easily
+- **Auto TLS** - Running a localhost website with `https` can be difficult, [Sanic makes it easy](/en/guide/how-to/tls.md)
+- **Streamlined testing** - Built-in testing capabilities, making it easier for developers to create and run tests, ensuring the quality and reliability of their services
+- **Modern Python** - Thoughtful use of type hints to help the developer IDE experience
 ```

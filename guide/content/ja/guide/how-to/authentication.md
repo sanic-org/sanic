@@ -74,7 +74,7 @@ def protected(wrapped):
     return decorator(wrapped)
 ```
 
-このデコレータパターンは format@@0(/ja/guide/best-practices/decorators.md) から取得されます。
+This decorator pattern is taken from the [decorators page](../best-practices/decorators.md).
 
 ---
 

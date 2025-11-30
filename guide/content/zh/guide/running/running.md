@@ -473,7 +473,7 @@ app.run(version=3)
 ```
 ````
 
-要同时运行一个 HTTP/3 和 HTTP/1.1 服务器，您可以使用 v22.3 引入的 [application multi-servve](../release-notes/v22.3.html#application-multi-servve)。 这将自动添加一个 [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ Alt-Svc) 头到您的 HTTP/1.1 请求让客户端知道它也是可用的 HTTP/3。
+要同时运行 HTTP/3 和 HTTP/1.1 服务器，您可以使用 v22.3 中引入的 [应用程序多服务器](../../release-notes/2022/v22.3.md#application-multi-serve)。 这将自动添加一个 [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ Alt-Svc) 头到您的 HTTP/1.1 请求让客户端知道它也是可用的 HTTP/3。
 
 .. 列:
 
@@ -497,7 +497,7 @@ Sanic.serve()
 ```
 ````
 
-因为HTTP 3 需要 TLS，您不能在没有TLS 证书的情况下启动 HTTP/3 服务器。 你应该[自己设置它](../how-to/tls.html)，或者在 `DEBUG` 模式下使用 `mkcert` 。 目前，HTTP/3 的自动TLS设置与 `trustme` 不兼容。 更多详细信息请访问 [development](./development.md)。
+因为HTTP 3 需要 TLS，您不能在没有TLS 证书的情况下启动 HTTP/3 服务器。 您应该[自己设置它](../how-to/tls.md) 或者在 `DEBUG` 模式下使用 `mkcert` 。 目前，HTTP/3 的自动TLS设置与 `trustme` 不兼容。 更多详细信息请访问 [development](./development.md)。
 
 _添加于 v22.6_
 
@@ -573,7 +573,7 @@ sanic path.to.server:app
 ```
 如果您关闭了 "access_log" ，Sanic 也会执行最快的操作。
 
-如果您仍然需要访问日志，但是想要享受此性能增强，请考虑使用 [Nginx 作为代理](。)。 nginx.md, 并让它处理您的访问记录。它将比任何Python能够处理的更快一些。
+如果您仍然需要访问日志，但想要享受此性能提升， 考虑使用 [Nginx 作为代理](./../deployment/nginx.md)，并让它处理您的访问记录。 它将比Python可以处理的任何东西快得多。
 ```
 
 .. 列:

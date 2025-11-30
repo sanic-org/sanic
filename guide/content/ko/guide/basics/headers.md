@@ -44,7 +44,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
 
 ### Proxy headers
 
-Sanic has special handling for proxy headers. See the [proxy headers](/guide/advanced/proxy-headers.md) section for more details.
+Sanic has special handling for proxy headers. See the [proxy headers](../advanced/proxy-headers.md) section for more details.
 
 ### Host header and dynamic URL construction
 

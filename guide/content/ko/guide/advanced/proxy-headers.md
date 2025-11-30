@@ -13,7 +13,7 @@ Without proper precautions, a malicious client may use proxy headers to spoof it
 .. column::
 
 ```
-Services behind reverse proxies must configure one or more of the following [configuration values](/guide/deployment/configuration.md):
+Services behind reverse proxies must configure one or more of the following [configuration values](../deployment/configuration.md):
 
 - `FORWARDED_SECRET`
 - `REAL_IP_HEADER`

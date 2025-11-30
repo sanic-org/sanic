@@ -384,4 +384,4 @@ For reference:
 
 ## Proxy configuration
 
-See [proxy configuration section](/guide/advanced/proxy-headers.md)
+See [proxy configuration section](../advanced/proxy-headers.md)

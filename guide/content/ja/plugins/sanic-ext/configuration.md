@@ -4,7 +4,7 @@ title: Sanic Extensions - 設定
 
 # 設定
 
-Sanic Extensionsは、format@@0(../../guide/deployment/configuration.md)と同じ方法で設定できます。 これにより、Sanic Extensionsを非常に簡単に構成できます。
+Sanic Extensionsは、[Sanicを設定できる](../../guide/running/configuration.md)と同じ方法で設定できます。 これにより、Sanic Extensionsを非常に簡単に構成できます。
 
 ```python
 app = Sanic("MyApp")

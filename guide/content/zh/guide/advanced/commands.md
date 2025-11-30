@@ -6,7 +6,7 @@
 This feature was added in version 24.12
 ```
 
-使用 [CLI]的Sanic 飞船(../running/running.html#running-via-command) 运行Sanic 服务器。 有时，您可能需要提高CLI来运行您自己的自定义命令。 命令使用以下基本模式：
+使用 [CLI](../running/running.md#running-via-command)运行Sanic服务器的Sanic船。 有时，您可能需要提高CLI来运行您自己的自定义命令。 命令使用以下基本模式：
 
 ```sh
 sanic path.to:app exec <command> [--arg=value]

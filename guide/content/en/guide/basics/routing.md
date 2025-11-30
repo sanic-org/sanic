@@ -607,7 +607,7 @@ app.url_for("post_handler", post_id=5, arg_one=["one", "two"], arg_two=2, _ancho
             message = await ws.recv()
     ```
 
-Read the [websockets section](/guide/advanced/websockets.md) to learn more about how they work.
+Read the [websockets section](../advanced/websockets.md) to learn more about how they work.
 
 ## Strict slashes
 

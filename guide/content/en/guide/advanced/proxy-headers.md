@@ -13,7 +13,7 @@ Sanic may be configured to use proxy headers for determining the true client IP,
 
 .. column::
 
-    Services behind reverse proxies must configure one or more of the following [configuration values](/guide/deployment/configuration.md):
+    Services behind reverse proxies must configure one or more of the following [configuration values](../deployment/configuration.md):
 
     - `FORWARDED_SECRET`
     - `REAL_IP_HEADER`

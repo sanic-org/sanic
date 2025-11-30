@@ -6,7 +6,7 @@
 This feature was added in version 24.12
 ```
 
-Sanic は Sanic サーバを実行するための [CLI](../running/running.html#running-via-command) を搭載しています。 場合によっては、独自のコマンドを実行するためにCLIを強化する必要があるかもしれません。 コマンドは以下の基本パターンを使用して呼び出されます。
+Sanic serverを実行するために、 [CLI](../running/running.md#running-via-command) が付いています。 場合によっては、独自のコマンドを実行するためにCLIを強化する必要があるかもしれません。 コマンドは以下の基本パターンを使用して呼び出されます。
 
 ```sh
 sanic path.to:app exec <command> [--arg=value]

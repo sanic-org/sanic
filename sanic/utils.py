@@ -37,7 +37,15 @@ def str_to_bool(val: str) -> bool:
     }:
         return True
     elif val in {
-        "n", "no", "f", "nope", "false", "off", "disable", "disabled", "0"
+        "n",
+        "no",
+        "f",
+        "nope",
+        "false",
+        "off",
+        "disable",
+        "disabled",
+        "0",
     }:
         return False
     else:

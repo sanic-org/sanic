@@ -93,7 +93,7 @@ class UserProfile:
 .. 列:
 
 - 更多例子见下文。 以下装饰符的任何值都可以在对应的
-    关键字参数中使用。\*
+  关键字参数中使用。\*
 
 ## 场地特定装饰
 
@@ -486,7 +486,7 @@ from sanic import Sanic, json
 from sanic_ext import validate, openapi
 from pydantic import BaseModel, Field
 
-@openapi.component
+@openapi.component()
 class Item(BaseModel):
     name: str
     description: str = None
@@ -501,7 +501,7 @@ app = Sanic("test")
 @app.get("/")
 @openapi.definition(
     body={
-        "application/json": ItemList.schema(
+        "application/json": ItemList.model_json_schema(
             ref_template="#/components/schemas/{model}"
         )
     },

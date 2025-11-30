@@ -4,7 +4,7 @@ title: Sanic 扩展 - 配置
 
 # 配置
 
-可使用[你可以配置Sanic](../../guide/deplment/configuration.md)的所有相同方式配置Sanic 扩展。 这使得配置Sanic扩展变得非常容易。
+Sanic 扩展可以使用[你可以配置Sanic](../../guide/running/configuration.md)同样的方式进行配置。 这使得配置Sanic扩展变得非常容易。
 
 ```python
 app = Sanic("MyApp")

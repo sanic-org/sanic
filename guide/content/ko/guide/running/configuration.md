@@ -220,7 +220,7 @@ When loading from environment variables, Sanic will attempt to cast the values t
 In regards to `bool`, the following _case insensitive_ values are allowed:
 
 - **`True`**: `y`, `yes`, `yep`, `yup`, `t`, `true`, `on`, `enable`, `enabled`, `1`
-- **`False`**: `n`, `no`, `f`, `false`, `off`, `disable`, `disabled`, `0`
+- **`False`**: `n`, `no`, `f`, `nope`, `false`, `off`, `disable`, `disabled`, `0`
 
 If a value cannot be cast, it will default to a `str`.
 
@@ -237,6 +237,65 @@ Additionally, Sanic can be configured to cast additional types using additional 
 ````
 ```python
 app = Sanic(..., config=Config(converters=[UUID]))
+```
+````
+
+#### Advanced Type Converters
+
+.. column::
+
+```
+For more sophisticated conversion logic that needs access to the full environment variable context, you can use `DetailedConverter`. This abstract base class provides access to the full environment variable key, the raw value, and the current config defaults.
+
+This is useful when you need to:
+- Cast values to the type of their defaults
+- Perform validation based on the variable name pattern
+- Use default values for fallback logic
+- Access configuration context during conversion
+```
+
+.. column::
+
+````
+```python
+from sanic.config import DetailedConverter
+
+class DefaultsTypeCastingConverter(DetailedConverter):
+    def __call__(self, full_key: str, config_key: str, value: str, defaults: dict):
+        try:
+            if config_key in defaults:
+                return type(defaults[config_key])(value)
+        except (ValueError, TypeError) as e:
+            raise TypeError(f"Configuration environment variable '{full_key}' type mismatch: expected"
+                            f" {type(defaults[config_key]).__name__}, got {type(value).__name__}") from e
+
+app = Sanic(..., config=Config(converters=[DefaultsTypeCastingConverter()]))
+```
+````
+
+.. column::
+
+```
+The `DetailedConverter.__call__` method receives four parameters:
+
+- `full_key`: The full environment variable name with prefix (e.g., "SANIC_DATABASE_URL")
+- `config_key`: The config key without prefix (e.g., "DATABASE_URL")
+- `value`: The raw string value from the environment
+- `defaults`: The current default configuration values
+```
+
+.. column::
+
+````
+```python
+class ValidationConverter(DetailedConverter):
+    def __call__(self, full_key: str, config_key: str, value: str, defaults: dict):
+        if config_key.endswith('_PORT'):
+            port = int(value)
+            if not 1 <= port <= 65535:
+                raise ValueError(f"Invalid port: {port}")
+            return port
+        raise ValueError  # Let other converters handle it
 ```
 ````
 

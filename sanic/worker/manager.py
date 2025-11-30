@@ -438,6 +438,9 @@ class WorkerManager:
             except KeyError:
                 process.set_state(ProcessState.TERMINATED, True)
                 continue
+            # Skip state sync if process is restarting to avoid race condition
+            if process.state == ProcessState.RESTARTING:
+                continue
             if not process.is_alive():
                 state = "FAILED" if process.exitcode else "COMPLETED"
             if state and process.state.name != state:

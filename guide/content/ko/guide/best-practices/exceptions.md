@@ -306,7 +306,7 @@ Sanic comes with three fallback exception handlers:
 2. Text
 3. JSON
 
-These handlers present differing levels of detail depending upon whether your application is in [debug mode](/guide/deployment/development.md) or not.
+These handlers present differing levels of detail depending upon whether your application is in [debug mode](../running/development.md) or not.
 
 By default, Sanic will be in "auto" mode, which means that it will using the incoming request and potential matching handler to choose the appropriate response format. For example, when in a browser it should always provide an HTML error page. When using curl, you might see JSON or plain text.
 

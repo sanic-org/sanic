@@ -473,7 +473,7 @@ app.run(version=3)
 ```
 ````
 
-HTTP/3 と HTTP/1.1 の両方のサーバーを同時に実行するには、v22.3 で導入された [application multi-serve] (../release-notes/v22.3.html#application-multi-serve) を使用します。 これにより自動的に [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc) ヘッダーがHTTP/1.1 リクエストに追加され、クライアントにHTTP/3 としても利用可能であることを知らせます。
+HTTP/3 と HTTP/1.1 の両方のサーバーを同時に実行するには、v22.3 で導入された [application multi-serve](../../release-notes/2022/v22.3.md#application-multi-serve) を使用します。 これにより自動的に [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc) ヘッダーがHTTP/1.1 リクエストに追加され、クライアントにHTTP/3 としても利用可能であることを知らせます。
 
 .. 列::
 
@@ -497,7 +497,7 @@ Sanic.serve()
 ```
 ````
 
-HTTP/3 は TLS を必要とするため、TLS 証明書なしでは HTTP/3 サーバーを起動できません。 `DEBUG`モードの場合は、format@@0(../how-to/tls.html) または `mkcert` を使用してください。 現在、HTTP/3 に対する自動的な TLS 設定は `trustme` と互換性がありません。 詳細は [development](./development.md) を参照してください。
+HTTP/3 は TLS を必要とするため、TLS 証明書なしでは HTTP/3 サーバーを起動できません。 [set up yourself](../how-to/tls.md) または `DEBUG`モードの場合は`mkcert`を使用してください。 現在、HTTP/3 に対する自動的な TLS 設定は `trustme` と互換性がありません。 詳細は [development](./development.md) を参照してください。
 
 _v22.6_に追加されました
 
@@ -573,7 +573,7 @@ sanic path.to.server:app
 ```
 `access_log` をオフにすると、Sanicも最速に動作します。
 
-まだアクセスログが必要で、このパフォーマンスを向上させたい場合は、[Nginx をプロキシとして使用することを検討してください](。 nginx.md)、そしてアクセスログを処理させます。Pythonが扱えるどんなものよりもずっと速くなります。
+それでもアクセスログが必要で、このパフォーマンス向上を楽しみたい場合。 [Nginx をプロキシとして使用する](./../deployment/nginx.md) を検討し、アクセスロギングを処理させます。 Pythonが扱えるものよりもはるかに速くなります。
 ```
 
 .. 列::

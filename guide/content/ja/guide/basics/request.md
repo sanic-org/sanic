@@ -4,7 +4,7 @@ API ドキュメント: [sanic.request](/api/sanic.request) を参照してく�
 
 :class:`sanic.request.Request`インスタンスには、パラメータで入手可能な役立つ情報がたくさん含まれています。 詳細については、format@@0(https://sanic.readthedocs.io/)を参照してください。
 
-[handlers](./handlers) のセクションで見たとおり、ルートハンドラの最初の引数は通常、 :class:`sanic.request.Request` オブジェクトです。 Sanic は非同期フレームワークなので、ハンドラは[`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)の中で実行され、イベントループによってスケジュールされます。 これは、ハンドラが分離されたコンテキストで実行され、リクエストオブジェクトはそのハンドラのタスクに固有であることを意味します。
+[handlers](./handlers.md) のセクションで見たように、ルートハンドラの最初の引数は通常、 :class:の `sanic.request.Request` オブジェクトです。 Sanic は非同期フレームワークなので、ハンドラは[`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task)の中で実行され、イベントループによってスケジュールされます。 これは、ハンドラが分離されたコンテキストで実行され、リクエストオブジェクトはそのハンドラのタスクに固有であることを意味します。
 
 .. 列::
 
@@ -213,7 +213,7 @@ async def hi_my_name_is(request):
 ```
 Often times your API will need to serve multiple concurrent (or consecutive) requests to the same client. This happens, for example, very often with progressive web apps that need to query multiple endpoints to get data.
 
-The HTTP protocol calls for an easing of overhead time caused by the connection with the use of [keep alive headers](../deployment/configuration.md#keep-alive-timeout).
+The HTTP protocol calls for an easing of overhead time caused by the connection with the use of [keep alive headers](../running/configuration.md#keep-alive-timeout).
 
 When multiple requests share a single connection, Sanic provides a context object to allow those requests to share state.
 ```
@@ -251,7 +251,7 @@ request.conn_info.ctx.foo=3
 
 ### カスタムリクエストオブジェクト
 
-[application customization](./app.md#custom-requests)で説明されているように、 :class:`sanic.request.Request` のサブクラスを作成して、リクエストオブジェクトに追加機能を追加できます。 これは、アプリケーションに固有の追加の属性やメソッドを追加する場合に便利です。
+[application customization](./app.md#custom-requests)で説明したように、リクエストオブジェクトに追加機能を追加するために、 :class:`sanic.request.Request` のサブクラスを作成できます。 これは、アプリケーションに固有の追加の属性やメソッドを追加する場合に便利です。
 
 .. 列::
 

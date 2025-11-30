@@ -157,9 +157,9 @@ So the pull request approval rules are pretty simple:
 7. If you decide to remove/change anything from any common interface a deprecation message should accompany it in accordance with our [deprecation policy](https://sanicframework.org/en/guide/project/policies.html#deprecation).
 8. If you implement a new feature you should have at least one unit test to accompany it.
 9. An example must be one of the following:
-    - Example of how to use Sanic
-    - Example of how to use Sanic extensions
-    - Example of how to use Sanic and asynchronous library
+   - Example of how to use Sanic
+   - Example of how to use Sanic extensions
+   - Example of how to use Sanic and asynchronous library
 
 ## Documentation
 

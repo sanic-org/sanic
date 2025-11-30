@@ -473,7 +473,7 @@ app.run(version=3)
 ```
 ````
 
-To run both an HTTP/3 and HTTP/1.1 server simultaneously, you can use [application multi-serve](../release-notes/v22.3.html#application-multi-serve) introduced in v22.3. This will automatically add an [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc) header to your HTTP/1.1 requests to let the client know that it is also available as HTTP/3.
+To run both an HTTP/3 and HTTP/1.1 server simultaneously, you can use [application multi-serve](../../release-notes/2022/v22.3.md#application-multi-serve) introduced in v22.3. This will automatically add an [Alt-Svc](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc) header to your HTTP/1.1 requests to let the client know that it is also available as HTTP/3.
 
 .. column::
 
@@ -497,7 +497,7 @@ Sanic.serve()
 ```
 ````
 
-Because HTTP/3 requires TLS, you cannot start a HTTP/3 server without a TLS certificate. You should [set it up yourself](../how-to/tls.html) or use `mkcert` if in `DEBUG` mode. Currently, automatic TLS setup for HTTP/3 is not compatible with `trustme`. See [development](./development.md) for more details.
+Because HTTP/3 requires TLS, you cannot start a HTTP/3 server without a TLS certificate. You should [set it up yourself](../how-to/tls.md) or use `mkcert` if in `DEBUG` mode. Currently, automatic TLS setup for HTTP/3 is not compatible with `trustme`. See [development](./development.md) for more details.
 
 _Added in v22.6_
 
@@ -573,7 +573,7 @@ sanic path.to.server:app
 ```
 Sanic will also perform fastest if you turn off `access_log`.
 
-If you still require access logs, but want to enjoy this performance boost, consider using [Nginx as a proxy](./nginx.md), and letting that handle your access logging. It will be much faster than anything Python can handle.
+If you still require access logs, but want to enjoy this performance boost, consider using [Nginx as a proxy](./../deployment/nginx.md), and letting that handle your access logging. It will be much faster than anything Python can handle.
 ```
 
 .. column::

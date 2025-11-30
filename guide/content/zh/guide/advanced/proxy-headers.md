@@ -13,7 +13,7 @@ Sanic 可以配置为使用代理头信息来确定真实的客户端IP地址，
 .. column::
 
 ```
-部署在反向代理之后的服务必须配置以下[配置值](/zh/guide/deployment/configuration.md)之一或多者：
+逆向代理后面的服务必须配置以下[配置值](../deployment/configuration.md)：
 
 - `FORWARDED_SECRET`
 - `REAL_IP_HEADER`

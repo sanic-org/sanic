@@ -11,7 +11,7 @@ from multiprocessing.context import BaseContext
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
@@ -96,7 +96,7 @@ class WorkerManager:
         self,
         name: str,
         func: Callable[..., Any],
-        kwargs: Dict[str, Any],
+        kwargs: dict[str, Any],
         transient: bool = False,
         restartable: Optional[bool] = None,
         tracked: bool = True,

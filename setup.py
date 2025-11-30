@@ -52,7 +52,17 @@ def str_to_bool(val: str) -> bool:
         "1",
     }:
         return True
-    elif val in {"n", "no", "f", "false", "off", "disable", "disabled", "0"}:
+    elif val in {
+        "n",
+        "no",
+        "f",
+        "nope",
+        "false",
+        "off",
+        "disable",
+        "disabled",
+        "0",
+    }:
         return False
     else:
         raise ValueError(f"Invalid truth value {val}")

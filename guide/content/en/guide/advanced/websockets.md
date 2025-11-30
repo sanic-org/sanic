@@ -73,7 +73,7 @@ Sanic provides an easy to use abstraction on top of [websockets](https://websock
 
 ## Configuration
 
-See [configuration section](/guide/deployment/configuration.md) for more details, however the defaults are shown below.
+See [configuration section](../running/configuration.md) for more details, however the defaults are shown below.
 
 ```python
 app.config.WEBSOCKET_MAX_SIZE = 2 ** 20

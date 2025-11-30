@@ -6,7 +6,7 @@ title: Sanic Extensions - Health Monitor
 
 The health monitor requires both `sanic>=22.9` and `sanic-ext>=22.9`.
 
-You can setup Sanic Extensions to monitor the health of your worker processes. This requires that you not be in [single process mode](../../guide/deployment/manager.md#single-process-mode).
+You can setup Sanic Extensions to monitor the health of your worker processes. This requires that you not be in [single process mode](../../guide/running/manager.md#single-process-mode).
 
 ## Setup
 
@@ -29,7 +29,7 @@ The monitor sets up a new background process that will periodically receive ackn
 
 .. column::
 
-    The health monitor will also enable a diagnostics endpoint that outputs the [worker state](../../guide/deployment/manager.md#worker-state). By default is id disabled.
+    The health monitor will also enable a diagnostics endpoint that outputs the [worker state](../../guide/running/manager.md#worker-state). By default is id disabled.
 
     .. danger:: 
 

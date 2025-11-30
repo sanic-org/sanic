@@ -4,7 +4,7 @@ See API docs: [sanic.request](/api/sanic.request)
 
 The :class:`sanic.request.Request` instance contains **a lot** of helpful information available on its parameters. Refer to the [API documentation](https://sanic.readthedocs.io/) for full details.
 
-As we saw in the section on [handlers](./handlers), the first argument in a route handler is usually the :class:`sanic.request.Request` object. Because Sanic is an async framework, the handler will run inside of a [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) and will be scheduled by the event loop. This means that the handler will be executed in an isolated context and the request object will be unique to that handler's task.
+As we saw in the section on [handlers](./handlers.md), the first argument in a route handler is usually the :class:`sanic.request.Request` object. Because Sanic is an async framework, the handler will run inside of a [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) and will be scheduled by the event loop. This means that the handler will be executed in an isolated context and the request object will be unique to that handler's task.
 
 .. column::
 
@@ -185,7 +185,7 @@ As you can see, the `request.ctx` object is a great place to store information t
 
     Often times your API will need to serve multiple concurrent (or consecutive) requests to the same client. This happens, for example, very often with progressive web apps that need to query multiple endpoints to get data.
 
-    The HTTP protocol calls for an easing of overhead time caused by the connection with the use of [keep alive headers](../deployment/configuration.md#keep-alive-timeout).
+    The HTTP protocol calls for an easing of overhead time caused by the connection with the use of [keep alive headers](../running/configuration.md#keep-alive-timeout).
 
     When multiple requests share a single connection, Sanic provides a context object to allow those requests to share state.
 
@@ -218,7 +218,7 @@ As you can see, the `request.ctx` object is a great place to store information t
 
 ### Custom Request Objects
 
-As dicussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. This is useful for adding additional attributes or methods that are specific to your application.
+As discussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. This is useful for adding additional attributes or methods that are specific to your application.
 
 .. column::
 

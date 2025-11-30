@@ -6,7 +6,7 @@ title: サニックエクステンション - ヘルスモニター
 
 ヘルスモニターには、`sanic>=22.9` と `sanic-ext>=22.9` の両方が必要です。
 
-Sanic Extensionsを設定して、作業工程の健全性を監視できます。 format@@0(../../guide/deployment/manager.md#single-process-mode) ではないことが必要です。
+Sanic Extensionsを設定して、作業工程の健全性を監視できます。 This requires that you not be in [single process mode](../../guide/running/manager.md#single-process-mode).
 
 ## セットアップ
 
@@ -34,11 +34,11 @@ app.config.HEALTH_ENDPOINT = True
 .. 列::
 
 ```
-ヘルスモニターは、[worker state](../../guide/deployment/manager)を出力する診断エンドポイントも有効にします。 d#worker-state). デフォルトではIDが無効になっています。
+The health monitor will also enable a diagnostics endpoint that outputs the [worker state](../../guide/running/manager.md#worker-state). By default is id disabled.
 
 .. danger:: 
 
-    診断エンドポイントはセキュリティ保護されていません。 本番環境でデプロイする場合は、プロキシサーバーを使用して保護する手順を実行する必要があります。 そうでない場合は、サーバーの状態に関する詳細が漏れるため、本番環境でこの機能を無効にすることを検討することをお勧めします。
+    The diagnostics endpoint is not secured. If you are deploying it in a production environment, you should take steps to protect it with a proxy server if you are using one. If not, you may want to consider disabling this feature in production since it will leak details about your server state.
 ```
 
 .. 列::

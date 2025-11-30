@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta
+from abc import ABC, ABCMeta, abstractmethod
 from collections.abc import Sequence
 from inspect import getmembers, isclass, isdatadescriptor
 from os import environ
@@ -84,6 +84,50 @@ class DescriptorMeta(ABCMeta):
         return isdatadescriptor(member) and hasattr(member, "setter")
 
 
+class DetailedConverter(ABC):
+    """Base class for detailed converters that need additional context.
+
+    DetailedConverter provides access to the full environment variable key,
+    the raw value, and the current config defaults. This allows for more
+    sophisticated conversion logic that can take into account the variable
+    name pattern, perform validation, or use default values for fallback.
+
+    Examples:
+        ```python
+        # Example of a converter that casts values to the type of the default
+        class DefaultsCastConverter(DetailedConverter):
+            def __call__(self, full_key: str, config_key: str, value: str,
+                                                        defaults: dict) -> Any:
+                try:
+                    if config_key in defaults:
+                        return type(defaults[config_key])(value)
+                except (ValueError, TypeError):
+                    raise ValueError
+        ```
+    """
+
+    @abstractmethod
+    def __call__(
+        self, full_key: str, config_key: str, value: str, defaults: dict
+    ) -> Any:
+        """Convert an environment variable to a Python value.
+
+        Args:
+            full_key: The full environment variable name (with prefix)
+                            (e.g., "SANIC_DATABASE_URL")
+            config_key: The environment variable name (without prefix)
+                            (e.g., "DATABASE_URL")
+            value: The raw string value from the environment
+            defaults: The current default configuration values
+
+        Returns:
+            The converted Python value
+
+        Raises:
+            ValueError: If the value cannot be converted by this converter
+        """
+
+
 class Config(dict, metaclass=DescriptorMeta):
     """Configuration object for Sanic.
 
@@ -144,7 +188,8 @@ class Config(dict, metaclass=DescriptorMeta):
         converters: Optional[Sequence[Callable[[str], Any]]] = None,
     ):
         defaults = defaults or {}
-        super().__init__({**DEFAULT_CONFIG, **defaults})
+        self.defaults = {**DEFAULT_CONFIG, **defaults}
+        super().__init__(self.defaults)
         self._configure_warnings()
 
         self._converters = [str, str_to_bool, float, int]
@@ -327,7 +372,12 @@ class Config(dict, metaclass=DescriptorMeta):
 
             for converter in reversed(self._converters):
                 try:
-                    self[config_key] = converter(value)
+                    if isinstance(converter, DetailedConverter):
+                        self[config_key] = converter(
+                            key, config_key, value, self.defaults
+                        )
+                    else:
+                        self[config_key] = converter(value)
                     break
                 except ValueError:
                     pass
@@ -413,7 +463,7 @@ class Config(dict, metaclass=DescriptorMeta):
 
         Args:
             converter (Callable[[str], Any]): A function that takes a string
-                and returns a value of any type.
+            and returns a value of any type, or a DetailedConverter instance.
 
         Examples:
             ```python
@@ -422,6 +472,20 @@ class Config(dict, metaclass=DescriptorMeta):
                 return value
 
             config.register_type(my_converter)
+
+            # Or use a DetailedConverter for more context
+            # Example of a converter that casts values to
+            # the type of the default
+            class DefaultsCastConverter(DetailedConverter):
+                def __call__(self, full_key: str, config_key: str, value: str,
+                                                    defaults: dict) -> Any:
+                    try:
+                        if config_key in defaults:
+                            return type(defaults[config_key])(value)
+                    except (ValueError, TypeError):
+                        raise ValueError
+
+            config.register_type(DefaultsCastConverter())
             ```
         """
         if converter in self._converters:

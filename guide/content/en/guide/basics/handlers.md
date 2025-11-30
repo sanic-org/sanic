@@ -24,14 +24,14 @@ In Sanic, a handler is any callable that takes at least a :class:`sanic.request.
 
 Two more important items to note:
 
-1. You almost *never* will want to use :class:`sanic.response.HTTPresponse` directly. It is much simpler to use one of the [convenience methods](./response#methods).
+1. You almost *never* will want to use :class:`sanic.response.HTTPresponse` directly. It is much simpler to use one of the [convenience methods](./response.md#methods).
 
     - `from sanic import json`
     - `from sanic import html`
     - `from sanic import redirect`
     - *etc*
     
-1. As we will see in [the streaming section](../advanced/streaming#response-streaming), you do not always need to return an object. If you use this lower-level API, you can control the flow of the response from within the handler, and a return object is not used.
+1. As we will see in [the streaming section](../advanced/streaming.md#response-streaming), you do not always need to return an object. If you use this lower-level API, you can control the flow of the response from within the handler, and a return object is not used.
 
 .. tip:: Heads up
 

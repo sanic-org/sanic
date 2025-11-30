@@ -319,7 +319,7 @@ In addition, there is a `name_prefix` argument that can be used to make blueprin
 
 .. column::
 
-    Which can then be retrieved using `url_for()`. See [routing](/guide/basics/routing.md) for more information.
+    Which can then be retrieved using `url_for()`. See [routing](../basics/routing.md) for more information.
 
 .. column::
 
@@ -332,7 +332,7 @@ In addition, there is a `name_prefix` argument that can be used to make blueprin
 
 .. column::
 
-    Blueprints can also implement [listeners](/guide/basics/listeners.md).
+    Blueprints can also implement [listeners](../basics/listeners.md).
 
 .. column::
 
@@ -348,7 +348,7 @@ In addition, there is a `name_prefix` argument that can be used to make blueprin
 
 ## Versioning
 
-As discussed in the [versioning section](/guide/advanced/versioning.md), blueprints can be used to implement different versions of a web API.
+As discussed in the [versioning section](../advanced/versioning.md), blueprints can be used to implement different versions of a web API.
 
 .. column::
 

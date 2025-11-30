@@ -13,7 +13,7 @@ Sanicは、`request.remote_addr`として利用可能な本当のクライアン
 .. column::
 
 ```
-リバースプロキシを使うサービスは、次の[構成値](/guide/deployment/configuration.md)の1つ以上を設定する必要があります。
+リバースプロキシの背後にあるサービスは、次の [設定値](../deployment/configuration.md):
 
 - `FORWARDED_SECRET`
 - `REAL_IP_HEADER`

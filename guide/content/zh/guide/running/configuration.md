@@ -384,4 +384,4 @@ or upload requests very slowly.
 
 ## 代理配置
 
-请参阅[代理配置部分](/guide/advanced/proxy-headers.md)
+查看[代理配置部分](../advanced/proxy-headers.md)

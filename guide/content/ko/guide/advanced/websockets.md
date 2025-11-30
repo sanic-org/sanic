@@ -82,7 +82,7 @@ async def feed(request: Request, ws: Websocket):
 
 ## Configuration
 
-See [configuration section](/guide/deployment/configuration.md) for more details, however the defaults are shown below.
+See [configuration section](../running/configuration.md) for more details, however the defaults are shown below.
 
 ```python
 app.config.WEBSOCKET_MAX_SIZE = 2 ** 20

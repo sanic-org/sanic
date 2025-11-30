@@ -6,7 +6,7 @@ title: Sanic Extensions - Background logger
 
 The background logger requires both `sanic>=22.9` and `sanic-ext>=22.9`.
 
-You can setup Sanic Extensions to log all of your messages from a background process. This requires that you not be in [single process mode](../../guide/deployment/manager.md#single-process-mode).
+You can setup Sanic Extensions to log all of your messages from a background process. This requires that you not be in [single process mode](../../guide/running/manager.md#single-process-mode).
 
 Logging can sometimes be an expensive operation. By pushing all logging off to a background process, you can potentially gain some performance benefits.
 

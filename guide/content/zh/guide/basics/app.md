@@ -629,7 +629,7 @@ async def handler(request: CustomRequest):
 ```
 ````
 
-在[自定义请求上下文](./request#custom-request-context)部分查看更多信息。
+在[自定义请求上下文](./request.md#custom-request-context)部分查看更多信息。
 
 _添加于 v23.6_
 

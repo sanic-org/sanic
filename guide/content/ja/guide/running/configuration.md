@@ -384,4 +384,4 @@ and sends that to the client. クライアントが非常に大きなリクエ�
 
 ## プロキシ設定
 
-format@@0(/guide/advanced/proxy-headers.md) を参照してください。
+[プロキシ設定セクション](../advanced/proxy-headers.md) を参照してください。

@@ -369,7 +369,7 @@ bp.static("/web/path", "/folder/to/server", name="uploads")
 .. column::
 
 ```
-Which can then be retrieved using `url_for()`. See [routing](/guide/basics/routing.md) for more information.
+Which can then be retrieved using `url_for()`. See [routing](../basics/routing.md) for more information.
 ```
 
 .. column::
@@ -386,7 +386,7 @@ Which can then be retrieved using `url_for()`. See [routing](/guide/basics/routi
 .. column::
 
 ```
-Blueprints can also implement [listeners](/guide/basics/listeners.md).
+Blueprints can also implement [listeners](../basics/listeners.md).
 ```
 
 .. column::
@@ -405,7 +405,7 @@ async def after_server_stop(app, loop):
 
 ## Versioning
 
-As discussed in the [versioning section](/guide/advanced/versioning.md), blueprints can be used to implement different versions of a web API.
+As discussed in the [versioning section](../advanced/versioning.md), blueprints can be used to implement different versions of a web API.
 
 .. column::
 

@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import os
 
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableMapping
 from contextlib import suppress
 from enum import IntEnum, auto
 from itertools import chain, count
+from multiprocessing.connection import Connection
+from multiprocessing.context import BaseContext
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
@@ -60,11 +64,11 @@ class WorkerManager:
     def __init__(
         self,
         number: int,
-        serve,
-        server_settings,
-        context,
-        monitor_pubsub,
-        worker_state,
+        serve: Callable[..., Any],
+        server_settings: dict[str, Any],
+        context: BaseContext,
+        monitor_pubsub: tuple[Connection[Any, Any], Connection[Any, Any]],
+        worker_state: MutableMapping[str, Any],
     ):
         self.num_server = number
         self.context = context
@@ -435,6 +439,9 @@ class WorkerManager:
                 state = self.worker_state[process.name].get("state")
             except KeyError:
                 process.set_state(ProcessState.TERMINATED, True)
+                continue
+            # Skip state sync if process is restarting to avoid race condition
+            if process.state == ProcessState.RESTARTING:
                 continue
             if not process.is_alive():
                 state = "FAILED" if process.exitcode else "COMPLETED"

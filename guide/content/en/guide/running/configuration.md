@@ -187,7 +187,7 @@ When loading from environment variables, Sanic will attempt to cast the values t
 In regards to `bool`, the following _case insensitive_ values are allowed:
 
 - **`True`**: `y`, `yes`, `yep`, `yup`, `t`, `true`, `on`, `enable`, `enabled`, `1`
-- **`False`**: `n`, `no`, `f`, `false`, `off`, `disable`, `disabled`, `0`
+- **`False`**: `n`, `no`, `f`, `nope`, `false`, `off`, `disable`, `disabled`, `0`
 
 If a value cannot be cast, it will default to a `str`.
 

@@ -4,7 +4,7 @@ content_class: changelog
 
 # Changelog
 
-🔶 Current release\
+🔶 Current release  
 🔷 In support LTS release
 
 ## Version 25.3.0 🔶

@@ -55,7 +55,7 @@ def create_app():
 
 **時々、これは十分ではありません... 🤔**
 
-[v22.9](../release-notes/v22.9.md) で導入されたSanicは、さまざまな[worker processes](./manager.md#how-sanic-server-starts-processes)でアプリケーションを作成する `AppLoader` オブジェクトを持っています。 アプリケーションでより動的なスタートアップ体験を作成する必要がある場合は、これを利用できます。
+[v22.9](../../release-notes/2022/v22.9.md) で導入されたSanic には、さまざまな [worker processes](./manager.md#how-sanic-server-starts-processes) でアプリケーションを作成する `AppLoader` オブジェクトがあります。 アプリケーションでより動的なスタートアップ体験を作成する必要がある場合は、これを利用できます。
 
 .. 列::
 

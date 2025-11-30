@@ -4,7 +4,7 @@ title: Sanic Extensions - Configuration
 
 # Configuration
 
-Sanic Extensions can be configured in all of the same ways that [you can configure Sanic](../../guide/deployment/configuration.md). That makes configuring Sanic Extensions very easy.
+Sanic Extensions can be configured in all of the same ways that [you can configure Sanic](../../guide/running/configuration.md). That makes configuring Sanic Extensions very easy.
 
 ```python
 app = Sanic("MyApp")

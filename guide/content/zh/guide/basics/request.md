@@ -4,7 +4,7 @@
 
 :class: `sanic.request.Request` 实例的参数中包含大量有用的信息。 详情请参阅[API 文档](https://sanic.readthedocs.io/)。
 
-正如我们在 [响应函数(Handlers)](./handlers) 部分中所看到的，路由处理器的第一个参数通常是 :class:`sanic.request.Request` 对象。 因为Sanic是一个异步框架，处理器将在一个 [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) 内运行，并由事件循环（event loop）调度。 这意味着处理器将在一个隔离的上下文中执行，并且请求对象（Rquest）将是该处理器任务所独有的。
+As we saw in the section on [handlers](./handlers.md), the first argument in a route handler is usually the :class:`sanic.request.Request` object. 因为Sanic是一个异步框架，处理器将在一个 [`asyncio.Task`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task) 内运行，并由事件循环（event loop）调度。 这意味着处理器将在一个隔离的上下文中执行，并且请求对象（Rquest）将是该处理器任务所独有的。
 
 .. column::
 
@@ -210,12 +210,11 @@ async def hi_my_name_is(request):
 .. column::
 
 ```
+您的 API 常常需要为同一客户端同时（或连续）请求服务。 例如，进步的 web 应用常常发生这种情况，这些应用需要查询多个终点才能获取数据。
 
-很多时候，您的API需要为同一客户端并发（或连续）处理多个请求。这种情况在需要查询多个端点以获取数据的渐进式Web应用程序中经常发生。
+HTTP协议要求放宽连接使用[保持头部存活](../running/configuration.md#keep-alive-timeout)所造成的间接时间。
 
-HTTP协议要求通过使用 [保持连接头](../deployment/configuration.md#keep-alive-timeout).来减轻由连接引起的开销时间。
-
-当多个请求共享单个连接时，Sanic提供了一个上下文对象，允许这些请求共享状态。
+当多个请求共享一个连接时，Sanic提供一个上下文对象以允许这些请求共享状态。
 ```
 
 .. column::
@@ -251,7 +250,7 @@ request.conn_info.ctx.foo=3
 
 ### 自定义请求对象(Custom Request Objects)
 
-正如在[自定义app](./app.md#custom-requests)部分讨论的那样，您可以创建:class:`sanic.request.Request`的一个子类，以向请求对象添加更多功能。 这对于添加专属于您的应用程序的额外属性或方法非常有用。
+As discussed in [application customization](./app.md#custom-requests), you can create a subclass of :class:`sanic.request.Request` to add additional functionality to the request object. 这对于添加专属于您的应用程序的额外属性或方法非常有用。
 
 .. column::
 

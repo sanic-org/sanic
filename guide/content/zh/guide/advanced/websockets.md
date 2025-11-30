@@ -82,7 +82,7 @@ async def feed(request: Request, ws: Websocket):
 
 ## 配置(Configuration)
 
-更多详情请参阅[配置部分](/zh/guide/deployment/configuration.md)，不过下面列出了默认值。
+请参阅[配置部分](../running/configuration.md)，了解更多详细信息，但默认情况在下面显示。
 
 ```python
 app.config.WEBSOCKET_MAX_SIZE = 2 ** 20

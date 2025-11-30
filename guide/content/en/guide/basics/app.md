@@ -555,7 +555,7 @@ Let's look at some examples of how the type will change.
         pass
     ```
 
-See more information in the [custom request context](./request#custom-request-context) section.
+See more information in the [custom request context](./request.md#custom-request-context) section.
 
 *Added in v23.6*
 

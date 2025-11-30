@@ -30,7 +30,7 @@ def worker_serve(
     worker_state: Optional[dict[str, Any]] = None,
     server_info: Optional[dict[str, list[ApplicationServerInfo]]] = None,
     ssl: Optional[
-        Union[SSLContext, dict[str, Union[str, os.PathLike]]]
+        Union[SSLContext, dict[str, Union[str, os.PathLike[str]]]]
     ] = None,
     sock: Optional[socket.socket] = None,
     unix: Optional[str] = None,
@@ -46,7 +46,7 @@ def worker_serve(
     state=None,
     asyncio_server_kwargs=None,
     version=HTTP.VERSION_1,
-    config=None,
+    config: Optional[Union[bytes, str, dict[str, Any], Any]] = None,
     passthru: Optional[dict[str, Any]] = None,
 ):
     try:

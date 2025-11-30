@@ -75,7 +75,7 @@ def protected(wrapped):
 
     return decorator(wrapped)
 ```
-This decorator pattern is taken from the [decorators page](/en/guide/best-practices/decorators.md).
+This decorator pattern is taken from the [decorators page](../best-practices/decorators.md).
 
 ---
 

@@ -1,6 +1,5 @@
 import asyncio
-import random
-import struct
+import secrets
 
 from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 from typing import (
@@ -419,7 +418,10 @@ class WebsocketImplProtocol:
                 websockets_logger.debug(
                     "Websocket half-closing TCP connection"
                 )
-                self.io_proto.transport.write_eof()
+                try:
+                    self.io_proto.transport.write_eof()
+                except RuntimeError:
+                    ...
                 if self.connection_lost_waiter:
                     if await self.wait_for_connection_lost(timeout=0):
                         return
@@ -764,7 +766,7 @@ class WebsocketImplProtocol:
 
             # Generate a unique random payload otherwise.
             while data is None or data in self.pings:
-                data = struct.pack("!I", random.getrandbits(32))
+                data = secrets.token_bytes(4)
 
             self.pings[data] = self.io_proto.loop.create_future()
 

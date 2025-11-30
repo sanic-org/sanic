@@ -701,7 +701,7 @@ async def handler(request, ws):
 ```
 ````
 
-Read the [websockets section](/guide/advanced/websockets.md) to learn more about how they work.
+Read the [websockets section](../advanced/websockets.md) to learn more about how they work.
 
 ## Strict slashes
 

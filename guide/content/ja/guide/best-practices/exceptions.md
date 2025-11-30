@@ -306,7 +306,7 @@ Sanic には 3 つのフォールバック例外ハンドラが付属してい�
 2. テキスト
 3. JSON
 
-これらのハンドラは、アプリケーションが format@@0(/guide/deployment/development.md) かどうかによって詳細のレベルが異なります。
+These handlers present differing levels of detail depending upon whether your application is in [debug mode](../running/development.md) or not.
 
 デフォルトでは、Sanicは「自動」モードになります。 つまり、受信リクエストと潜在的なマッチングハンドラを使用して、適切な応答形式を選択するということです。 例えば、ブラウザでは常にHTMLエラーページを提供する必要があります。 curl を使用すると、JSON またはプレーンテキストが表示されることがあります。
 

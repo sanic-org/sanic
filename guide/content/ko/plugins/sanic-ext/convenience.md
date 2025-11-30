@@ -129,6 +129,6 @@ async def handler(request: CountedRequest):
 ```
 ````
 
-If possible, the request count will also be added to the [worker state](../../guide/deployment/manager.md#worker-state).
+If possible, the request count will also be added to the [worker state](../../guide/running/manager.md#worker-state).
 
 ![](https://user-images.githubusercontent.com/166269/190922460-43bd2cfc-f81a-443b-b84f-07b6ce475cbf.png)

@@ -44,7 +44,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
 
 ### プロキシヘッダー
 
-Sanicはプロキシヘッダーのための特別な扱いを持っています。 詳細は [プロキシ ヘッダー](/guide/advanced/proxy-headers.md) をご覧ください。
+Sanicはプロキシヘッダーのための特別な扱いを持っています。 詳細については、[プロキシ ヘッダー](../advanced/proxy-headers.md)セクションを参照してください。
 
 ### ホストヘッダーと動的なURLの構築
 

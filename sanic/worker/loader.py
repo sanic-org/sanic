@@ -101,6 +101,7 @@ class AppLoader:
                         "will return a Sanic() application instance."
                     )
                 if self.as_factory or isfunction(app):
+                    assert callable(app)
                     try:
                         app = app(self.args)
                     except TypeError:

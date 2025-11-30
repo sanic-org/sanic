@@ -412,9 +412,9 @@ async def ready(app: Sanic, _):
 
 ### 跟踪或未跟踪的进程
 
-Sanic 将从盒子中追踪所有进程的状态。 这意味着您可以从 [multiplexer](./manager#access-to-the-multiplexer)对象或从 [Inspector](./manager#inspector)访问过程状态。
+Sanic 将从盒子中追踪所有进程的状态。 这意味着您可以从 [multiplexer](./manager.md#access-to-the-multiplexer) 对象或 [Inspector](./manager.md#inspector)访问过程状态。
 
-详见[工人状态](./manager#worker-state)。
+See [worker state](./manager.md#worker-state) for more information.
 
 有时运行并非长期运行的背景进程是有益的。 你运行一次，直到完成，然后他们退出。 完成后，它们将处于`FAILED`或`COMPLETED`状态。
 

@@ -1,5 +1,6 @@
 import os
 
+from collections.abc import MutableMapping
 from datetime import datetime, timezone
 from inspect import signature
 from multiprocessing.context import BaseContext
@@ -238,7 +239,7 @@ class Worker:
         serve,
         server_settings,
         context: BaseContext,
-        worker_state: dict[str, Any],
+        worker_state: MutableMapping[str, Any],
         num: int = 1,
         restartable: bool = False,
         tracked: bool = True,

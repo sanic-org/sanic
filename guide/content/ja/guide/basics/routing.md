@@ -701,7 +701,7 @@ async def handler(request, ws:
 ```
 ````
 
-動作の詳細については、[websockets section](/guide/advanced/websockets.md) をご覧ください。
+動作の詳細については、[websockets section](../advanced/websockets.md)を参照してください。
 
 ## 厳密なスラッシュ
 

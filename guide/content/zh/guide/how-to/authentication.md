@@ -74,7 +74,7 @@ def protected(wrapped):
     return decorator(wrapped)
 ```
 
-这种装饰模式取自[装饰品页面](/en/guide/best practices/decorators.md)。
+此装饰模式来自[装饰品页面](../best-practices/decorators.md)。
 
 ---
 

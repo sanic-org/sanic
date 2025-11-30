@@ -123,7 +123,7 @@ app.add_route(SimpleView.as_view(), "/")
 .. column::
 
 ```
-您可以完全按照[路由部分](/zh/guide/basics/routing.md)中讨论的方式来使用路径参数。
+您可以使用路径参数，正像[路由部分](../basics/routing.md )中讨论过的一样。
 ```
 
 .. column::
@@ -141,7 +141,7 @@ app.add_route(NameView.as_view(), "/<name>")
 
 ## 装饰器（Decorators）
 
-正如在[装饰器](/zh/guide/best-practices/decorators.md)部分讨论的那样，您经常需要通过使用装饰器为路由入口添加功能。 对于基于类的视图（CBV），有两种选择：
+正如在[装饰部分](../best-practices/decorators.md)中所讨论的那样，您常常需要通过装饰器添加功能到端点。 对于基于类的视图（CBV），有两种选择：
 
 1. 应用于视图中的**所有**HTTP方法
 2. 分别应用于视图中的各个HTTP方法
@@ -206,7 +206,7 @@ class ViewWithSomeDecorator(HTTPMethodView):
 .. column::
 
 ```
-这就像[生成任何其他URL](/zh/guide/basics/routing.md#generating-a-url)一样工作，只不过类名是路由入口的一部分。
+这就像[生成任何其它URL](../basics/routing.md#generating-a-url)，但类名称是端点的一部分。
 ```
 
 .. column::

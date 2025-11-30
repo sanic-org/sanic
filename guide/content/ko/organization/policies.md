@@ -69,8 +69,8 @@ Sanic releases a long term support release (aka "LTS") once a year in December. 
 | 0.1.9 | 2016-12-25 |               | ⚪         |
 | 0.1.0 | 2016-10-16 |               | ⚪         |
 
-☑️ = security fixes\
-✅ = full support\
+☑️ = security fixes  
+✅ = full support  
 ⚪ = no support
 
 ## Deprecation

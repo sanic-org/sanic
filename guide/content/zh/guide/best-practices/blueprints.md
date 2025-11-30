@@ -369,7 +369,7 @@ bp.static("/web/path", "/folder/to/server", name="上传")
 .. 列:
 
 ```
-然后可以通过 `url_for()`检索。更多信息请见 [routing](/guide/basics/routing.md)。
+然后可以通过 `url_for()`检索。更多信息请见 [routing](../basics/routing.md)。
 ```
 
 .. 列:
@@ -386,7 +386,7 @@ bp.static("/web/path", "/folder/to/server", name="上传")
 .. 列:
 
 ```
-蓝图也可以实现 [listeners](/guide/basics/listeners.md).
+蓝图也可以实现 [listeners](../basics/listeners.md)。
 ```
 
 .. 列:
@@ -405,7 +405,7 @@ async def after _server_stop(app, loop):
 
 ## Versioning
 
-正如[版本部分](/guide/advanced/versioning.md)所讨论的，蓝图可以用于实现不同版本的Web API。
+正如在[版本部分](../advanced/versioning.md)中所讨论的那样，蓝图可以用于实现不同版本的Web API。
 
 .. 列:
 

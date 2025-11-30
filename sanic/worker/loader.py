@@ -101,6 +101,11 @@ class AppLoader:
                         "will return a Sanic() application instance."
                     )
                 if self.as_factory or isfunction(app):
+                    if not callable(app):
+                        type_name = type(app).__name__
+                        raise ValueError(
+                            f"Expected a callable, but got {type_name}."
+                        )
                     try:
                         app = app(self.args)
                     except TypeError:

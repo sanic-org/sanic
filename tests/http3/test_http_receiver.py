@@ -68,7 +68,7 @@ def generate_http_receiver(app, http_request) -> HTTPReceiver:
     return receiver
 
 
-def test_http_receiver_init(app: Sanic, http_request: Request):
+async def test_http_receiver_init(app: Sanic, http_request: Request):
     receiver = generate_http_receiver(app, http_request)
     assert receiver.request_body is None
     assert receiver.stage is Stage.IDLE
@@ -114,7 +114,7 @@ async def test_http_receiver_run_exception(app: Sanic, http_request: Request):
     handler.assert_awaited_once_with(receiver.request, exception)
 
 
-def test_http_receiver_respond(app: Sanic, http_request: Request):
+async def test_http_receiver_respond(app: Sanic, http_request: Request):
     receiver = generate_http_receiver(app, http_request)
     response = empty()
 
@@ -131,7 +131,7 @@ def test_http_receiver_respond(app: Sanic, http_request: Request):
     assert response.stream is receiver
 
 
-def test_http_receiver_receive_body(app: Sanic, http_request: Request):
+async def test_http_receiver_receive_body(app: Sanic, http_request: Request):
     receiver = generate_http_receiver(app, http_request)
     receiver.request_max_size = 4
 
@@ -147,7 +147,7 @@ def test_http_receiver_receive_body(app: Sanic, http_request: Request):
         receiver.receive_body(b"..")
 
 
-def test_http3_events(app):
+async def test_http3_events(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
     http3.http_event_received(
@@ -213,7 +213,7 @@ async def test_send_headers(app: Sanic, http_request: Request):
     )
 
 
-def test_multiple_streams(app):
+async def test_multiple_streams(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
     http3.http_event_received(
@@ -251,7 +251,7 @@ def test_multiple_streams(app):
     assert receiver1 is not receiver2
 
 
-def test_request_stream_id(app):
+async def test_request_stream_id(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
     http3.http_event_received(
@@ -273,7 +273,7 @@ def test_request_stream_id(app):
     assert receiver.request.stream_id == 1
 
 
-def test_request_conn_info(app):
+async def test_request_conn_info(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
     http3.http_event_received(
@@ -294,7 +294,7 @@ def test_request_conn_info(app):
     assert isinstance(receiver.request.conn_info, ConnInfo)
 
 
-def test_request_header_encoding(app):
+async def test_request_header_encoding(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
     with pytest.raises(BadRequest) as exc_info:
@@ -318,7 +318,7 @@ def test_request_header_encoding(app):
     )
 
 
-def test_request_url_encoding(app):
+async def test_request_url_encoding(app):
     protocol = generate_protocol(app)
     http3 = Http3(protocol, protocol.transmit)
     with pytest.raises(BadRequest) as exc_info:

@@ -412,9 +412,9 @@ async def ready(app: Sanic, _):
 
 ### 追跡されていないプロセス
 
-Sanicは全プロセスの状態を追跡します。 これは、 [multiplexer](./manager#access-to-the-multiplexer) オブジェクト、または [Inspector](./manager#inspector) からプロセスの状態にアクセスできることを意味します。
+Sanicは全プロセスの状態を追跡します。 これは、 [multiplexer](./manager.md#access-to-the-multiplexer) オブジェクト、または [Inspector](./manager.md#inspector) からプロセスの状態にアクセスできることを意味します。
 
-詳細は format@@0(./manager#worker-state) を参照してください。
+詳細は [worker state](./manager.md#worker-state) を参照してください。
 
 バックグラウンドプロセスが長時間実行されていない場合もあります。 完了まで一度実行し、それらは終了します。 完了すると `FAILED` または `COMPLETED` のいずれかになります。
 

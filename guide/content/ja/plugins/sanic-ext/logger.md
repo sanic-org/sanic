@@ -6,7 +6,7 @@ title: Sanic Extensions - バックグラウンドロガー
 
 バックグラウンドロガーには `sanic>=22.9` と `sanic-ext>=22.9` が必要です。
 
-Sanic Extensionsを設定すると、バックグラウンドプロセスからすべてのメッセージをログに記録できます。 format@@0(../../guide/deployment/manager.md#single-process-mode) ではないことが必要です。
+Sanic Extensionsを設定すると、バックグラウンドプロセスからすべてのメッセージをログに記録できます。 This requires that you not be in [single process mode](../../guide/running/manager.md#single-process-mode).
 
 ロギングは高価な操作になることがあります。 すべてのログをバックグラウンドプロセスにプッシュすることで、パフォーマンスのメリットが得られる可能性があります。
 

@@ -28,13 +28,13 @@ async def i_am_ALSO_a_handler(request):
 
 さらに2つの重要な注意事項:
 
-1. あなたは :class:`sanic.response.HTTPresponse` を直接使用したくないでしょう。 format@@0(./response#methods) のいずれかを使う方が簡単です。
+1. あなたは :class:`sanic.response.HTTPresponse` を直接使用したくないでしょう。 It is much simpler to use one of the [convenience methods](./response.md#methods).
 
-    - `from sanic import json`
-    - `from sanic import html`
-    - `from sanic import redirect`
-    - _etc_
-2. format@@0(../advanced/streaming#response-streaming)で見るように、オブジェクトを返す必要はありません。 この下位レベルの API を使用する場合は、ハンドラ内からのレスポンスのフローを制御することができ、戻り値オブジェクトは使用されません。
+   - `from sanic import json`
+   - `from sanic import html`
+   - `from sanic import redirect`
+   - _etc_
+2. As we will see in [the streaming section](../advanced/streaming.md#response-streaming), you do not always need to return an object. この下位レベルの API を使用する場合は、ハンドラ内からのレスポンスのフローを制御することができ、戻り値オブジェクトは使用されません。
 
 .. tip:: Heads Up
 

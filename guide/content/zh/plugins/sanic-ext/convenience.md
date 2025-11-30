@@ -129,6 +129,6 @@ async def handler(request: CountedRequest):
 ```
 ````
 
-如果可能，请求计数也将添加到[工人状态](../../guide/deplement/manager.md#worker-state)。
+如果可能，请求计数也将被添加到[工人状态](../../guide/running/manager.md#worker-state)。
 
 ![](https://user-images.githubusercontent.com/166269/190922460-43bd2cfc-f81a-443b-b84f-07b6ce475cbf.png)

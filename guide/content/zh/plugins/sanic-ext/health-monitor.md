@@ -6,7 +6,7 @@ title: 神经扩展-健康监测
 
 健康监视器需要`sanic>=22.9`和`sanic-ext>=22.9`。
 
-您可以设置 Sanic 扩展来监测您的工作流程的健康状况。 这要求您不要处于[单一进程模式](../../guide/deplement/manager.md#单一进程模式)。
+您可以设置 Sanic 扩展来监测您的工作流程的健康状况。 This requires that you not be in [single process mode](../../guide/running/manager.md#single-process-mode).
 
 ## 设置
 
@@ -34,11 +34,11 @@ app.config.HEALTH_ENDPOINT = True
 .. 列:
 
 ```
-健康监视器还将启用一个诊断端点，输出[工人状态](../../guide/deplement/manager)。 d#worker-state)。默认情况下ID已禁用。
+The health monitor will also enable a diagnostics endpoint that outputs the [worker state](../../guide/running/manager.md#worker-state). By default is id disabled.
 
-。危险： 
+.. danger:: 
 
-    诊断端点不安全。 如果你在生产环境中部署它，你应该采取步骤来保护它，如果你在使用代理服务器的话。 如果没有，您可能想要考虑在生产中禁用此功能，因为它会泄露您服务器状态的详细信息。
+    The diagnostics endpoint is not secured. If you are deploying it in a production environment, you should take steps to protect it with a proxy server if you are using one. If not, you may want to consider disabling this feature in production since it will leak details about your server state.
 ```
 
 .. 列:

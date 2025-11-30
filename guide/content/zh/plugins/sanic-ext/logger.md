@@ -6,7 +6,7 @@ title: Sanic 扩展-背景记录器
 
 背景记录器需要 `sanic>=22.9` 和 `sanic-ext>=22.9`。
 
-您可以设置 Sanic 扩展来从后台进程中记录您所有的消息。 这要求您不要处于[单一进程模式](../../guide/deplement/manager.md#单一进程模式)。
+您可以设置 Sanic 扩展来从后台进程中记录您所有的消息。 This requires that you not be in [single process mode](../../guide/running/manager.md#single-process-mode).
 
 日志记录有时可能是一个昂贵的操作。 通过将所有登录推出到后台流程，您可以获得一些性能效益。
 

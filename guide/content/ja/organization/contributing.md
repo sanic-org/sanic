@@ -157,9 +157,9 @@ Sanicはコードの一貫性を維持するために、以下のツールを使
 7. 任意の一般的なインターフェイスから何かを削除/変更することにした場合、非推奨メッセージは format@@0(https://sanicframework.org/ja/guide/project/polices.html#deprecation )に従って同行する必要があります。
 8. 新しい機能を実装する場合は、少なくとも1つの単位テストが必要です。
 9. 例は次のいずれかでなければなりません:
-    - Sanicの使い方の例
-    - Sanic extensions の使用例
-    - Sanicライブラリと非同期ライブラリの使用例
+   - Sanicの使い方の例
+   - Sanic extensions の使用例
+   - Sanicライブラリと非同期ライブラリの使用例
 
 ## ドキュメント
 

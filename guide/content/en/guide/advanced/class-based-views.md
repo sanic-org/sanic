@@ -109,9 +109,10 @@ A class-based view should subclass :class:`sanic.views.HTTPMethodView`. You can 
 
 ## Path parameters
 
+
 .. column::
 
-    You can use path parameters exactly as discussed in [the routing section](/guide/basics/routing.md).
+    You can use path parameters exactly as discussed in [the routing section](../basics/routing.md).
 
 .. column::
 
@@ -126,7 +127,7 @@ A class-based view should subclass :class:`sanic.views.HTTPMethodView`. You can 
 
 ## Decorators
 
-As discussed in [the decorators section](/guide/best-practices/decorators.md), often you will need to add functionality to endpoints with the use of decorators. You have two options with CBV:
+As discussed in [the decorators section](../best-practices/decorators.md), often you will need to add functionality to endpoints with the use of decorators. You have two options with CBV:
 
 1. Apply to _all_ HTTP methods in the view
 2. Apply individually to HTTP methods in the view
@@ -183,7 +184,7 @@ Let's see what the options look like:
 
 .. column::
 
-    This works just like [generating any other URL](/guide/basics/routing.md#generating-a-url), except that the class name is a part of the endpoint.
+    This works just like [generating any other URL](../basics/routing.md#generating-a-url), except that the class name is a part of the endpoint.
 
 .. column::
 

@@ -24,7 +24,7 @@ def _menu_items(request: Request) -> list[Builder]:
         ),
         E.li("How we ").a(
             "built this site w/ Sanic",
-            href="/{request.ctx.language}/built-with-sanic.html",
+            href=f"/{request.ctx.language}/built-with-sanic.html",
         ),
         E.li("The ").a(
             "Awesome Sanic",

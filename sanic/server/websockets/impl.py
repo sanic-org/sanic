@@ -418,7 +418,10 @@ class WebsocketImplProtocol:
                 websockets_logger.debug(
                     "Websocket half-closing TCP connection"
                 )
-                self.io_proto.transport.write_eof()
+                try:
+                    self.io_proto.transport.write_eof()
+                except RuntimeError:
+                    ...
                 if self.connection_lost_waiter:
                     if await self.wait_for_connection_lost(timeout=0):
                         return

@@ -360,9 +360,9 @@ To run a managed custom process on Sanic, you must create a callable. If that pr
 
 ### Tracked v. untracked processes
 
-Out of the box, Sanic will track the state of all processes. This means that you can access the state of the process from the [multiplexer](./manager#access-to-the-multiplexer) object, or from the [Inspector](./manager#inspector).
+Out of the box, Sanic will track the state of all processes. This means that you can access the state of the process from the [multiplexer](./manager.md#access-to-the-multiplexer) object, or from the [Inspector](./manager.md#inspector).
 
-See [worker state](./manager#worker-state) for more information.
+See [worker state](./manager.md#worker-state) for more information.
     
 Sometimes it is helpful to run background processes that are not long-running. You run them once until completion and then they exit. Upon completion, they will either be in `FAILED` or `COMPLETED` state.
     

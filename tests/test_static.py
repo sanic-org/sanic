@@ -5,11 +5,13 @@ import sys
 from collections import Counter
 from pathlib import Path
 from time import gmtime, strftime
+from urllib.parse import unquote
 
 import pytest
 
 from sanic import Sanic, text
 from sanic.exceptions import FileNotFound, ServerError
+from sanic.response import file
 
 
 @pytest.fixture(scope="module")
@@ -150,43 +152,53 @@ def test_static_file_invalid_path(app, static_file_directory, file_name):
     assert response.status == 404
 
 
-@pytest.mark.parametrize("file_name", ["test.html"])
-def test_static_file_content_type(app, static_file_directory, file_name):
-    app.static(
-        "/testing.file",
-        get_file_path(static_file_directory, file_name),
-        content_type="text/html; charset=utf-8",
-    )
+@pytest.mark.parametrize(
+    "file_name,expected_content_type",
+    [
+        ("decode me.txt", "text/plain; charset=utf-8"),
+        ("test.html", "text/html; charset=utf-8"),
+        ("python.png", "image/png"),
+        # Note: file() default for unknown types differs from app.static
+        ("test.file", "text/plain; charset=utf-8"),
+    ],
+)
+def test_file_response_content_type(
+    app: Sanic, file_name, expected_content_type, static_file_directory
+):
+    """Responses by file() rather than app.static."""
 
-    request, response = app.test_client.get("/testing.file")
+    @app.get("/files/<filename>")
+    def file_route(request, filename):
+        file_path = os.path.join(static_file_directory, filename)
+        file_path = os.path.abspath(unquote(file_path))
+        return file(file_path)
+
+    request, response = app.test_client.get(f"/files/{file_name}")
     assert response.status == 200
-    assert response.body == get_file_content(static_file_directory, file_name)
-    assert response.headers["Content-Type"] == "text/html; charset=utf-8"
+    assert response.headers["Content-Type"] == expected_content_type
 
 
 @pytest.mark.parametrize(
-    "file_name,expected",
+    "file_name,expected_content_type",
     [
-        ("test.html", "text/html; charset=utf-8"),
         ("decode me.txt", "text/plain; charset=utf-8"),
+        ("test.html", "text/html; charset=utf-8"),
+        ("python.png", "image/png"),
         ("test.file", "application/octet-stream"),
     ],
 )
-def test_static_file_content_type_guessed(
-    app, static_file_directory, file_name, expected
+def test_static_file_content_type(
+    app: Sanic, file_name, expected_content_type, static_file_directory
 ):
-    app.static(
-        "/testing.file",
-        get_file_path(static_file_directory, file_name),
-    )
+    """Test that file responses automatically include charset for text."""
 
-    request, response = app.test_client.get("/testing.file")
+    app.static("/", static_file_directory)
+    request, response = app.test_client.get(file_name)
     assert response.status == 200
-    assert response.body == get_file_content(static_file_directory, file_name)
-    assert response.headers["Content-Type"] == expected
+    assert response.headers["Content-Type"] == expected_content_type
 
 
-def test_static_file_content_type_with_charset(app, static_file_directory):
+def test_static_file_content_type_forced(app, static_file_directory):
     app.static(
         "/testing.file",
         get_file_path(static_file_directory, "decode me.txt"),

@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from sanic.models.asgi import ASGIScope
 
 
-# Protocol is a 3.8+ feature
 from typing import Protocol
 
 

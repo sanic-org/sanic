@@ -4,6 +4,12 @@ import threading
 import time
 import traceback
 
+import atexit
+try:
+    import termios
+except ImportError:
+    termios = None
+
 from ast import PyCF_ALLOW_TOP_LEVEL_AWAIT
 from asyncio import iscoroutine, new_event_loop
 from code import InteractiveConsole
@@ -256,6 +262,13 @@ class SanicREPL(InteractiveConsole):
 
     def _monitor(self):
         if isinstance(self._start, Default):
+            if termios and sys.stdin.isatty():
+                try:
+                    fd = sys.stdin.fileno()
+                    old_attrs = termios.tcgetattr(fd)
+                    atexit.register(termios.tcsetattr, fd, termios.TCSADRAIN, old_attrs)
+                except (termios.error, AttributeError):
+                    pass
             enter = f"{Colors.BOLD + Colors.SANIC}ENTER{Colors.END}"
             start = input(f"\nPress {enter} at anytime to start the REPL.\n\n")
             if start:

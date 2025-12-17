@@ -83,8 +83,17 @@ class Executor:
             kwargs = {}
             if param.default is not param.empty:
                 kwargs["default"] = param.default
+
+            if param.annotation is not param.empty:
+                if hasattr(param.annotation, "__name__"):
+                    help_text = param.annotation.__name__
+                else:
+                    help_text = str(param.annotation)
+            else:
+                help_text = None
+
             parser.add_argument(
                 f"--{param.name}",
-                help=param.annotation,
+                help=help_text,
                 **kwargs,
             )

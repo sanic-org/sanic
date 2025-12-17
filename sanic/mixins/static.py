@@ -1,6 +1,7 @@
 from collections.abc import Sequence
+from contextlib import suppress
 from email.utils import formatdate
-from functools import partial, wraps
+from functools import WRAPPER_ASSIGNMENTS, partial, wraps
 from os import PathLike, path
 from pathlib import Path, PurePath
 from typing import Optional, Union
@@ -19,6 +20,11 @@ from sanic.models.futures import FutureStatic
 from sanic.request import Request
 from sanic.response import HTTPResponse, file, file_stream, validate_file
 from sanic.response.convenience import guess_content_type
+
+
+_STATIC_WRAPPER_ASSIGNMENTS = tuple(
+    a for a in WRAPPER_ASSIGNMENTS if a != "__annotate__"
+)
 
 
 class StaticMixin(BaseMixin, metaclass=SanicMeta):
@@ -222,7 +228,10 @@ class StaticHandleMixin(metaclass=SanicMeta):
         # if not static.name.startswith("_static_"):
         #     name = f"_static_{static.name}"
 
-        _handler = wraps(self._static_request_handler)(
+        _handler = wraps(
+            self._static_request_handler,
+            assigned=_STATIC_WRAPPER_ASSIGNMENTS,
+        )(
             partial(
                 self._static_request_handler,
                 file_or_directory=str(file_or_directory),
@@ -233,6 +242,10 @@ class StaticHandleMixin(metaclass=SanicMeta):
                 directory_handler=static.directory_handler,
             )
         )
+        # Python 3.14+ may copy a non-picklable `__annotate__` onto the wrapper
+        # which breaks multiprocessing pickling of FutureRoute handlers.
+        with suppress(AttributeError, TypeError):
+            delattr(_handler, "__annotate__")
 
         route, _ = self.route(  # type: ignore
             uri=uri,

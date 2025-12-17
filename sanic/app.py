@@ -4,7 +4,6 @@ import asyncio
 import logging
 import logging.config
 import re
-import sys
 
 from asyncio import (
     AbstractEventLoop,
@@ -418,10 +417,7 @@ class Sanic(
         try:
             return get_running_loop()
         except RuntimeError:  # no cov
-            if sys.version_info > (3, 10):
-                return asyncio.get_event_loop_policy().get_event_loop()
-            else:
-                return asyncio.get_event_loop()
+            return asyncio.get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration

@@ -52,6 +52,7 @@ def test_check_timeouts_no_timeout(protocol: HttpProtocol):
 
 def test_check_timeouts_keep_alive_timeout(protocol: HttpProtocol):
     protocol._http.stage = Stage.IDLE
+    protocol.keep_alive_timeout = 0
     protocol._time = 0
     protocol.check_timeouts()
     protocol._task.cancel.assert_called_once()
@@ -60,6 +61,7 @@ def test_check_timeouts_keep_alive_timeout(protocol: HttpProtocol):
 
 def test_check_timeouts_request_timeout(protocol: HttpProtocol):
     protocol._http.stage = Stage.REQUEST
+    protocol.request_timeout = 0
     protocol._time = 0
     protocol.check_timeouts()
     protocol._task.cancel.assert_called_once()
@@ -68,6 +70,7 @@ def test_check_timeouts_request_timeout(protocol: HttpProtocol):
 
 def test_check_timeouts_response_timeout(protocol: HttpProtocol):
     protocol._http.stage = Stage.RESPONSE
+    protocol.response_timeout = 0
     protocol._time = 0
     protocol.check_timeouts()
     protocol._task.cancel.assert_called_once()

@@ -104,6 +104,7 @@ setup_kwargs = {
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
     "entry_points": {"console_scripts": ["sanic = sanic.__main__:main"]},
 }
@@ -133,7 +134,7 @@ tests_require = [
     "pytest>=8.2.2",
     "coverage",
     "beautifulsoup4",
-    "pytest-sanic",
+    # pytest-sanic is installed from local repo via tox.ini
     "pytest-benchmark",
     "chardet==3.*",
     "ruff",

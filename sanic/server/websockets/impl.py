@@ -434,42 +434,39 @@ class WebsocketImplProtocol:
             if self.keepalive_ping_task:
                 self.keepalive_ping_task.cancel()
                 self.keepalive_ping_task = None
-            # The try/finally ensures that the transport never remains open,
-            # even if this coroutine is cancelled (for example).
-            if (not self.io_proto) or (not self.io_proto.transport):
-                # we were never open, or done. Can't do any finalization.
+
+        if (not self.io_proto) or (not self.io_proto.transport):
+            # we were never open, or done. Can't do any finalization.
+            return
+        elif (
+            self.connection_lost_waiter and self.connection_lost_waiter.done()
+        ):
+            # connection confirmed closed already, proceed to abort waiter
+            ...
+        elif self.io_proto.transport.is_closing():
+            # Connection is already closing (due to half-close above)
+            # proceed to abort waiter
+            ...
+        else:
+            self.io_proto.transport.close()
+
+        if not self.connection_lost_waiter:
+            # Our connection monitor task isn't running.
+            try:
+                await asyncio.sleep(self.close_timeout)
+            except asyncio.CancelledError:
+                ...
+            if self.io_proto and self.io_proto.transport:
+                self.io_proto.transport.abort()
+        else:
+            if await self.wait_for_connection_lost(timeout=self.close_timeout):
+                # Connection aborted before the timeout expired.
                 return
-            elif (
-                self.connection_lost_waiter
-                and self.connection_lost_waiter.done()
-            ):
-                # connection confirmed closed already, proceed to abort waiter
-                ...
-            elif self.io_proto.transport.is_closing():
-                # Connection is already closing (due to half-close above)
-                # proceed to abort waiter
-                ...
-            else:
-                self.io_proto.transport.close()
-            if not self.connection_lost_waiter:
-                # Our connection monitor task isn't running.
-                try:
-                    await asyncio.sleep(self.close_timeout)
-                except asyncio.CancelledError:
-                    ...
-                if self.io_proto and self.io_proto.transport:
-                    self.io_proto.transport.abort()
-            else:
-                if await self.wait_for_connection_lost(
-                    timeout=self.close_timeout
-                ):
-                    # Connection aborted before the timeout expired.
-                    return
-                websockets_logger.warning(
-                    "Timeout waiting for TCP connection to close. Aborting"
-                )
-                if self.io_proto and self.io_proto.transport:
-                    self.io_proto.transport.abort()
+            websockets_logger.warning(
+                "Timeout waiting for TCP connection to close. Aborting"
+            )
+            if self.io_proto and self.io_proto.transport:
+                self.io_proto.transport.abort()
 
     def abort_pings(self) -> None:
         """

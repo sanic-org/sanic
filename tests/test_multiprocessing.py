@@ -14,7 +14,8 @@ from sanic_testing.testing import HOST
 from sanic import Blueprint, text
 from sanic.compat import use_context
 from sanic.log import logger
-
+import sys
+import sanic.mixins.static as sm
 
 @pytest.mark.skipif(
     not hasattr(signal, "SIGALRM"),

@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from unittest.mock import Mock, patch
 
@@ -90,6 +91,13 @@ def test_logs_when_install_and_runtime_config_mismatch(caplog, monkeypatch):
     reason="Not testable with current client",
 )
 def test_sets_loop_policy_only_when_not_already_set(monkeypatch):
+    if sys.version_info >= (3, 14):
+        pytest.skip(
+            "Python 3.14 uses uvloop.install() instead of set_event_loop_policy; "
+            "there is no supported/intended way here to assert 'only when not "
+            "already set' without changing implementation details."
+        )
+
     import uvloop  # type: ignore
 
     # Existing policy is not uvloop.EventLoopPolicy

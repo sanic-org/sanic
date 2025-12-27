@@ -1,3 +1,4 @@
+import errno
 import sys
 from typing import Callable
 
@@ -18,7 +19,7 @@ def _handle_os_error(exc: Exception) -> bool:
     if not isinstance(exc, OSError):
         return False
 
-    if exc.errno == 98:
+    if exc.errno == errno.EADDRINUSE:
         error_logger.error(
             "Startup failed: Address already in use. \n\n"
             "Ensure no other process is using the same address and port, "

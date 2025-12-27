@@ -33,6 +33,9 @@ known-third-party = ["pytest"]
 lines-after-imports = 2
 lines-between-types = 1
 
+[tool.ruff.per-file-ignores]
+"sanic/__main__.py" = ["E402", "I001"]
+
 [[tool.mypy.overrides]]
 module = [
     "httptools.*",

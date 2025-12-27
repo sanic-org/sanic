@@ -1,3 +1,5 @@
+import errno
+
 import pytest
 
 from sanic.exceptions import ServerError
@@ -9,7 +11,7 @@ from sanic.startup.errors import (
 
 
 def test_handle_os_error_address_in_use(caplog):
-    exc = OSError(98, "Address already in use")
+    exc = OSError(errno.EADDRINUSE, "Address already in use")
     result = _handle_os_error(exc)
 
     assert result is True
@@ -51,7 +53,7 @@ def test_handle_server_error_non_server_error():
 
 
 def test_maybe_handle_startup_error_exits_on_os_error():
-    exc = OSError(98, "Address already in use")
+    exc = OSError(errno.EADDRINUSE, "Address already in use")
     with pytest.raises(SystemExit) as exc_info:
         maybe_handle_startup_error(exc)
 

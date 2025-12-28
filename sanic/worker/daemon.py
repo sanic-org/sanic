@@ -363,8 +363,9 @@ class Daemon:
             return
         try:
             self.pidfile.unlink(missing_ok=True)
-        except OSError:
-            pass
+        except OSError as e:
+            # Best-effort cleanup: failure to remove the PID file is non-fatal.
+            logger.debug("Failed to remove PID file %s: %s", self.pidfile, e)
 
     @staticmethod
     def read_pidfile(pidfile: str | Path) -> int | None:

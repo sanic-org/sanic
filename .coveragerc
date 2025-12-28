@@ -1,7 +1,6 @@
 [run]
 branch = True
 source = sanic
-parallel = True
 omit =
     site-packages
     sanic/__main__.py

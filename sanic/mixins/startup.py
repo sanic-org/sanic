@@ -45,7 +45,7 @@ from sanic.application.motd import MOTD
 from sanic.application.state import ApplicationServerInfo, Mode, ServerStage
 from sanic.base.meta import SanicMeta
 from sanic.compat import OS_IS_WINDOWS, StartMethod
-from sanic.exceptions import ServerKilled
+from sanic.exceptions import ServerError, ServerKilled
 from sanic.helpers import Default, _default, is_atty
 from sanic.http.constants import HTTP
 from sanic.http.tls import get_ssl_context, process_to_context
@@ -1023,10 +1023,28 @@ class StartupMixin(metaclass=SanicMeta):
             ) from None
 
         socks = []
-        sync_manager = Manager()
+        try:
+            sync_manager = Manager()
+        except EOFError:
+            message = (
+                "Sanic server could not start: worker process failed.\n\n"
+                "This may have happened if you are running Sanic in the "
+                "global scope and not inside of a "
+                '`if __name__ == "__main__"` block.\n\nSee more information: '
+                "https://sanic.dev/en/guide/deployment/manager.html#"
+                "how-sanic-server-starts-processes\n"
+            )
+            if not OS_IS_WINDOWS:
+                message += (
+                    "\nAlternatively, you can set "
+                    '`Sanic.start_method = "fork"` at the start of your '
+                    "application to avoid this issue (Unix only).\n"
+                )
+            raise ServerError(message, quiet=True) from None
         worker_state: Mapping[str, Any] = {"state": "NONE"}
         setup_ext(primary)
         exit_code = 0
+        workers_started = False
         try:
             primary_server_info.settings.pop("main_start", None)
             primary_server_info.settings.pop("main_stop", None)
@@ -1138,14 +1156,13 @@ class StartupMixin(metaclass=SanicMeta):
             ready = primary.listeners["main_process_ready"]
             trigger_events(ready, loop, primary)
 
+            workers_started = True
             manager.run()
         except ServerKilled:
             exit_code = 1
         except BaseException:
             kwargs = primary_server_info.settings
-            error_logger.exception(
-                "Experienced exception while trying to serve"
-            )
+            error_logger.error("Experienced exception while trying to serve")
             raise
         finally:
             logger.info("Server Stopped")
@@ -1168,16 +1185,17 @@ class StartupMixin(metaclass=SanicMeta):
             cls._cleanup_env_vars()
             cls._cleanup_apps()
 
-            limit = 100
-            while cls._get_process_states(worker_state):
-                sleep(0.1)
-                limit -= 1
-                if limit <= 0:
-                    error_logger.warning(
-                        "Worker shutdown timed out. "
-                        "Some processes may still be running."
-                    )
-                    break
+            if workers_started:
+                limit = 100
+                while cls._get_process_states(worker_state):
+                    sleep(0.1)
+                    limit -= 1
+                    if limit <= 0:
+                        error_logger.warning(
+                            "Worker shutdown timed out. "
+                            "Some processes may still be running."
+                        )
+                        break
             sync_manager.shutdown()
             unix = kwargs.get("unix")
             if unix:

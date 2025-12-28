@@ -443,18 +443,28 @@ class Daemon:
         try:
             if fcntl is not None:
                 fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
-        except OSError:
-            pass
+        except OSError as e:
+            # Best-effort cleanup: failure to unlock is non-fatal.
+            logger.debug(
+                "Failed to unlock file descriptor %s: %s", self._lock_fd, e
+            )
         try:
             os.close(self._lock_fd)
-        except OSError:
-            pass
+        except OSError as e:
+            # Best-effort cleanup: failure to close is non-fatal.
+            logger.debug(
+                "Failed to close file descriptor %s: %s", self._lock_fd, e
+            )
         self._lock_fd = None
         if self._lockfile_path:
             try:
                 self._lockfile_path.unlink(missing_ok=True)
-            except OSError:
-                pass
+            except OSError as e:
+                # Best-effort cleanup: failure to remove lock file
+                # is non-fatal.
+                logger.debug(
+                    "Failed to remove lock file %s: %s", self._lockfile_path, e
+                )
 
     def _redirect_streams(self) -> None:
         sys.stdout.flush()

@@ -428,7 +428,7 @@ def test_no_certs_on_list(app):
     assert "No certificates" in str(excinfo.value)
 
 
-def test_custom_cert_loader():
+def test_custom_cert_loader(port):
     class MyCertLoader(CertLoader):
         def load(self, app: Sanic):
             self._ssl_data = {
@@ -443,15 +443,15 @@ def test_custom_cert_loader():
     async def handler(request):
         return text("ssl test")
 
-    client = SanicTestClient(app, port=44556)
+    client = SanicTestClient(app, port=port)
 
-    request, response = client.get("https://localhost:44556/test")
+    request, response = client.get(f"https://localhost:{port}/test")
     assert request.scheme == "https"
     assert response.status_code == 200
     assert response.text == "ssl test"
 
 
-def test_logger_vhosts(caplog):
+def test_logger_vhosts(caplog, port):
     app = Sanic(name="test_logger_vhosts")
 
     @app.after_server_start
@@ -461,7 +461,7 @@ def test_logger_vhosts(caplog):
     with caplog.at_level(logging.INFO):
         app.run(
             host="127.0.0.1",
-            port=42102,
+            port=port,
             ssl=[localhost_dir, sanic_dir],
             single_process=True,
         )

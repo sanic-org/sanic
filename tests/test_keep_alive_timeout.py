@@ -7,6 +7,8 @@ from os import environ
 
 import pytest
 
+pytestmark = pytest.mark.xdist_group(name="keep_alive_timeout")
+
 from sanic_testing.reusable import ReusableClient
 
 from sanic import Sanic

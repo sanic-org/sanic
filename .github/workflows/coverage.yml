@@ -33,3 +33,4 @@ jobs:
           name: coverage-report
           path: ./coverage.xml
           retention-days: 1
+          if-no-files-found: error

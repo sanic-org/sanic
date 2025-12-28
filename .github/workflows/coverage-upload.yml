@@ -28,8 +28,18 @@ jobs:
         id: pr
         run: |
           if [ "${{ github.event.workflow_run.event }}" == "pull_request" ]; then
-            PR_NUMBER=$(gh pr list --search "${{ github.event.workflow_run.head_sha }}" --state open --json number --jq '.[0].number')
-            echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+            PR_NUMBERS=$(gh pr list --search "${{ github.event.workflow_run.head_sha }}" --state open --json number --jq '.[].number')
+            PR_COUNT=$(printf "%s\n" "$PR_NUMBERS" | sed '/^$/d' | wc -l | tr -d ' ')
+            if [ "$PR_COUNT" -eq 0 ]; then
+              echo "Error: No open pull request found for head SHA '${{ github.event.workflow_run.head_sha }}'." >&2
+              exit 1
+            elif [ "$PR_COUNT" -gt 1 ]; then
+              echo "Error: Multiple open pull requests ($PR_COUNT) found for head SHA '${{ github.event.workflow_run.head_sha }}':" >&2
+              printf "%s\n" "$PR_NUMBERS" >&2
+              exit 1
+            fi
+            PR_NUMBER="$PR_NUMBERS"
+            echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-
-pytestmark = pytest.mark.xdist_group(name="static_files")
-
 from sanic import Sanic
 from sanic.handlers.directory import DirectoryHandler
+
+
+pytestmark = pytest.mark.xdist_group(name="static_files")
 
 
 def get_file_path(static_file_directory, file_name):

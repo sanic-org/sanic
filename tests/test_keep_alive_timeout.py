@@ -7,14 +7,14 @@ from os import environ
 
 import pytest
 
-pytestmark = pytest.mark.xdist_group(name="keep_alive_timeout")
-
 from sanic_testing.reusable import ReusableClient
 
 from sanic import Sanic
 from sanic.compat import OS_IS_WINDOWS
 from sanic.response import text
 
+
+pytestmark = pytest.mark.xdist_group(name="keep_alive_timeout")
 
 CONFIG_FOR_TESTS = {"KEEP_ALIVE_TIMEOUT": 2, "KEEP_ALIVE": True}
 

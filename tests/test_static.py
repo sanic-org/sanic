@@ -9,12 +9,12 @@ from urllib.parse import unquote
 
 import pytest
 
-
-pytestmark = pytest.mark.xdist_group(name="static_files")
-
 from sanic import Sanic, text
 from sanic.exceptions import FileNotFound, ServerError
 from sanic.response import file
+
+
+pytestmark = pytest.mark.xdist_group(name="static_files")
 
 
 @pytest.fixture(scope="module")

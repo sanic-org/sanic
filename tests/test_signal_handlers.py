@@ -9,9 +9,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-
-pytestmark = pytest.mark.xdist_group(name="process_spawning")
-
 from sanic_testing.testing import HOST, PORT
 
 from sanic import Sanic
@@ -19,6 +16,9 @@ from sanic.compat import ctrlc_workaround_for_windows
 from sanic.exceptions import BadRequest, ServerError
 from sanic.response import HTTPResponse
 from sanic.signals import Event
+
+
+pytestmark = pytest.mark.xdist_group(name="process_spawning")
 
 
 async def stop(app, loop):

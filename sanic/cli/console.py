@@ -1,19 +1,24 @@
+import atexit
 import concurrent.futures
 import sys
 import threading
 import time
 import traceback
 
-import atexit
+
 try:
     import termios
+
+    TERMIOS_AVAILABLE = True
 except ImportError:
-    termios = None
+    TERMIOS_AVAILABLE = False
+    termios = None  # type: ignore
 
 from ast import PyCF_ALLOW_TOP_LEVEL_AWAIT
 from asyncio import iscoroutine, new_event_loop
 from code import InteractiveConsole
 from collections.abc import Sequence
+from contextlib import suppress
 from types import FunctionType
 from typing import Any, NamedTuple, Optional, Union
 
@@ -260,15 +265,19 @@ class SanicREPL(InteractiveConsole):
         self.interact(banner=self.banner_message, exitmsg=self.exit_message)
         self._shutdown()
 
+    def _setup_terminal(self):
+        assert termios is not None
+        with suppress(termios.error, AttributeError):
+            fd = sys.stdin.fileno()
+            old_attrs = termios.tcgetattr(fd)
+            atexit.register(
+                termios.tcsetattr, fd, termios.TCSADRAIN, old_attrs
+            )
+
     def _monitor(self):
         if isinstance(self._start, Default):
-            if termios and sys.stdin.isatty():
-                try:
-                    fd = sys.stdin.fileno()
-                    old_attrs = termios.tcgetattr(fd)
-                    atexit.register(termios.tcsetattr, fd, termios.TCSADRAIN, old_attrs)
-                except (termios.error, AttributeError):
-                    pass
+            if TERMIOS_AVAILABLE and sys.stdin.isatty():
+                self._setup_terminal()
             enter = f"{Colors.BOLD + Colors.SANIC}ENTER{Colors.END}"
             start = input(f"\nPress {enter} at anytime to start the REPL.\n\n")
             if start:

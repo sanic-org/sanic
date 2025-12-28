@@ -45,14 +45,14 @@ Usage:
 
 Examples:
     sanic path.to.server:app       Run app
-    sanic path.to.server --dev     Run with auto-reload and debug
+    sanic path.to.server --dev     Run in development mode
     sanic ./static --simple        Serve static files
 """,
         prefix=" ",
     )
 
-    DESCRIPTION_SHORT_FOOTER = """\
-    (additional options omitted)
+    DESCRIPTION_SHORT_FOOTER = """
+(additional options available)
 
 For complete options and documentation:
     sanic help --full
@@ -84,15 +84,15 @@ Additional commands:
 
     $ sanic inspect ...           Inspect a running Sanic instance
     $ sanic path.to.app exec ...  Run app commands
-    $ sanic path.to.app status    Check if app daemon is running (Unix only)
-    $ sanic path.to.app restart   Restart app daemon (Unix only, future use)
-    $ sanic path.to.app stop      Stop app daemon (Unix only)
+    $ sanic path.to.app status    Check if app daemon is running
+    $ sanic path.to.app restart   Restart app daemon (future use)
+    $ sanic path.to.app stop      Stop app daemon
 
-Advanced daemon management (Unix only):
+Advanced daemon management:
 
-    $ sanic kill --pid PID|--pidfile PATH      Force kill (SIGKILL)
-    $ sanic status --pid PID|--pidfile PATH    Check status
-    $ sanic restart --pid PID|--pidfile PATH   Restart (future use)
+    $ sanic kill (--pid PID | --pidfile PATH)      Force kill (SIGKILL)
+    $ sanic status (--pid PID | --pidfile PATH)    Check status
+    $ sanic restart (--pid PID | --pidfile PATH)   Restart (future use)
 """,
         prefix=" ",
     )
@@ -322,10 +322,10 @@ Advanced daemon management (Unix only):
         full = "--full" in sys.argv
         if full:
             self.parser.description = self.DESCRIPTION_FULL
-            for group in Group._registry:
-                instance = group.create(self.parser)
-                instance.attach()
-                self.groups.append(instance)
+        for group in Group._registry:
+            instance = group.create(self.parser)
+            instance.attach(short=not full)
+            self.groups.append(instance)
         self.parser.print_help()
         if not full:
             print(self.DESCRIPTION_SHORT_FOOTER)

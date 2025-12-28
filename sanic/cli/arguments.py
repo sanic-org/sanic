@@ -31,25 +31,51 @@ class Group:
         instance = cls(parser, cls.name)
         return instance
 
-    def add_bool_arguments(self, *args, nullable=False, **kwargs):
+    def add_bool_arguments(
+        self,
+        *args,
+        nullable=False,
+        help: str,
+        negative_help: str | None = None,
+        **kwargs,
+    ):
         group = self.container.add_mutually_exclusive_group()
-        kwargs["help"] = kwargs["help"].capitalize()
-        group.add_argument(*args, action="store_true", **kwargs)
-        kwargs["help"] = f"no {kwargs['help'].lower()}".capitalize()
-        group.add_argument(
-            "--no-" + args[0][2:], *args[1:], action="store_false", **kwargs
+
+        pos_help = help[0].upper() + help[1:]
+        neg_help = (
+            negative_help if negative_help else f"Disable {help.lower()}"
         )
+
+        group.add_argument(
+            *args,
+            action="store_true",
+            help=pos_help,
+            **kwargs,
+        )
+
+        group.add_argument(
+            "--no-" + args[0][2:],
+            *args[1:],
+            action="store_false",
+            help=neg_help[0].upper() + neg_help[1:],
+            **kwargs,
+        )
+
         if nullable:
-            params = {args[0][2:].replace("-", "_"): None}
-            group.set_defaults(**params)
+            group.set_defaults(**{args[0][2:].replace("-", "_"): None})
 
     def prepare(self, args) -> None: ...
+
+    def attach(self, short: bool = False) -> None: ...
 
 
 class GeneralGroup(Group):
     name = None
 
-    def attach(self):
+    def attach(self, short: bool = False):
+        if short:
+            return
+
         self.container.add_argument(
             "--version",
             action="version",
@@ -72,15 +98,15 @@ class GeneralGroup(Group):
         choices = ["serve", "exec"]
         help_text = (
             "Action to perform.\n"
-            "\tserve: Run the Sanic app (default)\n"
+            "\tserve: Run the Sanic app [default]\n"
             "\texec: Execute a command in the Sanic app context\n"
         )
         if not OS_IS_WINDOWS:
             choices.extend(["status", "restart", "stop"])
             help_text += (
-                "\tstatus: Check if daemon is running (Unix only)\n"
-                "\trestart: Restart daemon (Unix only, future use)\n"
-                "\tstop: Stop daemon gracefully (Unix only)\n"
+                "\tstatus: Check if daemon is running\n"
+                "\trestart: Restart daemon (future use)\n"
+                "\tstop: Stop daemon gracefully\n"
             )
         self.container.add_argument(
             "action",
@@ -94,7 +120,10 @@ class GeneralGroup(Group):
 class ApplicationGroup(Group):
     name = "Application"
 
-    def attach(self):
+    def attach(self, short: bool = False):
+        if short:
+            return
+
         group = self.container.add_mutually_exclusive_group()
         group.add_argument(
             "--factory",
@@ -116,14 +145,47 @@ class ApplicationGroup(Group):
         )
         self.add_bool_arguments(
             "--repl",
-            help="Run the server with an interactive shell session",
+            help="Run with an interactive shell session",
+            negative_help="Disable interactive shell session",
         )
+
+
+class SocketGroup(Group):
+    name = "Socket binding"
+
+    def attach(self, short: bool = False):
+        self.container.add_argument(
+            "-H",
+            "--host",
+            dest="host",
+            type=str,
+            help="Host address [default 127.0.0.1]",
+        )
+        self.container.add_argument(
+            "-p",
+            "--port",
+            dest="port",
+            type=int,
+            help="Port to serve on [default 8000]",
+        )
+        if not OS_IS_WINDOWS and not short:
+            self.container.add_argument(
+                "-u",
+                "--unix",
+                dest="unix",
+                type=str,
+                default="",
+                help="location of UNIX socket",
+            )
 
 
 class HTTPVersionGroup(Group):
     name = "HTTP version"
 
-    def attach(self):
+    def attach(self, short: bool = False):
+        if short:
+            return
+
         http_values = [http.value for http in HTTP.__members__.values()]
 
         self.container.add_argument(
@@ -158,38 +220,13 @@ class HTTPVersionGroup(Group):
         args.http = tuple(sorted(set(map(HTTP, args.http)), reverse=True))
 
 
-class SocketGroup(Group):
-    name = "Socket binding"
-
-    def attach(self):
-        self.container.add_argument(
-            "-H",
-            "--host",
-            dest="host",
-            type=str,
-            help="Host address [default 127.0.0.1]",
-        )
-        self.container.add_argument(
-            "-p",
-            "--port",
-            dest="port",
-            type=int,
-            help="Port to serve on [default 8000]",
-        )
-        self.container.add_argument(
-            "-u",
-            "--unix",
-            dest="unix",
-            type=str,
-            default="",
-            help="location of unix socket",
-        )
-
-
 class TLSGroup(Group):
     name = "TLS certificate"
 
-    def attach(self):
+    def attach(self, short: bool = False):
+        if short:
+            return
+
         self.container.add_argument(
             "--cert",
             dest="cert",
@@ -221,10 +258,58 @@ class TLSGroup(Group):
         )
 
 
+class DevelopmentGroup(Group):
+    name = "Development"
+
+    def attach(self, short: bool = False):
+        if not short:
+            self.container.add_argument(
+                "--debug",
+                dest="debug",
+                action="store_true",
+                help="Run the server in debug mode",
+            )
+            self.container.add_argument(
+                "-r",
+                "--reload",
+                "--auto-reload",
+                dest="auto_reload",
+                action="store_true",
+                help="Auto-reload on source changes",
+            )
+            self.container.add_argument(
+                "-R",
+                "--reload-dir",
+                dest="path",
+                action="append",
+                help="Additional directories to watch for changes",
+            )
+        self.container.add_argument(
+            "-d",
+            "--dev",
+            dest="dev",
+            action="store_true",
+            help="Run in development mode (debug + auto-reload)",
+        )
+        if not short:
+            self.container.add_argument(
+                "--auto-tls",
+                dest="auto_tls",
+                action="store_true",
+                help=(
+                    "Create a temporary TLS certificate for local development "
+                    "(requires mkcert or trustme)"
+                ),
+            )
+
+
 class WorkerGroup(Group):
     name = "Worker"
 
-    def attach(self):
+    def attach(self, short: bool = False):
+        if short:
+            return
+
         group = self.container.add_mutually_exclusive_group()
         group.add_argument(
             "-w",
@@ -254,66 +339,26 @@ class WorkerGroup(Group):
         )
 
 
-class DevelopmentGroup(Group):
-    name = "Development"
-
-    def attach(self):
-        self.container.add_argument(
-            "--debug",
-            dest="debug",
-            action="store_true",
-            help="Run the server in debug mode",
-        )
-        self.container.add_argument(
-            "-r",
-            "--reload",
-            "--auto-reload",
-            dest="auto_reload",
-            action="store_true",
-            help=(
-                "Watch source directory for file changes and reload on changes"
-            ),
-        )
-        self.container.add_argument(
-            "-R",
-            "--reload-dir",
-            dest="path",
-            action="append",
-            help="Extra directories to watch and reload on changes",
-        )
-        self.container.add_argument(
-            "-d",
-            "--dev",
-            dest="dev",
-            action="store_true",
-            help=("debug + auto reload"),
-        )
-        self.container.add_argument(
-            "--auto-tls",
-            dest="auto_tls",
-            action="store_true",
-            help=(
-                "Create a temporary TLS certificate for local development "
-                "(requires mkcert or trustme)"
-            ),
-        )
-
-
 class OutputGroup(Group):
     name = "Output"
 
-    def attach(self):
+    def attach(self, short: bool = False):
+        if short:
+            return
+
         self.add_bool_arguments(
             "--coffee",
             dest="coffee",
             default=False,
             help="Uhm, coffee?",
+            negative_help="No coffee? Is that a typo?",
         )
         self.add_bool_arguments(
             "--motd",
             dest="motd",
             default=True,
             help="Show the startup display",
+            negative_help="Disable the startup display",
         )
         self.container.add_argument(
             "-v",
@@ -330,9 +375,9 @@ class OutputGroup(Group):
 
 
 class DaemonGroup(Group):
-    name = "Daemon (Unix only)"
+    name = "Daemon"
 
-    def attach(self):
+    def attach(self, short: bool = False):
         if OS_IS_WINDOWS:
             return
 
@@ -341,11 +386,12 @@ class DaemonGroup(Group):
             "--daemon",
             dest="daemon",
             action="store_true",
-            help=(
-                "Run server as a daemon (background process). "
-                "Auto-generates PID file based on app name."
-            ),
+            help="Run server in background (auto-generated PID file)",
         )
+
+        if short:
+            return
+
         self.container.add_argument(
             "--pidfile",
             dest="pidfile",

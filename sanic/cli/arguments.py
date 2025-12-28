@@ -3,10 +3,10 @@ from __future__ import annotations
 from argparse import ArgumentParser, _ArgumentGroup
 from typing import Optional, Union
 
-from sanic_routing import __version__ as __routing_version__
-
 from sanic import __version__
+from sanic.compat import OS_IS_WINDOWS
 from sanic.http.constants import HTTP
+from sanic_routing import __version__ as __routing_version__
 
 
 class Group:
@@ -68,19 +68,25 @@ class GeneralGroup(Group):
             ),
         )
 
+        choices = ["serve", "exec"]
+        help_text = (
+            "Action to perform.\n"
+            "\tserve: Run the Sanic app (default)\n"
+            "\texec: Execute a command in the Sanic app context\n"
+        )
+        if not OS_IS_WINDOWS:
+            choices.extend(["status", "restart", "stop"])
+            help_text += (
+                "\tstatus: Check if daemon is running (Unix only)\n"
+                "\trestart: Restart daemon (Unix only, future use)\n"
+                "\tstop: Stop daemon gracefully (Unix only)\n"
+            )
         self.container.add_argument(
             "action",
             nargs="?",
             default="serve",
-            choices=[
-                "serve",
-                "exec",
-            ],
-            help=(
-                "Action to perform.\n"
-                "\tserve: Run the Sanic app\n"
-                "\texec: Execute a command in the Sanic app context\n"
-            ),
+            choices=choices,
+            help=help_text,
         )
 
 
@@ -320,3 +326,62 @@ class OutputGroup(Group):
             help="Output stack traces for all exceptions",
             default=None,
         )
+
+
+class DaemonGroup(Group):
+    name = "Daemon (Unix only)"
+
+    def attach(self):
+        if OS_IS_WINDOWS:
+            return
+
+        self.container.add_argument(
+            "-D",
+            "--daemon",
+            dest="daemon",
+            action="store_true",
+            help=(
+                "Run server as a daemon (background process). "
+                "Auto-generates PID file based on app name."
+            ),
+        )
+        self.container.add_argument(
+            "--pidfile",
+            dest="pidfile",
+            type=str,
+            default=None,
+            help="Override auto-generated PID file path (requires --daemon)",
+        )
+        self.container.add_argument(
+            "--logfile",
+            dest="logfile",
+            type=str,
+            default=None,
+            help="Path to log file for daemon output (requires --daemon)",
+        )
+        self.container.add_argument(
+            "--user",
+            dest="daemon_user",
+            type=str,
+            default=None,
+            help="User to run daemon as (requires root)",
+        )
+        self.container.add_argument(
+            "--group",
+            dest="daemon_group",
+            type=str,
+            default=None,
+            help="Group to run daemon as (requires root)",
+        )
+
+    def prepare(self, args):
+        if OS_IS_WINDOWS:
+            return
+
+        has_daemon_opts = (
+            getattr(args, "pidfile", None) or getattr(args, "logfile", None)
+        )
+        if has_daemon_opts and not getattr(args, "daemon", False):
+            raise SystemExit(
+                "Error: --pidfile and --logfile require --daemon"
+            )

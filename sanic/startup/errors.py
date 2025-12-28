@@ -5,6 +5,7 @@ from typing import Callable
 
 from sanic.exceptions import ServerError
 from sanic.log import error_logger
+from sanic.worker.daemon import DaemonError
 
 
 ExceptionHandler = Callable[[Exception], bool]
@@ -44,7 +45,16 @@ def _handle_server_error(exc: Exception) -> bool:
     return True
 
 
+def _handle_daemon_error(exc: Exception) -> bool:
+    if not isinstance(exc, DaemonError):
+        return False
+
+    error_logger.error(f"Daemon error: {exc}")
+    return True
+
+
 EXCEPTION_HANDLERS: tuple[ExceptionHandler, ...] = (
     _handle_os_error,
     _handle_server_error,
+    _handle_daemon_error,
 )

@@ -330,7 +330,7 @@ def test_route_optional_slash(app):
 
 def test_route_strict_slashes_set_to_false_and_host_is_a_list(app):
     # Part of regression test for issue #1120
-    test_client = SanicTestClient(app, port=42101)
+    test_client = SanicTestClient(app, port=42111)
     site1 = f"127.0.0.1:{test_client.port}"
 
     # before fix, this raises a RouteExists error

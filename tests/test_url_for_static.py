@@ -7,6 +7,9 @@ from sanic import Sanic
 from sanic.blueprints import Blueprint
 
 
+pytestmark = pytest.mark.xdist_group(name="static_files")
+
+
 @pytest.fixture(scope="module")
 def static_file_directory():
     """The static directory to serve"""

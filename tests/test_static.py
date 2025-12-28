@@ -14,6 +14,9 @@ from sanic.exceptions import FileNotFound, ServerError
 from sanic.response import file
 
 
+pytestmark = pytest.mark.xdist_group(name="static_files")
+
+
 @pytest.fixture(scope="module")
 def double_dotted_directory_file(static_file_directory: str):
     """Generate double dotted directory and its files"""
@@ -60,9 +63,12 @@ def symlink(static_file_directory):
     )
     symlink = "symlink"
     dist = os.path.join(static_file_directory, symlink)
+    if os.path.islink(dist):
+        os.remove(dist)
     os.symlink(src, dist)
     yield symlink
-    os.remove(dist)
+    if os.path.exists(dist):
+        os.remove(dist)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -72,9 +78,12 @@ def hard_link(static_file_directory):
     )
     hard_link = "hard_link"
     dist = os.path.join(static_file_directory, hard_link)
+    if os.path.exists(dist):
+        os.remove(dist)
     os.link(src, dist)
     yield hard_link
-    os.remove(dist)
+    if os.path.exists(dist):
+        os.remove(dist)
 
 
 @pytest.mark.parametrize(

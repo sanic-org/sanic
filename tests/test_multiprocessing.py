@@ -9,6 +9,9 @@ from asyncio import sleep
 
 import pytest
 
+
+pytestmark = pytest.mark.xdist_group(name="process_spawning")
+
 from sanic_testing.testing import HOST
 
 from sanic import Blueprint, text

@@ -3,6 +3,9 @@ import os
 
 import pytest
 
+
+pytestmark = pytest.mark.xdist_group(name="static_files")
+
 from sanic import Sanic
 from sanic.blueprints import Blueprint
 

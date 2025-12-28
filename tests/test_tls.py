@@ -682,6 +682,7 @@ def test_sanic_ssl_context_create():
     assert isinstance(sanic_context, SanicSSLContext)
 
 
+@pytest.mark.xdist_group(name="process_spawning")
 @pytest.mark.skipif(
     sys.platform not in ("linux", "darwin"),
     reason="This test requires fork context",
@@ -712,6 +713,7 @@ def test_ssl_in_multiprocess_mode(app: Sanic, caplog):
     ) in caplog.record_tuples
 
 
+@pytest.mark.xdist_group(name="process_spawning")
 @pytest.mark.skipif(
     sys.platform not in ("linux", "darwin"),
     reason="This test requires fork context",

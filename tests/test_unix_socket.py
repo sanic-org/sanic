@@ -24,7 +24,10 @@ from sanic.response import text
 # import sys
 
 
-pytestmark = pytest.mark.skipif(os.name != "posix", reason="UNIX only")
+pytestmark = [
+    pytest.mark.skipif(os.name != "posix", reason="UNIX only"),
+    pytest.mark.xdist_group(name="unix_socket"),
+]
 SOCKPATH = Path("/tmp/sanictest.sock")
 SOCKPATH2 = "/tmp/sanictest2.sock"
 httpx_version = tuple(

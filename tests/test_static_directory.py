@@ -4,6 +4,9 @@ from pathlib import Path
 
 import pytest
 
+
+pytestmark = pytest.mark.xdist_group(name="static_files")
+
 from sanic import Sanic
 from sanic.handlers.directory import DirectoryHandler
 

@@ -18,11 +18,11 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Download coverage artifact
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v3
         with:
           name: coverage-report
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run_id: ${{ github.event.workflow_run.id }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get PR number
         id: pr

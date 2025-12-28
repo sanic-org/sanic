@@ -1,7 +1,7 @@
 """Tests for daemon mode functionality."""
 
 import os
-from pathlib import Path
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -190,7 +190,9 @@ def test_daemonize_forks_twice(temp_pidfile, temp_logfile):
                 with patch("os.umask"):
                     with patch.object(daemon, "_redirect_streams"):
                         with patch.object(daemon, "_write_pidfile"):
-                            with patch.object(daemon, "_setup_signal_handlers"):
+                            with patch.object(
+                                daemon, "_setup_signal_handlers"
+                            ):
                                 daemon.validate = MagicMock()
                                 daemon.daemonize()
 
@@ -209,7 +211,9 @@ def test_daemonize_calls_validate(temp_pidfile):
                 with patch("os.umask"):
                     with patch.object(daemon, "_redirect_streams"):
                         with patch.object(daemon, "_write_pidfile"):
-                            with patch.object(daemon, "_setup_signal_handlers"):
+                            with patch.object(
+                                daemon, "_setup_signal_handlers"
+                            ):
                                 daemon.daemonize()
 
     daemon.validate.assert_called_once()
@@ -234,7 +238,7 @@ def test_drop_privileges_requires_root(temp_pidfile):
 
     with patch("os.getuid", return_value=0):
         with patch("os.setgid", side_effect=PermissionError):
-            with pytest.raises(DaemonError, match="Are you running as root"):
+            with pytest.raises(DaemonError, match="Are you root"):
                 daemon.drop_privileges()
 
 
@@ -363,7 +367,9 @@ def test_kill_command_parses_pid():
 def test_kill_command_parses_pidfile():
     from sanic.cli.app import SanicCLI
 
-    with patch("sys.argv", ["sanic", "kill", "--pidfile", "/var/run/sanic.pid"]):
+    with patch(
+        "sys.argv", ["sanic", "kill", "--pidfile", "/var/run/sanic.pid"]
+    ):
         cli = SanicCLI()
         cli.attach()
         args = cli.parser.parse_args(["--pidfile", "/var/run/sanic.pid"])
@@ -419,7 +425,9 @@ def test_kill_handles_missing_pidfile(tmp_path):
 
     missing_pidfile = tmp_path / "nonexistent.pid"
 
-    with patch("sys.argv", ["sanic", "kill", "--pidfile", str(missing_pidfile)]):
+    with patch(
+        "sys.argv", ["sanic", "kill", "--pidfile", str(missing_pidfile)]
+    ):
         cli = SanicCLI()
         cli.attach()
         with pytest.raises(SystemExit):
@@ -479,7 +487,9 @@ def test_status_command_parses_pid():
 def test_status_command_parses_pidfile():
     from sanic.cli.app import SanicCLI
 
-    with patch("sys.argv", ["sanic", "status", "--pidfile", "/var/run/sanic.pid"]):
+    with patch(
+        "sys.argv", ["sanic", "status", "--pidfile", "/var/run/sanic.pid"]
+    ):
         cli = SanicCLI()
         cli.attach()
         args = cli.parser.parse_args(["--pidfile", "/var/run/sanic.pid"])
@@ -505,7 +515,9 @@ def test_status_running_process(temp_pidfile):
     with open(temp_pidfile, "w") as f:
         f.write(f"sanic\npid={pid}\n")
 
-    with patch("sys.argv", ["sanic", "status", "--pidfile", str(temp_pidfile)]):
+    with patch(
+        "sys.argv", ["sanic", "status", "--pidfile", str(temp_pidfile)]
+    ):
         cli = SanicCLI()
         cli.attach()
         cli._status()
@@ -517,7 +529,9 @@ def test_status_not_running_process(temp_pidfile):
     with open(temp_pidfile, "w") as f:
         f.write("sanic\npid=999999999\n")
 
-    with patch("sys.argv", ["sanic", "status", "--pidfile", str(temp_pidfile)]):
+    with patch(
+        "sys.argv", ["sanic", "status", "--pidfile", str(temp_pidfile)]
+    ):
         cli = SanicCLI()
         cli.attach()
         with pytest.raises(SystemExit):
@@ -563,7 +577,9 @@ def test_restart_command_parses_pid():
 def test_restart_command_parses_pidfile():
     from sanic.cli.app import SanicCLI
 
-    with patch("sys.argv", ["sanic", "restart", "--pidfile", "/var/run/sanic.pid"]):
+    with patch(
+        "sys.argv", ["sanic", "restart", "--pidfile", "/var/run/sanic.pid"]
+    ):
         cli = SanicCLI()
         cli.attach()
         args = cli.parser.parse_args(["--pidfile", "/var/run/sanic.pid"])
@@ -589,7 +605,9 @@ def test_restart_not_implemented(temp_pidfile, capsys):
     with open(temp_pidfile, "w") as f:
         f.write(f"sanic\npid={pid}\n")
 
-    with patch("sys.argv", ["sanic", "restart", "--pidfile", str(temp_pidfile)]):
+    with patch(
+        "sys.argv", ["sanic", "restart", "--pidfile", str(temp_pidfile)]
+    ):
         cli = SanicCLI()
         cli.attach()
         with pytest.raises(SystemExit) as exc_info:

@@ -1,9 +1,9 @@
 import os
 import shutil
 import sys
+
 from argparse import Namespace
 from functools import partial
-from pathlib import Path
 from textwrap import indent
 from typing import Union
 
@@ -12,10 +12,16 @@ from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
 from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
 from sanic.cli.console import SanicREPL
-from sanic.cli.daemon import (kill_daemon, make_kill_parser,
-                              make_restart_parser, make_status_parser,
-                              resolve_target, restart_daemon, status_daemon,
-                              stop_daemon)
+from sanic.cli.daemon import (
+    kill_daemon,
+    make_kill_parser,
+    make_restart_parser,
+    make_status_parser,
+    resolve_target,
+    restart_daemon,
+    status_daemon,
+    stop_daemon,
+)
 from sanic.cli.executor import Executor, make_executor_parser
 from sanic.cli.inspector import make_inspector_parser
 from sanic.cli.inspector_client import InspectorClient
@@ -139,17 +145,26 @@ Advanced daemon management (Unix only):
             make_status_parser(self.parser)
             return
 
-        if not OS_IS_WINDOWS and len(sys.argv) > 1 and sys.argv[1] == "restart":
+        if (
+            not OS_IS_WINDOWS
+            and len(sys.argv) > 1
+            and sys.argv[1] == "restart"
+        ):
             self.run_mode = "restart"
             self.parser.description = get_logo(True)
             make_restart_parser(self.parser)
             return
 
         # Check for app-based daemon commands: sanic <app> status|restart|stop
-        if not OS_IS_WINDOWS and len(sys.argv) > 2 and sys.argv[2] in (
-            "status",
-            "restart",
-            "stop",
+        if (
+            not OS_IS_WINDOWS
+            and len(sys.argv) > 2
+            and sys.argv[2]
+            in (
+                "status",
+                "restart",
+                "stop",
+            )
         ):
             self.run_mode = f"app_{sys.argv[2]}"
 

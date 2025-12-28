@@ -3,10 +3,11 @@ from __future__ import annotations
 from argparse import ArgumentParser, _ArgumentGroup
 from typing import Optional, Union
 
+from sanic_routing import __version__ as __routing_version__
+
 from sanic import __version__
 from sanic.compat import OS_IS_WINDOWS
 from sanic.http.constants import HTTP
-from sanic_routing import __version__ as __routing_version__
 
 
 class Group:
@@ -378,10 +379,8 @@ class DaemonGroup(Group):
         if OS_IS_WINDOWS:
             return
 
-        has_daemon_opts = (
-            getattr(args, "pidfile", None) or getattr(args, "logfile", None)
+        has_daemon_opts = getattr(args, "pidfile", None) or getattr(
+            args, "logfile", None
         )
         if has_daemon_opts and not getattr(args, "daemon", False):
-            raise SystemExit(
-                "Error: --pidfile and --logfile require --daemon"
-            )
+            raise SystemExit("Error: --pidfile and --logfile require --daemon")

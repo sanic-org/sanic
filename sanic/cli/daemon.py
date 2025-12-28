@@ -1,6 +1,7 @@
 import os
 import signal
 import sys
+
 from argparse import ArgumentParser
 from contextlib import suppress
 from pathlib import Path
@@ -89,15 +90,22 @@ def _terminate_process(
         print(f"Failed to signal process {pid}: {e}", file=sys.stderr)
         sys.exit(1)
 
-    if pidfile and pidfile.exists():
-        try:
-            pidfile.unlink()
-            print(f"Removed PID file: {pidfile}")
-        except OSError as e:
-            print(
-                f"Warning: Could not remove PID file {pidfile}: {e}",
-                file=sys.stderr,
-            )
+    if pidfile:
+        if pidfile.exists():
+            try:
+                pidfile.unlink()
+                print(f"Removed PID file: {pidfile}")
+            except OSError as e:
+                print(
+                    f"Warning: Could not remove PID file {pidfile}: {e}",
+                    file=sys.stderr,
+                )
+        lockfile = pidfile.with_suffix(".lock")
+        if lockfile.exists():
+            try:
+                lockfile.unlink()
+            except OSError:
+                pass
 
 
 def kill_daemon(pid: int, pidfile: Optional[Path] = None) -> None:
@@ -122,7 +130,7 @@ def status_daemon(pid: int, pidfile: Optional[Path] = None) -> bool:
         pidfile: Optional pidfile path to clean up if stale
 
     Returns:
-        True if running, False otherwise (also exits with code 1 if not running)
+        True if running, False otherwise (exits with code 1 if not)
     """
     try:
         os.kill(pid, 0)
@@ -151,5 +159,5 @@ def restart_daemon(pid: int) -> None:
     Args:
         pid: Process ID to restart (unused, for future use)
     """
-    print("Restart is not yet implemented. It will be available in a future release.")
+    print("Restart is not yet implemented. Coming in a future release.")
     sys.exit(0)

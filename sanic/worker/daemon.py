@@ -8,12 +8,14 @@ import signal
 import sys
 import time
 import uuid
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.log import logger
+
 
 try:
     import fcntl  # type: ignore
@@ -58,7 +60,12 @@ def _get_default_runtime_dir() -> Path:
 
 
 def _sanitize_name(name: str) -> str:
-    return "".join(c if c.isalnum() or c in ("-", "_", ".") else "_" for c in name).strip("._") or "sanic"
+    return (
+        "".join(
+            c if c.isalnum() or c in ("-", "_", ".") else "_" for c in name
+        ).strip("._")
+        or "sanic"
+    )
 
 
 def _process_exists(pid: int) -> bool:
@@ -175,8 +182,9 @@ class Daemon:
         """
         Double-fork daemonization.
 
-        Important: anything meant for the invoking terminal must be printed/logged
-        before calling this method, since stdout/stderr are redirected after detaching.
+        Important: anything meant for the invoking terminal must be
+        printed/logged before calling this method, since stdout/stderr
+        are redirected after detaching.
         """
         self.validate()
 
@@ -202,7 +210,7 @@ class Daemon:
 
         self.pid = os.getpid()
 
-        # Acquire lock after we are the daemon (so the lock lifetime matches daemon lifetime)
+        # Acquire lock after daemonizing (lock lifetime matches daemon)
         self._acquire_lockfile()
 
         self._redirect_streams()
@@ -212,10 +220,10 @@ class Daemon:
         logger.info(
             "Sanic daemon started",
             extra={
-                "pid": self.pid,
-                "pidfile": str(self.pidfile) if self.pidfile else None,
-                "logfile": str(self.logfile) if self.logfile else None,
-                "name": self.name,
+                "daemon_pid": self.pid,
+                "daemon_pidfile": str(self.pidfile) if self.pidfile else None,
+                "daemon_logfile": str(self.logfile) if self.logfile else None,
+                "daemon_name": self.name,
             },
         )
 
@@ -241,16 +249,18 @@ class Daemon:
                 if self.user:
                     os.initgroups(self.user, self._gid)
             except PermissionError as e:
+                grp = self.group or self._gid
                 raise DaemonError(
-                    f"Cannot change group to '{self.group or self._gid}'. Are you running as root?"
+                    f"Cannot change group to '{grp}'. Are you root?"
                 ) from e
 
         if self._uid is not None:
             try:
                 os.setuid(self._uid)
             except PermissionError as e:
+                usr = self.user or self._uid
                 raise DaemonError(
-                    f"Cannot change user to '{self.user or self._uid}'. Are you running as root?"
+                    f"Cannot change user to '{usr}'. Are you root?"
                 ) from e
 
         logger.info(
@@ -278,7 +288,9 @@ class Daemon:
             try:
                 gr = grp.getgrnam(self.group)
             except KeyError as e:
-                raise DaemonError(f"Group '{self.group}' does not exist") from e
+                raise DaemonError(
+                    f"Group '{self.group}' does not exist"
+                ) from e
             self._gid = gr.gr_gid
 
     def _validate_paths(self) -> None:
@@ -288,7 +300,7 @@ class Daemon:
         if self.logfile:
             self._validate_writable_dir(self.logfile, "Log file")
 
-        # If lockfile isn't explicitly set but pidfile is, default lockfile beside it.
+        # Default lockfile beside pidfile if not explicitly set
         if not self._lockfile_path and self.pidfile:
             self._lockfile_path = self.pidfile.with_suffix(".lock")
 
@@ -312,8 +324,9 @@ class Daemon:
         if not directory.exists():
             raise DaemonError(f"{label} directory does not exist: {directory}")
         if not os.access(directory, os.W_OK):
-            raise DaemonError(f"Cannot write to {label} directory: {directory}")
-
+            raise DaemonError(
+                f"Cannot write to {label} directory: {directory}"
+            )
 
     def _write_pidfile(self) -> None:
         if not self.pidfile:
@@ -339,7 +352,9 @@ class Daemon:
         try:
             self.pidfile.write_text("\n".join(lines) + "\n")
         except OSError as e:
-            raise DaemonError(f"Failed to write PID file: {self.pidfile}") from e
+            raise DaemonError(
+                f"Failed to write PID file: {self.pidfile}"
+            ) from e
 
         atexit.register(self._remove_pidfile)
 
@@ -398,9 +413,13 @@ class Daemon:
             return
 
         try:
-            fd = os.open(str(self._lockfile_path), os.O_RDWR | os.O_CREAT, 0o644)
+            fd = os.open(
+                str(self._lockfile_path), os.O_RDWR | os.O_CREAT, 0o644
+            )
         except OSError as e:
-            raise DaemonError(f"Failed to open lock file: {self._lockfile_path}") from e
+            raise DaemonError(
+                f"Failed to open lock file: {self._lockfile_path}"
+            ) from e
 
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -409,7 +428,9 @@ class Daemon:
                 os.close(fd)
             except OSError:
                 pass
-            raise DaemonError(f"Daemon already running (lock held): {self._lockfile_path}") from e
+            raise DaemonError(
+                f"Daemon already running (lock held): {self._lockfile_path}"
+            ) from e
 
         self._lock_fd = fd
         atexit.register(self._release_lockfile)
@@ -427,6 +448,11 @@ class Daemon:
         except OSError:
             pass
         self._lock_fd = None
+        if self._lockfile_path:
+            try:
+                self._lockfile_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
     def _redirect_streams(self) -> None:
         sys.stdout.flush()

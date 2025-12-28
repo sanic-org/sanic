@@ -8,7 +8,6 @@ from ipaddress import ip_address
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from sanic.exceptions import ServerError
 from sanic.http.constants import HTTP
 
 
@@ -110,23 +109,11 @@ def configure_socket(
         sock = bind_unix_socket(unix, backlog=backlog)
         server_settings["unix"] = unix
     if sock is None:
-        try:
-            sock = bind_socket(
-                server_settings["host"],
-                server_settings["port"],
-                backlog=backlog,
-            )
-        except OSError as e:  # no cov
-            error = ServerError(
-                f"Sanic server could not start: {e}.\n\n"
-                "This may have happened if you are running Sanic in the "
-                "global scope and not inside of a "
-                '`if __name__ == "__main__"` block.\n\nSee more information: '
-                "https://sanic.dev/en/guide/deployment/manager.html#"
-                "how-sanic-server-starts-processes\n"
-            )
-            error.quiet = True
-            raise error
+        sock = bind_socket(
+            server_settings["host"],
+            server_settings["port"],
+            backlog=backlog,
+        )
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None

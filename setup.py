@@ -94,7 +94,7 @@ setup_kwargs = {
     "packages": find_packages(exclude=("tests", "tests.*")),
     "package_data": {"sanic": ["py.typed", "pages/styles/*"]},
     "platforms": "any",
-    "python_requires": ">=3.8",
+    "python_requires": ">=3.9",
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
@@ -123,7 +123,7 @@ requirements = [
     "websockets>=10.0",
     "multidict>=5.0,<7.0",
     "html5tagger>=1.2.1",
-    "tracerite>=1.0.0",
+    "tracerite>=2.2.0",
     "typing-extensions>=4.4.0",
     "setuptools>=70.1.0",
 ]
@@ -131,6 +131,8 @@ requirements = [
 tests_require = [
     "sanic-testing>=23.6.0",
     "pytest>=8.2.2",
+    "pytest-xdist>=3.5.0",
+    "pytest-cov>=4.0.0",
     "coverage",
     "beautifulsoup4",
     "pytest-sanic",

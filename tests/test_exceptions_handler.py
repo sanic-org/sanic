@@ -119,9 +119,10 @@ def test_html_traceback_output_in_debug_mode(exception_handler_app: Sanic):
     assert response.status == 500
     soup = BeautifulSoup(response.body, "html.parser")
     html = str(soup)
+    text_content = soup.get_text()
 
     assert "handler_4" in html
-    assert "foo = bar" in html
+    assert "foo = bar" in text_content
 
     summary_text = soup.select("h3")[0].text
     assert "NameError: name 'bar' is not defined" == summary_text
@@ -142,14 +143,17 @@ def test_chained_exception_handler(exception_handler_app: Sanic):
 
     soup = BeautifulSoup(response.body, "html.parser")
     html = str(soup)
+    text_content = soup.get_text()
 
     assert "handler_6" in html
-    assert "foo = 1 / arg" in html
+    assert "foo = 1 / arg" in text_content
     assert "ValueError" in html
     assert "GET /6" in html
 
-    summary_text = soup.select("h3")[0].text
-    assert "ZeroDivisionError: division by zero" == summary_text
+    # Both exceptions should be present in the traceback headers
+    h3_texts = [h3.text for h3 in soup.select("h3")]
+    assert any("ZeroDivisionError" in text for text in h3_texts)
+    assert any("ValueError" in text for text in h3_texts)
 
 
 def test_exception_handler_lookup(exception_handler_app: Sanic):

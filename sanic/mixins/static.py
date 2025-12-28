@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from email.utils import formatdate
 from functools import partial, wraps
-from mimetypes import guess_type
 from os import PathLike, path
 from pathlib import Path, PurePath
 from typing import Optional, Union
@@ -11,7 +10,6 @@ from sanic_routing.route import Route
 
 from sanic.base.meta import SanicMeta
 from sanic.compat import stat_async
-from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
 from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.handlers.directory import DirectoryHandler
@@ -20,6 +18,7 @@ from sanic.mixins.base import BaseMixin
 from sanic.models.futures import FutureStatic
 from sanic.request import Request
 from sanic.response import HTTPResponse, file, file_stream, validate_file
+from sanic.response.convenience import guess_content_type
 
 
 class StaticMixin(BaseMixin, metaclass=SanicMeta):
@@ -300,11 +299,7 @@ class StaticHandleMixin(metaclass=SanicMeta):
                         headers.update(_range.headers)
 
             if "content-type" not in headers:
-                content_type = (
-                    content_type
-                    or guess_type(file_path)[0]
-                    or DEFAULT_HTTP_CONTENT_TYPE
-                )
+                content_type = content_type or guess_content_type(file_path)
 
                 if "charset=" not in content_type and (
                     content_type.startswith("text/")

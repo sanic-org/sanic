@@ -3,6 +3,9 @@ import pytest
 from sanic import Sanic, text
 
 
+pytestmark = pytest.mark.xdist_group(name="process_spawning")
+
+
 @pytest.fixture
 def late_app(app: Sanic):
     app.config.TOUCHUP = False

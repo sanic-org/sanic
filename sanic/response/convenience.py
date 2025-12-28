@@ -290,12 +290,14 @@ async def file(
         else:
             out_stream = await f.read()
 
-    mime_type = mime_type or guess_type(filename)[0] or "text/plain"
+    content_type = mime_type or guess_content_type(
+        filename, fallback="text/plain; charset=utf-8"
+    )
     return HTTPResponse(
         body=out_stream,
         status=status,
         headers=headers,
-        content_type=mime_type,
+        content_type=content_type,
     )
 
 
@@ -395,3 +397,16 @@ async def file_stream(
         headers=headers,
         content_type=mime_type,
     )
+
+
+def guess_content_type(
+    file_path: Union[str, PurePath],
+    fallback: str = DEFAULT_HTTP_CONTENT_TYPE,
+) -> str:
+    """Guess the content type (rather than MIME only) by the file extension."""
+    mediatype = guess_type(file_path)[0]
+    if mediatype is None:
+        return fallback
+    if mediatype.startswith("text/"):
+        return f"{mediatype}; charset=utf-8"
+    return mediatype

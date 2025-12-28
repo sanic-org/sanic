@@ -18,6 +18,9 @@ from sanic.response import HTTPResponse
 from sanic.signals import Event
 
 
+pytestmark = pytest.mark.xdist_group(name="process_spawning")
+
+
 async def stop(app, loop):
     await asyncio.sleep(0.1)
     app.stop()

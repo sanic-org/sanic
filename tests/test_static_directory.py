@@ -8,6 +8,9 @@ from sanic import Sanic
 from sanic.handlers.directory import DirectoryHandler
 
 
+pytestmark = pytest.mark.xdist_group(name="static_files")
+
+
 def get_file_path(static_file_directory, file_name):
     return os.path.join(static_file_directory, file_name)
 
@@ -35,7 +38,7 @@ def test_static_index_single(app: Sanic, static_file_directory: str):
     assert response.body == get_file_content(
         static_file_directory, "test.html"
     )
-    assert response.headers["Content-Type"] == "text/html"
+    assert response.headers["Content-Type"] == "text/html; charset=utf-8"
 
 
 def test_static_index_single_not_found(app: Sanic, static_file_directory: str):
@@ -57,7 +60,7 @@ def test_static_index_multiple(app: Sanic, static_file_directory: str):
     assert response.body == get_file_content(
         static_file_directory, "test.html"
     )
-    assert response.headers["Content-Type"] == "text/html"
+    assert response.headers["Content-Type"] == "text/html; charset=utf-8"
 
 
 def test_static_directory_view_and_index(
@@ -80,7 +83,7 @@ def test_static_directory_view_and_index(
     assert response.body == get_file_content(
         f"{static_file_directory}/nested/dir", "foo.txt"
     )
-    assert response.content_type == "text/plain"
+    assert response.content_type == "text/plain; charset=utf-8"
 
 
 def test_static_directory_handler(app: Sanic, static_file_directory: str):
@@ -102,7 +105,7 @@ def test_static_directory_handler(app: Sanic, static_file_directory: str):
     assert response.body == get_file_content(
         f"{static_file_directory}/nested/dir", "foo.txt"
     )
-    assert response.content_type == "text/plain"
+    assert response.content_type == "text/plain; charset=utf-8"
 
 
 def test_static_directory_handler_fails(app: Sanic):

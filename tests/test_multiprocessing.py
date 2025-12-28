@@ -16,6 +16,9 @@ from sanic.compat import use_context
 from sanic.log import logger
 
 
+pytestmark = pytest.mark.xdist_group(name="process_spawning")
+
+
 @pytest.mark.skipif(
     not hasattr(signal, "SIGALRM"),
     reason="SIGALRM is not implemented for this platform, we have to come "

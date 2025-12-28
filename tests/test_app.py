@@ -60,10 +60,10 @@ def test_asyncio_server_no_start_serving(app: Sanic, port):
 
 
 @pytest.mark.asyncio
-def test_asyncio_server_start_serving(app: Sanic):
+def test_asyncio_server_start_serving(app: Sanic, port):
     loop = asyncio.get_event_loop()
     asyncio_srv_coro = app.create_server(
-        port=43124,
+        port=port,
         return_asyncio_server=True,
         asyncio_server_kwargs=dict(start_serving=False),
     )

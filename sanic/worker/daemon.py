@@ -428,6 +428,7 @@ class Daemon:
             try:
                 os.close(fd)
             except OSError:
+                # Ignore errors closing fd; we're already handling lock failure
                 pass
             raise DaemonError(
                 f"Daemon already running (lock held): {self._lockfile_path}"
@@ -443,16 +444,19 @@ class Daemon:
             if fcntl is not None:
                 fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
         except OSError:
+            # Best-effort cleanup: failure to unlock is non-fatal
             pass
         try:
             os.close(self._lock_fd)
         except OSError:
+            # Best-effort cleanup: failure to close fd is non-fatal
             pass
         self._lock_fd = None
         if self._lockfile_path:
             try:
                 self._lockfile_path.unlink(missing_ok=True)
             except OSError:
+                # Best-effort cleanup: failure to remove lock file is non-fatal
                 pass
 
     def _redirect_streams(self) -> None:

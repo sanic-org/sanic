@@ -196,7 +196,7 @@ class Daemon:
         try:
             pid = os.fork()
             if pid > 0:
-                os._exit(0)
+                os._exit(0)  # pragma: no cover
         except OSError as e:
             raise DaemonError(f"First fork failed: {e}") from e
 
@@ -208,7 +208,7 @@ class Daemon:
         try:
             pid = os.fork()
             if pid > 0:
-                os._exit(0)
+                os._exit(0)  # pragma: no cover
         except OSError as e:
             raise DaemonError(f"Second fork failed: {e}") from e
 

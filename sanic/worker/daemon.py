@@ -188,6 +188,10 @@ class Daemon:
         """
         self.validate()
 
+        # Acquire lock before forking to prevent race condition
+        # The lock is inherited by child processes and remains held
+        self._acquire_lockfile()
+
         # First fork
         try:
             pid = os.fork()
@@ -209,9 +213,6 @@ class Daemon:
             raise DaemonError(f"Second fork failed: {e}") from e
 
         self.pid = os.getpid()
-
-        # Acquire lock after daemonizing (lock lifetime matches daemon)
-        self._acquire_lockfile()
 
         self._redirect_streams()
         self._write_pidfile()

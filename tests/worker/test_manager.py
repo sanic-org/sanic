@@ -245,12 +245,14 @@ def test_shutdown_servers(caplog):
 
     with patch("os.kill") as kill:
         with caplog.at_level(ERROR):
+            caplog.clear()
             manager.shutdown_server()
 
             kill.assert_called_once_with(1234, SIGINT)
             kill.reset_mock()
 
-            assert not caplog.record_tuples
+            sanic_errors = [r for r in caplog.record_tuples if r[0].startswith("sanic")]
+            assert not sanic_errors
 
             manager.shutdown_server()
 

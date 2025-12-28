@@ -1,0 +1,45 @@
+name: Upload coverage to Codecov
+on:
+  workflow_run:
+    workflows: ["Coverage check"]
+    types:
+      - completed
+
+jobs:
+  upload:
+    name: Upload coverage
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get PR number
+        id: pr
+        run: |
+          if [ "${{ github.event.workflow_run.event }}" == "pull_request" ]; then
+            PR_NUMBER=$(gh pr list --search "${{ github.event.workflow_run.head_sha }}" --state open --json number --jq '.[0].number')
+            echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: true
+          override_commit: ${{ github.event.workflow_run.head_sha }}
+          override_branch: ${{ github.event.workflow_run.head_branch }}
+          override_pr: ${{ steps.pr.outputs.number }}

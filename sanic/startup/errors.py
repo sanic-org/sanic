@@ -1,9 +1,11 @@
 import errno
 import sys
+
 from typing import Callable
 
 from sanic.exceptions import ServerError
 from sanic.log import error_logger
+
 
 ExceptionHandler = Callable[[Exception], bool]
 

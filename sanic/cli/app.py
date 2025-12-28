@@ -27,7 +27,32 @@ from sanic.worker.loader import AppLoader
 
 
 class SanicCLI:
-    DESCRIPTION = indent(
+    DESCRIPTION_SHORT = indent(
+        f"""
+{get_logo(True)}
+
+Usage:
+    sanic <target> [options]       Run a Sanic application
+    sanic <target> exec <cmd>      Execute a command in app context
+    sanic inspect [options]        Inspect a running instance
+    sanic help [--full]            Show help (--full for all options)
+
+Examples:
+    sanic path.to.server:app       Run app
+    sanic path.to.server --dev     Run with auto-reload and debug
+    sanic ./static --simple        Serve static files
+""",
+        prefix=" ",
+    )
+
+    DESCRIPTION_SHORT_FOOTER = """\
+    (additional options omitted)
+
+For complete options and documentation:
+    sanic help --full
+"""
+
+    DESCRIPTION_FULL = indent(
         f"""
 {get_logo(True)}
 
@@ -70,7 +95,7 @@ Advanced daemon management (Unix only):
         width = shutil.get_terminal_size().columns
         self.parser = SanicArgumentParser(
             prog="sanic",
-            description=self.DESCRIPTION,
+            description=self.DESCRIPTION_SHORT,
             formatter_class=lambda prog: SanicHelpFormatter(
                 prog,
                 max_help_position=36 if width > 96 else 24,
@@ -88,6 +113,14 @@ Advanced daemon management (Unix only):
         self.run_mode = "serve"
 
     def attach(self):
+        if len(sys.argv) > 1 and sys.argv[1] == "help":
+            self.run_mode = "help"
+            return
+
+        if len(sys.argv) == 2 and sys.argv[1] in ("-h", "--help"):
+            self.run_mode = "help"
+            return
+
         if len(sys.argv) > 1 and sys.argv[1] == "inspect":
             self.run_mode = "inspect"
             self.parser.description = get_logo(True)
@@ -145,6 +178,10 @@ Advanced daemon management (Unix only):
 
         if self.run_mode == "restart":
             self._restart()
+            return
+
+        if self.run_mode == "help":
+            self._help()
             return
 
         if self.run_mode.startswith("app_"):
@@ -265,6 +302,18 @@ Advanced daemon management (Unix only):
         self.args = self.parser.parse_args(args=sys.argv[2:])
         pid, _ = resolve_target(self.args.pid, self.args.pidfile)
         restart_daemon(pid)
+
+    def _help(self):
+        full = "--full" in sys.argv
+        if full:
+            self.parser.description = self.DESCRIPTION_FULL
+            for group in Group._registry:
+                instance = group.create(self.parser)
+                instance.attach()
+                self.groups.append(instance)
+        self.parser.print_help()
+        if not full:
+            print(self.DESCRIPTION_SHORT_FOOTER)
 
     def _app_daemon_command(self):
         """Handle app-based daemon commands: sanic <app> status|restart|stop"""

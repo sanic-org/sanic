@@ -19,7 +19,7 @@ from sanic.log import logger
 
 try:
     import fcntl  # type: ignore
-except Exception:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     fcntl = None  # type: ignore
 
 

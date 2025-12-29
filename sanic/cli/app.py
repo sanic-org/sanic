@@ -12,16 +12,53 @@ from sanic.application.logo import get_logo
 from sanic.cli.arguments import Group
 from sanic.cli.base import SanicArgumentParser, SanicHelpFormatter
 from sanic.cli.console import SanicREPL
+from sanic.cli.daemon import (
+    kill_daemon,
+    make_kill_parser,
+    make_restart_parser,
+    make_status_parser,
+    resolve_target,
+    restart_daemon,
+    status_daemon,
+    stop_daemon,
+)
 from sanic.cli.executor import Executor, make_executor_parser
 from sanic.cli.inspector import make_inspector_parser
 from sanic.cli.inspector_client import InspectorClient
+from sanic.compat import OS_IS_WINDOWS
 from sanic.helpers import _default, is_atty
 from sanic.log import error_logger
+from sanic.worker.daemon import Daemon, DaemonError
 from sanic.worker.loader import AppLoader
 
 
 class SanicCLI:
-    DESCRIPTION = indent(
+    DESCRIPTION_SHORT = indent(
+        f"""
+{get_logo(True)}
+
+Usage:
+    sanic <target> [options]       Run a Sanic application
+    sanic <target> exec <cmd>      Execute a command in app context
+    sanic inspect [options]        Inspect a running instance
+    sanic help [--full]            Show help (--full for all options)
+
+Examples:
+    sanic path.to.server:app       Run app
+    sanic path.to.server --dev     Run in development mode
+    sanic ./static --simple        Serve static files
+""",
+        prefix=" ",
+    )
+
+    DESCRIPTION_SHORT_FOOTER = """
+(additional options available)
+
+For complete options and documentation:
+    sanic help --full
+"""
+
+    DESCRIPTION_FULL = indent(
         f"""
 {get_logo(True)}
 
@@ -42,6 +79,20 @@ Or, a path to a callable that returns a Sanic() instance:
 Or, a path to a directory to run as a simple HTTP server:
 
     $ sanic ./path/to/static
+
+Additional commands:
+
+    $ sanic inspect ...           Inspect a running Sanic instance
+    $ sanic path.to.app exec ...  Run app commands
+    $ sanic path.to.app status    Check if app daemon is running
+    $ sanic path.to.app restart   Restart app daemon (future use)
+    $ sanic path.to.app stop      Stop app daemon
+
+Advanced daemon management:
+
+    $ sanic kill (--pid PID | --pidfile PATH)      Force kill (SIGKILL)
+    $ sanic status (--pid PID | --pidfile PATH)    Check status
+    $ sanic restart (--pid PID | --pidfile PATH)   Restart (future use)
 """,
         prefix=" ",
     )
@@ -50,7 +101,7 @@ Or, a path to a directory to run as a simple HTTP server:
         width = shutil.get_terminal_size().columns
         self.parser = SanicArgumentParser(
             prog="sanic",
-            description=self.DESCRIPTION,
+            description=self.DESCRIPTION_SHORT,
             formatter_class=lambda prog: SanicHelpFormatter(
                 prog,
                 max_help_position=36 if width > 96 else 24,
@@ -68,11 +119,54 @@ Or, a path to a directory to run as a simple HTTP server:
         self.run_mode = "serve"
 
     def attach(self):
+        if len(sys.argv) > 1 and sys.argv[1] == "help":
+            self.run_mode = "help"
+            return
+
+        if len(sys.argv) == 2 and sys.argv[1] in ("-h", "--help"):
+            self.run_mode = "help"
+            return
+
         if len(sys.argv) > 1 and sys.argv[1] == "inspect":
             self.run_mode = "inspect"
             self.parser.description = get_logo(True)
             make_inspector_parser(self.parser)
             return
+
+        if not OS_IS_WINDOWS and len(sys.argv) > 1 and sys.argv[1] == "kill":
+            self.run_mode = "kill"
+            self.parser.description = get_logo(True)
+            make_kill_parser(self.parser)
+            return
+
+        if not OS_IS_WINDOWS and len(sys.argv) > 1 and sys.argv[1] == "status":
+            self.run_mode = "status"
+            self.parser.description = get_logo(True)
+            make_status_parser(self.parser)
+            return
+
+        if (
+            not OS_IS_WINDOWS
+            and len(sys.argv) > 1
+            and sys.argv[1] == "restart"
+        ):
+            self.run_mode = "restart"
+            self.parser.description = get_logo(True)
+            make_restart_parser(self.parser)
+            return
+
+        # Check for app-based daemon commands: sanic <app> status|restart|stop
+        if (
+            not OS_IS_WINDOWS
+            and len(sys.argv) > 2
+            and sys.argv[2]
+            in (
+                "status",
+                "restart",
+                "stop",
+            )
+        ):
+            self.run_mode = f"app_{sys.argv[2]}"
 
         for group in Group._registry:
             instance = group.create(self.parser)
@@ -87,6 +181,26 @@ Or, a path to a directory to run as a simple HTTP server:
     def run(self, parse_args=None):
         if self.run_mode == "inspect":
             self._inspector()
+            return
+
+        if self.run_mode == "kill":
+            self._kill()
+            return
+
+        if self.run_mode == "status":
+            self._status()
+            return
+
+        if self.run_mode == "restart":
+            self._restart()
+            return
+
+        if self.run_mode == "help":
+            self._help()
+            return
+
+        if self.run_mode.startswith("app_"):
+            self._app_daemon_command()
             return
 
         legacy_version = False
@@ -131,10 +245,26 @@ Or, a path to a directory to run as a simple HTTP server:
             elif self.run_mode != "serve":
                 raise ValueError(f"Unknown run mode: {self.run_mode}")
 
+            daemon = None
+            if getattr(self.args, "daemon", False):
+                daemon = self._setup_daemon(app.name)
+                if daemon:
+                    lines = ["Starting Sanic in daemon mode..."]
+                    if daemon.pidfile:
+                        lines.append(f"  PID file: {daemon.pidfile}")
+                    if daemon.logfile:
+                        lines.append(f"  Logs: {daemon.logfile}")
+                    print("\n".join(lines), flush=True)
+                    daemon.daemonize()
+
             if self.args.repl:
                 self._repl(app)
             for http_version in self.args.http:
                 app.prepare(**kwargs, version=http_version)
+
+            if daemon:
+                daemon.drop_privileges()
+
             if self.args.single:
                 serve = Sanic.serve_single
             else:
@@ -173,6 +303,60 @@ Or, a path to a directory to run as a simple HTTP server:
                 kwargs["args"] = positional[1:]
         InspectorClient(host, port, secure, raw, api_key).do(action, **kwargs)
 
+    def _kill(self):
+        self.args = self.parser.parse_args(args=sys.argv[2:])
+        pid, pidfile = resolve_target(self.args.pid, self.args.pidfile)
+        kill_daemon(pid, pidfile)
+
+    def _status(self):
+        self.args = self.parser.parse_args(args=sys.argv[2:])
+        pid, pidfile = resolve_target(self.args.pid, self.args.pidfile)
+        status_daemon(pid, pidfile)
+
+    def _restart(self):
+        self.args = self.parser.parse_args(args=sys.argv[2:])
+        pid, _ = resolve_target(self.args.pid, self.args.pidfile)
+        restart_daemon(pid)
+
+    def _help(self):
+        full = "--full" in sys.argv
+        if full:
+            self.parser.description = self.DESCRIPTION_FULL
+        for group in Group._registry:
+            instance = group.create(self.parser)
+            instance.attach(short=not full)
+            self.groups.append(instance)
+        self.parser.print_help()
+        if not full:
+            print(self.DESCRIPTION_SHORT_FOOTER)
+
+    def _app_daemon_command(self):
+        """Handle app-based daemon commands: sanic <app> status|restart|stop"""
+        command = self.run_mode.replace("app_", "")
+        # Parse just the app target (first arg)
+        self.args = self.parser.parse_args(args=[sys.argv[1]])
+
+        app_loader = AppLoader(
+            self.args.target, self.args.factory, self.args.simple, self.args
+        )
+
+        try:
+            app = self._get_app(app_loader)
+        except (ImportError, ValueError) as e:
+            error_logger.error(f"Failed to load app: {e}")
+            sys.exit(1)
+
+        pidfile = Daemon.get_pidfile_path(app.name)
+        pid, pidfile = resolve_target(None, str(pidfile))
+
+        if command == "status":
+            status_daemon(pid, pidfile)
+        elif command == "restart":
+            restart_daemon(pid)
+        elif command == "stop":
+            force = "-f" in sys.argv or "--force" in sys.argv
+            stop_daemon(pid, pidfile, force)
+
     def _executor(self, app: Sanic, kwargs: dict):
         args = sys.argv[3:]
         Executor(app, kwargs).run(self.args.command, args)
@@ -190,6 +374,39 @@ Or, a path to a directory to run as a simple HTTP server:
                 "Can't start REPL in non-interactive mode. "
                 "You can only run with --repl in a TTY."
             )
+
+    def _setup_daemon(self, app_name: str):
+        if OS_IS_WINDOWS:
+            error_logger.error(
+                "Daemon mode is not supported on Windows. "
+                "Consider using a Windows service or nssm instead."
+            )
+            sys.exit(1)
+
+        if getattr(self.args, "dev", False) or getattr(
+            self.args, "auto_reload", False
+        ):
+            error_logger.error(
+                "Daemon mode is not compatible with --dev or --auto-reload"
+            )
+            sys.exit(1)
+
+        if getattr(self.args, "repl", False):
+            error_logger.error("Daemon mode is not compatible with --repl")
+            sys.exit(1)
+
+        try:
+            daemon = Daemon(
+                pidfile=getattr(self.args, "pidfile", None) or "auto",
+                logfile=getattr(self.args, "logfile", None),
+                user=getattr(self.args, "daemon_user", None),
+                group=getattr(self.args, "daemon_group", None),
+                name=app_name,
+            )
+            return daemon
+        except DaemonError as e:
+            error_logger.error(f"Daemon configuration error: {e}")
+            sys.exit(1)
 
     def _precheck(self):
         # Custom TLS mismatch handling for better diagnostics

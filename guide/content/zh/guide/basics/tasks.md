@@ -52,6 +52,24 @@ app.add_task(explicit_inject(app))
 ```
 ````
 
+.. column::
+
+```
+The `add_task` method returns the created `asyncio.Task` object, allowing you to await or check its result later.
+
+*Added in v25.12*
+```
+
+.. column::
+
+````
+```python
+任务 = app.add_task(some_coroutine())
+# 稍后...
+结果 = 等待任务
+```
+````
+
 ## 在 `app.run` 之前添加任务
 
 在应用运行之前（即在调用 app.run 之前），可以添加后台任务。 建议在这种情况下不要传递协程对象（即通过调用异步可调用函数创建的对象），而是仅传递可调用函数，Sanic 会在**每个工作进程**中自行创建协程对象。 请注意，这样添加的任务会在每个工作进程内以 `before_server_start `任务的形式运行，而不是在主进程中运行。 这一点具有特定的影响，请参阅该问题下的[这条评论](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668) 在 [issue](https://github.com/sanic-org/sanic/issues/2139) 以获取更多细节。
@@ -125,13 +143,13 @@ await app.cancel_task("slow_task")
 ```
 ````
 
-.. column::
+.. 列:
 
 ```
 所有已注册的任务都可以在`app.tasks`属性中找到。为了避免被取消的任务占用空间，你可能想要运行`app.purge_tasks`，它会清除所有已完成或被取消的任务。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python

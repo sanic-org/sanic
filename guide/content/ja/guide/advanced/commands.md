@@ -1,11 +1,5 @@
 # カスタムCLIコマンド
 
-.. new:: v24.12 の新機能
-
-```
-This feature was added in version 24.12
-```
-
 Sanic serverを実行するために、 [CLI](../running/running.md#running-via-command) が付いています。 場合によっては、独自のコマンドを実行するためにCLIを強化する必要があるかもしれません。 コマンドは以下の基本パターンを使用して呼び出されます。
 
 ```sh

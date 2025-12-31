@@ -893,6 +893,44 @@ app.static("/uploads/", "/path/to/dir", directory_view=True)
 
 _V23.3_に追加されました
 
+#### Symlink control
+
+.. new:: v25.12 の新機能
+
+```
+この機能はバージョン25.12で追加されました
+```
+
+.. 列::
+
+```
+デフォルトでは、Sanicはセキュリティ上の理由から静的ルートディレクトリの外側を指すシンボリックリンクに従いません。 `follow_external_symlink_files` と `follow_external_symlink_dirs` を使用して、ファイルとディレクトリに対して個別に外部シンボリックリンクを有効にすることができます。
+```
+
+.. 列::
+
+````
+```python
+# Allow file symlinks pointing outside static root
+app.static(
+    "/static",
+    "/var/www/static",
+    follow_external_symlink_files=True,
+)
+
+# Allow directory symlinks pointing outside static root
+app.static(
+    "/static",
+    "/var/www/static",
+    follow_external_symlink_dirs=True,
+)
+```
+````
+
+静的ルート内のシンボリックリンクは、これらの設定に関係なく常に機能します。 壊れたシンボリックリンクは常にディレクトリ一覧から非表示になり、404を返します。
+
+_V25.12_に追加しました
+
 ## ルートの説明
 
 .. 列::

@@ -242,6 +242,12 @@ app = Sanic(..., config=Config(converters=[UUID]))
 
 #### Advanced Type Converters
 
+.. new:: New in v25.12
+
+```
+This feature was added in version 25.12
+```
+
 .. column::
 
 ```

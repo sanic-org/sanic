@@ -7,9 +7,59 @@ content_class: changelog
 🔶 Current release  
 🔷 In support LTS release
 
-## Version 25.3.0 🔶
+## Version 25.12.0 🔶
 
-_Current version_
+_Current LTS version_
+
+### Features
+
+- [#3071](https://github.com/sanic-org/sanic/pull/3071) Add automatic `charset=UTF-8` to text content types
+- [#3079](https://github.com/sanic-org/sanic/pull/3079) Add `DetailedConverter` for advanced environment variable conversion
+- [#3080](https://github.com/sanic-org/sanic/pull/3080) Update `str_to_bool` function to include `nope` as a valid false value
+- [#3102](https://github.com/sanic-org/sanic/pull/3102) Better server error messaging
+- [#3110](https://github.com/sanic-org/sanic/pull/3110) Add daemon mode to Sanic CLI
+- [#3114](https://github.com/sanic-org/sanic/pull/3114) Return task when creating a task
+- [#3117](https://github.com/sanic-org/sanic/pull/3117) Explicit symlink params for static files/dirs
+
+### Bugfixes
+
+- [#3064](https://github.com/sanic-org/sanic/pull/3064) Change the log type to debug
+- [#3068](https://github.com/sanic-org/sanic/pull/3068) Silent on `RuntimeError` when `write_eof`
+- [#3077](https://github.com/sanic-org/sanic/pull/3077) Fix `WorkerManager.kill` on Windows
+- [#3085](https://github.com/sanic-org/sanic/pull/3085) Fix `AttributeError` in `close_if_idle()` when `_http` is not initialized
+- [#3086](https://github.com/sanic-org/sanic/pull/3086) Fix race condition in worker restart causing spawn failure
+- [#3088](https://github.com/sanic-org/sanic/pull/3088) Fixing bad term cleanup at exit
+- [#3119](https://github.com/sanic-org/sanic/pull/3119) Fix static file serving for directories with CJK characters
+- [#3120](https://github.com/sanic-org/sanic/pull/3120) Respect `LOG_EXTRA` in all cases
+- [#3121](https://github.com/sanic-org/sanic/pull/3121) Respect `KEEP_ALIVE` config
+- [#3122](https://github.com/sanic-org/sanic/pull/3122) Check state in shutdown for handling uvloop double kill
+
+### Deprecations and Removals
+
+- [#3115](https://github.com/sanic-org/sanic/pull/3115) Remove Python 3.9 support and add Python 3.14
+
+### Developer infrastructure
+
+- [#3083](https://github.com/sanic-org/sanic/pull/3083) Add typing for parameters of constructor of `WorkerManager`
+- [#3084](https://github.com/sanic-org/sanic/pull/3084) Create baseline for bandit to remove false positives
+- [#3091](https://github.com/sanic-org/sanic/pull/3091) Use secrets for generating unique ping payloads
+- [#3094](https://github.com/sanic-org/sanic/pull/3094) Add some typing and fix some tests
+- [#3095](https://github.com/sanic-org/sanic/pull/3095) Update required Python to >=3.10
+- [#3101](https://github.com/sanic-org/sanic/pull/3101) Upgrade tracerite to latest
+- [#3107](https://github.com/sanic-org/sanic/pull/3107) Testing improvements
+- [#3108](https://github.com/sanic-org/sanic/pull/3108) Move to 2-stage coverage check
+- [#3109](https://github.com/sanic-org/sanic/pull/3109) Bump `dawidd6/action-download-artifact` from 3 to 6
+
+### Improved Documentation
+
+- [#3035](https://github.com/sanic-org/sanic/pull/3035) Fixes `sanic_ext` openapi component documentation
+- [#3054](https://github.com/sanic-org/sanic/pull/3054) Fix 'how we built sanic' sidebar link
+- [#3056](https://github.com/sanic-org/sanic/pull/3056) Fix broken link in website
+- [#3057](https://github.com/sanic-org/sanic/pull/3057) Add correct path for Contribution guidelines
+- [#3065](https://github.com/sanic-org/sanic/pull/3065) Fixed incorrect links throughout the documentation
+- [#3066](https://github.com/sanic-org/sanic/pull/3066) Single letter typo fix for request.md documentation
+
+## Version 25.3.0
 
 ### Features
 

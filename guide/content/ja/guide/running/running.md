@@ -439,6 +439,72 @@ sanic ./path/to/dir --simple -reload -reload-dir=./path/to/dir
 
 _V21.6_に追加されました
 
+### デーモンモード
+
+.. new:: v25.12 の新機能
+
+```
+この機能はバージョン25.12で追加されました
+```
+
+.. 列::
+
+```
+Sanicはバックグラウンドデーモンプロセスとして実行できます。バックグラウンドでサーバーを起動するには、`-D`または`--daemon`フラグを使用します。
+```
+
+.. 列::
+
+````
+```sh
+sanic path.to.server:app --daemon
+sanic path.to.server:app -D
+```
+````
+
+.. 列::
+
+```
+追加のコマンドでデーモンを管理できます。
+```
+
+.. 列::
+
+````
+```sh
+sanic path.to.server:app status   # Check if running
+sanic path.to.server:app stop     # Stop the daemon
+```
+````
+
+.. 列::
+
+```
+デーモン設定に追加のオプションがあります。
+```
+
+.. 列::
+
+````
+```sh
+sanic path.to.server:app -D --pidfile=/var/run/sanic.pid
+sanic path.to.server:app -D --logfile=/var/log/sanic.log
+sanic path.to.server:app -D --user=ww-data
+sanic path.to.server:app -D --group=www-data
+```
+````
+
+PIDでプロセスを管理するための下位レベルのコマンドも利用できます。
+
+```sh
+sanic kill --pid=<PID>
+sanic kill --pidfile=/var/run/sanic.pid
+sanic status --pid=<PID>
+sanic status --pidfile=/var/run/sanic.pid
+```
+
+_V25.12_に追加しました
+
 ### HTTP/3
 
 Sanic server provides HTTP/3 support using [aioquic](https://github.com/aiortc/aioquic). HTTP/3を使用するには**インストールする必要があります**

@@ -108,3 +108,29 @@ def test_shutdown_tasks_on_app_stop():
         call(timeout=0),
         call(15.0),
     ]
+
+
+async def test_task_result_is_preserved(app: Sanic):
+    async def return_value(x):
+        await asyncio.sleep(0)
+        return x
+
+    task = app.add_task(return_value(42), name="return_42")
+
+    result = await task
+
+    assert result == 42
+    assert task.result() == 42
+
+
+async def test_task_result_with_callable(app: Sanic):
+    async def coro_with_app(app):
+        await asyncio.sleep(0)
+        return app.name
+
+    task = app.add_task(coro_with_app, name="return_app_name")
+
+    result = await task
+
+    assert result == app.name
+    assert task.result() == app.name

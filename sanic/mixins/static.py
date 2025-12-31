@@ -10,7 +10,7 @@ from urllib.parse import unquote
 from sanic_routing.route import Route
 
 from sanic.base.meta import SanicMeta
-from sanic.compat import stat_async
+from sanic.compat import clear_function_annotate, stat_async
 from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.handlers.directory import DirectoryHandler
@@ -370,3 +370,12 @@ class StaticHandleMixin(metaclass=SanicMeta):
                 )
                 raise not_found
         return file_path
+
+
+# Clear __annotate__ on methods that may be pickled via functools.partial
+# to avoid PicklingError in Python 3.14+ (PEP 649)
+clear_function_annotate(
+    StaticHandleMixin._static_request_handler,
+    StaticHandleMixin._get_file_path,
+    StaticHandleMixin._register_static,
+)

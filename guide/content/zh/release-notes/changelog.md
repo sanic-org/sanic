@@ -7,9 +7,59 @@ content_class: 更新日志
 :larg_orange_diamond: Current release
 :larg_blu_diamond: In support LTS release
 
-## 版本25.3.0 :larg_orange_diamond:
+## 版本25.12.0 :larg_orange_diamond:
 
-_当前版本_
+_当前LTS版本_
+
+### Features
+
+- [#3071](https://github.com/sanic-org/sanic/pull/3071) Add automatic `charset=UTF-8` to text content types
+- [#3079](https://github.com/sanic-org/sanic/pull/3079) Add `DetailedConverter` for advanced environment variable conversion
+- [#3080](https://github.com/sanic-org/sanic/pull/3080) 更新 `str_to_bool` 函数以包含`nope` 作为有效的虚假值
+- [#3102](https://github.com/sanic-org/sanic/pull/3102) Better server error messaging
+- [#3110](https://github.com/sanic-org/sanic/pull/3110) Add daemon mode to Sanic CLI
+- [#3114](https://github.com/sanic-org/sanic/pull/3114) Return task when creating a task
+- [#3117](https://github.com/sanic-org/sanic/pull/3117) Explicit symlink params for static files/dirs
+
+### Bugfixes
+
+- [#3064](https://github.com/sanic-org/sanic/pull/3064) Change the log type to debug
+- [#3068](https://github.com/sanic-org/sanic/pull/3068) Silent on `RuntimeError` when `write_eof`
+- [#3077](https://github.com/sanic-org/sanic/pull/3077) Fix `WorkerManager.kill` on Windows
+- [#3085](https://github.com/sanic-org/sanic/pull/3085) 修复`close_if_idle()`中的`AttributeEror` 当`_http`未初始化
+- [#3086](https://github.com/sanic-org/sanic/pull/3086) 修复工人的种族条件，重启导致重生失败
+- [#3088](https://github.com/sanic-org/sanic/pull/3088) Fixing bad term cleanup at exit
+- [#3119](https://github.com/sanic-org/sanic/pull/3119) 修复为带有CJK字符的目录服务的静态文件
+- [#3120](https://github.com/sanic-org/sanic/pull/3120) Respect `LOG_EXTRA` in all cases
+- [#3121](https://github.com/sanic-org/sanic/pull/3121) Respect `KEEP_ALIVE` config
+- [#3122](https://github.com/sanic-org/sanic/pull/3122) 关机状态检查处理乌夫罗普双击杀
+
+### Deprecations and Removals
+
+- [#3115](https://github.com/sanic-org/sanic/pull/3115) Remove Python 3.9 support and add Python 3.14
+
+### 开发者基础设施
+
+- [#3083](https://github.com/sanic-org/sanic/pull/3083) 添加 `WorkerManager` 构造函数参数的输入
+- [#3084](https://github.com/sanic-org/sanic/pull/3084) Create baseline for bandit to remove false positives
+- [#3091](https://github.com/sanic-org/sanic/pull/3091) Use secrets for generating unique ping payloads
+- [#3094](https://github.com/sanic-org/sanic/pull/3094) Add some typing and fix some tests
+- [#3095](https://github.com/sanic-org/sanic/pull/3095) 更新需要 Python >=3.10
+- [#3101](https://github.com/sanic-org/sanic/pull/3101) 升级拖拉机到最新版本
+- [#3107](https://github.com/sanic-org/sanic/pull/3107) Testing improvements
+- [#3108](https://github.com/sanic-org/sanic/pull/3108) Move to 2-stage coverage check
+- [#3109](https://github.com/sanic-org/sanic/pull/3109) Bump `dawidd6/action-download-artifact` from 3 to 6
+
+### Improved Documentation
+
+- [#3035](https://github.com/sanic-org/sanic/pull/3035) 修复 `sanic_ext` openapi 组件文档
+- [#3054](https://github.com/sanic-org/sanic/pull/3054) Fix 'how we built sanic' sidebar link
+- [#3056](https://github.com/sanic-org/sanic/pull/3056) Fix broken link in website
+- [#3057](https://github.com/sanic-org/sanic/pull/3057) Add correct path for Contribution guidelines
+- [#3065](https://github.com/sanic-org/sanic/pull/3065) Fixed incorrect links throughout the documentation
+- [#3066](https://github.com/sanic-org/sanic/pull/3066) 请求.md 文档的单个字母类型修复
+
+## 版本25.3.0
 
 ### Features
 
@@ -45,11 +95,11 @@ _当前版本_
 - [#3015](https://github.com/sanic-org/sanic/pull/3015) 如果适用，则杀死整个流程组
 - [#3016](https://github.com/sanic-org/sanic/pull/3016) 修复在 HTTPMethodView 类中获取方法的不兼容类型注释
 
-### Deprecations and Removals
+### 废弃和移除
 
 - [#3020](https://github.com/sanic-org/sanic/pull/3020) 删除 Python 3.8 支持
 
-### 开发者基础设施
+### Developer infrastructure
 
 - [#3017](https://github.com/sanic-org/sanic/pull/3017) Cleanup setup.cfg
 
@@ -171,7 +221,7 @@ _Due to circumstances at the time, v.23.9 was skipped._
 - [#2785](https://github.com/sanic-org/sanic/pull/2785) Add custom typing to config and ctx objects
 - [#2790](https://github.com/sanic-org/sanic/pull/2790) Add `request.client_ip`
 
-### Bugfixes
+### 错误修正
 
 - [#2728](https://github.com/sanic-org/sanic/pull/2728) Fix traversals for intended results
 - [#2729](https://github.com/sanic-org/sanic/pull/2729) Handle case when headers argument of ResponseStream constructor is None
@@ -182,7 +232,7 @@ _Due to circumstances at the time, v.23.9 was skipped._
 - [#2774](https://github.com/sanic-org/sanic/pull/2774) Resolve headers on different renderers
 - [#2782](https://github.com/sanic-org/sanic/pull/2782) Resolve pypy compatibility issues
 
-### 废弃和移除
+### Deprecations and Removals
 
 - [#2777](https://github.com/sanic-org/sanic/pull/2777) Remove Python 3.7 support
 
@@ -241,12 +291,12 @@ _Due to circumstances at the time, v.23.9 was skipped._
 - [#2722](https://github.com/sanic-org/sanic/pull/2722) Add `CertLoader` as application option for directly controlling `SSLContext` objects
 - [#2725](https://github.com/sanic-org/sanic/pull/2725) Worker sync state tolerance on race condition
 
-### 错误修正
+### Bugfixes
 
 - [#2651](https://github.com/sanic-org/sanic/pull/2651) ASGI websocket to pass thru bytes as is
 - [#2697](https://github.com/sanic-org/sanic/pull/2697) Fix comparison between datetime aware and naive in `file` when using `If-Modified-Since`
 
-### Deprecations and Removals
+### 废弃和移除
 
 - [#2666](https://github.com/sanic-org/sanic/pull/2666) Remove deprecated `__blueprintname__` property
 
@@ -258,7 +308,7 @@ _Due to circumstances at the time, v.23.9 was skipped._
 
 _当前LTS版本_
 
-### Features
+### 功能
 
 - [#2569](https://github.com/sanic-org/sanic/pull/2569) Add `JSONResponse` class with some convenient methods when updating a response object
 - [#2598](https://github.com/sanic-org/sanic/pull/2598) Change `uvloop` requirement to `>=0.15.0`
@@ -294,7 +344,7 @@ _当前LTS版本_
 - [#2627](https://github.com/sanic-org/sanic/pull/2627) Crash ASGI application on lifespan failure
 - [#2635](https://github.com/sanic-org/sanic/pull/2635) Resolve error with low-level server creation on Windows
 
-### 废弃和移除
+### Deprecations and Removals
 
 - [#2608](https://github.com/sanic-org/sanic/pull/2608) [#2630](https://github.com/sanic-org/sanic/pull/2630) Signal conditions and triggers saved on `signal.extra`
 - [#2626](https://github.com/sanic-org/sanic/pull/2626) Move to HTTP Inspector
@@ -308,11 +358,11 @@ _当前LTS版本_
 
 ## Version 22.9.1
 
-### 功能
+### Features
 
 - [#2585](https://github.com/sanic-org/sanic/pull/2585) Improved error message when no applications have been registered
 
-### Bugfixes
+### 错误修正
 
 - [#2578](https://github.com/sanic-org/sanic/pull/2578) Add certificate loader for in process certificate creation
 - [#2591](https://github.com/sanic-org/sanic/pull/2591) Do not use sentinel identity for `spawn` compatibility
@@ -360,7 +410,7 @@ _当前LTS版本_
 - [#2495](https://github.com/sanic-org/sanic/pull/2495) Prevent directory traversion with static files
 - [#2515](https://github.com/sanic-org/sanic/pull/2515) Do not apply double slash to paths in certain static dirs in Blueprints
 
-### Deprecations and Removals
+### 废弃和移除
 
 - [#2525](https://github.com/sanic-org/sanic/pull/2525) Warn on duplicate route names, will be prevented outright in v23.3
 - [#2537](https://github.com/sanic-org/sanic/pull/2537) Raise warning and deprecation notice on duplicate exceptions, will be prevented outright in v23.3
@@ -378,7 +428,7 @@ _当前LTS版本_
 
 ## Version 22.6.2
 
-### 错误修正
+### Bugfixes
 
 - [#2522](https://github.com/sanic-org/sanic/pull/2522) Always show server location in ASGI
 
@@ -390,7 +440,7 @@ _当前LTS版本_
 
 ## Version 22.6.0
 
-### Features
+### 功能
 
 - [#2378](https://github.com/sanic-org/sanic/pull/2378) Introduce HTTP/3 and autogeneration of TLS certificates in `DEBUG` mode
   - 👶 _EARLY RELEASE FEATURE_: Serving Sanic over HTTP/3 is an early release feature. It does not yet fully cover the HTTP/3 spec, but instead aims for feature parity with Sanic's existing HTTP/1.1 server. Websockets, WebTransport, push responses are examples of some features not yet implemented.
@@ -406,7 +456,7 @@ _当前LTS版本_
 - [#2453](https://github.com/sanic-org/sanic/pull/2453) Move verbosity filtering to logger
 - [#2475](https://github.com/sanic-org/sanic/pull/2475) Expose getter for current request using `Request.get_current()`
 
-### Bugfixes
+### 错误修正
 
 - [#2448](https://github.com/sanic-org/sanic/pull/2448) Fix to allow running with `pythonw.exe` or places where there is no `sys.stdout`
 - [#2451](https://github.com/sanic-org/sanic/pull/2451) Trigger `http.lifecycle.request` signal in ASGI mode
@@ -423,12 +473,12 @@ _当前LTS版本_
   5. `sanic.response.stream`
   6. `AsyncioServer.init`
 
-### Developer infrastructure
+### 开发者基础设施
 
 - [#2449](https://github.com/sanic-org/sanic/pull/2449) Clean up `black` and `isort` config
 - [#2479](https://github.com/sanic-org/sanic/pull/2479) Fix some flappy tests
 
-### Improved Documentation
+### 改进文档
 
 - [#2461](https://github.com/sanic-org/sanic/pull/2461) Update example to match current application naming standards
 - [#2466](https://github.com/sanic-org/sanic/pull/2466) Better type annotation for `Extend`
@@ -464,7 +514,7 @@ _当前LTS版本_
 - [sanic-routing#52](https://github.com/sanic-org/sanic-routing/pull/52) Add type casting to regex route matching
 - [sanic-routing#60](https://github.com/sanic-org/sanic-routing/pull/60) Add requirements check on regex routes (this resolves, for example, multiple static directories with differing `host` values)
 
-### Deprecations and Removals
+### 废弃和移除
 
 - [#2362](https://github.com/sanic-org/sanic/pull/2362) 22.3 Deprecations and changes
   1. `debug=True` and `--debug` do _NOT_ automatically run `auto_reload`
@@ -988,7 +1038,7 @@ Notes
 
 ## Version 19.12.3
 
-**Bugfixes**
+**错误修复**
 
 - [#1959](https://github.com/sanic-org/sanic/pull/1959) Removes
   duplicate headers in ASGI streaming body

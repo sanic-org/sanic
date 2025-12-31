@@ -13,6 +13,23 @@ from sanic.request import Request
 from sanic.response import file, html, redirect
 
 
+def _is_path_within_root(path: Path, root: Path) -> bool:
+    """Check if a path (after resolution) is within the root directory.
+
+    Returns False for:
+    - Broken symlinks (cannot be resolved)
+    - Paths that resolve outside the root directory
+    - Any errors during resolution
+    """
+    try:
+        resolved = path.resolve()
+        resolved.relative_to(root.resolve())
+    except (ValueError, OSError, RuntimeError):
+        return False
+    else:
+        return True
+
+
 class DirectoryHandler:
     """Serve files from a directory.
 
@@ -22,6 +39,13 @@ class DirectoryHandler:
         directory_view (bool): Whether to show a directory listing or not.
         index (Optional[Union[str, Sequence[str]]]): The index file(s) to
             serve if the directory is requested. Defaults to None.
+        root_path (Optional[Path]): The root path for security checks.
+            Symlinks resolving outside this path will be hidden from
+            directory listings. Defaults to directory if not specified.
+        follow_external_symlink_files (bool): Whether to show file symlinks
+            pointing outside root in directory listings. Defaults to False.
+        follow_external_symlink_dirs (bool): Whether to show directory symlinks
+            pointing outside root in directory listings. Defaults to False.
     """
 
     def __init__(
@@ -30,6 +54,9 @@ class DirectoryHandler:
         directory: Path,
         directory_view: bool = False,
         index: Optional[Union[str, Sequence[str]]] = None,
+        root_path: Optional[Path] = None,
+        follow_external_symlink_files: bool = False,
+        follow_external_symlink_dirs: bool = False,
     ) -> None:
         if isinstance(index, str):
             index = [index]
@@ -39,6 +66,9 @@ class DirectoryHandler:
         self.directory = directory
         self.directory_view = directory_view
         self.index = tuple(index)
+        self.root_path = root_path if root_path is not None else directory
+        self.follow_external_symlink_files = follow_external_symlink_files
+        self.follow_external_symlink_dirs = follow_external_symlink_dirs
 
     async def handle(self, request: Request, path: str):
         """Handle the request.
@@ -81,8 +111,13 @@ class DirectoryHandler:
         page = DirectoryPage(self._iter_files(location), path, debug)
         return html(page.render())
 
-    def _prepare_file(self, path: Path) -> dict[str, Union[int, str]]:
-        stat = path.stat()
+    def _prepare_file(
+        self, path: Path
+    ) -> Optional[dict[str, Union[int, str]]]:
+        try:
+            stat = path.stat()
+        except OSError:
+            return None
         modified = (
             datetime.fromtimestamp(stat.st_mtime)
             .isoformat()[:19]
@@ -102,7 +137,21 @@ class DirectoryHandler:
         }
 
     def _iter_files(self, location: Path) -> Iterable[FileInfo]:
-        prepared = [self._prepare_file(f) for f in location.iterdir()]
+        prepared = []
+        for f in location.iterdir():
+            if f.is_symlink() and not _is_path_within_root(f, self.root_path):
+                # External symlink - check if allowed based on type
+                try:
+                    is_dir = f.resolve().is_dir()
+                except OSError:
+                    continue  # Broken symlink
+                if is_dir and not self.follow_external_symlink_dirs:
+                    continue
+                if not is_dir and not self.follow_external_symlink_files:
+                    continue
+            file_info = self._prepare_file(f)
+            if file_info is not None:
+                prepared.append(file_info)
         for item in sorted(prepared, key=itemgetter("priority", "file_name")):
             del item["priority"]
             yield cast(FileInfo, item)

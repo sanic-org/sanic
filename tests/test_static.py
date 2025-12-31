@@ -131,7 +131,7 @@ def test_static_file_pathlib_relative_path_traversal(
         pytest.skip("Current working directory does not end with 'sanic'")
 
     file_path = "./tests/static/../static/"
-    app.static("/", file_path)
+    app.static("/", file_path, follow_external_symlink_files=True)
     _, response = app.test_client.get(f"/{file_name}")
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
@@ -224,7 +224,11 @@ def test_static_file_content_type_forced(app, static_file_directory):
 )
 @pytest.mark.parametrize("base_uri", ["/static", "", "/dir"])
 def test_static_directory(app, file_name, base_uri, static_file_directory):
-    app.static(base_uri, static_file_directory)
+    app.static(
+        base_uri,
+        static_file_directory,
+        follow_external_symlink_files=(file_name == "symlink"),
+    )
 
     request, response = app.test_client.get(uri=f"{base_uri}/{file_name}")
     assert response.status == 200

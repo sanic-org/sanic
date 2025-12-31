@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 from collections.abc import ItemsView, Iterator, KeysView, Mapping, ValuesView
 from collections.abc import Mapping as MappingType
 from typing import Any
-
-
-dict
 
 
 class WorkerState(Mapping):

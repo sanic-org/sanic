@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shutil
 import sys
@@ -5,7 +7,6 @@ import sys
 from argparse import Namespace
 from functools import partial
 from textwrap import indent
-from typing import Union
 
 from sanic.app import Sanic
 from sanic.application.logo import get_logo
@@ -452,7 +453,7 @@ Advanced daemon management:
     def _build_run_kwargs(self):
         for group in self.groups:
             group.prepare(self.args)
-        ssl: Union[None, dict, str, list] = []
+        ssl: None | dict | str | list = []
         if self.args.tlshost:
             ssl.append(None)
         if self.args.cert is not None or self.args.key is not None:

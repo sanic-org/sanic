@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from email.utils import formatdate
 from functools import partial, wraps
 from os import PathLike, path
 from pathlib import Path, PurePath
-from typing import Optional, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route
@@ -31,20 +32,20 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
     def static(
         self,
         uri: str,
-        file_or_directory: Union[PathLike, str],
+        file_or_directory: PathLike | str,
         pattern: str = r"/?.+",
         use_modified_since: bool = True,
         use_content_range: bool = False,
-        stream_large_files: Union[bool, int] = False,
+        stream_large_files: bool | int = False,
         name: str = "static",
-        host: Optional[str] = None,
-        strict_slashes: Optional[bool] = None,
-        content_type: Optional[str] = None,
+        host: str | None = None,
+        strict_slashes: bool | None = None,
+        content_type: str | None = None,
         apply: bool = True,
-        resource_type: Optional[str] = None,
-        index: Optional[Union[str, Sequence[str]]] = None,
+        resource_type: str | None = None,
+        index: str | Sequence[str] | None = None,
         directory_view: bool = False,
-        directory_handler: Optional[DirectoryHandler] = None,
+        directory_handler: DirectoryHandler | None = None,
     ):
         """Register a root to serve files from. The input can either be a file or a directory.
 
@@ -252,10 +253,10 @@ class StaticHandleMixin(metaclass=SanicMeta):
         file_or_directory: str,
         use_modified_since: bool,
         use_content_range: bool,
-        stream_large_files: Union[bool, int],
+        stream_large_files: bool | int,
         directory_handler: DirectoryHandler,
-        content_type: Optional[str] = None,
-        __file_uri__: Optional[str] = None,
+        content_type: str | None = None,
+        __file_uri__: str | None = None,
     ):
         not_found = FileNotFound(
             "File not found",

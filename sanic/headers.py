@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from collections.abc import Iterable
-from typing import Any, Optional, Union
+from typing import Any
 from urllib.parse import unquote
 
 from sanic.exceptions import InvalidHeader
@@ -15,7 +15,7 @@ from sanic.helpers import STATUS_CODES
 #   across the application (in request.py for example)
 HeaderIterable = Iterable[tuple[str, Any]]  # Values convertible to str
 HeaderBytesIterable = Iterable[tuple[bytes, bytes]]
-Options = dict[str, Union[int, str]]  # key=value fields in various headers
+Options = dict[str, int | str]  # key=value fields in various headers
 OptionsIterable = Iterable[tuple[str, str]]  # May contain duplicate keys
 
 _token, _quoted = r"([\w!#$%&'*+\-.^_`|~]+)", r'"([^"]*)"'
@@ -86,8 +86,8 @@ class MediaType:
 
     def match(
         self,
-        mime_with_params: Union[str, MediaType],
-    ) -> Optional[MediaType]:
+        mime_with_params: str | MediaType,
+    ) -> MediaType | None:
         """Match this media type against another media type.
 
         Check if this media type matches the given mime type/subtype.
@@ -142,7 +142,7 @@ class MediaType:
         return any(part == "*" for part in (self.subtype, self.type))
 
     @classmethod
-    def _parse(cls, mime_with_params: str) -> Optional[MediaType]:
+    def _parse(cls, mime_with_params: str) -> MediaType | None:
         mtype = mime_with_params.strip()
         if "/" not in mime_with_params:
             return None
@@ -172,7 +172,7 @@ class Matched:
         header (MediaType): The header to match against, if any.
     """
 
-    def __init__(self, mime: str, header: Optional[MediaType]):
+    def __init__(self, mime: str, header: MediaType | None):
         self.mime = mime
         self.header = header
 
@@ -214,7 +214,7 @@ class Matched:
             f"mime types of '{self.mime}' and '{other}'"
         )
 
-    def match(self, other: Union[str, Matched]) -> Optional[Matched]:
+    def match(self, other: str | Matched) -> Matched | None:
         """Match this MIME string against another MIME string.
 
         Check if this MIME string matches the given MIME string. Wildcards are supported both ways on both type and subtype.
@@ -295,7 +295,7 @@ class AcceptList(list):
         return ", ".join(str(m) for m in self)
 
 
-def parse_accept(accept: Optional[str]) -> AcceptList:
+def parse_accept(accept: str | None) -> AcceptList:
     """Parse an Accept header and order the acceptable media types according to RFC 7231, s. 5.3.2
 
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
@@ -345,7 +345,7 @@ def parse_content_header(value: str) -> tuple[str, Options]:
     """
     pos = value.find(";")
     if pos == -1:
-        options: dict[str, Union[int, str]] = {}
+        options: dict[str, int | str] = {}
     else:
         options = {
             m.group(1).lower(): (m.group(2) or m.group(3))
@@ -365,7 +365,7 @@ def parse_content_header(value: str) -> tuple[str, Options]:
 _rparam = re.compile(f"(?:{_token}|{_quoted})={_token}\\s*($|[;,])", re.ASCII)
 
 
-def parse_forwarded(headers, config) -> Optional[Options]:
+def parse_forwarded(headers, config) -> Options | None:
     """Parse RFC 7239 Forwarded headers.
     The value of `by` or `secret` must match `config.FORWARDED_SECRET`
     :return: dict with keys and values, or None if nothing matched
@@ -379,7 +379,7 @@ def parse_forwarded(headers, config) -> Optional[Options]:
         return None
     # Loop over <separator><key>=<value> elements from right to left
     sep = pos = None
-    options: list[tuple[str, str]] = []
+    options_list: list[tuple[str, str]] = []
     found = False
     for m in _rparam.finditer(header[::-1]):
         # Start of new element? (on parser skips and non-semicolon right sep)
@@ -388,22 +388,22 @@ def parse_forwarded(headers, config) -> Optional[Options]:
             if found:
                 break
             # Clear values and parse as new element
-            del options[:]
+            del options_list[:]
         pos = m.end()
         val_token, val_quoted, key, sep = m.groups()
         key = key.lower()[::-1]
         val = (val_token or val_quoted.replace('"\\', '"'))[::-1]
-        options.append((key, val))
+        options_list.append((key, val))
         if key in ("secret", "by") and val == secret:
             found = True
         # Check if we would return on next round, to avoid useless parse
         if found and sep != ";":
             break
     # If secret was found, return the matching options in left-to-right order
-    return fwd_normalize(reversed(options)) if found else None
+    return fwd_normalize(reversed(options_list)) if found else None
 
 
-def parse_xforwarded(headers, config) -> Optional[Options]:
+def parse_xforwarded(headers, config) -> Options | None:
     """Parse traditional proxy headers."""
     real_ip_header = config.REAL_IP_HEADER
     proxies_count = config.PROXIES_COUNT
@@ -450,7 +450,7 @@ def fwd_normalize(fwd: OptionsIterable) -> Options:
     Returns:
         Options: A dict of normalized key-value pairs.
     """
-    ret: dict[str, Union[int, str]] = {}
+    ret: dict[str, int | str] = {}
     for key, val in fwd:
         if val is not None:
             try:
@@ -487,7 +487,7 @@ def fwd_normalize_address(addr: str) -> str:
     return addr.lower()
 
 
-def parse_host(host: str) -> tuple[Optional[str], Optional[int]]:
+def parse_host(host: str) -> tuple[str | None, int | None]:
     """Split host:port into hostname and port.
 
     Args:
@@ -529,9 +529,9 @@ def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
 
 
 def parse_credentials(
-    header: Optional[str],
-    prefixes: Optional[Union[list, tuple, set]] = None,
-) -> tuple[Optional[str], Optional[str]]:
+    header: str | None,
+    prefixes: list | tuple | set | None = None,
+) -> tuple[str | None, str | None]:
     """Parses any header with the aim to retrieve any credentials from it.
 
     Args:

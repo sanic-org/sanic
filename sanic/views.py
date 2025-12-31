@@ -5,8 +5,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Optional,
-    Union,
 )
 
 from sanic.models.handler_types import RouteHandler
@@ -118,13 +116,13 @@ class HTTPMethodView:
 
     def __init_subclass__(
         cls,
-        attach: Optional[Union[Sanic, Blueprint]] = None,
+        attach: Sanic | Blueprint | None = None,
         uri: str = "",
         methods: Iterable[str] = frozenset({"GET"}),
-        host: Optional[str] = None,
-        strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
-        name: Optional[str] = None,
+        host: str | None = None,
+        strict_slashes: bool | None = None,
+        version: int | None = None,
+        name: str | None = None,
         stream: bool = False,
         version_prefix: str = "/v",
         **kwargs: Any,
@@ -204,13 +202,13 @@ class HTTPMethodView:
     @classmethod
     def attach(
         cls,
-        to: Union[Sanic, Blueprint],
+        to: Sanic | Blueprint,
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
-        host: Optional[str] = None,
-        strict_slashes: Optional[bool] = None,
-        version: Optional[int] = None,
-        name: Optional[str] = None,
+        host: str | None = None,
+        strict_slashes: bool | None = None,
+        version: int | None = None,
+        name: str | None = None,
         stream: bool = False,
         version_prefix: str = "/v",
     ) -> None:

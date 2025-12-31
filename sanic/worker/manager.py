@@ -12,7 +12,7 @@ from multiprocessing.context import BaseContext
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
@@ -99,7 +99,7 @@ class WorkerManager:
         func: Callable[..., Any],
         kwargs: dict[str, Any],
         transient: bool = False,
-        restartable: Optional[bool] = None,
+        restartable: bool | None = None,
         tracked: bool = True,
         auto_start: bool = True,
         workers: int = 1,
@@ -167,7 +167,7 @@ class WorkerManager:
             ident=f"{WorkerProcess.SERVER_IDENTIFIER}{server_number:2}",
         )
 
-    def shutdown_server(self, name: Optional[str] = None) -> None:
+    def shutdown_server(self, name: str | None = None) -> None:
         """Shutdown a server process.
 
         Args:
@@ -240,7 +240,7 @@ class WorkerManager:
 
     def restart(
         self,
-        process_names: Optional[list[str]] = None,
+        process_names: list[str] | None = None,
         restart_order=RestartOrder.SHUTDOWN_FIRST,
         **kwargs,
     ):
@@ -463,7 +463,7 @@ class WorkerManager:
         for worker in to_remove:
             self.remove_worker(worker)
 
-    def _poll_monitor(self) -> Optional[MonitorCycle]:
+    def _poll_monitor(self) -> MonitorCycle | None:
         if self.monitor_subscriber.poll(0.1):
             message = self.monitor_subscriber.recv()
             logger.debug(f"Monitor message: {message}", extra={"verbosity": 2})
@@ -488,7 +488,7 @@ class WorkerManager:
     def _handle_terminate(self) -> None:
         self.shutdown()
 
-    def _handle_message(self, message: str) -> Optional[MonitorCycle]:
+    def _handle_message(self, message: str) -> MonitorCycle | None:
         logger.debug(
             "Incoming monitor message: %s",
             message,
@@ -501,7 +501,7 @@ class WorkerManager:
 
         processes = split_message[0]
         reloaded_files = split_message[1] if len(split_message) > 1 else None
-        process_names: Optional[list[str]] = [
+        process_names: list[str] | None = [
             name.strip() for name in processes.split(",")
         ]
         if process_names and "__ALL_PROCESSES__" in process_names:
@@ -525,7 +525,7 @@ class WorkerManager:
         func: Callable[..., Any],
         kwargs: dict[str, Any],
         transient: bool,
-        restartable: Optional[bool],
+        restartable: bool | None,
         tracked: bool,
         auto_start: bool,
         workers: int,

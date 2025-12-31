@@ -13,8 +13,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Optional,
-    Union,
     overload,
 )
 
@@ -115,10 +113,10 @@ class Blueprint(BaseSanic):
     def __init__(
         self,
         name: str,
-        url_prefix: Optional[str] = None,
-        host: Optional[Union[list[str], str]] = None,
-        version: Optional[Union[int, str, float]] = None,
-        strict_slashes: Optional[bool] = None,
+        url_prefix: str | None = None,
+        host: list[str] | str | None = None,
+        version: int | str | float | None = None,
+        strict_slashes: bool | None = None,
         version_prefix: str = "/v",
     ):
         super().__init__(name=name)
@@ -201,11 +199,11 @@ class Blueprint(BaseSanic):
     def copy(
         self,
         name: str,
-        url_prefix: Optional[Union[str, Default]] = _default,
-        version: Optional[Union[int, str, float, Default]] = _default,
-        version_prefix: Union[str, Default] = _default,
-        allow_route_overwrite: Union[bool, Default] = _default,
-        strict_slashes: Optional[Union[bool, Default]] = _default,
+        url_prefix: str | Default | None = _default,
+        version: int | str | float | Default | None = _default,
+        version_prefix: str | Default = _default,
+        allow_route_overwrite: bool | Default = _default,
+        strict_slashes: bool | Default | None = _default,
         with_registration: bool = True,
         with_ctx: bool = False,
     ):
@@ -270,12 +268,12 @@ class Blueprint(BaseSanic):
 
     @staticmethod
     def group(
-        *blueprints: Union[Blueprint, BlueprintGroup],
-        url_prefix: Optional[str] = None,
-        version: Optional[Union[int, str, float]] = None,
-        strict_slashes: Optional[bool] = None,
+        *blueprints: Blueprint | BlueprintGroup,
+        url_prefix: str | None = None,
+        version: int | str | float | None = None,
+        strict_slashes: bool | None = None,
         version_prefix: str = "/v",
-        name_prefix: Optional[str] = "",
+        name_prefix: str | None = "",
     ) -> BlueprintGroup:
         """Group multiple blueprints (or other blueprint groups) together.
 
@@ -525,9 +523,9 @@ class Blueprint(BaseSanic):
     def event(
         self,
         event: str,
-        timeout: Optional[Union[int, float]] = None,
+        timeout: int | float | None = None,
         *,
-        condition: Optional[dict[str, Any]] = None,
+        condition: dict[str, Any] | None = None,
     ):
         """Wait for a signal event to be dispatched.
 
@@ -579,7 +577,7 @@ class Blueprint(BaseSanic):
         return value
 
     @staticmethod
-    def _setup_uri(base: str, prefix: Optional[str]):
+    def _setup_uri(base: str, prefix: str | None):
         uri = base
         if prefix:
             uri = prefix
@@ -693,11 +691,11 @@ class BlueprintGroup(bpg_base):
 
     def __init__(
         self,
-        url_prefix: Optional[str] = None,
-        version: Optional[Union[int, str, float]] = None,
-        strict_slashes: Optional[bool] = None,
+        url_prefix: str | None = None,
+        version: int | str | float | None = None,
+        strict_slashes: bool | None = None,
         version_prefix: str = "/v",
-        name_prefix: Optional[str] = "",
+        name_prefix: str | None = "",
     ):
         self._blueprints: list[Blueprint] = []
         self._url_prefix = url_prefix
@@ -707,7 +705,7 @@ class BlueprintGroup(bpg_base):
         self._name_prefix = name_prefix
 
     @property
-    def url_prefix(self) -> Optional[Union[int, str, float]]:
+    def url_prefix(self) -> int | str | float | None:
         """The URL prefix for the Blueprint Group.
 
         Returns:
@@ -727,7 +725,7 @@ class BlueprintGroup(bpg_base):
         return self._blueprints
 
     @property
-    def version(self) -> Optional[Union[str, int, float]]:
+    def version(self) -> str | int | float | None:
         """API Version for the Blueprint Group, if any.
 
         Returns:
@@ -736,7 +734,7 @@ class BlueprintGroup(bpg_base):
         return self._version
 
     @property
-    def strict_slashes(self) -> Optional[bool]:
+    def strict_slashes(self) -> bool | None:
         """Whether to enforce strict slashes for the Blueprint Group.
 
         Returns:
@@ -754,7 +752,7 @@ class BlueprintGroup(bpg_base):
         return self._version_prefix
 
     @property
-    def name_prefix(self) -> Optional[str]:
+    def name_prefix(self) -> str | None:
         """Name prefix for the Blueprint Group.
 
         This is mainly needed when blueprints are copied in order to
@@ -780,8 +778,8 @@ class BlueprintGroup(bpg_base):
     def __getitem__(self, item: slice) -> MutableSequence[Blueprint]: ...
 
     def __getitem__(
-        self, item: Union[int, slice]
-    ) -> Union[Blueprint, MutableSequence[Blueprint]]:
+        self, item: int | slice
+    ) -> Blueprint | MutableSequence[Blueprint]:
         """Get the Blueprint object at the specified index.
 
         This method returns a blueprint inside the group specified by
@@ -807,8 +805,8 @@ class BlueprintGroup(bpg_base):
 
     def __setitem__(
         self,
-        index: Union[int, slice],
-        item: Union[Blueprint, Iterable[Blueprint]],
+        index: int | slice,
+        item: Blueprint | Iterable[Blueprint],
     ) -> None:
         """Set the Blueprint object at the specified index.
 
@@ -844,7 +842,7 @@ class BlueprintGroup(bpg_base):
     @overload
     def __delitem__(self, index: slice) -> None: ...
 
-    def __delitem__(self, index: Union[int, slice]) -> None:
+    def __delitem__(self, index: int | slice) -> None:
         """Delete the Blueprint object at the specified index.
 
         Abstract method implemented to turn the `BlueprintGroup` class

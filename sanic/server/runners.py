@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ssl import SSLContext
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from sanic.config import Config
 from sanic.exceptions import ServerError
@@ -43,9 +43,9 @@ def serve(
     host,
     port,
     app: Sanic,
-    ssl: Optional[SSLContext] = None,
-    sock: Optional[socket.socket] = None,
-    unix: Optional[str] = None,
+    ssl: SSLContext | None = None,
+    sock: socket.socket | None = None,
+    unix: str | None = None,
     reuse_port: bool = False,
     loop=None,
     protocol: type[asyncio.Protocol] = HttpProtocol,
@@ -352,7 +352,7 @@ def _serve_http_3(
 
 def _build_protocol_kwargs(
     protocol: type[asyncio.Protocol], config: Config
-) -> dict[str, Union[int, float]]:
+) -> dict[str, int | float]:
     if hasattr(protocol, "websocket_handshake"):
         return {
             "websocket_max_size": config.WEBSOCKET_MAX_SIZE,

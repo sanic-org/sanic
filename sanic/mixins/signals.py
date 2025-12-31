@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Coroutine
 from enum import Enum
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureSignal
@@ -20,10 +20,10 @@ class SignalMixin(metaclass=SanicMeta):
 
     def signal(
         self,
-        event: Union[str, Enum],
+        event: str | Enum,
         *,
         apply: bool = True,
-        condition: Optional[dict[str, Any]] = None,
+        condition: dict[str, Any] | None = None,
         exclusive: bool = True,
         priority: int = 0,
     ) -> Callable[[SignalHandler], SignalHandler]:
@@ -70,9 +70,9 @@ class SignalMixin(metaclass=SanicMeta):
 
     def add_signal(
         self,
-        handler: Optional[Callable[..., Any]],
-        event: Union[str, Enum],
-        condition: Optional[dict[str, Any]] = None,
+        handler: Callable[..., Any] | None,
+        event: str | Enum,
+        condition: dict[str, Any] | None = None,
         exclusive: bool = True,
     ) -> Callable[..., Any]:
         """Registers a signal handler for a specific event.

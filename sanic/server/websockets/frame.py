@@ -2,7 +2,7 @@ import asyncio
 import codecs
 
 from collections.abc import AsyncIterator
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from websockets.frames import Frame, Opcode
 from websockets.typing import Data
@@ -46,10 +46,10 @@ class WebsocketFrameAssembler:
         message_fetched: asyncio.Event
         completed_queue: asyncio.Queue
         get_in_progress: bool
-        decoder: Optional[codecs.IncrementalDecoder]
+        decoder: codecs.IncrementalDecoder | None
         # For streaming chunks rather than messages:
         chunks: list[Data]
-        chunks_queue: Optional[asyncio.Queue[Optional[Data]]]
+        chunks_queue: asyncio.Queue[Data | None] | None
         paused: bool
 
     def __init__(self, protocol) -> None:
@@ -86,7 +86,7 @@ class WebsocketFrameAssembler:
         # Flag to indicate we've paused the protocol
         self.paused = False
 
-    async def get(self, timeout: Optional[float] = None) -> Optional[Data]:
+    async def get(self, timeout: float | None = None) -> Data | None:
         """
         Read the next message.
         :meth:`get` returns a single :class:`str` or :class:`bytes`.

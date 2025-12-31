@@ -4,14 +4,7 @@ import asyncio
 
 from abc import ABC, abstractmethod
 from ssl import SSLContext
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Optional,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 from sanic.compat import Header
 from sanic.constants import LocalCertCreator
@@ -53,7 +46,7 @@ if TYPE_CHECKING:
     from sanic.response import BaseHTTPResponse
     from sanic.server.protocols.http_protocol import Http3Protocol
 
-    HttpConnection = Union[H0Connection, H3Connection]
+    HttpConnection = H0Connection | H3Connection
 
 
 class HTTP3Transport(TransportProtocol):
@@ -106,11 +99,11 @@ class HTTPReceiver(Receiver, Stream):
         self.request_body = None
         self.stage = Stage.IDLE
         self.headers_sent = False
-        self.response: Optional[BaseHTTPResponse] = None
+        self.response: BaseHTTPResponse | None = None
         self.request_max_size = self.protocol.request_max_size
         self.request_bytes = 0
 
-    async def run(self, exception: Optional[Exception] = None):
+    async def run(self, exception: Exception | None = None):
         """Handle the request and response cycle."""
         self.stage = Stage.HANDLER
         self.head_only = self.request.method.upper() == "HEAD"
@@ -396,13 +389,11 @@ class SessionTicketStore:
     def add(self, ticket: SessionTicket) -> None:
         self.tickets[ticket.ticket] = ticket
 
-    def pop(self, label: bytes) -> Optional[SessionTicket]:
+    def pop(self, label: bytes) -> SessionTicket | None:
         return self.tickets.pop(label, None)
 
 
-def get_config(
-    app: Sanic, ssl: Union[SanicSSLContext, CertSelector, SSLContext]
-):
+def get_config(app: Sanic, ssl: SanicSSLContext | CertSelector | SSLContext):
     # TODO:
     # - proper selection needed if service with multiple certs insted of
     #   just taking the first

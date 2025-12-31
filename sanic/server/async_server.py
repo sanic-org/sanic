@@ -67,7 +67,7 @@ class AsyncioServer:
         if self.server:
             self.server.close()
             coro = self.wait_closed()
-            task = asyncio.ensure_future(coro, loop=self.loop)
+            task = asyncio.ensure_future(coro)
             return task
 
     def start_serving(self):

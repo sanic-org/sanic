@@ -284,3 +284,19 @@ def test_debug_formatter_formatException(atty, no_color, expected):
         "\033[1mdivision by zero\033[0m"
     ) is expected
     assert (lines[-1] == "ZeroDivisionError: division by zero") is not expected
+
+
+def test_log_extra_config_respected():
+    AutoFormatter.SETUP = False
+    AutoFormatter.LOG_EXTRA = True
+
+    app = Sanic(name="TestLogExtra")
+    app.config.LOG_EXTRA = False
+
+    @app.get("/")
+    def handler(request):
+        return text("ok")
+
+    app.test_client.get("/", debug=True)
+
+    assert AutoFormatter.LOG_EXTRA is False

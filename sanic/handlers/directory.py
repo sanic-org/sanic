@@ -6,6 +6,7 @@ from operator import itemgetter
 from pathlib import Path
 from stat import S_ISDIR
 from typing import cast
+from urllib.parse import unquote
 
 from sanic.exceptions import NotFound
 from sanic.pages.directory_page import DirectoryPage, FileInfo
@@ -84,7 +85,7 @@ class DirectoryHandler:
         Returns:
             Response: The response object.
         """  # noqa: E501
-        current = path.strip("/")[len(self.base) :].strip("/")  # noqa: E203
+        current = unquote(path).strip("/")[len(self.base) :].strip("/")  # noqa: E203
         for file_name in self.index:
             index_file = self.directory / current / file_name
             if index_file.is_file():

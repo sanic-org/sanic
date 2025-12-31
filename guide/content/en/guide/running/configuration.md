@@ -205,6 +205,10 @@ If a value cannot be cast, it will default to a `str`.
 
 #### Advanced Type Converters
 
+.. new:: New in v25.12
+
+    This feature was added in version 25.12
+
 .. column::
 
     For more sophisticated conversion logic that needs access to the full environment variable context, you can use `DetailedConverter`. This abstract base class provides access to the full environment variable key, the raw value, and the current config defaults.

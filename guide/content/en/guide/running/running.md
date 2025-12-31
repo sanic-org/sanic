@@ -391,6 +391,58 @@ For a slightly more advanced implementation, it is good to know that `app.run` w
 
 *Added in v21.6*
 
+### Daemon mode
+
+.. new:: New in v25.12
+
+    This feature was added in version 25.12
+
+.. column::
+
+    Sanic can run as a background daemon process. Use the `-D` or `--daemon` flag to start the server in the background.
+
+.. column::
+
+    ```sh
+    sanic path.to.server:app --daemon
+    sanic path.to.server:app -D
+    ```
+
+.. column::
+
+    You can manage the daemon with additional commands:
+
+.. column::
+
+    ```sh
+    sanic path.to.server:app status   # Check if running
+    sanic path.to.server:app stop     # Stop the daemon
+    ```
+
+.. column::
+
+    Additional options are available for daemon configuration:
+
+.. column::
+
+    ```sh
+    sanic path.to.server:app -D --pidfile=/var/run/sanic.pid
+    sanic path.to.server:app -D --logfile=/var/log/sanic.log
+    sanic path.to.server:app -D --user=www-data
+    sanic path.to.server:app -D --group=www-data
+    ```
+
+Lower-level commands are also available to manage processes by PID:
+
+```sh
+sanic kill --pid=<PID>
+sanic kill --pidfile=/var/run/sanic.pid
+sanic status --pid=<PID>
+sanic status --pidfile=/var/run/sanic.pid
+```
+
+*Added in v25.12*
+
 ### HTTP/3
 
 Sanic server offers HTTP/3 support using [aioquic](https://github.com/aiortc/aioquic). This **must** be installed to use HTTP/3:

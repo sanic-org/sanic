@@ -402,7 +402,8 @@ class StaticHandleMixin(metaclass=SanicMeta):
         try:
             file_path.relative_to(root_path)
         except ValueError:
-            is_file_symlink = file_path_raw.is_symlink()
+            # Check if it's a symlink and determine its type
+            is_file_symlink = file_path_raw.is_symlink() and not file_path.is_dir()
             if is_file_symlink:
                 allowed = follow_external_symlink_files
             else:

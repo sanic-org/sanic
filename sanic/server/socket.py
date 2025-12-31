@@ -6,7 +6,7 @@ import stat
 
 from ipaddress import ip_address
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from sanic.http.constants import HTTP
 
@@ -36,7 +36,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
 
 
 def bind_unix_socket(
-    path: Union[Path, str], *, mode=0o666, backlog=100
+    path: Path | str, *, mode=0o666, backlog=100
 ) -> socket.socket:
     """Create unix socket.
     :param path: filesystem path
@@ -78,7 +78,7 @@ def bind_unix_socket(
     return sock
 
 
-def remove_unix_socket(path: Optional[Union[Path, str]]) -> None:
+def remove_unix_socket(path: Path | str | None) -> None:
     """Remove dead unix socket during server exit."""
     if not path:
         return
@@ -97,7 +97,7 @@ def remove_unix_socket(path: Optional[Union[Path, str]]) -> None:
 
 def configure_socket(
     server_settings: dict[str, Any],
-) -> Optional[socket.SocketType]:
+) -> socket.SocketType | None:
     # Create a listening socket or use the one in settings
     if server_settings.get("version") is HTTP.VERSION_3:
         return None

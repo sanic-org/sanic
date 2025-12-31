@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from sanic.log import error_logger
 from sanic.worker.constants import RestartOrder
@@ -10,7 +10,7 @@ class Restarter:
         self,
         transient_processes: list[WorkerProcess],
         durable_processes: list[WorkerProcess],
-        process_names: Optional[list[str]] = None,
+        process_names: list[str] | None = None,
         restart_order=RestartOrder.SHUTDOWN_FIRST,
         **kwargs,
     ) -> None:

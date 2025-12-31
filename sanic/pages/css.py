@@ -1,12 +1,11 @@
 from abc import ABCMeta
 from pathlib import Path
-from typing import Optional
 
 
 CURRENT_DIR = Path(__file__).parent
 
 
-def _extract_style(maybe_style: Optional[str], name: str) -> str:
+def _extract_style(maybe_style: str | None, name: str) -> str:
     if maybe_style is not None:
         maybe_path = Path(maybe_style)
         if maybe_path.exists():

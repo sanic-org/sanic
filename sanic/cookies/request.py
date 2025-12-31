@@ -1,6 +1,6 @@
 import re
 
-from typing import Any, Optional
+from typing import Any
 
 from sanic.cookies.response import Cookie
 from sanic.request.parameters import RequestParameters
@@ -124,7 +124,7 @@ class CookieRequestParameters(RequestParameters):
         ```
     """  # noqa: E501
 
-    def __getitem__(self, key: str) -> Optional[str]:
+    def __getitem__(self, key: str) -> str | None:
         try:
             value = self._get_prefixed_cookie(key)
         except KeyError:
@@ -137,14 +137,14 @@ class CookieRequestParameters(RequestParameters):
         key = key.rstrip("_").replace("_", "-")
         return str(self.get(key, ""))
 
-    def get(self, name: str, default: Optional[Any] = None) -> Optional[Any]:
+    def get(self, name: str, default: Any | None = None) -> Any | None:
         try:
             return self._get_prefixed_cookie(name)[0]
         except KeyError:
             return super().get(name, default)
 
     def getlist(
-        self, name: str, default: Optional[list[Any]] = None
+        self, name: str, default: list[Any] | None = None
     ) -> list[Any]:
         try:
             return self._get_prefixed_cookie(name)

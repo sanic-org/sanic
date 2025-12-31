@@ -5,7 +5,7 @@ from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
 from stat import S_ISDIR
-from typing import Optional, Union, cast
+from typing import cast
 
 from sanic.exceptions import NotFound
 from sanic.pages.directory_page import DirectoryPage, FileInfo
@@ -20,7 +20,7 @@ class DirectoryHandler:
         uri (str): The URI to serve the files at.
         directory (Path): The directory to serve files from.
         directory_view (bool): Whether to show a directory listing or not.
-        index (Optional[Union[str, Sequence[str]]]): The index file(s) to
+        index (str | Sequence[str] | None): The index file(s) to
             serve if the directory is requested. Defaults to None.
     """
 
@@ -29,7 +29,7 @@ class DirectoryHandler:
         uri: str,
         directory: Path,
         directory_view: bool = False,
-        index: Optional[Union[str, Sequence[str]]] = None,
+        index: str | Sequence[str] | None = None,
     ) -> None:
         if isinstance(index, str):
             index = [index]
@@ -81,7 +81,7 @@ class DirectoryHandler:
         page = DirectoryPage(self._iter_files(location), path, debug)
         return html(page.render())
 
-    def _prepare_file(self, path: Path) -> dict[str, Union[int, str]]:
+    def _prepare_file(self, path: Path) -> dict[str, int | str]:
         stat = path.stat()
         modified = (
             datetime.fromtimestamp(stat.st_mtime)

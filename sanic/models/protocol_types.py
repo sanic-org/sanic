@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from asyncio import BaseTransport
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Protocol
 
 
 if TYPE_CHECKING:
@@ -9,20 +9,17 @@ if TYPE_CHECKING:
     from sanic.models.asgi import ASGIScope
 
 
-from typing import Protocol
-
-
 class HTMLProtocol(Protocol):
-    def __html__(self) -> Union[str, bytes]: ...
+    def __html__(self) -> str | bytes: ...
 
-    def _repr_html_(self) -> Union[str, bytes]: ...
+    def _repr_html_(self) -> str | bytes: ...
 
 
 class Range(Protocol):
-    start: Optional[int]
-    end: Optional[int]
-    size: Optional[int]
-    total: Optional[int]
+    start: int | None
+    end: int | None
+    size: int | None
+    total: int | None
     __slots__ = ()
 
 

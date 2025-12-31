@@ -1,7 +1,7 @@
 import asyncio
 
 from collections.abc import Awaitable, MutableMapping
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 from sanic.exceptions import BadRequest
 from sanic.models.protocol_types import TransportProtocol
@@ -48,7 +48,7 @@ class MockProtocol:  # no cov
 
 
 class MockTransport(TransportProtocol):  # no cov
-    _protocol: Optional[MockProtocol]
+    _protocol: MockProtocol | None
 
     def __init__(
         self, scope: ASGIScope, receive: ASGIReceive, send: ASGISend
@@ -57,16 +57,14 @@ class MockTransport(TransportProtocol):  # no cov
         self._receive = receive
         self._send = send
         self._protocol = None
-        self.loop: Optional[asyncio.AbstractEventLoop] = None
+        self.loop: asyncio.AbstractEventLoop | None = None
 
     def get_protocol(self) -> MockProtocol:  # type: ignore
         if not self._protocol:
             self._protocol = MockProtocol(self, self.loop)
         return self._protocol
 
-    def get_extra_info(
-        self, info: str, default=None
-    ) -> Optional[Union[str, bool]]:
+    def get_extra_info(self, info: str, default=None) -> str | bool | None:
         if info == "peername":
             return self.scope.get("client")
         elif info == "sslcontext":

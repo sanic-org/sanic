@@ -16,5 +16,7 @@ def test_deprecation():
 )
 def test_deprecation_filter(app: Sanic, filter, expected, recwarn):
     app.config.DEPRECATION_FILTER = filter
+    # Clear any warnings captured during test setup (e.g., from pytest_sanic)
+    recwarn.clear()
     deprecation("hello", 9.9)
     assert len(recwarn) == expected

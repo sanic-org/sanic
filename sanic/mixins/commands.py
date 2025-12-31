@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 from inspect import isawaitable
-from typing import Callable, Optional, Union
+from typing import Callable
 
 from sanic.base.meta import SanicMeta
 from sanic.models.futures import FutureCommand
@@ -13,8 +13,8 @@ class CommandMixin(metaclass=SanicMeta):
         self._future_commands: set[FutureCommand] = set()
 
     def command(
-        self, maybe_func: Optional[Callable] = None, *, name: str = ""
-    ) -> Union[Callable, Callable[[Callable], Callable]]:
+        self, maybe_func: Callable | None = None, *, name: str = ""
+    ) -> Callable | Callable[[Callable], Callable]:
         def decorator(f):
             @wraps(f)
             async def decorated_function(*args, **kwargs):

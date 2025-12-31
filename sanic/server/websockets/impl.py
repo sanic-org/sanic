@@ -2,10 +2,6 @@ import asyncio
 import secrets
 
 from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
-from typing import (
-    Optional,
-    Union,
-)
 
 from websockets.exceptions import (
     ConnectionClosed,
@@ -38,35 +34,35 @@ CLOSED = State.CLOSED
 
 class WebsocketImplProtocol:
     ws_proto: ServerProtocol
-    io_proto: Optional[SanicProtocol]
-    loop: Optional[asyncio.AbstractEventLoop]
+    io_proto: SanicProtocol | None
+    loop: asyncio.AbstractEventLoop | None
     max_queue: int
     close_timeout: float
-    ping_interval: Optional[float]
-    ping_timeout: Optional[float]
+    ping_interval: float | None
+    ping_timeout: float | None
     assembler: WebsocketFrameAssembler
-    # Dict[bytes, asyncio.Future[None]]
+    # dict[bytes, asyncio.Future[None]]
     pings: dict[bytes, asyncio.Future]
     conn_mutex: asyncio.Lock
     recv_lock: asyncio.Lock
-    recv_cancel: Optional[asyncio.Future]
+    recv_cancel: asyncio.Future | None
     process_event_mutex: asyncio.Lock
     can_pause: bool
-    # Optional[asyncio.Future[None]]
-    data_finished_fut: Optional[asyncio.Future]
-    # Optional[asyncio.Future[None]]
-    pause_frame_fut: Optional[asyncio.Future]
-    # Optional[asyncio.Future[None]]
-    connection_lost_waiter: Optional[asyncio.Future]
-    keepalive_ping_task: Optional[asyncio.Task]
-    auto_closer_task: Optional[asyncio.Task]
+    # asyncio.Future[None] | None
+    data_finished_fut: asyncio.Future | None
+    # asyncio.Future[None] | None
+    pause_frame_fut: asyncio.Future | None
+    # asyncio.Future[None] | None
+    connection_lost_waiter: asyncio.Future | None
+    keepalive_ping_task: asyncio.Task | None
+    auto_closer_task: asyncio.Task | None
 
     def __init__(
         self,
         ws_proto,
         max_queue=None,
-        ping_interval: Optional[float] = 20,
-        ping_timeout: Optional[float] = 20,
+        ping_interval: float | None = 20,
+        ping_timeout: float | None = 20,
         close_timeout: float = 10,
         loop=None,
     ):
@@ -128,7 +124,7 @@ class WebsocketImplProtocol:
     async def connection_made(
         self,
         io_proto: SanicProtocol,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
+        loop: asyncio.AbstractEventLoop | None = None,
     ):
         if not loop:
             try:
@@ -510,7 +506,7 @@ class WebsocketImplProtocol:
                 data_to_send = self.ws_proto.data_to_send()
                 await self.send_data(data_to_send)
 
-    async def recv(self, timeout: Optional[float] = None) -> Optional[Data]:
+    async def recv(self, timeout: float | None = None) -> Data | None:
         """
         Receive the next message.
         Return a :class:`str` for a text frame and :class:`bytes` for a binary
@@ -542,7 +538,7 @@ class WebsocketImplProtocol:
             raise WebsocketClosed(
                 "Cannot receive from websocket interface after it is closed."
             )
-        assembler_get: Optional[asyncio.Task] = None
+        assembler_get: asyncio.Task | None = None
         try:
             self.recv_cancel = asyncio.Future()
             assembler_get = asyncio.create_task(self.assembler.get(timeout))
@@ -598,7 +594,7 @@ class WebsocketImplProtocol:
                 "Cannot receive from websocket interface after it is closed."
             )
         messages = []
-        assembler_get: Optional[asyncio.Task] = None
+        assembler_get: asyncio.Task | None = None
         try:
             # Prevent pausing the transport when we're
             # receiving a burst of messages
@@ -676,7 +672,7 @@ class WebsocketImplProtocol:
             self.recv_cancel = None
             self.recv_lock.release()
 
-    async def send(self, message: Union[Data, Iterable[Data]]) -> None:
+    async def send(self, message: Data | Iterable[Data]) -> None:
         """
         Send a message.
         A string (:class:`str`) is sent as a `Text frame`_. A bytestring or
@@ -727,7 +723,7 @@ class WebsocketImplProtocol:
             else:
                 raise TypeError("Websocket data must be bytes, str.")
 
-    async def ping(self, data: Optional[Data] = None) -> asyncio.Future:
+    async def ping(self, data: Data | None = None) -> asyncio.Future:
         """
         Send a ping.
         Return an :class:`~asyncio.Future` that will be resolved when the
@@ -851,7 +847,7 @@ class WebsocketImplProtocol:
             # This will fail the connection appropriately
             SanicProtocol.close(self.io_proto, timeout=1.0)
 
-    def eof_received(self) -> Optional[bool]:
+    def eof_received(self) -> bool | None:
         self.ws_proto.receive_eof()
         data_to_send = self.ws_proto.data_to_send()
         events_to_process = self.ws_proto.events_received()

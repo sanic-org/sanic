@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Optional, cast
+from typing import cast
 
 
 try:  # websockets >= 11.0
@@ -41,19 +41,19 @@ class WebSocketProtocol(HttpProtocol):
         self,
         *args,
         websocket_timeout: float = 10.0,
-        websocket_max_size: Optional[int] = None,
-        websocket_ping_interval: Optional[float] = 20.0,
-        websocket_ping_timeout: Optional[float] = 20.0,
+        websocket_max_size: int | None = None,
+        websocket_ping_interval: float | None = 20.0,
+        websocket_ping_timeout: float | None = 20.0,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.websocket: Optional[WebsocketImplProtocol] = None
+        self.websocket: WebsocketImplProtocol | None = None
         self.websocket_timeout = websocket_timeout
         self.websocket_max_size = websocket_max_size
         self.websocket_ping_interval = websocket_ping_interval
         self.websocket_ping_timeout = websocket_ping_timeout
-        self.websocket_url: Optional[str] = None
-        self.websocket_peer: Optional[str] = None
+        self.websocket_url: str | None = None
+        self.websocket_peer: str | None = None
 
     def connection_lost(self, exc):
         if self.websocket is not None:
@@ -71,13 +71,13 @@ class WebSocketProtocol(HttpProtocol):
             # That will (hopefully) upgrade it to a websocket.
             super().data_received(data)
 
-    def eof_received(self) -> Optional[bool]:
+    def eof_received(self) -> bool | None:
         if self.websocket is not None:
             return self.websocket.eof_received()
         else:
             return False
 
-    def close(self, timeout: Optional[float] = None):
+    def close(self, timeout: float | None = None):
         # Called by HttpProtocol at the end of connection_task
         # If we've upgraded to websocket, we do our own closing
         if self.websocket is not None:
@@ -109,7 +109,7 @@ class WebSocketProtocol(HttpProtocol):
         )
 
     async def websocket_handshake(
-        self, request, subprotocols: Optional[Sequence[str]] = None
+        self, request, subprotocols: Sequence[str] | None = None
     ):
         # let the websockets package do the handshake with the client
         try:
@@ -117,7 +117,7 @@ class WebSocketProtocol(HttpProtocol):
                 # subprotocols can be a set or frozenset,
                 # but ServerProtocol needs a list
                 subprotocols = cast(
-                    Optional[Sequence[Subprotocol]],
+                    Sequence[Subprotocol] | None,
                     list(
                         [
                             Subprotocol(subprotocol)

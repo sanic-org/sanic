@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from shutil import get_terminal_size
 from textwrap import indent, wrap
-from typing import Optional
 
 from sanic import __version__
 from sanic.helpers import is_atty
@@ -13,7 +12,7 @@ class MOTD(ABC):
 
     def __init__(
         self,
-        logo: Optional[str],
+        logo: str | None,
         serve_location: str,
         data: dict[str, str],
         extra: dict[str, str],
@@ -32,7 +31,7 @@ class MOTD(ABC):
     @classmethod
     def output(
         cls,
-        logo: Optional[str],
+        logo: str | None,
         serve_location: str,
         data: dict[str, str],
         extra: dict[str, str],

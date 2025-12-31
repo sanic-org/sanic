@@ -37,7 +37,7 @@ def parse_multipart_form(body, boundary):
         boundary (bytes): Bytes multipart boundary.
 
     Returns:
-        Tuple[RequestParameters, RequestParameters]: A tuple containing fields and files as `RequestParameters`.
+        tuple[RequestParameters, RequestParameters]: A tuple containing fields and files as `RequestParameters`.
     """  # noqa: E501
     files = {}
     fields = {}

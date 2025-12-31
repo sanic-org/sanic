@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 
 class REPLLocal(NamedTuple):
@@ -21,8 +21,8 @@ class REPLContext:
     def add(
         self,
         var: Any,
-        name: Optional[str] = None,
-        desc: Optional[str] = None,
+        name: str | None = None,
+        desc: str | None = None,
     ):
         """Add a local variable to be available in REPL context.
 

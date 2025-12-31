@@ -5,7 +5,7 @@ from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
 from stat import S_ISDIR
-from typing import Optional, Union, cast
+from typing import cast
 
 from sanic.exceptions import NotFound
 from sanic.pages.directory_page import DirectoryPage, FileInfo
@@ -37,7 +37,7 @@ class DirectoryHandler:
         uri (str): The URI to serve the files at.
         directory (Path): The directory to serve files from.
         directory_view (bool): Whether to show a directory listing or not.
-        index (Optional[Union[str, Sequence[str]]]): The index file(s) to
+        index (str | Sequence[str] | None): The index file(s) to
             serve if the directory is requested. Defaults to None.
         root_path (Optional[Path]): The root path for security checks.
             Symlinks resolving outside this path will be hidden from
@@ -53,8 +53,8 @@ class DirectoryHandler:
         uri: str,
         directory: Path,
         directory_view: bool = False,
-        index: Optional[Union[str, Sequence[str]]] = None,
-        root_path: Optional[Path] = None,
+        index: str | Sequence[str] | None = None,
+        root_path: Path | None = None,
         follow_external_symlink_files: bool = False,
         follow_external_symlink_dirs: bool = False,
     ) -> None:
@@ -113,7 +113,7 @@ class DirectoryHandler:
 
     def _prepare_file(
         self, path: Path
-    ) -> Optional[dict[str, Union[int, str]]]:
+    ) -> dict[str, int | str] | None:
         try:
             stat = path.stat()
         except OSError:

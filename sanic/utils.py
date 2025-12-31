@@ -4,7 +4,6 @@ from importlib.util import module_from_spec, spec_from_file_location
 from os import environ as os_environ
 from pathlib import Path
 from re import findall as re_findall
-from typing import Union
 
 from sanic.exceptions import LoadFileException, PyFileError
 from sanic.helpers import import_string
@@ -53,7 +52,7 @@ def str_to_bool(val: str) -> bool:
 
 
 def load_module_from_file_location(
-    location: Union[bytes, str, Path], encoding: str = "utf8", *args, **kwargs
+    location: bytes | str | Path, encoding: str = "utf8", *args, **kwargs
 ):  # noqa
     """Returns loaded module provided as a file path.
 

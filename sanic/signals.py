@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 from inspect import isawaitable
-from typing import Any, Optional, Union, cast
+from typing import Any, cast
 
 from sanic_routing import BaseRouter, Route, RouteGroup
 from sanic_routing.exceptions import NotFound
@@ -94,10 +94,10 @@ class SignalWaiter:
     signal: Signal
     event_definition: str
     trigger: str = ""
-    requirements: Optional[dict[str, str]] = None
+    requirements: dict[str, str] | None = None
     exclusive: bool = True
 
-    future: Optional[asyncio.Future] = None
+    future: asyncio.Future | None = None
 
     async def wait(self):
         """Block until the signal is next dispatched.
@@ -138,7 +138,7 @@ class SignalRouter(BaseRouter):
         self.ctx.loop = None
 
     @staticmethod
-    def format_event(event: Union[str, Enum]) -> str:
+    def format_event(event: str | Enum) -> str:
         """Ensure event strings in proper format
 
         Args:
@@ -155,8 +155,8 @@ class SignalRouter(BaseRouter):
 
     def get(  # type: ignore
         self,
-        event: Union[str, Enum],
-        condition: Optional[dict[str, str]] = None,
+        event: str | Enum,
+        condition: dict[str, str] | None = None,
     ):
         """Get the handlers for a signal
 
@@ -182,7 +182,7 @@ class SignalRouter(BaseRouter):
             )
         except NotFound:
             message = "Could not find signal %s"
-            terms: list[Union[str, Optional[dict[str, str]]]] = [event]
+            terms: list[str | dict[str, str] | None] = [event]
             if extra:
                 message += " with %s"
                 terms.append(extra)
@@ -205,8 +205,8 @@ class SignalRouter(BaseRouter):
     async def _dispatch(
         self,
         event: str,
-        context: Optional[dict[str, Any]] = None,
-        condition: Optional[dict[str, str]] = None,
+        context: dict[str, Any] | None = None,
+        condition: dict[str, str] | None = None,
         fail_not_found: bool = True,
         reverse: bool = False,
     ) -> Any:
@@ -264,14 +264,14 @@ class SignalRouter(BaseRouter):
 
     async def dispatch(
         self,
-        event: Union[str, Enum],
+        event: str | Enum,
         *,
-        context: Optional[dict[str, Any]] = None,
-        condition: Optional[dict[str, str]] = None,
+        context: dict[str, Any] | None = None,
+        condition: dict[str, str] | None = None,
         fail_not_found: bool = True,
         inline: bool = False,
         reverse: bool = False,
-    ) -> Union[asyncio.Task, Any]:
+    ) -> asyncio.Task | Any:
         """Dispatch a signal to all handlers that match the event
 
         Args:
@@ -308,10 +308,10 @@ class SignalRouter(BaseRouter):
 
     def get_waiter(
         self,
-        event: Union[str, Enum],
-        condition: Optional[dict[str, Any]] = None,
+        event: str | Enum,
+        condition: dict[str, Any] | None = None,
         exclusive: bool = True,
-    ) -> Optional[SignalWaiter]:
+    ) -> SignalWaiter | None:
         event_definition = self.format_event(event)
         name, trigger, _ = self._get_event_parts(event_definition)
         signal = cast(Signal, self.name_index.get(name))
@@ -345,8 +345,8 @@ class SignalRouter(BaseRouter):
     def add(  # type: ignore
         self,
         handler: SignalHandler,
-        event: Union[str, Enum],
-        condition: Optional[dict[str, Any]] = None,
+        event: str | Enum,
+        condition: dict[str, Any] | None = None,
         exclusive: bool = True,
         *,
         priority: int = 0,

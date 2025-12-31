@@ -11,7 +11,6 @@ import uuid
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.log import logger
@@ -119,12 +118,12 @@ class Daemon:
 
     def __init__(
         self,
-        pidfile: Optional[str] = None,
-        logfile: Optional[str] = None,
-        user: Optional[str] = None,
-        group: Optional[str] = None,
-        name: Optional[str] = None,
-        lockfile: Optional[str] = None,
+        pidfile: str | None = None,
+        logfile: str | None = None,
+        user: str | None = None,
+        group: str | None = None,
+        name: str | None = None,
+        lockfile: str | None = None,
     ):
         if OS_IS_WINDOWS:
             raise DaemonError(

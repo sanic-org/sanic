@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import asyncio
-
 from typing import TYPE_CHECKING
 
 from sanic.exceptions import SanicException
@@ -67,7 +65,7 @@ class AsyncioServer:
         if self.server:
             self.server.close()
             coro = self.wait_closed()
-            task = asyncio.ensure_future(coro, loop=self.loop)
+            task = self.loop.create_task(coro)
             return task
 
     def start_serving(self):
@@ -107,7 +105,7 @@ class AsyncioServer:
         """
         Starts the asyncio server, returns AsyncServerCoro
         """
-        task = asyncio.ensure_future(self.serve_coro)
+        task = self.loop.create_task(self.serve_coro)
         while not task.done():
             yield
         self.server = task.result()

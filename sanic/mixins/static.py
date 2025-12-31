@@ -1,15 +1,16 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 from email.utils import formatdate
 from functools import partial, wraps
 from os import PathLike, path
 from pathlib import Path, PurePath
-from typing import Optional, Union
 from urllib.parse import unquote
 
 from sanic_routing.route import Route
 
 from sanic.base.meta import SanicMeta
-from sanic.compat import stat_async
+from sanic.compat import clear_function_annotate, stat_async
 from sanic.exceptions import FileNotFound, HeaderNotFound, RangeNotSatisfiable
 from sanic.handlers import ContentRangeHandler
 from sanic.handlers.directory import DirectoryHandler
@@ -31,20 +32,20 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
     def static(
         self,
         uri: str,
-        file_or_directory: Union[PathLike, str],
+        file_or_directory: PathLike | str,
         pattern: str = r"/?.+",
         use_modified_since: bool = True,
         use_content_range: bool = False,
-        stream_large_files: Union[bool, int] = False,
+        stream_large_files: bool | int = False,
         name: str = "static",
-        host: Optional[str] = None,
-        strict_slashes: Optional[bool] = None,
-        content_type: Optional[str] = None,
+        host: str | None = None,
+        strict_slashes: bool | None = None,
+        content_type: str | None = None,
         apply: bool = True,
-        resource_type: Optional[str] = None,
-        index: Optional[Union[str, Sequence[str]]] = None,
+        resource_type: str | None = None,
+        index: str | Sequence[str] | None = None,
         directory_view: bool = False,
-        directory_handler: Optional[DirectoryHandler] = None,
+        directory_handler: DirectoryHandler | None = None,
         follow_external_symlink_files: bool = False,
         follow_external_symlink_dirs: bool = False,
     ):
@@ -267,12 +268,12 @@ class StaticHandleMixin(metaclass=SanicMeta):
         file_or_directory: str,
         use_modified_since: bool,
         use_content_range: bool,
-        stream_large_files: Union[bool, int],
+        stream_large_files: bool | int,
         directory_handler: DirectoryHandler,
         follow_external_symlink_files: bool,
         follow_external_symlink_dirs: bool,
-        content_type: Optional[str] = None,
-        __file_uri__: Optional[str] = None,
+        content_type: str | None = None,
+        __file_uri__: str | None = None,
     ):
         not_found = FileNotFound(
             "File not found",
@@ -410,3 +411,12 @@ class StaticHandleMixin(metaclass=SanicMeta):
                 reject()
 
         return file_path
+
+
+# Clear __annotate__ on methods that may be pickled via functools.partial
+# to avoid PicklingError in Python 3.14+ (PEP 649)
+clear_function_annotate(
+    StaticHandleMixin._static_request_handler,
+    StaticHandleMixin._get_file_path,
+    StaticHandleMixin._register_static,
+)

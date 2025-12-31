@@ -151,9 +151,9 @@ def test_chained_exception_handler(exception_handler_app: Sanic):
     assert "GET /6" in html
 
     # Both exceptions should be present in the traceback headers
-    h3_texts = [h3.text for h3 in soup.select("h3")]
-    assert any("ZeroDivisionError" in text for text in h3_texts)
-    assert any("ValueError" in text for text in h3_texts)
+    header_texts = [h.text for h in soup.select("h2, h3")]
+    assert any("ZeroDivisionError" in text for text in header_texts)
+    assert any("ValueError" in text for text in header_texts)
 
 
 def test_exception_handler_lookup(exception_handler_app: Sanic):

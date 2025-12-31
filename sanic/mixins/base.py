@@ -1,4 +1,6 @@
-from typing import Optional, Protocol, Union
+from __future__ import annotations
+
+from typing import Protocol
 
 from sanic.base.meta import SanicMeta
 
@@ -15,12 +17,12 @@ class BaseMixin(metaclass=SanicMeta):
     """Base class for various mixins."""
 
     name: str
-    strict_slashes: Optional[bool]
+    strict_slashes: bool | None
 
     def _generate_name(
-        self, *objects: Union[NameProtocol, DunderNameProtocol, str]
+        self, *objects: NameProtocol | DunderNameProtocol | str
     ) -> str:
-        name: Optional[str] = None
+        name: str | None = None
         for obj in objects:
             if not obj:
                 continue

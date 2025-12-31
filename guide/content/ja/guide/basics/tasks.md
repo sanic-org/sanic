@@ -52,6 +52,24 @@ app.add_task(explicit_inject(app))
 ```
 ````
 
+.. 列::
+
+```
+`add_task` メソッドは、生成された `asyncio.Task` オブジェクトを返します。これにより、待ったり、結果を確認することができます。
+
+*v25.12* に追加されました。
+```
+
+.. 列::
+
+````
+```python
+task = app.add_task(some_coroutine())
+# Later...
+result = await task
+```
+````
+
 ## `app.run`の前にタスクを追加する
 
 `app.run`の前にバックグラウンドタスクを追加することができます。 アプリを実行する前にタスクを追加するには、コルーチンオブジェクトを渡さないことをお勧めします (すなわち。 `async`呼び出し可能を呼び出すことで作成されたものですが、代わりに呼び出し可能ファイルを渡すだけで、Sanicは**各ワーカー**にコルーチンオブジェクトを作成します。 注意: このように追加されたタスクは、 `before_server_start` ジョブとして実行されます。そのため、すべてのワーカーで実行されます (メインプロセスでは実行されません)。 これには一定の影響があります。詳細については、[このissue](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668)の[このissue](https://github.com/sanic-org/sanic/issues/2139)をご覧ください。

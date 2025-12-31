@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from collections import deque
 from functools import partial
 from operator import attrgetter
-from typing import Callable, Union, overload
+from typing import Callable, overload
 
 from sanic.base.meta import SanicMeta
 from sanic.middleware import Middleware, MiddlewareLocation
@@ -40,12 +42,12 @@ class MiddlewareMixin(metaclass=SanicMeta):
 
     def middleware(
         self,
-        middleware_or_request: Union[MiddlewareType, str],
+        middleware_or_request: MiddlewareType | str,
         attach_to: str = "request",
         apply: bool = True,
         *,
         priority: int = 0,
-    ) -> Union[MiddlewareType, Callable[[MiddlewareType], MiddlewareType]]:
+    ) -> MiddlewareType | Callable[[MiddlewareType], MiddlewareType]:
         """Decorator for registering middleware.
 
         Decorate and register middleware to be called before a request is

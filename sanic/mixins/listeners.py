@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from enum import Enum, auto
 from functools import partial
-from typing import Callable, Optional, Union, cast, overload
+from typing import Callable, cast, overload
 
 from sanic.base.meta import SanicMeta
 from sanic.exceptions import BadRequest
@@ -54,15 +56,15 @@ class ListenerMixin(metaclass=SanicMeta):
 
     def listener(
         self,
-        listener_or_event: Union[ListenerType[Sanic], str],
-        event_or_none: Optional[str] = None,
+        listener_or_event: ListenerType[Sanic] | str,
+        event_or_none: str | None = None,
         apply: bool = True,
         *,
         priority: int = 0,
-    ) -> Union[
-        ListenerType[Sanic],
-        Callable[[ListenerType[Sanic]], ListenerType[Sanic]],
-    ]:
+    ) -> (
+        ListenerType[Sanic]
+        | Callable[[ListenerType[Sanic]], ListenerType[Sanic]]
+    ):
         """Create a listener for a specific event in the application's lifecycle.
 
         See [Listeners](/en/guide/basics/listeners) for more details.
@@ -138,7 +140,7 @@ class ListenerMixin(metaclass=SanicMeta):
 
     def _setup_listener(
         self,
-        listener: Optional[ListenerType[Sanic]],
+        listener: ListenerType[Sanic] | None,
         event: str,
         priority: int,
     ) -> ListenerType[Sanic]:
@@ -150,7 +152,7 @@ class ListenerMixin(metaclass=SanicMeta):
         )
 
     def main_process_start(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_start event.
 
@@ -174,7 +176,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "main_process_start", priority)
 
     def main_process_ready(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_ready event.
 
@@ -199,7 +201,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "main_process_ready", priority)
 
     def main_process_stop(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the main_process_stop event.
 
@@ -222,7 +224,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "main_process_stop", priority)
 
     def reload_process_start(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the reload_process_start event.
 
@@ -245,7 +247,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "reload_process_start", priority)
 
     def reload_process_stop(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the reload_process_stop event.
 
@@ -268,7 +270,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "reload_process_stop", priority)
 
     def before_reload_trigger(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the before_reload_trigger event.
 
@@ -294,7 +296,7 @@ class ListenerMixin(metaclass=SanicMeta):
         )
 
     def after_reload_trigger(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_reload_trigger event.
 
@@ -319,7 +321,7 @@ class ListenerMixin(metaclass=SanicMeta):
 
     def before_server_start(
         self,
-        listener: Optional[ListenerType[Sanic]] = None,
+        listener: ListenerType[Sanic] | None = None,
         *,
         priority: int = 0,
     ) -> ListenerType[Sanic]:
@@ -347,7 +349,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "before_server_start", priority)
 
     def after_server_start(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_server_start event.
 
@@ -377,7 +379,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "after_server_start", priority)
 
     def before_server_stop(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the before_server_stop event.
 
@@ -404,7 +406,7 @@ class ListenerMixin(metaclass=SanicMeta):
         return self._setup_listener(listener, "before_server_stop", priority)
 
     def after_server_stop(
-        self, listener: Optional[ListenerType[Sanic]], *, priority: int = 0
+        self, listener: ListenerType[Sanic] | None, *, priority: int = 0
     ) -> ListenerType[Sanic]:
         """Decorator for registering a listener for the after_server_stop event.
 

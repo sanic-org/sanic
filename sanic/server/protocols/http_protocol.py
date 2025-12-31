@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+import sys
+
+from typing import TYPE_CHECKING
 
 from sanic.http.constants import HTTP
 from sanic.http.http3 import Http3
@@ -60,7 +62,7 @@ class HttpProtocolMixin:
             ...
 
     def _setup(self):
-        self.request: Optional[Request] = None
+        self.request: Request | None = None
         self.access_log = self.app.config.ACCESS_LOG
         self.request_handler = self.app.handle_request
         self.error_handler = self.app.error_handler
@@ -242,13 +244,14 @@ class HttpProtocol(HttpProtocolMixin, SanicProtocol, metaclass=TouchUpMeta):
                     _interval, self.check_timeouts
                 )
                 return
-            cancel_msg_args = ()
-            cancel_msg_args = ("Cancel connection task with a timeout",)
-            self._task.cancel(*cancel_msg_args)
+            if sys.version_info < (3, 14):
+                self._task.cancel("Cancel connection task with a timeout")
+            else:
+                self._task.cancel()
         except Exception:
             error_logger.exception("protocol.check_timeouts")
 
-    def close(self, timeout: Optional[float] = None):
+    def close(self, timeout: float | None = None):
         """
         Requires to prevent checking timeouts for closed connections
         """
@@ -329,7 +332,7 @@ class Http3Protocol(HttpProtocolMixin, ConnectionProtocol):  # type: ignore
         self.app = app
         super().__init__(*args, **kwargs)
         self._setup()
-        self._connection: Optional[H3Connection] = None
+        self._connection: H3Connection | None = None
 
     def quic_event_received(self, event: QuicEvent) -> None:
         logger.debug(
@@ -353,5 +356,5 @@ class Http3Protocol(HttpProtocolMixin, ConnectionProtocol):  # type: ignore
                 self._http.http_event_received(http_event)
 
     @property
-    def connection(self) -> Optional[H3Connection]:
+    def connection(self) -> H3Connection | None:
         return self._connection

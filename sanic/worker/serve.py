@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import os
 import socket
@@ -6,7 +8,7 @@ import warnings
 from functools import partial
 from multiprocessing.connection import Connection
 from ssl import SSLContext
-from typing import Any, Optional, Union
+from typing import Any
 
 from sanic.application.constants import ServerStage
 from sanic.application.state import ApplicationServerInfo
@@ -25,15 +27,13 @@ def worker_serve(
     host,
     port,
     app_name: str,
-    monitor_publisher: Optional[Connection],
+    monitor_publisher: Connection | None,
     app_loader: AppLoader,
-    worker_state: Optional[dict[str, Any]] = None,
-    server_info: Optional[dict[str, list[ApplicationServerInfo]]] = None,
-    ssl: Optional[
-        Union[SSLContext, dict[str, Union[str, os.PathLike[str]]]]
-    ] = None,
-    sock: Optional[socket.socket] = None,
-    unix: Optional[str] = None,
+    worker_state: dict[str, Any] | None = None,
+    server_info: dict[str, list[ApplicationServerInfo]] | None = None,
+    ssl: SSLContext | dict[str, str | os.PathLike[str]] | None = None,
+    sock: socket.socket | None = None,
+    unix: str | None = None,
     reuse_port: bool = False,
     loop=None,
     protocol: type[asyncio.Protocol] = HttpProtocol,
@@ -46,8 +46,8 @@ def worker_serve(
     state=None,
     asyncio_server_kwargs=None,
     version=HTTP.VERSION_1,
-    config: Optional[Union[bytes, str, dict[str, Any], Any]] = None,
-    passthru: Optional[dict[str, Any]] = None,
+    config: bytes | str | dict[str, Any] | Any | None = None,
+    passthru: dict[str, Any] | None = None,
 ):
     try:
         from sanic import Sanic

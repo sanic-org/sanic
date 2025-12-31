@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -232,6 +232,9 @@ class Http(Stream, metaclass=TouchUpMeta):
                 headers.append(h)
         except Exception:
             raise BadRequest("Bad Request")
+
+        if not self.protocol.app.config.KEEP_ALIVE:
+            self.keep_alive = False
 
         headers_instance = Header(headers)
         self.upgrade_websocket = (
@@ -496,7 +499,7 @@ class Http(Stream, metaclass=TouchUpMeta):
             if data:
                 yield data
 
-    async def read(self) -> Optional[bytes]:  # no cov
+    async def read(self) -> bytes | None:  # no cov
         """Read some bytes of request body."""
 
         # Send a 100-continue if needed

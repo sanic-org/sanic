@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import signal
 import sys
@@ -5,7 +7,6 @@ import sys
 from argparse import ArgumentParser
 from contextlib import suppress
 from pathlib import Path
-from typing import Optional
 
 from sanic.worker.daemon import Daemon
 
@@ -40,8 +41,8 @@ def make_restart_parser(parser: ArgumentParser) -> None:
 
 
 def resolve_target(
-    pid: Optional[int], pidfile: Optional[str]
-) -> tuple[int, Optional[Path]]:
+    pid: int | None, pidfile: str | None
+) -> tuple[int, Path | None]:
     """
     Resolve a PID from either a direct PID or a pidfile path.
 
@@ -68,7 +69,7 @@ def resolve_target(
 
 
 def _terminate_process(
-    pid: int, sig: signal.Signals, pidfile: Optional[Path] = None
+    pid: int, sig: signal.Signals, pidfile: Path | None = None
 ) -> None:
     """Send a signal to terminate a process and clean up pidfile."""
     sig_name = sig.name
@@ -108,20 +109,20 @@ def _terminate_process(
                 pass
 
 
-def kill_daemon(pid: int, pidfile: Optional[Path] = None) -> None:
+def kill_daemon(pid: int, pidfile: Path | None = None) -> None:
     """Force kill a daemon process with SIGKILL."""
     _terminate_process(pid, signal.SIGKILL, pidfile)
 
 
 def stop_daemon(
-    pid: int, pidfile: Optional[Path] = None, force: bool = False
+    pid: int, pidfile: Path | None = None, force: bool = False
 ) -> None:
     """Stop a daemon process gracefully (SIGTERM) or forcefully (SIGKILL)."""
     sig = signal.SIGKILL if force else signal.SIGTERM
     _terminate_process(pid, sig, pidfile)
 
 
-def status_daemon(pid: int, pidfile: Optional[Path] = None) -> bool:
+def status_daemon(pid: int, pidfile: Path | None = None) -> bool:
     """
     Check if a daemon process is running.
 

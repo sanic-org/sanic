@@ -83,8 +83,18 @@ class Executor:
             kwargs = {}
             if param.default is not param.empty:
                 kwargs["default"] = param.default
+            # In Python 3.14+, argparse validates help strings and rejects
+            # non-string types. Convert annotations to string representation.
+            help_text = None
+            if param.annotation is not param.empty:
+                if isinstance(param.annotation, str):
+                    help_text = param.annotation
+                else:
+                    help_text = getattr(
+                        param.annotation, "__name__", str(param.annotation)
+                    )
             parser.add_argument(
                 f"--{param.name}",
-                help=param.annotation,
+                help=help_text,
                 **kwargs,
             )

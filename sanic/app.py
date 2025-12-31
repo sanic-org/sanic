@@ -32,12 +32,9 @@ from typing import (
     AnyStr,
     Callable,
     ClassVar,
-    Deque,
     Generic,
     Literal,
-    Optional,
     TypeVar,
-    Union,
     cast,
     overload,
 )
@@ -64,6 +61,7 @@ from sanic.handlers import ErrorHandler
 from sanic.helpers import Default, _default
 from sanic.http import Stage
 from sanic.log import LOGGING_CONFIG_DEFAULTS, error_logger, logger
+from sanic.logging.deprecation import deprecation
 from sanic.logging.setup import setup_logging
 from sanic.middleware import Middleware, MiddlewareLocation
 from sanic.mixins.commands import CommandMixin
@@ -232,40 +230,40 @@ class Sanic(
         name: str,
         config: None = None,
         ctx: None = None,
-        router: Optional[Router] = None,
-        signal_router: Optional[SignalRouter] = None,
-        error_handler: Optional[ErrorHandler] = None,
-        env_prefix: Optional[str] = SANIC_PREFIX,
-        request_class: Optional[type[Request]] = None,
+        router: Router | None = None,
+        signal_router: SignalRouter | None = None,
+        error_handler: ErrorHandler | None = None,
+        env_prefix: str | None = SANIC_PREFIX,
+        request_class: type[Request] | None = None,
         strict_slashes: bool = False,
-        log_config: Optional[dict[str, Any]] = None,
+        log_config: dict[str, Any] | None = None,
         configure_logging: bool = True,
-        dumps: Optional[Callable[..., AnyStr]] = None,
-        loads: Optional[Callable[..., Any]] = None,
+        dumps: Callable[..., AnyStr] | None = None,
+        loads: Callable[..., Any] | None = None,
         inspector: bool = False,
-        inspector_class: Optional[type[Inspector]] = None,
-        certloader_class: Optional[type[CertLoader]] = None,
+        inspector_class: type[Inspector] | None = None,
+        certloader_class: type[CertLoader] | None = None,
     ) -> None: ...
 
     @overload
     def __init__(
         self: Sanic[config_type, SimpleNamespace],
         name: str,
-        config: Optional[config_type] = None,
+        config: config_type | None = None,
         ctx: None = None,
-        router: Optional[Router] = None,
-        signal_router: Optional[SignalRouter] = None,
-        error_handler: Optional[ErrorHandler] = None,
-        env_prefix: Optional[str] = SANIC_PREFIX,
-        request_class: Optional[type[Request]] = None,
+        router: Router | None = None,
+        signal_router: SignalRouter | None = None,
+        error_handler: ErrorHandler | None = None,
+        env_prefix: str | None = SANIC_PREFIX,
+        request_class: type[Request] | None = None,
         strict_slashes: bool = False,
-        log_config: Optional[dict[str, Any]] = None,
+        log_config: dict[str, Any] | None = None,
         configure_logging: bool = True,
-        dumps: Optional[Callable[..., AnyStr]] = None,
-        loads: Optional[Callable[..., Any]] = None,
+        dumps: Callable[..., AnyStr] | None = None,
+        loads: Callable[..., Any] | None = None,
         inspector: bool = False,
-        inspector_class: Optional[type[Inspector]] = None,
-        certloader_class: Optional[type[CertLoader]] = None,
+        inspector_class: type[Inspector] | None = None,
+        certloader_class: type[CertLoader] | None = None,
     ) -> None: ...
 
     @overload
@@ -273,61 +271,61 @@ class Sanic(
         self: Sanic[Config, ctx_type],
         name: str,
         config: None = None,
-        ctx: Optional[ctx_type] = None,
-        router: Optional[Router] = None,
-        signal_router: Optional[SignalRouter] = None,
-        error_handler: Optional[ErrorHandler] = None,
-        env_prefix: Optional[str] = SANIC_PREFIX,
-        request_class: Optional[type[Request]] = None,
+        ctx: ctx_type | None = None,
+        router: Router | None = None,
+        signal_router: SignalRouter | None = None,
+        error_handler: ErrorHandler | None = None,
+        env_prefix: str | None = SANIC_PREFIX,
+        request_class: type[Request] | None = None,
         strict_slashes: bool = False,
-        log_config: Optional[dict[str, Any]] = None,
+        log_config: dict[str, Any] | None = None,
         configure_logging: bool = True,
-        dumps: Optional[Callable[..., AnyStr]] = None,
-        loads: Optional[Callable[..., Any]] = None,
+        dumps: Callable[..., AnyStr] | None = None,
+        loads: Callable[..., Any] | None = None,
         inspector: bool = False,
-        inspector_class: Optional[type[Inspector]] = None,
-        certloader_class: Optional[type[CertLoader]] = None,
+        inspector_class: type[Inspector] | None = None,
+        certloader_class: type[CertLoader] | None = None,
     ) -> None: ...
 
     @overload
     def __init__(
         self: Sanic[config_type, ctx_type],
         name: str,
-        config: Optional[config_type] = None,
-        ctx: Optional[ctx_type] = None,
-        router: Optional[Router] = None,
-        signal_router: Optional[SignalRouter] = None,
-        error_handler: Optional[ErrorHandler] = None,
-        env_prefix: Optional[str] = SANIC_PREFIX,
-        request_class: Optional[type[Request]] = None,
+        config: config_type | None = None,
+        ctx: ctx_type | None = None,
+        router: Router | None = None,
+        signal_router: SignalRouter | None = None,
+        error_handler: ErrorHandler | None = None,
+        env_prefix: str | None = SANIC_PREFIX,
+        request_class: type[Request] | None = None,
         strict_slashes: bool = False,
-        log_config: Optional[dict[str, Any]] = None,
+        log_config: dict[str, Any] | None = None,
         configure_logging: bool = True,
-        dumps: Optional[Callable[..., AnyStr]] = None,
-        loads: Optional[Callable[..., Any]] = None,
+        dumps: Callable[..., AnyStr] | None = None,
+        loads: Callable[..., Any] | None = None,
         inspector: bool = False,
-        inspector_class: Optional[type[Inspector]] = None,
-        certloader_class: Optional[type[CertLoader]] = None,
+        inspector_class: type[Inspector] | None = None,
+        certloader_class: type[CertLoader] | None = None,
     ) -> None: ...
 
     def __init__(
         self,
         name: str,
-        config: Optional[config_type] = None,
-        ctx: Optional[ctx_type] = None,
-        router: Optional[Router] = None,
-        signal_router: Optional[SignalRouter] = None,
-        error_handler: Optional[ErrorHandler] = None,
-        env_prefix: Optional[str] = SANIC_PREFIX,
-        request_class: Optional[type[Request]] = None,
+        config: config_type | None = None,
+        ctx: ctx_type | None = None,
+        router: Router | None = None,
+        signal_router: SignalRouter | None = None,
+        error_handler: ErrorHandler | None = None,
+        env_prefix: str | None = SANIC_PREFIX,
+        request_class: type[Request] | None = None,
         strict_slashes: bool = False,
-        log_config: Optional[dict[str, Any]] = None,
+        log_config: dict[str, Any] | None = None,
         configure_logging: bool = True,
-        dumps: Optional[Callable[..., AnyStr]] = None,
-        loads: Optional[Callable[..., Any]] = None,
+        dumps: Callable[..., AnyStr] | None = None,
+        loads: Callable[..., Any] | None = None,
         inspector: bool = False,
-        inspector_class: Optional[type[Inspector]] = None,
-        certloader_class: Optional[type[CertLoader]] = None,
+        inspector_class: type[Inspector] | None = None,
+        certloader_class: type[CertLoader] | None = None,
     ) -> None:
         super().__init__(name=name)
         # logging
@@ -349,16 +347,16 @@ class Sanic(
             self.config.INSPECTOR = inspector
 
         # Then we can do the rest
-        self._asgi_app: Optional[ASGIApp] = None
-        self._asgi_lifespan: Optional[Lifespan] = None
+        self._asgi_app: ASGIApp | None = None
+        self._asgi_lifespan: Lifespan | None = None
         self._asgi_client: Any = None
         self._blueprint_order: list[Blueprint] = []
         self._delayed_tasks: list[str] = []
         self._future_registry: FutureRegistry = FutureRegistry()
-        self._inspector: Optional[Inspector] = None
-        self._manager: Optional[WorkerManager] = None
+        self._inspector: Inspector | None = None
+        self._manager: WorkerManager | None = None
         self._state: ApplicationState = ApplicationState(app=self)
-        self._task_registry: dict[str, Union[Task, None]] = {}
+        self._task_registry: dict[str, Task | None] = {}
         self._test_client: Any = None
         self._test_manager: Any = None
         self.asgi = False
@@ -372,16 +370,16 @@ class Sanic(
         self.error_handler: ErrorHandler = error_handler or ErrorHandler()
         self.inspector_class: type[Inspector] = inspector_class or Inspector
         self.listeners: dict[str, list[ListenerType[Any]]] = defaultdict(list)
-        self.named_request_middleware: dict[str, Deque[Middleware]] = {}
-        self.named_response_middleware: dict[str, Deque[Middleware]] = {}
+        self.named_request_middleware: dict[str, deque[Middleware]] = {}
+        self.named_response_middleware: dict[str, deque[Middleware]] = {}
         self.repl_ctx: REPLContext = REPLContext()
         self.request_class = request_class or Request
-        self.request_middleware: Deque[Middleware] = deque()
-        self.response_middleware: Deque[Middleware] = deque()
+        self.request_middleware: deque[Middleware] = deque()
+        self.response_middleware: deque[Middleware] = deque()
         self.router: Router = router or Router()
         self.shared_ctx: SharedContext = SharedContext()
         self.signal_router: SignalRouter = signal_router or SignalRouter()
-        self.sock: Optional[socket] = None
+        self.sock: socket | None = None
         self.strict_slashes: bool = strict_slashes
         self.websocket_enabled: bool = False
         self.websocket_tasks: set[Future[Any]] = set()
@@ -418,10 +416,7 @@ class Sanic(
         try:
             return get_running_loop()
         except RuntimeError:  # no cov
-            if sys.version_info > (3, 10):
-                return asyncio.get_event_loop_policy().get_event_loop()
-            else:
-                return asyncio.get_event_loop()
+            return asyncio.get_event_loop_policy().get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration
@@ -467,11 +462,11 @@ class Sanic(
 
     def register_middleware(
         self,
-        middleware: Union[MiddlewareType, Middleware],
+        middleware: MiddlewareType | Middleware,
         attach_to: str = "request",
         *,
-        priority: Union[Default, int] = _default,
-    ) -> Union[MiddlewareType, Middleware]:
+        priority: Default | int = _default,
+    ) -> MiddlewareType | Middleware:
         """Register a middleware to be called before a request is handled.
 
         Args:
@@ -516,7 +511,7 @@ class Sanic(
         route_names: Iterable[str],
         attach_to: str = "request",
         *,
-        priority: Union[Default, int] = _default,
+        priority: Default | int = _default,
     ):
         """Used to register named middleqare (middleware typically on blueprints)
 
@@ -567,7 +562,7 @@ class Sanic(
     def _apply_exception_handler(
         self,
         handler: FutureException,
-        route_names: Optional[list[str]] = None,
+        route_names: list[str] | None = None,
     ):
         """Decorate a function to be registered as a handler for exceptions
 
@@ -624,7 +619,7 @@ class Sanic(
     def _apply_middleware(
         self,
         middleware: FutureMiddleware,
-        route_names: Optional[list[str]] = None,
+        route_names: list[str] | None = None,
     ):
         with self.amend():
             if route_names:
@@ -651,8 +646,8 @@ class Sanic(
         self,
         event: str,
         *,
-        condition: Optional[dict[str, str]] = None,
-        context: Optional[dict[str, Any]] = None,
+        condition: dict[str, str] | None = None,
+        context: dict[str, Any] | None = None,
         fail_not_found: bool = True,
         inline: Literal[True],
         reverse: bool = False,
@@ -663,8 +658,8 @@ class Sanic(
         self,
         event: str,
         *,
-        condition: Optional[dict[str, str]] = None,
-        context: Optional[dict[str, Any]] = None,
+        condition: dict[str, str] | None = None,
+        context: dict[str, Any] | None = None,
         fail_not_found: bool = True,
         inline: Literal[False] = False,
         reverse: bool = False,
@@ -674,12 +669,12 @@ class Sanic(
         self,
         event: str,
         *,
-        condition: Optional[dict[str, str]] = None,
-        context: Optional[dict[str, Any]] = None,
+        condition: dict[str, str] | None = None,
+        context: dict[str, Any] | None = None,
         fail_not_found: bool = True,
         inline: bool = False,
         reverse: bool = False,
-    ) -> Coroutine[Any, Any, Awaitable[Union[Task, Any]]]:
+    ) -> Coroutine[Any, Any, Awaitable[Task | Any]]:
         """Dispatches an event to the signal router.
 
         Args:
@@ -725,10 +720,10 @@ class Sanic(
 
     async def event(
         self,
-        event: Union[str, Enum],
-        timeout: Optional[Union[int, float]] = None,
+        event: str | Enum,
+        timeout: int | float | None = None,
         *,
-        condition: Optional[dict[str, Any]] = None,
+        condition: dict[str, Any] | None = None,
         exclusive: bool = True,
     ) -> None:
         """Wait for a specific event to be triggered.
@@ -853,13 +848,13 @@ class Sanic(
 
     def blueprint(
         self,
-        blueprint: Union[Blueprint, Iterable[Blueprint], BlueprintGroup],
+        blueprint: Blueprint | Iterable[Blueprint] | BlueprintGroup,
         *,
-        url_prefix: Optional[str] = None,
-        version: Optional[Union[int, float, str]] = None,
-        strict_slashes: Optional[bool] = None,
-        version_prefix: Optional[str] = None,
-        name_prefix: Optional[str] = None,
+        url_prefix: str | None = None,
+        version: int | float | str | None = None,
+        strict_slashes: bool | None = None,
+        version_prefix: str | None = None,
+        name_prefix: str | None = None,
     ) -> None:
         """Register a blueprint on the application.
 
@@ -1302,13 +1297,12 @@ class Sanic(
 
         # Define `response` var here to remove warnings about
         # allocation before assignment below.
-        response: Optional[
-            Union[
-                BaseHTTPResponse,
-                Coroutine[Any, Any, Optional[BaseHTTPResponse]],
-                ResponseStream,
-            ]
-        ] = None
+        response: (
+            BaseHTTPResponse
+            | Coroutine[Any, Any, BaseHTTPResponse | None]
+            | ResponseStream
+            | None
+        ) = None
         run_middleware = True
         try:
             await self.dispatch(
@@ -1620,6 +1614,17 @@ class Sanic(
         try:
             maybe_coro = listener(app)  # type: ignore
         except TypeError:
+            name = getattr(
+                listener,
+                "__qualname__",
+                getattr(getattr(listener, "func", None), "__qualname__", None),
+            )
+            deprecation(
+                f"Passing the loop argument to listeners is deprecated. "
+                f"Your listener{f' {name!r}' if name else ''} should only "
+                "accept the app argument.",
+                26.6,
+            )
             maybe_coro = listener(app, loop)  # type: ignore
         if maybe_coro and isawaitable(maybe_coro):
             await maybe_coro
@@ -1643,7 +1648,7 @@ class Sanic(
                     except TypeError:
                         task = task()
                 if isawaitable(task):
-                    await task
+                    return await task
             except CancelledError:
                 error_logger.warning(
                     f"Task {task} was cancelled before it completed."
@@ -1665,7 +1670,7 @@ class Sanic(
         app,
         loop,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         register: bool = True,
     ) -> Task:
         tsk: Task = task
@@ -1705,7 +1710,7 @@ class Sanic(
     async def run_delayed_task(
         app: Sanic,
         loop: AbstractEventLoop,
-        task: Union[Future[Any], Task[Any], Awaitable[Any]],
+        task: Future[Any] | Task[Any] | Awaitable[Any],
     ) -> None:
         """Executes a delayed task within the context of a given app and loop.
 
@@ -1728,11 +1733,11 @@ class Sanic(
 
     def add_task(
         self,
-        task: Union[Future[Any], Coroutine[Any, Any, Any], Awaitable[Any]],
+        task: Future[Any] | Coroutine[Any, Any, Any] | Awaitable[Any],
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         register: bool = True,
-    ) -> Optional[Task[Any]]:
+    ) -> Task[Any] | None:
         """Schedule a task to run later, after the loop has started.
 
         While this is somewhat similar to `asyncio.create_task`, it can be
@@ -1782,16 +1787,14 @@ class Sanic(
     @overload
     def get_task(
         self, name: str, *, raise_exception: Literal[False]
-    ) -> Optional[Task]: ...
+    ) -> Task | None: ...
 
     @overload
-    def get_task(
-        self, name: str, *, raise_exception: bool
-    ) -> Optional[Task]: ...
+    def get_task(self, name: str, *, raise_exception: bool) -> Task | None: ...
 
     def get_task(
         self, name: str, *, raise_exception: bool = True
-    ) -> Optional[Task]:
+    ) -> Task | None:
         """Get a named task.
 
         This method is used to get a task by its name. Optionally, you can
@@ -1817,7 +1820,7 @@ class Sanic(
     async def cancel_task(
         self,
         name: str,
-        msg: Optional[str] = None,
+        msg: str | None = None,
         *,
         raise_exception: bool = True,
     ) -> None:
@@ -1852,10 +1855,10 @@ class Sanic(
         """  # noqa: E501
         task = self.get_task(name, raise_exception=raise_exception)
         if task and not task.cancelled():
-            args: tuple[str, ...] = ()
-            if msg:
-                args = (msg,)
-            task.cancel(*args)
+            if msg and sys.version_info < (3, 14):
+                task.cancel(msg)
+            else:
+                task.cancel()
             try:
                 await task
             except CancelledError:
@@ -1879,7 +1882,7 @@ class Sanic(
         }
 
     def shutdown_tasks(
-        self, timeout: Optional[float] = None, increment: float = 0.1
+        self, timeout: float | None = None, increment: float = 0.1
     ) -> None:
         """Cancel all tasks except the server task.
 
@@ -1934,7 +1937,11 @@ class Sanic(
         details: https://asgi.readthedocs.io/en/latest
         """
         if scope["type"] == "lifespan":
-            setup_logging(self.state.is_debug, self.config.NO_COLOR)
+            setup_logging(
+                self.state.is_debug,
+                self.config.NO_COLOR,
+                self.config.LOG_EXTRA,
+            )
             self.asgi = True
             self.motd("")
             self._asgi_lifespan = Lifespan(self, scope, receive, send)
@@ -1949,7 +1956,7 @@ class Sanic(
     # Configuration
     # -------------------------------------------------------------------- #
 
-    def update_config(self, config: Union[bytes, str, dict, Any]) -> None:
+    def update_config(self, config: bytes | str | dict | Any) -> None:
         """Update the application configuration.
 
         This method is used to update the application configuration. It can
@@ -2044,9 +2051,9 @@ class Sanic(
     def extend(
         self,
         *,
-        extensions: Optional[list[type[Extension]]] = None,
+        extensions: list[type[Extension]] | None = None,
         built_in_extensions: bool = True,
-        config: Optional[Union[Config, dict[str, Any]]] = None,
+        config: Config | dict[str, Any] | None = None,
         **kwargs,
     ) -> Extend:
         """Extend Sanic with additional functionality using Sanic Extensions.
@@ -2165,7 +2172,7 @@ class Sanic(
 
     @classmethod
     def get_app(
-        cls, name: Optional[str] = None, *, force_create: bool = False
+        cls, name: str | None = None, *, force_create: bool = False
     ) -> Sanic:
         """Retrieve an instantiated Sanic instance by name.
 
@@ -2426,7 +2433,7 @@ class Sanic(
         self,
         concern: str,
         action: str,
-        loop: Optional[AbstractEventLoop] = None,
+        loop: AbstractEventLoop | None = None,
     ) -> None:
         event = f"server.{concern}.{action}"
         if action not in ("before", "after") or concern not in (
@@ -2457,7 +2464,7 @@ class Sanic(
 
     def refresh(
         self,
-        passthru: Optional[dict[str, Any]] = None,
+        passthru: dict[str, Any] | None = None,
     ) -> Sanic:
         """Refresh the application instance. **This is used internally by Sanic**.
 

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from multiprocessing.connection import Connection
 from os import environ, getpid
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from sanic.log import Colors, logger
 from sanic.worker.process import ProcessState
@@ -45,7 +47,7 @@ class WorkerMultiplexer:
         func: Callable[..., Any],
         kwargs: dict[str, Any],
         transient: bool = False,
-        restartable: Optional[bool] = None,
+        restartable: bool | None = None,
         tracked: bool = False,
         auto_start: bool = True,
         workers: int = 1,

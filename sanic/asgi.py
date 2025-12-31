@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sanic.compat import Header
 from sanic.exceptions import BadRequest, ServerError
@@ -109,9 +109,9 @@ class ASGIApp:
     request: Request
     transport: MockTransport
     lifespan: Lifespan
-    ws: Optional[WebSocketConnection]
+    ws: WebSocketConnection | None
     stage: Stage
-    response: Optional[BaseHTTPResponse]
+    response: BaseHTTPResponse | None
 
     @classmethod
     async def create(
@@ -189,7 +189,7 @@ class ASGIApp:
 
         return instance
 
-    async def read(self) -> Optional[bytes]:
+    async def read(self) -> bytes | None:
         """
         Read and stream the body in chunks from an incoming ASGI message.
         """

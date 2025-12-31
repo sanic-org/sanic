@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Callable, NamedTuple, Optional, Union
+from typing import Callable, NamedTuple
 
 from sanic.handlers.directory import DirectoryHandler
 from sanic.models.handler_types import (
@@ -15,19 +15,19 @@ from sanic.types import HashableDict
 class FutureRoute(NamedTuple):
     handler: str
     uri: str
-    methods: Optional[Iterable[str]]
-    host: Union[str, list[str]]
+    methods: Iterable[str] | None
+    host: str | list[str]
     strict_slashes: bool
     stream: bool
-    version: Optional[int]
+    version: int | None
     name: str
     ignore_body: bool
     websocket: bool
-    subprotocols: Optional[list[str]]
+    subprotocols: list[str] | None
     unquote: bool
     static: bool
     version_prefix: str
-    error_format: Optional[str]
+    error_format: str | None
     route_context: HashableDict
 
 
@@ -53,19 +53,21 @@ class FutureStatic(NamedTuple):
     pattern: str
     use_modified_since: bool
     use_content_range: bool
-    stream_large_files: Union[bool, int]
+    stream_large_files: bool | int
     name: str
-    host: Optional[str]
-    strict_slashes: Optional[bool]
-    content_type: Optional[str]
-    resource_type: Optional[str]
+    host: str | None
+    strict_slashes: bool | None
+    content_type: str | None
+    resource_type: str | None
     directory_handler: DirectoryHandler
+    follow_external_symlink_files: bool
+    follow_external_symlink_dirs: bool
 
 
 class FutureSignal(NamedTuple):
     handler: SignalHandler
     event: str
-    condition: Optional[dict[str, str]]
+    condition: dict[str, str] | None
     exclusive: bool
     priority: int
 

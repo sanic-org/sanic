@@ -1,15 +1,10 @@
 import asyncio
 import secrets
-
 from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 
-from websockets.exceptions import (
-    ConnectionClosed,
-    ConnectionClosedError,
-    ConnectionClosedOK,
-)
+from websockets.exceptions import (ConnectionClosed, ConnectionClosedError,
+                                   ConnectionClosedOK)
 from websockets.frames import Frame, Opcode
-
 
 try:  # websockets >= 11.0
     from websockets.protocol import Event, State  # type: ignore
@@ -18,14 +13,13 @@ except ImportError:  # websockets < 11.0
     from websockets.connection import Event, State  # type: ignore
     from websockets.server import ServerConnection as ServerProtocol
 
-from websockets.typing import Data
-
 from sanic.log import websockets_logger
 from sanic.server.protocols.base_protocol import SanicProtocol
 
+from websockets.typing import Data
+
 from ...exceptions import ServerError, WebsocketClosed
 from .frame import WebsocketFrameAssembler
-
 
 OPEN = State.OPEN
 CLOSING = State.CLOSING
@@ -130,7 +124,7 @@ class WebsocketImplProtocol:
             try:
                 loop = getattr(io_proto, "loop")
             except AttributeError:
-                loop = asyncio.get_running_loop()
+                loop = asyncio.get_event_loop()
         if not loop:
             # This catch is for mypy type checker
             # to assert loop is not None here.

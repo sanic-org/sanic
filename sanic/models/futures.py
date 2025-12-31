@@ -60,6 +60,8 @@ class FutureStatic(NamedTuple):
     content_type: str | None
     resource_type: str | None
     directory_handler: DirectoryHandler
+    follow_external_symlink_files: bool
+    follow_external_symlink_dirs: bool
 
 
 class FutureSignal(NamedTuple):

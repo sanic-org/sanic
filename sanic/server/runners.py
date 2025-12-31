@@ -126,7 +126,7 @@ def serve(
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    setup_logging(app.debug, app.config.NO_COLOR)
+    setup_logging(app.debug, app.config.NO_COLOR, app.config.LOG_EXTRA)
 
     if app.debug:
         loop.set_debug(app.debug)

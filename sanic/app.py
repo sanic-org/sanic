@@ -1937,7 +1937,11 @@ class Sanic(
         details: https://asgi.readthedocs.io/en/latest
         """
         if scope["type"] == "lifespan":
-            setup_logging(self.state.is_debug, self.config.NO_COLOR)
+            setup_logging(
+                self.state.is_debug,
+                self.config.NO_COLOR,
+                self.config.LOG_EXTRA,
+            )
             self.asgi = True
             self.motd("")
             self._asgi_lifespan = Lifespan(self, scope, receive, send)

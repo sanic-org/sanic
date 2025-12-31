@@ -111,9 +111,7 @@ class DirectoryHandler:
         page = DirectoryPage(self._iter_files(location), path, debug)
         return html(page.render())
 
-    def _prepare_file(
-        self, path: Path
-    ) -> dict[str, int | str] | None:
+    def _prepare_file(self, path: Path) -> dict[str, int | str] | None:
         try:
             stat = path.stat()
         except OSError:

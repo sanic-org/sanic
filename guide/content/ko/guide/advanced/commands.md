@@ -1,11 +1,5 @@
 # Custom CLI Commands
 
-.. new:: New in v24.12
-
-```
-This feature was added in version 24.12
-```
-
 Sanic ships with a [CLI](../running/running.md#running-via-command) for running the Sanic server. Sometimes, you may have the need to enhance that CLI to run your own custom commands. Commands are invoked using the following basic pattern:
 
 ```sh

@@ -1882,7 +1882,10 @@ class Sanic(
         }
 
     def shutdown_tasks(
-        self, timeout: float | None = None, increment: float = 0.1
+        self,
+        timeout: float | None = None,
+        increment: float = 0.1,
+        loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         """Cancel all tasks except the server task.
 
@@ -1897,6 +1900,8 @@ class Sanic(
                 to complete. Defaults to `None`.
             increment (float): The amount of time to wait between checks for
                 whether the tasks have completed. Defaults to `0.1`.
+            loop (Optional[asyncio.AbstractEventLoop]): The event loop to use
+                for waiting. If not provided, attempts to get the running loop.
         """
         for task in self.tasks:
             if task.get_name() != "RunServer":
@@ -1905,10 +1910,17 @@ class Sanic(
         if timeout is None:
             timeout = self.config.GRACEFUL_SHUTDOWN_TIMEOUT
 
-        while len(self._task_registry) and timeout:
-            with suppress(RuntimeError):
-                running_loop = get_running_loop()
-                running_loop.run_until_complete(asyncio.sleep(increment))
+        if loop is None:
+            try:
+                loop = get_running_loop()
+            except RuntimeError:
+                loop = asyncio.get_event_loop()
+
+        while self._task_registry and timeout > 0:
+            try:
+                loop.run_until_complete(asyncio.sleep(increment))
+            except RuntimeError:
+                pass
             self.purge_tasks()
             timeout -= increment
 

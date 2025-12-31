@@ -321,7 +321,7 @@ def _serve_http_1(
             loop.run_until_complete(asyncio.sleep(0.1))
             start_shutdown = start_shutdown + 0.1
 
-        app.shutdown_tasks(graceful - start_shutdown)
+        app.shutdown_tasks(graceful - start_shutdown, loop=loop)
 
         # Force close non-idle connection after waiting for
         # graceful_shutdown_timeout

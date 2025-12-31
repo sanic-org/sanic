@@ -1648,7 +1648,7 @@ class Sanic(
                     except TypeError:
                         task = task()
                 if isawaitable(task):
-                    await task
+                    return await task
             except CancelledError:
                 error_logger.warning(
                     f"Task {task} was cancelled before it completed."

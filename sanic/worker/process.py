@@ -94,7 +94,12 @@ class WorkerProcess:
         if not self.is_alive():
             try:
                 del self.worker_state[self.name]
-            except ConnectionRefusedError:
+            except (
+                BrokenPipeError,
+                ConnectionRefusedError,
+                ConnectionResetError,
+                EOFError,
+            ):
                 logger.debug("Monitor process has already exited.")
             except KeyError:
                 logger.debug("Could not find worker state to delete.")
@@ -108,7 +113,10 @@ class WorkerProcess:
                 self.name,
                 self.pid,
             )
-            self.set_state(ProcessState.TERMINATED, force=True)
+            try:
+                self.set_state(ProcessState.TERMINATED, force=True)
+            except (BrokenPipeError, ConnectionResetError, EOFError):
+                pass
             try:
                 os.kill(self.pid, SIGINT)
             except (KeyError, AttributeError, ProcessLookupError):

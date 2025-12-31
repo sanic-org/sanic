@@ -176,6 +176,34 @@ def _setup_system_signals(
                 )
 
 
+def _run_shutdown_coro(loop, coro):
+    """Run a shutdown coroutine, handling the case where the loop was stopped.
+
+    When loop.stop() is called during run_forever(), asyncio sets an internal
+    flag that causes the first run_until_complete() to fail. For standard
+    asyncio, we clear the _stopping flag. For uvloop (which doesn't expose
+    this flag), the first attempt may fail but subsequent attempts succeed.
+    """
+    # Clear asyncio's stopped state if accessible
+    if hasattr(loop, "_stopping"):
+        loop._stopping = False
+
+    try:
+        loop.run_until_complete(coro())
+    except (RuntimeError, KeyboardInterrupt):
+        # RuntimeError: loop was stopped (uvloop behavior)
+        # KeyboardInterrupt: signal arrived during select (asyncio behavior)
+        # Try once more - this handles uvloop's behavior where the first
+        # run_until_complete after stop() fails but subsequent calls succeed.
+        if hasattr(loop, "_stopping"):
+            loop._stopping = False
+        try:
+            loop.run_until_complete(coro())
+        except (RuntimeError, KeyboardInterrupt):
+            # If it still fails, the loop is truly unusable
+            pass
+
+
 def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
     pid = os.getpid()
     try:
@@ -184,12 +212,19 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
     finally:
         server_logger.info("Stopping worker [%s]", pid)
 
-        loop.run_until_complete(before_stop())
+        for _signal in [SIGINT, SIGTERM]:
+            try:
+                loop.remove_signal_handler(_signal)
+            except (NotImplementedError, OSError):
+                pass
+
+        _run_shutdown_coro(loop, before_stop)
 
         if cleanup:
             cleanup()
 
-        loop.run_until_complete(after_stop())
+        _run_shutdown_coro(loop, after_stop)
+
         remove_unix_socket(unix)
         loop.close()
         server_logger.info("Worker complete [%s]", pid)
@@ -296,7 +331,10 @@ def _serve_http_1(
             else:
                 conn.abort()
 
-        app.set_serving(False)
+        try:
+            app.set_serving(False)
+        except (BrokenPipeError, ConnectionResetError, EOFError):
+            pass
 
     _setup_system_signals(app, run_multiple, register_sys_signals, loop)
     loop.run_until_complete(app._server_event("init", "after"))

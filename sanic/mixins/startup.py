@@ -1204,14 +1204,18 @@ class StartupMixin(metaclass=SanicMeta):
 
     @staticmethod
     def _get_process_states(worker_state) -> list[str]:
-        return [
-            state
-            for s in worker_state.values()
-            if (
-                (state := s.get("state"))
-                and state not in ("TERMINATED", "FAILED", "COMPLETED", "NONE")
-            )
-        ]
+        try:
+            return [
+                state
+                for s in worker_state.values()
+                if (
+                    (state := s.get("state"))
+                    and state
+                    not in ("TERMINATED", "FAILED", "COMPLETED", "NONE")
+                )
+            ]
+        except (BrokenPipeError, ConnectionResetError, EOFError):
+            return []
 
     @classmethod
     def serve_single(cls, primary: Sanic | None = None) -> None:

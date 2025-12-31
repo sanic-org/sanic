@@ -439,6 +439,72 @@ sanic ./path/to/dir --simple --reload --reload-dir=./path/to/dir
 
 \*添加于 v21.6 \*
 
+### 守护进程模式
+
+.. 新：v25.12
+
+```
+此功能已添加到版本25.12
+```
+
+.. 列:
+
+```
+Sanic 可以作为后台守护进程运行。使用 "-D" 或 "--daemon" 标志在后台启动服务器。
+```
+
+.. 列:
+
+````
+```sh
+sanic path.to.server:app --daemon
+sanic path.to.server:app -D
+```
+````
+
+.. 列:
+
+```
+您可以通过额外命令管理守护进程：
+```
+
+.. 列:
+
+````
+```sh
+sanic path.to.server:app 状态 # 检查是否运行
+sanic path.to.server:app stop # 停止守护程序
+```
+````
+
+.. 列:
+
+```
+守护进程配置有其他选项：
+```
+
+.. 列:
+
+````
+```sh
+sanic path.to.server:app -D --pidfile=/var/run/sanic.pid
+sanic path.to.server:app -D --logfile=/var/log/sanic.log
+sanic path.to.server:app -D --user=www-data
+sanic path.to.server:app -D --group=www-data
+```
+````
+
+低级别命令也可用来管理由 PID 进行的过程：
+
+```sh
+sanic kill --pid=<PID>
+sanic kill --pidfile=/var/run/sanic.pid
+sanic status --pid=<PID>
+sanic status --pidfile=/var/run/sanic.pid
+```
+
+_添加于 v25.12_
+
 ### HTTP/3
 
 Sanic 服务器使用 [aioquic](https://github.com/aiortc/aioquic) 提供 HTTP/3 支持。 此 \*\*must \*\* 安装后才能使用 HTTP/3：

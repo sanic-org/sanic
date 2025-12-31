@@ -233,6 +233,9 @@ class Http(Stream, metaclass=TouchUpMeta):
         except Exception:
             raise BadRequest("Bad Request")
 
+        if not self.protocol.app.config.KEEP_ALIVE:
+            self.keep_alive = False
+
         headers_instance = Header(headers)
         self.upgrade_websocket = (
             headers_instance.getone("upgrade", "").lower() == "websocket"

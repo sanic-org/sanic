@@ -7,9 +7,59 @@ content_class: 更新履歴
 🔶 現在のリリース  
 🔷 LTS リリース
 
-## バージョン25.3.0 🔶
+## バージョン25.12.0 🔶
 
-_現在のバージョン_
+現在のLTSバージョン_
+
+### 特徴
+
+- [#3071](https://github.com/sanic-org/sanic/pull/3071) テキストコンテンツタイプに `charset=UTF-8` を自動的に追加する
+- [#3079](https://github.com/sanic-org/sanic/pull/3079) 高度な環境変数変換に`DetailedConverter`を追加する
+- [#3080](https://github.com/sanic-org/sanic/pull/3080) `str_to_bool`関数を有効な偽の値として`nope`を含めるように更新する
+- [#3102](https://github.com/sanic-org/sanic/pull/3102) サーバーエラーメッセージの改善
+- [#3110](https://github.com/sanic-org/sanic/pull/3110) Sanic CLI にデーモンモードを追加
+- タスク作成時に[#3114](https://github.com/sanic-org/sanic/pull/3114) タスクを返却する
+- [#3117](https://github.com/sanic-org/sanic/pull/3117) 静的なファイル/ディレクトリのシンボリックリンクパラメータ
+
+### バグ修正
+
+- [#3064](https://github.com/sanic-org/sanic/pull/3064) ログの種類をデバッグに変更する
+- [#3068](https://github.com/sanic-org/sanic/pull/3068) `write_eof` のとき `RuntimeError` をサイレントにする
+- [#3077](https://github.com/sanic-org/sanic/pull/3077) Windows で `WorkerManager.kill` を修正
+- [#3085](https://github.com/sanic-org/sanic/pull/3085) `_http` が初期化されていない場合、`AttributeError` を `close_if_idle()` に修正しました。
+- [#3086](https://github.com/sanic-org/sanic/pull/3086) 労働者の再起動時のレース条件を修正し、スポーンに失敗する
+- [#3088](https://github.com/sanic-org/sanic/pull/3088) 終了時に不適切な用語クリーンアップを修正中
+- [#31119](https://github.com/sanic-org/sanic/pull/3119) CJK 文字を持つディレクトリを提供する静的ファイルを修正しました
+- [#3120](https://github.com/sanic-org/sanic/pull/3120) 全てのケースで `LOG_EXTRA` を尊重する
+- [#3121](https://github.com/sanic-org/sanic/pull/3121) `KEEP_ALIVE` の設定を尊重する
+- [#3122](https://github.com/sanic-org/sanic/pull/3122) uvloop double kill を処理するためのシャットダウン状態を確認する
+
+### 非推奨と削除
+
+- [#31115](https://github.com/sanic-org/sanic/pull/3115) Python 3.9 サポートを削除してPython 3.14 を追加
+
+### 開発者のインフラストラクチャ
+
+- [#3083](https://github.com/sanic-org/sanic/pull/3083) `WorkerManager` のコンストラクタのパラメータを入力します。
+- [#3084](https://github.com/sanic-org/sanic/pull/3084) 誤検出を除去するためのベースラインを作成する
+- [#3091](https://github.com/sanic-org/sanic/pull/3091) 固有の ping ペイロードを生成するためのシークレットを使用する
+- [#3094](https://github.com/sanic-org/sanic/pull/3094) タイプを追加してテストを修正する
+- [#3095](https://github.com/sanic-org/sanic/pull/3095) 更新にはPythonが必要です >=3.10
+- [#3101](https://github.com/sanic-org/sanic/pull/3101) トレースライトを最新にアップグレード
+- [#3107](https://github.com/sanic-org/sanic/pull/3107) テストの改善
+- [#3108](https://github.com/sanic-org/sanic/pull/3108) 2段カバレッジチェックに移動
+- [#3109](https://github.com/sanic-org/sanic/pull/3109) `dawidd6/action-download-artifact` を 3 から 6 まで
+
+### ドキュメントの改善
+
+- [#3035](https://github.com/sanic-org/sanic/pull/3035) openapi コンポーネントのドキュメントを修正する
+- [#3054](https://github.com/sanic-org/sanic/pull/3054) 'どのようにサニック・サイドバーを作ったか'を修正
+- [#3056](https://github.com/sanic-org/sanic/pull/3056) ウェブサイトで壊れたリンクを修正
+- [#3057](https://github.com/sanic-org/sanic/pull/3057) コントリビューションガイドラインの正しいパスを追加
+- [#3065](https://github.com/sanic-org/sanic/pull/3065) ドキュメント内の不正なリンクを修正しました
+- [#3066](https://github.com/sanic-org/sanic/pull/3066) request.md ドキュメントの単一文字の誤字修正
+
+## バージョン25.3.0
 
 ### 特徴
 

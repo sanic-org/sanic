@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from pathlib import Path
 
@@ -124,3 +125,33 @@ def test_static_directory_handler_fails(app: Sanic):
         app.static("/static", "", directory_handler=dh, directory_view=True)
     with pytest.raises(ValueError, match=message):
         app.static("/static", "", directory_handler=dh, index="index.html")
+
+
+@pytest.mark.parametrize(
+    "dir_name",
+    [
+        "你好",  # Chinese
+        "こんにちは",  # Japanese
+        "안녕하세요",  # Korean
+        "hello 世界",  # Mixed ASCII and CJK
+    ],
+)
+def test_static_index_with_cjk_directory_name(app: Sanic, dir_name: str):
+    """Test static file serving with CJK characters in directory names.
+
+    See: https://github.com/sanic-org/sanic/issues/3008
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create directory with CJK name containing an index file
+        cjk_dir = Path(tmpdir) / dir_name
+        cjk_dir.mkdir()
+        index_file = cjk_dir / "index.html"
+        index_content = b"<html>Hello from CJK directory</html>"
+        index_file.write_bytes(index_content)
+
+        app.static("/static", tmpdir, index="index.html")
+
+        # Access the CJK directory - should serve index.html
+        _, response = app.test_client.get(f"/static/{dir_name}/")
+        assert response.status == 200
+        assert response.body == index_content

@@ -893,15 +893,53 @@ app.static("/uploads/", "/path/to/dir", directory_view=True)
 
 _添加于 v23.3_
 
-## 路由上下文(Route context)
+#### Symlink control
+
+.. 新：v25.12
+
+```
+此功能已添加到版本25.12
+```
 
 .. column::
+
+```
+默认情况下，出于安全原因，Sanic将不会跟随静态根目录之外的符号链接。 您可以使用"follow_external_symlink_files"和"follow_external_symlink_dirs"单独启用外部符号链接。
+```
+
+.. column::
+
+````
+```python
+# 允许文件符号链接指向静态根
+应用。 tatic(
+    "/static",
+    "/var/www/static",
+    follow_external_symlink_files=True,
+
+
+# 允许目录符号链接指向外部静态根
+应用。 tatic(
+    "/static",
+    "/var/www/static",
+    follow_external_symlink_dirs=True,
+)
+```
+````
+
+静态根内部的符号链接总是能够运行，不管这些设置。 损坏的符号链接总是在目录列表中隐藏并返回 404。
+
+_添加于 v25.12_
+
+## 路由上下文(Route context)
+
+.. 列:
 
 ```
 在定义路由时，您可以添加任意数量以 `ctx_` 前缀的关键字参数。这些值将被注入到路由的 `ctx` 对象中。
 ```
 
-.. column::
+.. 列:
 
 ````
 ```python

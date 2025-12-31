@@ -46,6 +46,8 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
         index: str | Sequence[str] | None = None,
         directory_view: bool = False,
         directory_handler: DirectoryHandler | None = None,
+        follow_external_symlink_files: bool = False,
+        follow_external_symlink_dirs: bool = False,
     ):
         """Register a root to serve files from. The input can either be a file or a directory.
 
@@ -92,6 +94,12 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
                 instance of DirectoryHandler that can be used for explicitly
                 controlling and subclassing the behavior of the default
                 directory handler.
+            follow_external_symlink_files (bool, optional): Whether to serve
+                files that are symlinks pointing outside the static root.
+                Defaults to `False` for security.
+            follow_external_symlink_dirs (bool, optional): Whether to serve
+                files from directories that are symlinks pointing outside
+                the static root. Defaults to `False` for security.
 
         Returns:
             List[sanic.router.Route]: Routes registered on the router.
@@ -143,6 +151,9 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
                 directory=file_or_directory,
                 directory_view=directory_view,
                 index=index,
+                root_path=file_or_directory,
+                follow_external_symlink_files=follow_external_symlink_files,
+                follow_external_symlink_dirs=follow_external_symlink_dirs,
             )
 
         static = FutureStatic(
@@ -158,6 +169,8 @@ class StaticMixin(BaseMixin, metaclass=SanicMeta):
             content_type,
             resource_type,
             directory_handler,
+            follow_external_symlink_files,
+            follow_external_symlink_dirs,
         )
         self._future_statics.add(static)
 
@@ -232,6 +245,8 @@ class StaticHandleMixin(metaclass=SanicMeta):
                 stream_large_files=static.stream_large_files,
                 content_type=static.content_type,
                 directory_handler=static.directory_handler,
+                follow_external_symlink_files=static.follow_external_symlink_files,
+                follow_external_symlink_dirs=static.follow_external_symlink_dirs,
             )
         )
 
@@ -255,6 +270,8 @@ class StaticHandleMixin(metaclass=SanicMeta):
         use_content_range: bool,
         stream_large_files: bool | int,
         directory_handler: DirectoryHandler,
+        follow_external_symlink_files: bool,
+        follow_external_symlink_dirs: bool,
         content_type: str | None = None,
         __file_uri__: str | None = None,
     ):
@@ -266,7 +283,11 @@ class StaticHandleMixin(metaclass=SanicMeta):
 
         # Merge served directory and requested file if provided
         file_path = await self._get_file_path(
-            file_or_directory, __file_uri__, not_found
+            file_or_directory,
+            __file_uri__,
+            not_found,
+            follow_external_symlink_files,
+            follow_external_symlink_dirs,
         )
 
         try:
@@ -340,35 +361,58 @@ class StaticHandleMixin(metaclass=SanicMeta):
             )
             raise
 
-    async def _get_file_path(self, file_or_directory, __file_uri__, not_found):
-        file_path_raw = Path(unquote(file_or_directory))
-        root_path = file_path = file_path_raw.resolve()
+    async def _get_file_path(
+        self,
+        file_or_directory,
+        __file_uri__,
+        not_found,
+        follow_external_symlink_files: bool,
+        follow_external_symlink_dirs: bool,
+    ):
+        """
+        Resolve a filesystem path safely.
+
+        Security goals:
+        - Prevent path traversal via `..`
+        - Prevent escaping the root via symlinks unless explicitly allowed
+        - Treat file URIs as relative paths even if they look absolute
+        """
+
+        def reject():
+            error_logger.exception(
+                f"File not found: path={file_or_directory}, "
+                f"relative_url={__file_uri__}"
+            )
+            raise not_found
+
+        root_raw = Path(unquote(file_or_directory))
+        root_path = root_raw.resolve()
+        file_path_raw = root_raw
 
         if __file_uri__:
-            # Strip all / that in the beginning of the URL to help prevent
-            # python from herping a derp and treating the uri as an
-            # absolute path
-            unquoted_file_uri = unquote(__file_uri__).lstrip("/")
-            file_path_raw = Path(file_or_directory, unquoted_file_uri)
-            file_path = file_path_raw.resolve()
-            if (
-                file_path < root_path and not file_path_raw.is_symlink()
-            ) or ".." in file_path_raw.parts:
-                error_logger.exception(
-                    f"File not found: path={file_or_directory}, "
-                    f"relative_url={__file_uri__}"
-                )
-                raise not_found
+            # URLs may start with `/`, Path() interprets as absolute
+            rel_uri = unquote(__file_uri__).lstrip("/")
+            file_path_raw = Path(root_raw, rel_uri)
+
+            if ".." in file_path_raw.parts:
+                reject()
+
+        file_path = file_path_raw.resolve()
 
         try:
             file_path.relative_to(root_path)
         except ValueError:
-            if not file_path_raw.is_symlink():
-                error_logger.exception(
-                    f"File not found: path={file_or_directory}, "
-                    f"relative_url={__file_uri__}"
-                )
-                raise not_found
+            # Check if it's a symlink and determine its type
+            is_file_symlink = (
+                file_path_raw.is_symlink() and not file_path.is_dir()
+            )
+            if is_file_symlink:
+                allowed = follow_external_symlink_files
+            else:
+                allowed = follow_external_symlink_dirs
+            if not allowed:
+                reject()
+
         return file_path
 
 

@@ -127,6 +127,200 @@ def test_static_directory_handler_fails(app: Sanic):
         app.static("/static", "", directory_handler=dh, index="index.html")
 
 
+@pytest.fixture
+def symlink_test_directory(tmp_path):
+    static_root = tmp_path / "static"
+    static_root.mkdir()
+
+    (static_root / "normal_file.txt").write_text("normal content")
+
+    subdir = static_root / "subdir"
+    subdir.mkdir()
+    (subdir / "sub_file.txt").write_text("sub content")
+
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    secret_file = outside_dir / "secret.txt"
+    secret_file.write_text("secret content")
+
+    symlink_to_outside_file = static_root / "link_to_secret"
+    symlink_to_outside_file.symlink_to(secret_file)
+
+    symlink_to_outside_dir = static_root / "link_to_outside_dir"
+    symlink_to_outside_dir.symlink_to(outside_dir)
+
+    symlink_to_inside = static_root / "link_to_subdir"
+    symlink_to_inside.symlink_to(subdir)
+
+    broken_symlink = static_root / "broken_link"
+    broken_symlink.symlink_to(tmp_path / "nonexistent")
+
+    return static_root
+
+
+def test_directory_view_hides_symlinks_outside_root(
+    app: Sanic, symlink_test_directory: Path
+):
+    app.static("/static", symlink_test_directory, directory_view=True)
+
+    _, response = app.test_client.get("/static/")
+    assert response.status == 200
+
+    assert "normal_file.txt" in response.text
+    assert "link_to_subdir" in response.text
+    assert "link_to_secret" not in response.text
+    assert "link_to_outside_dir" not in response.text
+    assert "broken_link" not in response.text
+
+
+def test_directory_view_broken_symlink_no_crash(
+    app: Sanic, symlink_test_directory: Path
+):
+    app.static("/static", symlink_test_directory, directory_view=True)
+
+    _, response = app.test_client.get("/static/")
+    assert response.status == 200
+
+
+def test_symlink_inside_root_visible(app: Sanic, symlink_test_directory: Path):
+    app.static("/static", symlink_test_directory, directory_view=True)
+
+    _, response = app.test_client.get("/static/")
+    assert response.status == 200
+    assert "link_to_subdir" in response.text
+
+    _, response = app.test_client.get("/static/link_to_subdir/")
+    assert response.status == 200
+    assert "sub_file.txt" in response.text
+
+
+def test_symlink_to_outside_file_returns_404(
+    app: Sanic, symlink_test_directory: Path
+):
+    app.static("/static", symlink_test_directory)
+
+    _, response = app.test_client.get("/static/link_to_secret")
+    assert response.status == 404
+
+
+def test_symlink_to_outside_dir_returns_404(
+    app: Sanic, symlink_test_directory: Path
+):
+    app.static("/static", symlink_test_directory)
+
+    _, response = app.test_client.get("/static/link_to_outside_dir/secret.txt")
+    assert response.status == 404
+
+
+@pytest.mark.parametrize(
+    "follow_files,follow_dirs,path,expected_status",
+    [
+        # Normal file - always accessible
+        (False, False, "/static/normal_file.txt", 200),
+        (True, False, "/static/normal_file.txt", 200),
+        (False, True, "/static/normal_file.txt", 200),
+        (True, True, "/static/normal_file.txt", 200),
+        # Symlink to file inside root - always accessible
+        (False, False, "/static/link_to_subdir/sub_file.txt", 200),
+        (True, False, "/static/link_to_subdir/sub_file.txt", 200),
+        (False, True, "/static/link_to_subdir/sub_file.txt", 200),
+        (True, True, "/static/link_to_subdir/sub_file.txt", 200),
+        # Symlink to file outside root - only with follow_files=True
+        (False, False, "/static/link_to_secret", 404),
+        (True, False, "/static/link_to_secret", 200),
+        (False, True, "/static/link_to_secret", 404),
+        (True, True, "/static/link_to_secret", 200),
+        # File in symlinked dir outside root - only with follow_dirs=True
+        (False, False, "/static/link_to_outside_dir/secret.txt", 404),
+        (True, False, "/static/link_to_outside_dir/secret.txt", 404),
+        (False, True, "/static/link_to_outside_dir/secret.txt", 200),
+        (True, True, "/static/link_to_outside_dir/secret.txt", 200),
+        # Broken symlink - always 404
+        (False, False, "/static/broken_link", 404),
+        (True, False, "/static/broken_link", 404),
+        (False, True, "/static/broken_link", 404),
+        (True, True, "/static/broken_link", 404),
+    ],
+)
+def test_symlink_serving_permutations(
+    app: Sanic,
+    symlink_test_directory: Path,
+    follow_files: bool,
+    follow_dirs: bool,
+    path: str,
+    expected_status: int,
+):
+    app.static(
+        "/static",
+        symlink_test_directory,
+        follow_external_symlink_files=follow_files,
+        follow_external_symlink_dirs=follow_dirs,
+    )
+
+    _, response = app.test_client.get(path)
+    assert response.status == expected_status
+
+
+@pytest.mark.parametrize(
+    "follow_files,follow_dirs,item,expected_visible",
+    [
+        # Normal file - always visible
+        (False, False, "normal_file.txt", True),
+        (True, False, "normal_file.txt", True),
+        (False, True, "normal_file.txt", True),
+        (True, True, "normal_file.txt", True),
+        # Subdir - always visible
+        (False, False, "subdir", True),
+        (True, False, "subdir", True),
+        (False, True, "subdir", True),
+        (True, True, "subdir", True),
+        # Symlink to dir inside root - always visible
+        (False, False, "link_to_subdir", True),
+        (True, False, "link_to_subdir", True),
+        (False, True, "link_to_subdir", True),
+        (True, True, "link_to_subdir", True),
+        # Symlink to file outside root - only with follow_files=True
+        (False, False, "link_to_secret", False),
+        (True, False, "link_to_secret", True),
+        (False, True, "link_to_secret", False),
+        (True, True, "link_to_secret", True),
+        # Symlink to dir outside root - only with follow_dirs=True
+        (False, False, "link_to_outside_dir", False),
+        (True, False, "link_to_outside_dir", False),
+        (False, True, "link_to_outside_dir", True),
+        (True, True, "link_to_outside_dir", True),
+        # Broken symlink - never visible
+        (False, False, "broken_link", False),
+        (True, False, "broken_link", False),
+        (False, True, "broken_link", False),
+        (True, True, "broken_link", False),
+    ],
+)
+def test_directory_view_visibility_permutations(
+    app: Sanic,
+    symlink_test_directory: Path,
+    follow_files: bool,
+    follow_dirs: bool,
+    item: str,
+    expected_visible: bool,
+):
+    app.static(
+        "/static",
+        symlink_test_directory,
+        directory_view=True,
+        follow_external_symlink_files=follow_files,
+        follow_external_symlink_dirs=follow_dirs,
+    )
+
+    _, response = app.test_client.get("/static/")
+    assert response.status == 200
+
+    if expected_visible:
+        assert item in response.text
+    else:
+        assert item not in response.text
+
+
 @pytest.mark.parametrize(
     "dir_name",
     [

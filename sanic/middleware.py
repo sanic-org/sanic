@@ -4,7 +4,6 @@ from collections import deque
 from collections.abc import Sequence
 from enum import IntEnum, auto
 from itertools import count
-from typing import Deque, Union
 
 from sanic.models.handler_types import MiddlewareType
 
@@ -70,9 +69,9 @@ class Middleware:
     @classmethod
     def convert(
         cls,
-        *middleware_collections: Sequence[Union[Middleware, MiddlewareType]],
+        *middleware_collections: Sequence[Middleware | MiddlewareType],
         location: MiddlewareLocation,
-    ) -> Deque[Middleware]:
+    ) -> deque[Middleware]:
         """Convert middleware collections to a deque of Middleware objects.
 
         Args:

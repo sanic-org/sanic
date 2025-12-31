@@ -1,7 +1,7 @@
 from asyncio import CancelledError
 from collections.abc import Sequence
 from os import PathLike
-from typing import Any, Optional, Union
+from typing import Any
 
 from sanic.helpers import STATUS_CODES
 from sanic.models.protocol_types import Range
@@ -54,19 +54,19 @@ class SanicException(Exception):
     """  # noqa: E501
 
     status_code: int = 500
-    quiet: Optional[bool] = False
+    quiet: bool | None = False
     headers: dict[str, str] = {}
     message: str = ""
 
     def __init__(
         self,
-        message: Optional[Union[str, bytes]] = None,
-        status_code: Optional[int] = None,
+        message: str | bytes | None = None,
+        status_code: int | None = None,
         *,
-        quiet: Optional[bool] = None,
-        context: Optional[dict[str, Any]] = None,
-        extra: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
+        quiet: bool | None = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.context = context
         self.extra = extra
@@ -103,12 +103,12 @@ class HTTPException(SanicException):
 
     def __init__(
         self,
-        message: Optional[Union[str, bytes]] = None,
+        message: str | bytes | None = None,
         *,
-        quiet: Optional[bool] = None,
-        context: Optional[dict[str, Any]] = None,
-        extra: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, Any]] = None,
+        quiet: bool | None = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(
             message,
@@ -187,14 +187,14 @@ class MethodNotAllowed(HTTPException):
 
     def __init__(
         self,
-        message: Optional[Union[str, bytes]] = None,
+        message: str | bytes | None = None,
         method: str = "",
-        allowed_methods: Optional[Sequence[str]] = None,
+        allowed_methods: Sequence[str] | None = None,
         *,
-        quiet: Optional[bool] = None,
-        context: Optional[dict[str, Any]] = None,
-        extra: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, Any]] = None,
+        quiet: bool | None = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
     ):
         super().__init__(
             message,
@@ -308,14 +308,14 @@ class FileNotFound(NotFound):
 
     def __init__(
         self,
-        message: Optional[Union[str, bytes]] = None,
-        path: Optional[PathLike] = None,
-        relative_url: Optional[str] = None,
+        message: str | bytes | None = None,
+        path: PathLike | None = None,
+        relative_url: str | None = None,
         *,
-        quiet: Optional[bool] = None,
-        context: Optional[dict[str, Any]] = None,
-        extra: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, Any]] = None,
+        quiet: bool | None = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
     ):
         super().__init__(
             message,
@@ -438,13 +438,13 @@ class RangeNotSatisfiable(HTTPException):
 
     def __init__(
         self,
-        message: Optional[Union[str, bytes]] = None,
-        content_range: Optional[Range] = None,
+        message: str | bytes | None = None,
+        content_range: Range | None = None,
         *,
-        quiet: Optional[bool] = None,
-        context: Optional[dict[str, Any]] = None,
-        extra: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, Any]] = None,
+        quiet: bool | None = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
     ):
         super().__init__(
             message,
@@ -530,12 +530,12 @@ class PyFileError(SanicException):
     def __init__(
         self,
         file,
-        status_code: Optional[int] = None,
+        status_code: int | None = None,
         *,
-        quiet: Optional[bool] = None,
-        context: Optional[dict[str, Any]] = None,
-        extra: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, Any]] = None,
+        quiet: bool | None = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
     ):
         super().__init__(
             "could not execute config file %s" % file,
@@ -612,13 +612,13 @@ class Unauthorized(HTTPException):
 
     def __init__(
         self,
-        message: Optional[Union[str, bytes]] = None,
-        scheme: Optional[str] = None,
+        message: str | bytes | None = None,
+        scheme: str | None = None,
         *,
-        quiet: Optional[bool] = None,
-        context: Optional[dict[str, Any]] = None,
-        extra: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, Any]] = None,
+        quiet: bool | None = None,
+        context: dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
         **challenges,
     ):
         super().__init__(

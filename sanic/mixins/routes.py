@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ast import NodeVisitor, Return, parse
 from collections.abc import Iterable
 from contextlib import suppress
@@ -6,8 +8,6 @@ from textwrap import dedent
 from typing import (
     Any,
     Callable,
-    Optional,
-    Union,
     cast,
 )
 
@@ -23,7 +23,7 @@ from sanic.types import HashableDict
 
 
 RouteWrapper = Callable[
-    [RouteHandler], Union[RouteHandler, tuple[Route, RouteHandler]]
+    [RouteHandler], RouteHandler | tuple[Route, RouteHandler]
 ]
 
 
@@ -38,20 +38,20 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def route(
         self,
         uri: str,
-        methods: Optional[Iterable[str]] = None,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
+        methods: Iterable[str] | None = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
         stream: bool = False,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         ignore_body: bool = False,
         apply: bool = True,
-        subprotocols: Optional[list[str]] = None,
+        subprotocols: list[str] | None = None,
         websocket: bool = False,
         unquote: bool = False,
         static: bool = False,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteWrapper:
         """Decorate a function to be registered as a route.
@@ -215,13 +215,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         handler: RouteHandler,
         uri: str,
         methods: Iterable[str] = frozenset({"GET"}),
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         stream: bool = False,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         unquote: bool = False,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
@@ -309,13 +309,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def get(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """Decorate a function handler to create a route definition using the **GET** HTTP method.
@@ -362,13 +362,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def post(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
         stream: bool = False,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """Decorate a function handler to create a route definition using the **POST** HTTP method.
@@ -413,13 +413,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def put(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
         stream: bool = False,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """Decorate a function handler to create a route definition using the **PUT** HTTP method.
@@ -464,13 +464,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def head(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """Decorate a function handler to create a route definition using the **HEAD** HTTP method.
@@ -517,13 +517,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def options(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         ignore_body: bool = True,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """Decorate a function handler to create a route definition using the **OPTIONS** HTTP method.
@@ -570,13 +570,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def patch(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
         stream=False,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """Decorate a function handler to create a route definition using the **PATCH** HTTP method.
@@ -621,13 +621,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def delete(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         ignore_body: bool = False,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ) -> RouteHandler:
         """Decorate a function handler to create a route definition using the **DELETE** HTTP method.
@@ -671,14 +671,14 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
     def websocket(
         self,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
-        subprotocols: Optional[list[str]] = None,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
+        subprotocols: list[str] | None = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         apply: bool = True,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ):
         """Decorate a function to be registered as a websocket route.
@@ -725,13 +725,13 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         self,
         handler,
         uri: str,
-        host: Optional[Union[str, list[str]]] = None,
-        strict_slashes: Optional[bool] = None,
+        host: str | list[str] | None = None,
+        strict_slashes: bool | None = None,
         subprotocols=None,
-        version: Optional[Union[int, str, float]] = None,
-        name: Optional[str] = None,
+        version: int | str | float | None = None,
+        name: str | None = None,
         version_prefix: str = "/v",
-        error_format: Optional[str] = None,
+        error_format: str | None = None,
         **ctx_kwargs: Any,
     ):
         """A helper method to register a function as a websocket route.

@@ -4,7 +4,7 @@ import re
 import string
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from sanic.exceptions import ServerError
 
@@ -12,17 +12,15 @@ from sanic.exceptions import ServerError
 if TYPE_CHECKING:
     from sanic.compat import Header
 
-from typing import Literal
 
-
-SameSite = Union[
-    Literal["Strict"],
-    Literal["Lax"],
-    Literal["None"],
-    Literal["strict"],
-    Literal["lax"],
-    Literal["none"],
-]
+SameSite = (
+    Literal["Strict"]
+    | Literal["Lax"]
+    | Literal["None"]
+    | Literal["strict"]
+    | Literal["lax"]
+    | Literal["none"]
+)
 
 DEFAULT_MAX_AGE = 0
 SAMESITE_VALUES = ("strict", "lax", "none")

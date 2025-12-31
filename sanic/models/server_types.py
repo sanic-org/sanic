@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ssl import SSLContext, SSLObject
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 from sanic.models.protocol_types import TransportProtocol
 
@@ -35,7 +35,7 @@ class ConnInfo:
     def __init__(self, transport: TransportProtocol, unix=None):
         self.ctx = SimpleNamespace()
         self.lost = False
-        self.peername: Optional[tuple[str, int]] = None
+        self.peername: tuple[str, int] | None = None
         self.server = self.client = ""
         self.server_port = self.client_port = 0
         self.client_ip = ""
@@ -44,8 +44,8 @@ class ConnInfo:
         self.server_name = ""
         self.cert: dict[str, Any] = {}
         self.network_paths: list[Any] = []
-        sslobj: Optional[SSLObject] = transport.get_extra_info("ssl_object")  # type: ignore
-        sslctx: Optional[SSLContext] = transport.get_extra_info("ssl_context")  # type: ignore
+        sslobj: SSLObject | None = transport.get_extra_info("ssl_object")  # type: ignore
+        sslctx: SSLContext | None = transport.get_extra_info("ssl_context")  # type: ignore
         if sslobj:
             self.ssl = True
             self.server_name = getattr(sslobj, "sanic_server_name", None) or ""

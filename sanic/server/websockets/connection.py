@@ -1,10 +1,5 @@
 from collections.abc import Awaitable, MutableMapping
-from typing import (
-    Any,
-    Callable,
-    Optional,
-    Union,
-)
+from typing import Any, Callable
 
 from sanic.exceptions import InvalidUsage
 
@@ -26,14 +21,14 @@ class WebSocketConnection:
         self,
         send: Callable[[ASGIMessage], Awaitable[None]],
         receive: Callable[[], Awaitable[ASGIMessage]],
-        subprotocols: Optional[list[str]] = None,
+        subprotocols: list[str] | None = None,
     ) -> None:
         self._send = send
         self._receive = receive
         self._subprotocols = subprotocols or []
 
-    async def send(self, data: Union[str, bytes], *args, **kwargs) -> None:
-        message: dict[str, Union[str, bytes]] = {"type": "websocket.send"}
+    async def send(self, data: str | bytes, *args, **kwargs) -> None:
+        message: dict[str, str | bytes] = {"type": "websocket.send"}
 
         if isinstance(data, bytes):
             message.update({"bytes": data})
@@ -42,7 +37,7 @@ class WebSocketConnection:
 
         await self._send(message)
 
-    async def recv(self, *args, **kwargs) -> Optional[Union[str, bytes]]:
+    async def recv(self, *args, **kwargs) -> str | bytes | None:
         message = await self._receive()
 
         if message["type"] == "websocket.receive":
@@ -60,7 +55,7 @@ class WebSocketConnection:
 
     receive = recv
 
-    async def accept(self, subprotocols: Optional[list[str]] = None) -> None:
+    async def accept(self, subprotocols: list[str] | None = None) -> None:
         subprotocol = None
         if subprotocols:
             for subp in subprotocols:
@@ -83,5 +78,5 @@ class WebSocketConnection:
         return self._subprotocols
 
     @subprotocols.setter
-    def subprotocols(self, subprotocols: Optional[list[str]] = None):
+    def subprotocols(self, subprotocols: list[str] | None = None):
         self._subprotocols = subprotocols or []

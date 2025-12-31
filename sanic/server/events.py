@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from inspect import isawaitable
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable
 
 
 if TYPE_CHECKING:
@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 
 def trigger_events(
-    events: Optional[Iterable[Callable[..., Any]]],
+    events: Iterable[Callable[..., Any]] | None,
     loop,
-    app: Optional[Sanic] = None,
+    app: Sanic | None = None,
     **kwargs,
 ):
     """Trigger event callbacks (functions or async)

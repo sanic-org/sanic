@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from functools import lru_cache
 from inspect import signature
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import UUID
 
 from sanic_routing import BaseRouter
@@ -29,7 +29,7 @@ class Router(BaseRouter):
     ALLOWED_METHODS = HTTP_METHODS
 
     def _get(
-        self, path: str, method: str, host: Optional[str]
+        self, path: str, method: str, host: str | None
     ) -> tuple[Route, RouteHandler, dict[str, Any]]:
         try:
             return self.resolve(
@@ -50,7 +50,7 @@ class Router(BaseRouter):
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def get(  # type: ignore
-        self, path: str, method: str, host: Optional[str]
+        self, path: str, method: str, host: str | None
     ) -> tuple[Route, RouteHandler, dict[str, Any]]:
         """Retrieve a `Route` object containing the details about how to handle a response for a given request
 
@@ -80,18 +80,18 @@ class Router(BaseRouter):
         uri: str,
         methods: Iterable[str],
         handler: RouteHandler,
-        host: Optional[Union[str, Iterable[str]]] = None,
+        host: str | Iterable[str] | None = None,
         strict_slashes: bool = False,
         stream: bool = False,
         ignore_body: bool = False,
-        version: Optional[Union[str, float, int]] = None,
-        name: Optional[str] = None,
+        version: str | float | int | None = None,
+        name: str | None = None,
         unquote: bool = False,
         static: bool = False,
         version_prefix: str = "/v",
         overwrite: bool = False,
-        error_format: Optional[str] = None,
-    ) -> Union[Route, list[Route]]:
+        error_format: str | None = None,
+    ) -> Route | list[Route]:
         """Add a handler to the router
 
         Args:
@@ -165,8 +165,8 @@ class Router(BaseRouter):
 
     @lru_cache(maxsize=ROUTER_CACHE_SIZE)
     def find_route_by_view_name(
-        self, view_name: str, name: Optional[str] = None
-    ) -> Optional[Route]:
+        self, view_name: str, name: str | None = None
+    ) -> Route | None:
         """Find a route in the router based on the specified view name.
 
         Args:

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from sanic.errorpages import BaseRenderer, TextRenderer, exception_response
 from sanic.exceptions import ServerError
 from sanic.log import error_logger
@@ -28,17 +26,17 @@ class ErrorHandler:
         base: type[BaseRenderer] = TextRenderer,
     ):
         self.cached_handlers: dict[
-            tuple[type[BaseException], Optional[str]], Optional[RouteHandler]
+            tuple[type[BaseException], str | None], RouteHandler | None
         ] = {}
         self.debug = False
         self.base = base
 
-    def _full_lookup(self, exception, route_name: Optional[str] = None):
+    def _full_lookup(self, exception, route_name: str | None = None):
         return self.lookup(exception, route_name)
 
     def _add(
         self,
-        key: tuple[type[BaseException], Optional[str]],
+        key: tuple[type[BaseException], str | None],
         handler: RouteHandler,
     ) -> None:
         if key in self.cached_handlers:
@@ -53,7 +51,7 @@ class ErrorHandler:
             raise ServerError(message)
         self.cached_handlers[key] = handler
 
-    def add(self, exception, handler, route_names: Optional[list[str]] = None):
+    def add(self, exception, handler, route_names: list[str] | None = None):
         """Add a new exception handler to an already existing handler object.
 
         Args:
@@ -72,7 +70,7 @@ class ErrorHandler:
         else:
             self._add((exception, None), handler)
 
-    def lookup(self, exception, route_name: Optional[str] = None):
+    def lookup(self, exception, route_name: str | None = None):
         """Lookup the existing instance of `ErrorHandler` and fetch the registered handler for a specific type of exception.
 
         This method leverages a dict lookup to speedup the retrieval process.

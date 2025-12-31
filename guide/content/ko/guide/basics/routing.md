@@ -893,6 +893,44 @@ You now have a browsable directory in your web browser:
 
 _Added in v23.3_
 
+#### Symlink control
+
+.. new:: New in v25.12
+
+```
+This feature was added in version 25.12
+```
+
+.. column::
+
+```
+By default, Sanic will not follow symlinks that point outside the static root directory for security reasons. You can enable external symlinks separately for files and directories using `follow_external_symlink_files` and `follow_external_symlink_dirs`.
+```
+
+.. column::
+
+````
+```python
+# Allow file symlinks pointing outside static root
+app.static(
+    "/static",
+    "/var/www/static",
+    follow_external_symlink_files=True,
+)
+
+# Allow directory symlinks pointing outside static root
+app.static(
+    "/static",
+    "/var/www/static",
+    follow_external_symlink_dirs=True,
+)
+```
+````
+
+Symlinks within the static root always work regardless of these settings. Broken symlinks are always hidden from directory listings and return 404.
+
+_Added in v25.12_
+
 ## Route context
 
 .. column::

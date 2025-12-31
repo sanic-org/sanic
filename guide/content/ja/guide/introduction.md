@@ -1,6 +1,6 @@
 # はじめに
 
-Sanic is a Python 3.10+ web server and web framework that's written to go fast. Python 3.5 で追加された async/await 構文を使用することができます。これにより、コードをノンブロッキングでスピーディーにすることができます。
+Sanic は Python 3.10+ のウェブサーバーであり、高速に動作するように書かれたウェブフレームワークです。 Python 3.5 で追加された async/await 構文を使用することができます。これにより、コードをノンブロッキングでスピーディーにすることができます。
 
 .. attrs::
 :class: 紹介テーブル

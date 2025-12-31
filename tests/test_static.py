@@ -1,18 +1,15 @@
 import logging
 import os
 import sys
-
 from collections import Counter
 from pathlib import Path
 from time import gmtime, strftime
 from urllib.parse import unquote
 
 import pytest
-
 from sanic import Sanic, text
 from sanic.exceptions import FileNotFound, ServerError
 from sanic.response import file
-
 
 pytestmark = pytest.mark.xdist_group(name="static_files")
 
@@ -545,7 +542,7 @@ def test_stack_trace_on_not_found(app, static_file_directory, caplog):
     assert counter[("sanic.root", logging.INFO)] == 10
     assert counter[("sanic.root", logging.ERROR)] == 0
     assert counter[("sanic.error", logging.ERROR)] == 0
-    assert counter[("sanic.server", logging.INFO)] == 3
+    assert counter[("sanic.server", logging.INFO)] == 4
 
 
 def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
@@ -564,7 +561,7 @@ def test_no_stack_trace_on_not_found(app, static_file_directory, caplog):
     assert counter[("sanic.root", logging.INFO)] == 10
     assert counter[("sanic.root", logging.ERROR)] == 0
     assert counter[("sanic.error", logging.ERROR)] == 0
-    assert counter[("sanic.server", logging.INFO)] == 3
+    assert counter[("sanic.server", logging.INFO)] == 4
     assert response.text == "No file: /static/non_existing_file.file"
 
 

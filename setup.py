@@ -155,8 +155,12 @@ docs_require = [
     "pygments",
     "m2r2",
     "enum-tools[sphinx]",
-    "mistune<2.0.0",
+    "mistune>=2.0.0",
     "autodocsumm>=0.2.11",
+    "msgspec",
+    "python-frontmatter",
+    "docstring-parser",
+    "libsass",
 ]
 
 dev_require = tests_require + [

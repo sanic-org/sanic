@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import atexit
-import grp
 import os
-import pwd
 import signal
 import sys
 import time
@@ -20,6 +18,13 @@ try:
     import fcntl  # type: ignore
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     fcntl = None  # type: ignore
+
+try:
+    import grp
+    import pwd
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    grp = None  # type: ignore
+    pwd = None  # type: ignore
 
 
 def _get_default_runtime_dir() -> Path:

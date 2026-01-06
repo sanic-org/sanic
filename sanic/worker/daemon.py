@@ -22,7 +22,7 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 try:
     import grp
     import pwd
-except ImportError:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     grp = None  # type: ignore
     pwd = None  # type: ignore
 

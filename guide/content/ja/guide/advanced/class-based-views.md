@@ -123,7 +123,7 @@ app.add_route(SimpleView.as_view(), "/")
 .. column::
 
 ```
-You can use path parameters exactly as discussed in [the routing section](../basics/routing.md).
+[ルーティングのセクション](../basics/routing.md)で説明されているように、pathパラメータを使用できます。
 ```
 
 .. column::
@@ -141,7 +141,7 @@ app.add_route(NameView.as_view(), "/<name>")
 
 ## デコレータ
 
-As discussed in [the decorators section](../best-practices/decorators.md), often you will need to add functionality to endpoints with the use of decorators. CBVによる二つの選択肢があります:
+[デコレータのセクション](../best-practices/decorators.md)で述べられているように、デコレータを使用してエンドポイントに機能を追加する必要があるかもしれません。 CBVによる二つの選択肢があります:
 
 1. ビュー内の _全ての_ HTTPメソッドに適用する
 2. ビュー内のHTTPメソッドに個別に適用する

@@ -1914,7 +1914,7 @@ class Sanic(
             try:
                 loop = get_running_loop()
             except RuntimeError:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_event_loop_policy().get_event_loop()
 
         while self._task_registry and timeout > 0:
             try:

@@ -1603,7 +1603,7 @@ class Sanic(
         return ".".join(parts)
 
     @classmethod
-    def _cancel_websocket_tasks(cls, app, loop):
+    def _cancel_websocket_tasks(cls, app):
         for task in app.websocket_tasks:
             task.cancel()
 
@@ -1684,10 +1684,7 @@ class Sanic(
         return tsk
 
     @staticmethod
-    async def dispatch_delayed_tasks(
-        app: Sanic,
-        loop: AbstractEventLoop,
-    ) -> None:
+    async def dispatch_delayed_tasks(app: Sanic) -> None:
         """Signal handler for dispatching delayed tasks.
 
         This is used to dispatch tasks that were added before the loop was
@@ -1696,12 +1693,11 @@ class Sanic(
 
         Args:
             app (Sanic): The Sanic application instance.
-            loop (AbstractEventLoop): The event loop in which the tasks are
-                being run.
 
         Returns:
             None
         """
+        loop = asyncio.get_running_loop()
         for name in app._delayed_tasks:
             await app.dispatch(name, context={"app": app, "loop": loop})
         app._delayed_tasks.clear()

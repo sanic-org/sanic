@@ -204,10 +204,9 @@ def _run_shutdown_coro(loop, coro):
             pass
 
 
-def _run_server_forever(loop, before_stop, after_stop, cleanup, unix):
-    pid = os.getpid()
+def _run_server_forever(loop, before_stop, after_stop, cleanup, unix, pid):
     try:
-        server_logger.info("Starting worker [%s]", pid)
+        server_logger.info("Worker ready [%s]", pid)
         loop.run_forever()
     finally:
         server_logger.info("Stopping worker [%s]", pid)
@@ -291,6 +290,8 @@ def _serve_http_1(
             connections=connections,
         )
 
+    pid = os.getpid()
+    server_logger.info("Starting worker [%s]", pid)
     loop.run_until_complete(app._startup())
     loop.run_until_complete(app._server_event("init", "before"))
     app.ack()
@@ -345,6 +346,7 @@ def _serve_http_1(
         partial(app._server_event, "shutdown", "after"),
         _cleanup,
         unix,
+        pid,
     )
 
 
@@ -361,6 +363,8 @@ def _serve_http_3(
         raise ServerError(
             "Cannot run HTTP/3 server without aioquic installed. "
         )
+    pid = os.getpid()
+    server_logger.info("Starting worker [%s]", pid)
     protocol = partial(Http3Protocol, app=app)
     ticket_store = SessionTicketStore()
     ssl_context = get_ssl_context(app, ssl)
@@ -384,7 +388,7 @@ def _serve_http_3(
     # TODO: Create connection cleanup and graceful shutdown
     cleanup = None
     _run_server_forever(
-        loop, server.before_stop, server.after_stop, cleanup, None
+        loop, server.before_stop, server.after_stop, cleanup, None, pid
     )
 
 

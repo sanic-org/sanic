@@ -1,7 +1,6 @@
 from unittest.mock import Mock, call, patch
 
 import pytest
-
 from sanic.app import Sanic
 from sanic.http.constants import HTTP
 from sanic.server.runners import _run_server_forever, serve
@@ -42,6 +41,7 @@ def test_run_server_forever(remove_unix_socket: Mock, do_cleanup: bool):
             after_stop,
             cleanup if do_cleanup else None,
             unix,
+            12345,
         )
 
     loop.run_forever.assert_called_once_with()

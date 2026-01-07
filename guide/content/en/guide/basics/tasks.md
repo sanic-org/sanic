@@ -44,6 +44,20 @@ app.add_task(notify_server_started_after_five_seconds())
     app.add_task(explicit_inject(app))
     ```
 
+.. column::
+
+    The `add_task` method returns the created `asyncio.Task` object, allowing you to await or check its result later.
+
+    *Added in v25.12*
+
+.. column::
+
+    ```python
+    task = app.add_task(some_coroutine())
+    # Later...
+    result = await task
+    ```
+
 ## Adding tasks before `app.run`
 
 It is possible to add background tasks before the App is run ie. before `app.run`. To add a task before the App is run, it is recommended to not pass the coroutine object (ie. one created by calling the `async` callable), but instead just pass the callable and Sanic will create the coroutine object on **each worker**. Note: the tasks that are added such are run as `before_server_start` jobs and thus run on every worker (and not in the main process). This has certain consequences, please read [this comment](https://github.com/sanic-org/sanic/issues/2139#issuecomment-868993668) on [this issue](https://github.com/sanic-org/sanic/issues/2139) for further details.

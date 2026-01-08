@@ -1095,6 +1095,11 @@ class StartupMixin(metaclass=SanicMeta):
                 },
                 "shared_ctx": app.shared_ctx.__dict__,
             }
+            if app.config.SERVER_NAME:
+                if app.config.SERVER_NAME:
+                    kwargs["passthru"]["config"]["SERVER_NAME"] = (
+                        app.config.SERVER_NAME
+                    )
             for app in apps:
                 kwargs["server_info"][app.name] = []
                 for server_info in app.state.server_info:

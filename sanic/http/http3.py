@@ -142,24 +142,20 @@ class HTTPReceiver(Receiver, Stream):
         size = len(response.body) if response.body else 0
         headers = response.headers
         status = response.status
-
-        if not has_message_body(status) and (
+        want_body = (
             size
             or "content-length" in headers
             or "transfer-encoding" in headers
-        ):
+        )
+        headers.pop("transfer-encoding", None)  # Not used with HTTP/3
+        if want_body and not has_message_body(status):
             headers.pop("content-length", None)
-            headers.pop("transfer-encoding", None)
             logger.warning(  # no cov
                 f"Message body set in response on {self.request.path}. "
                 f"A {status} response may only have headers, no body."
             )
-        elif "content-length" not in headers:
-            if size:
-                headers["content-length"] = size
-            else:
-                headers["transfer-encoding"] = "chunked"
-
+        elif size and "content-length" not in headers:
+            headers["content-length"] = size
         headers = [
             (b":status", str(response.status).encode()),
             *response.processed_headers,
@@ -185,18 +181,8 @@ class HTTPReceiver(Receiver, Stream):
         self.headers_sent = True
         self.stage = Stage.RESPONSE
 
-        if self.response.body and not self.head_only:
-            self._send(self.response.body, False)
-        elif self.head_only:
-            self.future.cancel()
-
     def respond(self, response: BaseHTTPResponse) -> BaseHTTPResponse:
         """Prepare response to client"""
-        logger.debug(  # no cov
-            f"{Colors.BLUE}[respond]:{Colors.END} {response}",
-            extra={"verbosity": 2},
-        )
-
         if self.stage is not Stage.HANDLER:
             self.stage = Stage.FAILED
             raise RuntimeError("Response already started")
@@ -219,38 +205,14 @@ class HTTPReceiver(Receiver, Stream):
 
     async def send(self, data: bytes, end_stream: bool) -> None:
         """Send data to client"""
-        logger.debug(  # no cov
-            f"{Colors.BLUE}[send]: {Colors.GREEN}data={data.decode()} "
-            f"end_stream={end_stream}{Colors.END}",
-            extra={"verbosity": 2},
-        )
-        self._send(data, end_stream)
-
-    def _send(self, data: bytes, end_stream: bool) -> None:
         if not self.headers_sent:
             self.send_headers()
         if self.stage is not Stage.RESPONSE:
             raise ServerError(f"not ready to send: {self.stage}")
 
-        # Chunked
-        if (
-            self.response
-            and self.response.headers.get("transfer-encoding") == "chunked"
-        ):
-            size = len(data)
-            if end_stream:
-                data = (
-                    b"%x\r\n%b\r\n0\r\n\r\n" % (size, data)
-                    if size
-                    else b"0\r\n\r\n"
-                )
-            elif size:
-                data = b"%x\r\n%b\r\n" % (size, data)
+        if data and self.head_only:
+            data = b""
 
-        logger.debug(  # no cov
-            f"{Colors.BLUE}[transmitting]{Colors.END}",
-            extra={"verbosity": 2},
-        )
         self.protocol.connection.send_data(
             stream_id=self.request.stream_id,
             data=data,

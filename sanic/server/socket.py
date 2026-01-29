@@ -29,6 +29,19 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
     except ValueError:  # Hostname, may become AF_INET or AF_INET6
         sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    # Sanic's test client (sanic-testing) starts/stops a real server for each request.
+    # In Docker/Linux, rapid restart can sometimes fail with:
+    #   OSError: [Errno 98] Address already in use
+    # because the previous listener socket may not be fully released yet.
+    # Enabling SO_REUSEPORT improves reliability of repeated bind/listen cycles on the
+    # same host:port. It’s a no-op on platforms without SO_REUSEPORT support.
+    if hasattr(socket, "SO_REUSEPORT"):
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except OSError:
+            # Some platforms/kernels reject it; ignore and keep old behavior
+            pass
     sock.bind(location)
     sock.listen(backlog)
     sock.set_inheritable(True)

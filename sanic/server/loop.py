@@ -1,10 +1,41 @@
 import asyncio
+import sys
+import warnings
 
 from os import getenv
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.log import error_logger
 from sanic.utils import str_to_bool
+
+PYTHON_314_OR_LATER = sys.version_info >= (3, 14)
+
+
+def _get_event_loop_policy():
+    """Get the current event loop policy, suppressing deprecation on 3.14+."""
+    if PYTHON_314_OR_LATER:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=DeprecationWarning,
+                message=".*get_event_loop_policy.*",
+            )
+            return asyncio.get_event_loop_policy()
+    return asyncio.get_event_loop_policy()
+
+
+def _set_event_loop_policy(policy):
+    """Set the event loop policy, suppressing deprecation on 3.14+."""
+    if PYTHON_314_OR_LATER:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=DeprecationWarning,
+                message=".*set_event_loop_policy.*",
+            )
+            asyncio.set_event_loop_policy(policy)
+    else:
+        asyncio.set_event_loop_policy(policy)
 
 
 def try_use_uvloop() -> None:
@@ -43,8 +74,8 @@ def try_use_uvloop() -> None:
             "false."
         )
 
-    if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    if not isinstance(_get_event_loop_policy(), uvloop.EventLoopPolicy):
+        _set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def try_windows_loop():
@@ -59,6 +90,6 @@ def try_windows_loop():
         return
 
     if not isinstance(
-        asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
+        _get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
     ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        _set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

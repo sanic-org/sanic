@@ -170,10 +170,16 @@ def _setup_system_signals(
         if OS_IS_WINDOWS:
             ctrlc_workaround_for_windows(app)
         else:
+            import warnings
+
             for _signal in [SIGINT, SIGTERM]:
-                loop.add_signal_handler(
-                    _signal, partial(app.stop, terminate=False)
-                )
+                with warnings.catch_warnings():
+                    # Suppress uvloop's use of deprecated
+                    # asyncio.iscoroutinefunction on Python 3.14+
+                    warnings.simplefilter("ignore", DeprecationWarning)
+                    loop.add_signal_handler(
+                        _signal, partial(app.stop, terminate=False)
+                    )
 
 
 def _run_shutdown_coro(loop, coro):

@@ -8,7 +8,6 @@ from asyncio import (
     CancelledError,
     Protocol,
     all_tasks,
-    get_event_loop,
     get_running_loop,
     new_event_loop,
 )
@@ -577,7 +576,7 @@ class StartupMixin(metaclass=SanicMeta):
             ssl=ssl,
             sock=sock,
             unix=unix,
-            loop=get_event_loop(),
+            loop=get_running_loop(),
             protocol=protocol,
             backlog=backlog,
             run_async=return_asyncio_server,
@@ -622,7 +621,7 @@ class StartupMixin(metaclass=SanicMeta):
                 with suppress(AttributeError):
                     if task.get_name() == "RunServer":
                         task.cancel()
-            get_event_loop().stop()
+            get_running_loop().stop()
 
         if unregister:
             self.__class__.unregister_app(self)  # type: ignore

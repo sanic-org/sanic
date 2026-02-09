@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 
 from os import getenv
 
@@ -43,8 +44,12 @@ def try_use_uvloop() -> None:
             "false."
         )
 
-    if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        if not isinstance(
+            asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy
+        ):
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def try_windows_loop():
@@ -58,7 +63,12 @@ def try_windows_loop():
         )
         return
 
-    if not isinstance(
-        asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
-    ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        if not isinstance(
+            asyncio.get_event_loop_policy(),
+            asyncio.WindowsSelectorEventLoopPolicy,
+        ):
+            asyncio.set_event_loop_policy(
+                asyncio.WindowsSelectorEventLoopPolicy()
+            )

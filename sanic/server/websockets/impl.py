@@ -130,7 +130,7 @@ class WebsocketImplProtocol:
             try:
                 loop = getattr(io_proto, "loop")
             except AttributeError:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
         if not loop:
             # This catch is for mypy type checker
             # to assert loop is not None here.

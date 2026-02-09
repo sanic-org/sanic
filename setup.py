@@ -125,7 +125,6 @@ requirements = [
     "html5tagger>=1.2.1",
     "tracerite>=2.2.0",
     "typing-extensions>=4.4.0",
-    "setuptools>=70.1.0",
 ]
 
 tests_require = [

@@ -83,6 +83,18 @@ def worker_serve(
             for info in app.state.server_info:
                 info.settings["ssl"] = ssl
 
+        # Load per-app SSL for non-primary apps from their server_info settings
+        if server_info:
+            for si_app_name in server_info:
+                a = Sanic.get_app(si_app_name)
+                for info in a.state.server_info:
+                    info_ssl = info.settings.get("ssl")
+                    if info_ssl is not None and not isinstance(
+                        info_ssl, SSLContext
+                    ):
+                        cert_loader = a.certloader_class(info_ssl)
+                        info.settings["ssl"] = cert_loader.load(a)
+
         # When in a worker process, do some init
         worker_name = os.environ.get("SANIC_WORKER_NAME")
         if worker_name and worker_name.startswith(

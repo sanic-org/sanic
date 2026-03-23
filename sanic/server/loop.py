@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from os import getenv
 
@@ -43,8 +44,17 @@ def try_use_uvloop() -> None:
             "false."
         )
 
-    if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    if sys.version_info >= (3, 12):
+        # Python 3.12+: use set_event_loop_factory (avoids deprecated policy API)
+        if hasattr(asyncio, "set_event_loop_factory"):
+            asyncio.set_event_loop_factory(uvloop.new_event_loop)
+        else:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    else:
+        if not isinstance(
+            asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy
+        ):
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def try_windows_loop():
@@ -58,7 +68,21 @@ def try_windows_loop():
         )
         return
 
-    if not isinstance(
-        asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
-    ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if sys.version_info >= (3, 12):
+        # Python 3.12+: use set_event_loop_factory (avoids deprecated policy API)
+        if hasattr(asyncio, "set_event_loop_factory"):
+            asyncio.set_event_loop_factory(
+                asyncio.WindowsSelectorEventLoop
+            )
+        else:
+            asyncio.set_event_loop_policy(
+                asyncio.WindowsSelectorEventLoopPolicy()
+            )
+    else:
+        if not isinstance(
+            asyncio.get_event_loop_policy(),
+            asyncio.WindowsSelectorEventLoopPolicy,
+        ):
+            asyncio.set_event_loop_policy(
+                asyncio.WindowsSelectorEventLoopPolicy()
+            )

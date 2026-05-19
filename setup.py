@@ -146,6 +146,9 @@ tests_require = [
     "uvicorn",
     "slotscheck>=0.8.0,<1",
     types_ujson,
+    "fakeredis[lua]",
+    "redis>=5.0.0",
+    "pytest-asyncio",
 ]
 
 docs_require = [
@@ -188,6 +191,7 @@ extras_require = {
     "all": all_require,
     "ext": ["sanic-ext"],
     "http3": ["aioquic"],
+    "jobs": ["redis>=5.0.0"],
 }
 
 setup_kwargs["install_requires"] = requirements

@@ -96,6 +96,41 @@ def test_dont_register_system_signals(app):
     assert calledq.get() is False
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX signal semantics")
+def test_dont_register_system_signals_preserves_user_handlers(app):
+    """Regression test for GH #2956.
+
+    When ``register_sys_signals=False`` the caller is opting out of Sanic's
+    own signal handling, so any signal handlers they have installed on
+    SIGINT/SIGTERM must not be overwritten with ``SIG_IGN``.
+    """
+    from sanic.server.runners import _setup_system_signals
+
+    # Install user-land handlers that we expect to survive the call.
+    def user_handler(_signum, _frame):  # pragma: no cover - sentinel only
+        pass
+
+    old_int = signal.signal(signal.SIGINT, user_handler)
+    old_term = signal.signal(signal.SIGTERM, user_handler)
+    try:
+        loop = asyncio.new_event_loop()
+        try:
+            _setup_system_signals(
+                app,
+                run_multiple=False,
+                register_sys_signals=False,
+                loop=loop,
+            )
+            # Handlers must still point at the user's callable, not SIG_IGN.
+            assert signal.getsignal(signal.SIGINT) is user_handler
+            assert signal.getsignal(signal.SIGTERM) is user_handler
+        finally:
+            loop.close()
+    finally:
+        signal.signal(signal.SIGINT, old_int)
+        signal.signal(signal.SIGTERM, old_term)
+
+
 @pytest.mark.skipif(os.name == "nt", reason="windows cannot SIGINT processes")
 def test_windows_workaround():
     """Test Windows workaround (on any other OS)"""

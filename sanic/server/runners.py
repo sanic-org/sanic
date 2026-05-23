@@ -162,11 +162,18 @@ def _setup_system_signals(
     register_sys_signals: bool,
     loop: asyncio.AbstractEventLoop,
 ) -> None:  # no cov
-    signal_func(SIGINT, SIG_IGN)
-    signal_func(SIGTERM, SIG_IGN)
     os.environ["SANIC_WORKER_PROCESS"] = "true"
     # Register signals for graceful termination
     if register_sys_signals:
+        # Reset the default Python signal handlers before installing the
+        # asyncio handlers below. Without this, the existing handlers (e.g.
+        # the default SIGINT -> KeyboardInterrupt) may race with the
+        # asyncio loop's add_signal_handler on some platforms. When the
+        # caller opts out via ``register_sys_signals=False`` they are
+        # explicitly taking over signal handling, so leave their handlers
+        # intact (see GH issue #2956).
+        signal_func(SIGINT, SIG_IGN)
+        signal_func(SIGTERM, SIG_IGN)
         if OS_IS_WINDOWS:
             ctrlc_workaround_for_windows(app)
         else:

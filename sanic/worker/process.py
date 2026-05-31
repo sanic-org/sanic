@@ -231,12 +231,10 @@ class WorkerProcess:
 
     def _add_config(self) -> bool:
         sig = signature(self.target)
-        if "config" in sig.parameters or any(
+        return "config" in sig.parameters or any(
             param.kind == param.VAR_KEYWORD
             for param in sig.parameters.values()
-        ):
-            return True
-        return False
+        )
 
 
 class Worker:

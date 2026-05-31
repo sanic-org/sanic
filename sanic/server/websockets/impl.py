@@ -860,7 +860,7 @@ class WebsocketImplProtocol:
         """
         The WebSocket Connection is Closed.
         """
-        if not self.ws_proto.state == CLOSED:
+        if self.ws_proto.state != CLOSED:
             # signal to the websocket connection handler
             # we've lost the connection
             self.ws_proto.fail(code=1006)

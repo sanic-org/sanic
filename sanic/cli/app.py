@@ -282,7 +282,7 @@ Advanced daemon management:
                         key, value = arg.split("=")
                         key = key.lstrip("-")
                     except ValueError:
-                        value = False if arg.startswith("--no-") else True
+                        value = not arg.startswith("--no-")
                         key = (
                             arg.replace("--no-", "")
                             .lstrip("-")

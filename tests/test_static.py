@@ -1,15 +1,18 @@
 import logging
 import os
 import sys
+
 from collections import Counter
 from pathlib import Path
 from time import gmtime, strftime
 from urllib.parse import unquote
 
 import pytest
+
 from sanic import Sanic, text
 from sanic.exceptions import FileNotFound, ServerError
 from sanic.response import file
+
 
 pytestmark = pytest.mark.xdist_group(name="static_files")
 

@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import re
 
-from collections.abc import Iterable
-from typing import Any
+from collections.abc import Collection, Iterable
+from typing import TYPE_CHECKING, Any
 from urllib.parse import unquote
 
 from sanic.exceptions import InvalidHeader
 from sanic.helpers import STATUS_CODES
+
+
+if TYPE_CHECKING:
+    from sanic.compat import Header
+    from sanic.config import Config
 
 
 # TODO:
@@ -199,7 +204,7 @@ class Matched:
             )
         )
 
-    def _compare(self, other) -> tuple[bool, Matched]:
+    def _compare(self, other: str | Matched) -> tuple[bool, Matched]:
         if isinstance(other, str):
             parsed = Matched.parse(other)
             if self.mime == other:
@@ -254,7 +259,7 @@ class AcceptList(list):
         *args (MediaType): Any number of MediaType objects.
     """
 
-    def match(self, *mimes: str, accept_wildcards=True) -> Matched:
+    def match(self, *mimes: str, accept_wildcards: bool = True) -> Matched:
         """Find a media type accepted by the client.
 
         This method can be used to find which of the media types requested by
@@ -365,16 +370,16 @@ def parse_content_header(value: str) -> tuple[str, Options]:
 _rparam = re.compile(f"(?:{_token}|{_quoted})={_token}\\s*($|[;,])", re.ASCII)
 
 
-def parse_forwarded(headers, config) -> Options | None:
+def parse_forwarded(headers: Header, config: Config) -> Options | None:
     """Parse RFC 7239 Forwarded headers.
     The value of `by` or `secret` must match `config.FORWARDED_SECRET`
     :return: dict with keys and values, or None if nothing matched
     """
-    header = headers.getall("forwarded", None)
+    header_values = headers.getall("forwarded", None)
     secret = config.FORWARDED_SECRET
-    if header is None or not secret:
+    if header_values is None or not secret:
         return None
-    header = ",".join(header)  # Join multiple header lines
+    header = ",".join(header_values)  # Join multiple header lines
     if secret not in header:
         return None
     # Loop over <separator><key>=<value> elements from right to left
@@ -403,7 +408,7 @@ def parse_forwarded(headers, config) -> Options | None:
     return fwd_normalize(reversed(options_list)) if found else None
 
 
-def parse_xforwarded(headers, config) -> Options | None:
+def parse_xforwarded(headers: Header, config: Config) -> Options | None:
     """Parse traditional proxy headers."""
     real_ip_header = config.REAL_IP_HEADER
     proxies_count = config.PROXIES_COUNT
@@ -530,7 +535,7 @@ def format_http1_response(status: int, headers: HeaderBytesIterable) -> bytes:
 
 def parse_credentials(
     header: str | None,
-    prefixes: list | tuple | set | None = None,
+    prefixes: Collection[str] | None = None,
 ) -> tuple[str | None, str | None]:
     """Parses any header with the aim to retrieve any credentials from it.
 
@@ -541,7 +546,7 @@ def parse_credentials(
     Returns:
         Tuple[Optional[str], Optional[str]]: The prefix and the credentials.
     """  # noqa: E501
-    if not prefixes or not isinstance(prefixes, (list, tuple, set)):
+    if not prefixes:
         prefixes = ("Basic", "Bearer", "Token")
     if header is not None:
         for prefix in prefixes:

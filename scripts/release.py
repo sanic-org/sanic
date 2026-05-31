@@ -73,7 +73,7 @@ class Directory:
         chdir(self._old_path)
 
 
-def _run_shell_command(command: list):
+def _run_shell_command(command: list[str]):
     try:
         process = Popen(
             command, stderr=PIPE, stdout=PIPE, stdin=PIPE, shell=True

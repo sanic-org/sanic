@@ -1,6 +1,7 @@
 from unittest.mock import Mock, call, patch
 
 import pytest
+
 from sanic.app import Sanic
 from sanic.http.constants import HTTP
 from sanic.server.runners import _run_server_forever, serve

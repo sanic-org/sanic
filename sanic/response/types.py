@@ -28,6 +28,9 @@ else:
     Request = TypeVar("Request")
 
 
+HEADER_TRANSLATION_TABLE = str.maketrans("", "", "\r\n\x00")
+
+
 class BaseHTTPResponse:
     """The base class for all HTTP Responses"""
 
@@ -61,6 +64,10 @@ class BaseHTTPResponse:
             return b""
         return data.encode() if hasattr(data, "encode") else data  # type: ignore
 
+    @staticmethod
+    def _sanitize_header_value(value: str) -> str:
+        return value.translate(HEADER_TRANSLATION_TABLE)
+
     @property
     def cookies(self) -> CookieJar:
         """The response cookies.
@@ -85,9 +92,15 @@ class BaseHTTPResponse:
         """  # noqa: E501
         if has_message_body(self.status):
             self.headers.setdefault("content-type", self.content_type)
-        # Encode headers into bytes
+        # Encode headers into bytes, stripping CR/LF/NUL from both name and
+        # value to prevent response header (CRLF) injection.
         return (
-            (name.encode("ascii"), f"{value}".encode(errors="surrogateescape"))
+            (
+                self._sanitize_header_value(name).encode("ascii"),
+                self._sanitize_header_value(f"{value}").encode(
+                    errors="surrogateescape"
+                ),
+            )
             for name, value in self.headers.items()
         )
 

@@ -80,7 +80,7 @@ def test_request_id(request_id, expected_type):
         "/", headers={"X-REQUEST-ID": f"{request_id}"}
     )
     assert request.id == request_id
-    assert type(request.id) == expected_type
+    assert type(request.id) is expected_type
 
 
 def test_custom_generator():

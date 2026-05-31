@@ -158,7 +158,7 @@ class DebugFormatter(AutoFormatter):
             return line
         exc = match.group("exc")
         message = match.group("message")
-        return f"{c.SANIC}{c.BOLD}{exc}{c.END}: " f"{c.BOLD}{message}{c.END}"
+        return f"{c.SANIC}{c.BOLD}{exc}{c.END}: {c.BOLD}{message}{c.END}"
 
     def _color_file_line(self, line: str) -> str:  # no cov
         match = FILE_LINE_RE.search(line)

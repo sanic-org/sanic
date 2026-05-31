@@ -159,11 +159,13 @@ class Http(Stream, metaclass=TouchUpMeta):
                 try:
                     async for _ in self:
                         pass
-                except PayloadTooLarge:
-                    # We won't read the body and that may cause httpx and
-                    # tests to fail. This little delay allows clients to push
-                    # a small request into network buffers before we close the
-                    # socket, so that they are then able to read the response.
+                except (BadRequest, PayloadTooLarge):
+                    # The remaining body was malformed (e.g. a chunked
+                    # trailer, which must never be reparsed as a smuggled
+                    # request) or too large. Drop the connection. This little
+                    # delay allows clients to push a small request into
+                    # network buffers before we close the socket, so that
+                    # they are then able to read the response.
                     await sleep(0.001)
                     self.keep_alive = False
 
@@ -534,12 +536,25 @@ class Http(Stream, metaclass=TouchUpMeta):
                     self.keep_alive = False
                     raise BadRequest("Bad chunked encoding")
 
-                # Consume CRLF, chunk size 0 and the two CRLF that follow
-                pos += 4
-                # Might need to wait for the final CRLF
-                while len(buf) < pos:
+                # Consume the leading CRLF, the terminating size line and
+                # the CRLF that follows it.
+                del buf[: pos + 2]
+
+                # Only the empty line that ends the (empty) trailer section
+                # may follow. Wait for it to arrive.
+                while len(buf) < 2:
                     await self._receive_more()
-                del buf[:pos]
+
+                # Reject any trailer-part. Leaving trailer bytes in the
+                # buffer would let them be reparsed as a smuggled request on
+                # this keep-alive connection.
+                if buf[:2] != b"\r\n":
+                    self.keep_alive = False
+                    raise BadRequest("Bad chunked encoding")
+
+                # Consume the final empty line. Anything after it is a
+                # legitimately pipelined next request.
+                del buf[:2]
                 return None
 
             # Remove CRLF, chunk size and the CRLF that follows

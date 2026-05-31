@@ -170,7 +170,7 @@ async def validate_file(
         if_modified_since = parsedate_to_datetime(if_modified_since)
     except (TypeError, ValueError):
         logger.warning(
-            "Ignorning invalid If-Modified-Since header received: " "'%s'",
+            "Ignorning invalid If-Modified-Since header received: '%s'",
             if_modified_since,
         )
         return None

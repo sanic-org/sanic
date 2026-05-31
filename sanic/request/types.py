@@ -44,7 +44,7 @@ from sanic.constants import (
     SAFE_HTTP_METHODS,
 )
 from sanic.cookies.request import CookieRequestParameters, parse_cookie
-from sanic.exceptions import BadRequest, BadURL, ServerError
+from sanic.exceptions import BadRequest, BadURL, ServerError, URITooLong
 from sanic.headers import (
     AcceptList,
     Options,
@@ -156,6 +156,11 @@ class Request(Generic[sanic_type, ctx_type]):
         stream_id: int = 0,
     ):
         self.raw_url = url_bytes
+        # httptools.parse_url stores URL component offsets and lengths as
+        # uint16, so a longer URL would silently wrap and truncate the path
+        # or query string. Reject it instead of routing on a corrupted path.
+        if len(url_bytes) > 65535:
+            raise URITooLong("URL exceeds the maximum size of 65535 bytes")
         try:
             self._parsed_url = parse_url(url_bytes)
         except HttpParserInvalidURLError:

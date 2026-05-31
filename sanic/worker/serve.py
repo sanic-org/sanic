@@ -75,6 +75,9 @@ def worker_serve(
                     for info in server_info_objects:
                         if not info.settings.get("app"):
                             info.settings["app"] = a
+                        if isinstance(info.settings.get("ssl"), dict) or a.certloader_class is not CertLoader:
+                            cert_loader = a.certloader_class(info.settings.get("ssl") or {})
+                            info.settings["ssl"] = cert_loader.load(a)
                         a.state.server_info.append(info)
 
         if isinstance(ssl, dict) or app.certloader_class is not CertLoader:

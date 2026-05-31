@@ -36,7 +36,7 @@ DEFAULT_CONFIG = {
     "EVENT_AUTOREGISTER": False,
     "DEPRECATION_FILTER": "once",
     "FORWARDED_FOR_HEADER": "X-Forwarded-For",
-    "FORWARDED_SECRET": None,
+    "FORWARDED_SECRET": None,  # nosec B105
     "GRACEFUL_SHUTDOWN_TIMEOUT": 15.0,
     "GRACEFUL_TCP_CLOSE_TIMEOUT": 5.0,
     "INSPECTOR": False,
@@ -64,7 +64,7 @@ DEFAULT_CONFIG = {
     "REQUEST_MAX_SIZE": 100_000_000,
     "REQUEST_TIMEOUT": 60,
     "RESPONSE_TIMEOUT": 60,
-    "TLS_CERT_PASSWORD": "",
+    "TLS_CERT_PASSWORD": "",  # nosec B105
     "TOUCHUP": _default,
     "USE_UVLOOP": _default,
     "WEBSOCKET_MAX_SIZE": 2**20,  # 1 MiB

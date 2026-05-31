@@ -16,14 +16,39 @@ from sanic_testing.testing import (
 )
 
 from sanic import Blueprint, Sanic
+from sanic.compat import Header
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
-from sanic.exceptions import ServerError
-from sanic.request import RequestParameters
+from sanic.exceptions import ServerError, URITooLong
+from sanic.request import Request, RequestParameters
 from sanic.response import BaseHTTPResponse, html, json, text
 
 
 def encode_basic_auth_credentials(username, password):
     return base64.b64encode(f"{username}:{password}".encode()).decode("ascii")
+
+
+def _make_request(url_bytes: bytes) -> Request:
+    return Request(url_bytes, Header(), "1.1", "GET", None, None)
+
+
+def test_long_url_raises_uri_too_long():
+    url = b"/admin/secret" + b"/" * (65536 - len(b"/admin/secret"))
+    assert len(url) == 65536
+    with pytest.raises(URITooLong):
+        _make_request(url)
+
+
+def test_long_query_string_raises_uri_too_long():
+    url = b"/?token=" + b"a" * 65536
+    with pytest.raises(URITooLong):
+        _make_request(url)
+
+
+def test_url_at_uint16_boundary_is_accepted():
+    url = b"/" + b"a" * 65534
+    assert len(url) == 65535
+    request = _make_request(url)
+    assert request.path == url.decode()
 
 
 # ------------------------------------------------------------ #

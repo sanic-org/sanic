@@ -112,6 +112,34 @@ def test_run_inspector_arbitrary(http_client):
     assert response.json == {"meta": {"action": "foo"}, "result": "bar is 99"}
 
 
+@pytest.mark.parametrize(
+    "action",
+    (
+        "_state_to_json",
+        "_authentication",
+        "_setup",
+        "_respond",
+        "_info",
+        "__dir__",
+        "__init__",
+        "__class__",
+        "__getattribute__",
+        "host",
+        "api_key",
+    ),
+)
+def test_inspector_rejects_non_action(publisher, http_client, action):
+    _, response = http_client.post(f"/{action}")
+    assert response.status == 404
+    publisher.send.assert_not_called()
+
+
+def test_inspector_dunder_action_does_not_leak_internals(http_client):
+    _, response = http_client.post("/__dir__")
+    assert response.status == 404
+    assert b"_authentication" not in response.body
+
+
 def test_state_to_json():
     now = datetime.now()
     now_iso = now.isoformat()

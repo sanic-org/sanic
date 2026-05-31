@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from inspect import isawaitable
+from inspect import isawaitable, ismethod
 from multiprocessing.connection import Connection
 from os import environ
 from pathlib import Path
 from typing import Any
 
-from sanic.exceptions import Unauthorized
+from sanic.exceptions import NotFound, Unauthorized
 from sanic.helpers import Default
 from sanic.log import logger
 from sanic.request import Request
@@ -87,16 +87,20 @@ class Inspector:
 
     async def _action(self, request: Request, action: str):
         logger.info("Incoming inspector action: %s", action)
-        output: Any = None
         method = getattr(self, action, None)
-        if method:
-            kwargs = {}
-            if request.body:
-                kwargs = request.json
-            args = kwargs.pop("args", ())
-            output = method(*args, **kwargs)
-            if isawaitable(output):
-                output = await output
+        # Only public, bound methods may be dispatched as actions. This blocks
+        # dunder/private methods, data attributes and anything on a subclass
+        # that is not an intentional action.
+        if action.startswith("_") or not ismethod(method):
+            raise NotFound(f"Unknown action: {action}")
+
+        kwargs = {}
+        if request.body:
+            kwargs = request.json
+        args = kwargs.pop("args", ())
+        output = method(*args, **kwargs)
+        if isawaitable(output):
+            output = await output
 
         return await self._respond(request, output)
 

@@ -1,6 +1,7 @@
+import pickle
 from logging import ERROR, INFO
 from signal import SIGINT
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, MagicMock, call, patch
 
 import pytest
 
@@ -8,7 +9,7 @@ from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
 from sanic.worker.constants import RestartOrder
 from sanic.worker.manager import WorkerManager
-from sanic.worker.process import Worker
+from sanic.worker.process import ProcessState, Worker
 
 
 if not OS_IS_WINDOWS:
@@ -449,3 +450,75 @@ def test_remove_untracked_worker(manager: WorkerManager, caplog):
     assert len(manager.transient) == 1
     assert len(manager.durable) == 0
     assert ("sanic.root", 20, message) in caplog.record_tuples
+
+
+@patch("sanic.worker.process.os")
+def test_terminate_handles_unpickling_error(os_mock: Mock):
+    """terminate() catches UnpicklingError from corrupted multiprocessing proxy during shutdown."""
+    process = Mock()
+    process.pid = 1234
+    context = Mock()
+    context.Process.return_value = process
+    worker_state = {}
+    manager = WorkerManager(1, fake_serve, {}, context, (Mock(), Mock()), worker_state)
+
+    wp = next(manager.processes)
+
+    # Replace worker_state with one that raises UnpicklingError on read
+    # (simulates corrupted multiprocessing proxy connection from signal re-entrancy)
+    corrupted_ws = MagicMock()
+    corrupted_ws.__getitem__.side_effect = pickle.UnpicklingError(
+        "invalid load key, '\\x07'."
+    )
+    wp.worker_state = corrupted_ws
+
+    # Should not raise - the error should be caught during shutdown
+    wp.terminate()
+    # os.kill should still be called to send SIGINT to the worker
+    os_mock.kill.assert_called_once_with(1234, SIGINT)
+
+
+def test_exit_handles_unpickling_error():
+    """exit() catches UnpicklingError when cleaning up worker state."""
+    process = Mock()
+    process.pid = 1234
+    process.is_alive.return_value = False
+    context = Mock()
+    context.Process.return_value = process
+    worker_state = {}
+    manager = WorkerManager(1, fake_serve, {}, context, (Mock(), Mock()), worker_state)
+
+    wp = next(manager.processes)
+
+    # Replace worker_state with one that raises UnpicklingError on delete
+    corrupted_ws = MagicMock()
+    corrupted_ws.__delitem__.side_effect = pickle.UnpicklingError(
+        "invalid load key, '\\x07'."
+    )
+    wp.worker_state = corrupted_ws
+
+    # Should not raise
+    wp.exit()
+
+
+def test_sync_states_handles_unpickling_error():
+    """_sync_states() catches UnpicklingError from corrupted proxy during shutdown."""
+    process = Mock()
+    process.pid = 1234
+    context = Mock()
+    context.Process.return_value = process
+    worker_state = {}
+    manager = WorkerManager(1, fake_serve, {}, context, (Mock(), Mock()), worker_state)
+
+    wp = next(manager.processes)
+    wp.set_state(ProcessState.STARTED, force=True)
+
+    # Replace worker_state with one that raises UnpicklingError on read
+    corrupted_ws = MagicMock()
+    corrupted_ws.__getitem__.side_effect = pickle.UnpicklingError(
+        "invalid load key, '\\x07'."
+    )
+    manager.worker_state = corrupted_ws
+
+    # Should not raise - treats corrupted state same as missing key
+    manager._sync_states()

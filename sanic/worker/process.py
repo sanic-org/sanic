@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pickle  # nosec B403
 
 from collections.abc import MutableMapping
 from datetime import datetime, timezone
@@ -99,6 +100,7 @@ class WorkerProcess:
                 ConnectionRefusedError,
                 ConnectionResetError,
                 EOFError,
+                pickle.UnpicklingError,
             ):
                 logger.debug("Monitor process has already exited.")
             except KeyError:
@@ -115,7 +117,12 @@ class WorkerProcess:
             )
             try:
                 self.set_state(ProcessState.TERMINATED, force=True)
-            except (BrokenPipeError, ConnectionResetError, EOFError):
+            except (
+                BrokenPipeError,
+                ConnectionResetError,
+                EOFError,
+                pickle.UnpicklingError,
+            ):
                 pass
             try:
                 os.kill(self.pid, SIGINT)

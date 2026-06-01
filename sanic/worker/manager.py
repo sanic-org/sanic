@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pickle  # nosec B403
 import signal
 
 from collections.abc import Iterable, MutableMapping
@@ -442,7 +443,7 @@ class WorkerManager:
         for process in self.processes:
             try:
                 state = self.worker_state[process.name].get("state")
-            except KeyError:
+            except (KeyError, pickle.UnpicklingError):
                 process.set_state(ProcessState.TERMINATED, True)
                 continue
             # Skip state sync if process is restarting to avoid race condition

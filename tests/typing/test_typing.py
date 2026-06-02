@@ -3,6 +3,7 @@
 import subprocess
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -15,13 +16,19 @@ def run_check(path_location: str) -> str:
 
     mypy_path = "mypy"
     path = CURRENT_DIR / path_location
-    command = [mypy_path, path.resolve().as_posix()]
+    with TemporaryDirectory() as cache_dir:
+        command = [
+            mypy_path,
+            "--cache-dir",
+            cache_dir,
+            path.resolve().as_posix(),
+        ]
 
-    process = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-    )
+        process = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+        )
     output = process.stdout + process.stderr
     return output
 
@@ -113,6 +120,12 @@ def test_check_app_default(
                     raise
             else:
                 break
+
+
+def test_route_handler_registration() -> None:
+    output = run_check("samples/route_handler_registration.py")
+
+    assert "unused-coroutine" not in output
 
 
 def _text_from_path(

@@ -233,7 +233,8 @@ class SignalRouter(BaseRouter):
             for signal in signals:
                 for waiter in signal.ctx.waiters:
                     if waiter.matches(event, condition):
-                        waiter.future.set_result(dict(params))
+                        if not waiter.future.done():
+                            waiter.future.set_result(dict(params))
 
             for signal in signals:
                 requirements = signal.extra.requirements

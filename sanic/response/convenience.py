@@ -187,7 +187,7 @@ async def validate_file(
             "Cannot compare tz-aware and tz-naive datetimes. To avoid "
             "this conflict Sanic is converting last_modified to UTC."
         )
-        last_modified.replace(tzinfo=timezone.utc)
+        last_modified = last_modified.replace(tzinfo=timezone.utc)
     elif (
         last_modified.utcoffset() is not None
         and if_modified_since.utcoffset() is None
@@ -196,7 +196,7 @@ async def validate_file(
             "Cannot compare tz-aware and tz-naive datetimes. To avoid "
             "this conflict Sanic is converting if_modified_since to UTC."
         )
-        if_modified_since.replace(tzinfo=timezone.utc)
+        if_modified_since = if_modified_since.replace(tzinfo=timezone.utc)
     if last_modified.timestamp() <= if_modified_since.timestamp():
         return HTTPResponse(status=304)
 

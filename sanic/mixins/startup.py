@@ -1098,11 +1098,19 @@ class StartupMixin(metaclass=SanicMeta):
             for app in apps:
                 kwargs["server_info"][app.name] = []
                 for server_info in app.state.server_info:
-                    server_info.settings = {
+                    # Convert SSL context to serializable dict form
+                    # so it can be passed through multiprocessing
+                    app_ssl = server_info.settings.get("ssl")
+                    filtered_settings = {
                         k: v
                         for k, v in server_info.settings.items()
                         if k not in ("main_start", "main_stop", "app", "ssl")
                     }
+                    if isinstance(app_ssl, SanicSSLContext):
+                        filtered_settings["ssl"] = app_ssl.sanic
+                    elif app_ssl is not None:
+                        filtered_settings["ssl"] = app_ssl
+                    server_info.settings = filtered_settings
                     kwargs["server_info"][app.name].append(server_info)
 
             ssl = kwargs.get("ssl")

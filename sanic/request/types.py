@@ -526,7 +526,7 @@ class Request(Generic[sanic_type, ctx_type]):
             uuid.UUID | str | int | None: A request ID passed from the
                 client, or generated from the backend.
         """
-        if not self._id:
+        if self._id is None:
             self._id = self.headers.getone(
                 self.app.config.REQUEST_ID_HEADER,
                 self.__class__.generate_id(self),  # type: ignore

@@ -3,6 +3,10 @@
   background: #444444;
 }
 
+main {
+  overflow-x: auto;
+}
+
 #changelog section {
   padding-left: 3rem;
 }

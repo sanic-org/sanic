@@ -1,17 +1,17 @@
 {
   "errors": [],
-  "generated_at": "2025-09-14T20:47:44Z",
+  "generated_at": "2026-02-15T07:07:43Z",
   "metrics": {
     "_totals": {
       "CONFIDENCE.HIGH": 10,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.MEDIUM": 2,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 10,
+      "SEVERITY.LOW": 12,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 20091,
+      "loc": 21170,
       "nosec": 2,
       "skipped_tests": 6
     },
@@ -37,7 +37,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 10,
+      "loc": 22,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -63,7 +63,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 2122,
+      "loc": 2125,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -128,7 +128,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 155,
+      "loc": 154,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -232,7 +232,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 790,
+      "loc": 788,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -258,7 +258,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 239,
+      "loc": 418,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -271,7 +271,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 283,
+      "loc": 373,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -289,15 +289,28 @@
       "skipped_tests": 0
     },
     "sanic/cli/console.py": {
-      "CONFIDENCE.HIGH": 3,
+      "CONFIDENCE.HIGH": 4,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 3,
+      "SEVERITY.LOW": 4,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 242,
+      "loc": 261,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "sanic/cli/daemon.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 129,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -310,7 +323,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 76,
+      "loc": 84,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -349,20 +362,20 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 126,
+      "loc": 139,
       "nosec": 0,
       "skipped_tests": 0
     },
     "sanic/config.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.MEDIUM": 2,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 0,
+      "SEVERITY.LOW": 2,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 350,
+      "loc": 398,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -414,7 +427,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 521,
+      "loc": 520,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -479,7 +492,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 89,
+      "loc": 133,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -492,7 +505,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 166,
+      "loc": 165,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -557,7 +570,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 470,
+      "loc": 472,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -570,7 +583,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 348,
+      "loc": 339,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -609,7 +622,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 169,
+      "loc": 167,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -622,7 +635,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 245,
+      "loc": 243,
       "nosec": 0,
       "skipped_tests": 3
     },
@@ -739,7 +752,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 53,
+      "loc": 52,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -752,7 +765,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 83,
+      "loc": 82,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -778,7 +791,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 30,
+      "loc": 31,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -804,7 +817,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 81,
+      "loc": 82,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -817,7 +830,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 346,
+      "loc": 347,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -830,7 +843,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 198,
+      "loc": 199,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -843,7 +856,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 725,
+      "loc": 724,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -869,7 +882,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 1236,
+      "loc": 1257,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -882,7 +895,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 322,
+      "loc": 361,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -908,7 +921,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 75,
+      "loc": 73,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -934,7 +947,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 61,
+      "loc": 63,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -960,7 +973,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 28,
+      "loc": 27,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -973,7 +986,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 20,
+      "loc": 19,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1025,7 +1038,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 26,
+      "loc": 25,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1103,7 +1116,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 941,
+      "loc": 938,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1129,7 +1142,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 335,
+      "loc": 348,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1142,7 +1155,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 449,
+      "loc": 447,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1181,7 +1194,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 89,
+      "loc": 88,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1259,7 +1272,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 305,
+      "loc": 307,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1285,7 +1298,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 306,
+      "loc": 336,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1298,7 +1311,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 115,
+      "loc": 102,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1324,7 +1337,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 66,
+      "loc": 61,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1342,15 +1355,15 @@
       "skipped_tests": 0
     },
     "sanic/server/websockets/impl.py": {
-      "CONFIDENCE.HIGH": 1,
+      "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 1,
+      "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 720,
+      "loc": 718,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1377,6 +1390,32 @@
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 13,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "sanic/startup/__init__.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 0,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "sanic/startup/errors.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 43,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1519,7 +1558,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 110,
+      "loc": 119,
       "nosec": 1,
       "skipped_tests": 0
     },
@@ -1532,7 +1571,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 198,
+      "loc": 196,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1562,6 +1601,19 @@
       "nosec": 0,
       "skipped_tests": 0
     },
+    "sanic/worker/daemon.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 401,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
     "sanic/worker/inspector.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
@@ -1584,7 +1636,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 137,
+      "loc": 140,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1597,7 +1649,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 473,
+      "loc": 482,
       "nosec": 0,
       "skipped_tests": 1
     },
@@ -1610,7 +1662,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 143,
+      "loc": 144,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1623,7 +1675,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 247,
+      "loc": 257,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1662,7 +1714,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 127,
+      "loc": 126,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1682,7 +1734,7 @@
   },
   "results": [
     {
-      "code": "931         if blueprint.name in self.blueprints:\n932             assert self.blueprints[blueprint.name] is blueprint, (\n933                 'A blueprint with the name \"%s\" is already registered.  '\n934                 \"Blueprint names must be unique.\" % (blueprint.name,)\n935             )\n936         else:\n",
+      "code": "926         if blueprint.name in self.blueprints:\n927             assert self.blueprints[blueprint.name] is blueprint, (\n928                 'A blueprint with the name \"%s\" is already registered.  '\n929                 \"Blueprint names must be unique.\" % (blueprint.name,)\n930             )\n931         else:\n",
       "col_offset": 12,
       "end_col_offset": 13,
       "filename": "sanic/app.py",
@@ -1693,19 +1745,19 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
-      "line_number": 932,
+      "line_number": 927,
       "line_range": [
-        932,
-        933,
-        934,
-        935
+        927,
+        928,
+        929,
+        930
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
     },
     {
-      "code": "77 ):\n78     assert repl_app, \"No Sanic app has been registered.\"\n79     headers = headers or {}\n",
+      "code": "90 ):\n91     assert repl_app, \"No Sanic app has been registered.\"\n92     headers = headers or {}\n",
       "col_offset": 4,
       "end_col_offset": 56,
       "filename": "sanic/cli/console.py",
@@ -1716,16 +1768,16 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
-      "line_number": 78,
+      "line_number": 91,
       "line_range": [
-        78
+        91
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
     },
     {
-      "code": "96 async def respond(request) -> HTTPResponse:\n97     assert repl_app, \"No Sanic app has been registered.\"\n98     await repl_app.handle_request(request)\n",
+      "code": "109 async def respond(request) -> HTTPResponse:\n110     assert repl_app, \"No Sanic app has been registered.\"\n111     await repl_app.handle_request(request)\n",
       "col_offset": 4,
       "end_col_offset": 56,
       "filename": "sanic/cli/console.py",
@@ -1736,16 +1788,16 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
-      "line_number": 97,
+      "line_number": 110,
       "line_range": [
-        97
+        110
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
     },
     {
-      "code": "98     await repl_app.handle_request(request)\n99     assert repl_response\n100     return repl_response\n",
+      "code": "111     await repl_app.handle_request(request)\n112     assert repl_response\n113     return repl_response\n",
       "col_offset": 4,
       "end_col_offset": 24,
       "filename": "sanic/cli/console.py",
@@ -1756,13 +1808,157 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
-      "line_number": 99,
+      "line_number": 112,
       "line_range": [
-        99
+        112
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
+    },
+    {
+      "code": "270     def _setup_terminal(self):\n271         assert termios is not None\n272         with suppress(termios.error, AttributeError):\n",
+      "col_offset": 8,
+      "end_col_offset": 34,
+      "filename": "sanic/cli/console.py",
+      "issue_confidence": "HIGH",
+      "issue_cwe": {
+        "id": 703,
+        "link": "https://cwe.mitre.org/data/definitions/703.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
+      "line_number": 271,
+      "line_range": [
+        271
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
+      "test_id": "B101",
+      "test_name": "assert_used"
+    },
+    {
+      "code": "38     \"FORWARDED_FOR_HEADER\": \"X-Forwarded-For\",\n39     \"FORWARDED_SECRET\": None,\n40     \"GRACEFUL_SHUTDOWN_TIMEOUT\": 15.0,\n41     \"GRACEFUL_TCP_CLOSE_TIMEOUT\": 5.0,\n42     \"INSPECTOR\": False,\n43     \"INSPECTOR_HOST\": \"localhost\",\n44     \"INSPECTOR_PORT\": 6457,\n45     \"INSPECTOR_TLS_KEY\": _default,\n46     \"INSPECTOR_TLS_CERT\": _default,\n47     \"INSPECTOR_API_KEY\": \"\",\n48     \"KEEP_ALIVE_TIMEOUT\": 120,\n49     \"KEEP_ALIVE\": True,\n50     \"LOCAL_CERT_CREATOR\": LocalCertCreator.AUTO,\n51     \"LOCAL_TLS_KEY\": _default,\n52     \"LOCAL_TLS_CERT\": _default,\n53     \"LOCALHOST\": \"localhost\",\n54     \"LOG_EXTRA\": _default,\n55     \"MOTD\": True,\n56     \"MOTD_DISPLAY\": {},\n57     \"NO_COLOR\": False,\n58     \"NOISY_EXCEPTIONS\": False,\n59     \"PROXIES_COUNT\": None,\n60     \"REAL_IP_HEADER\": None,\n61     \"REQUEST_BUFFER_SIZE\": 65536,\n62     \"REQUEST_MAX_HEADER_SIZE\": 8192,  # Cannot exceed 16384\n63     \"REQUEST_ID_HEADER\": \"X-Request-ID\",\n64     \"REQUEST_MAX_SIZE\": 100_000_000,\n65     \"REQUEST_TIMEOUT\": 60,\n66     \"RESPONSE_TIMEOUT\": 60,\n67     \"TLS_CERT_PASSWORD\": \"\",\n68     \"TOUCHUP\": _default,\n69     \"USE_UVLOOP\": _default,\n70     \"WEBSOCKET_MAX_SIZE\": 2**20,  # 1 MiB\n71     \"WEBSOCKET_PING_INTERVAL\": 20,\n72     \"WEBSOCKET_PING_TIMEOUT\": 20,\n73 }\n74 \n75 \n76 class DescriptorMeta(ABCMeta):\n77     \"\"\"Metaclass for Config.\"\"\"\n78 \n79     def __init__(cls, *_):\n80         cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}\n81 \n82     @staticmethod\n",
+      "col_offset": 4,
+      "end_col_offset": 22,
+      "filename": "sanic/config.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 259,
+        "link": "https://cwe.mitre.org/data/definitions/259.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password: 'None'",
+      "line_number": 39,
+      "line_range": [
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b105_hardcoded_password_string.html",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string"
+    },
+    {
+      "code": "66     \"RESPONSE_TIMEOUT\": 60,\n67     \"TLS_CERT_PASSWORD\": \"\",\n68     \"TOUCHUP\": _default,\n69     \"USE_UVLOOP\": _default,\n70     \"WEBSOCKET_MAX_SIZE\": 2**20,  # 1 MiB\n71     \"WEBSOCKET_PING_INTERVAL\": 20,\n72     \"WEBSOCKET_PING_TIMEOUT\": 20,\n73 }\n74 \n75 \n76 class DescriptorMeta(ABCMeta):\n77     \"\"\"Metaclass for Config.\"\"\"\n78 \n79     def __init__(cls, *_):\n80         cls.__setters__ = {name for name, _ in getmembers(cls, cls._is_setter)}\n81 \n82     @staticmethod\n83     def _is_setter(member: object):\n84         return isdatadescriptor(member) and hasattr(member, \"setter\")\n85 \n86 \n87 class DetailedConverter(ABC):\n88     \"\"\"Base class for detailed converters that need additional context.\n89 \n90     DetailedConverter provides access to the full environment variable key,\n91     the raw value, and the current config defaults. This allows for more\n92     sophisticated conversion logic that can take into account the variable\n93     name pattern, perform validation, or use default values for fallback.\n94 \n95     Examples:\n96         ```python\n97         # Example of a converter that casts values to the type of the default\n98         class DefaultsCastConverter(DetailedConverter):\n99             def __call__(self, full_key: str, config_key: str, value: str,\n100                                                         defaults: dict) -> Any:\n101                 try:\n102                     if config_key in defaults:\n103                         return type(defaults[config_key])(value)\n104                 except (ValueError, TypeError):\n105                     raise ValueError\n106         ```\n107     \"\"\"\n108 \n109     @abstractmethod\n110     def __call__(\n",
+      "col_offset": 4,
+      "end_col_offset": 23,
+      "filename": "sanic/config.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 259,
+        "link": "https://cwe.mitre.org/data/definitions/259.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password: ''",
+      "line_number": 67,
+      "line_range": [
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b105_hardcoded_password_string.html",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string"
     },
     {
       "code": "411     if not addr and proxies_count:\n412         assert proxies_count > 0\n413         try:\n",
@@ -1780,7 +1976,7 @@
       "line_range": [
         412
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
     },
@@ -1800,7 +1996,7 @@
       "line_range": [
         4
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/blacklists/blacklist_imports.html#b404-import-subprocess",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/blacklists/blacklist_imports.html#b404-import-subprocess",
       "test_id": "B404",
       "test_name": "blacklist"
     },
@@ -1822,29 +2018,9 @@
         47,
         48
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
-    },
-    {
-      "code": "766             while data is None or data in self.pings:\n767                 data = struct.pack(\"!I\", random.getrandbits(32))\n768 \n",
-      "col_offset": 41,
-      "end_col_offset": 63,
-      "filename": "sanic/server/websockets/impl.py",
-      "issue_confidence": "HIGH",
-      "issue_cwe": {
-        "id": 330,
-        "link": "https://cwe.mitre.org/data/definitions/330.html"
-      },
-      "issue_severity": "LOW",
-      "issue_text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-      "line_number": 767,
-      "line_range": [
-        767
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/blacklists/blacklist_calls.html#b311-random",
-      "test_id": "B311",
-      "test_name": "blacklist"
     },
     {
       "code": "33                 return None\n34             assert isinstance(node.value, Constant)\n35             node.value.value = self.value()\n",
@@ -1862,12 +2038,12 @@
       "line_range": [
         34
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
     },
     {
-      "code": "106             )\n107             assert _mod_spec is not None  # type assertion for mypy\n108             module = module_from_spec(_mod_spec)\n",
+      "code": "115             )\n116             assert _mod_spec is not None  # type assertion for mypy\n117             module = module_from_spec(_mod_spec)\n",
       "col_offset": 12,
       "end_col_offset": 40,
       "filename": "sanic/utils.py",
@@ -1878,11 +2054,11 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.",
-      "line_number": 107,
+      "line_number": 116,
       "line_range": [
-        107
+        116
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html",
+      "more_info": "https://bandit.readthedocs.io/en/1.9.3/plugins/b101_assert_used.html",
       "test_id": "B101",
       "test_name": "assert_used"
     }

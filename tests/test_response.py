@@ -343,6 +343,12 @@ def get_file_content(static_file_directory: Union[Path, str], file_name: str):
         return file.read()
 
 
+def get_file_size(static_file_directory: Union[Path, str], file_name: str):
+    """The size of the static file in bytes"""
+    static_file_directory = path_str_to_path_obj(static_file_directory)
+    return (static_file_directory / file_name).stat().st_size
+
+
 def get_file_last_modified_timestamp(
     static_file_directory: Union[Path, str], file_name: str
 ):
@@ -525,13 +531,12 @@ def test_file_stream_response_range(
     app: Sanic, file_name, static_file_directory, size, start, end
 ):
     Range = namedtuple("Range", ["size", "start", "end", "total"])
-    total = len(get_file_content(static_file_directory, file_name))
+    total = get_file_size(static_file_directory, file_name)
     range = Range(size=size, start=start, end=end, total=total)
 
     @app.route("/files/<filename>", methods=["GET"])
     def file_route(request, filename):
-        file_path = os.path.join(static_file_directory, filename)
-        file_path = os.path.abspath(unquote(file_path))
+        file_path = Path(static_file_directory, unquote(filename)).resolve()
         return file_stream(
             file_path,
             chunk_size=32,
@@ -546,6 +551,37 @@ def test_file_stream_response_range(
         response.headers["Content-Range"]
         == f"bytes {range.start}-{range.end}/{range.total}"
     )
+
+
+def test_file_stream_response_range_correct_length(
+    app: Sanic, static_file_directory
+):
+    """Regression test for https://github.com/sanic-org/sanic/issues/2507
+
+    When range size is not aligned to chunk_size, file_stream() used to
+    send more data than requested because it read min(_range.size, chunk_size)
+    on every iteration instead of min(to_send, chunk_size).
+    """
+    Range = namedtuple("Range", ["size", "start", "end", "total"])
+    file_name = "python.png"
+    total = get_file_size(static_file_directory, file_name)
+    # Range of 100 bytes with chunk_size=32 — requires multiple chunks
+    # and the last chunk must be truncated to 4 bytes (100 = 32*3 + 4)
+    content_range = Range(size=100, start=0, end=99, total=total)
+
+    @app.route("/files/<filename>", methods=["GET"])
+    def file_route(_, filename: str):
+        file_path = Path(static_file_directory, unquote(filename)).resolve()
+        return file_stream(
+            file_path,
+            chunk_size=32,
+            mime_type=guess_type(file_path)[0] or "text/plain",
+            _range=content_range,
+        )
+
+    request, response = app.test_client.get(f"/files/{file_name}")
+    assert response.status == 206
+    assert len(response.body) == 100
 
 
 def test_raw_response(app):

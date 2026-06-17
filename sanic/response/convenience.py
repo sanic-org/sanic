@@ -379,7 +379,7 @@ async def file_stream(
                 await f.seek(_range.start)
                 to_send = _range.size
                 while to_send > 0:
-                    content = await f.read(min((_range.size, chunk_size)))
+                    content = await f.read(min((to_send, chunk_size)))
                     if len(content) < 1:
                         break
                     to_send -= len(content)

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import atexit
-import grp
 import os
-import pwd
 import signal
 import sys
 import time
@@ -15,6 +13,16 @@ from pathlib import Path
 from sanic.compat import OS_IS_WINDOWS
 from sanic.log import logger
 
+
+try:
+    import grp  # type: ignore
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    grp = None  # type: ignore
+
+try:
+    import pwd  # type: ignore
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    pwd = None  # type: ignore
 
 try:
     import fcntl  # type: ignore

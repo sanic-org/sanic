@@ -1,14 +1,19 @@
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
-import tracerite.html
-
-from html5tagger import E
+from html5tagger import HTML, E
 from tracerite import html_traceback, inspector
+from tracerite.html import javascript, style
 
 from sanic.request import Request
 
 from .base import BasePage
+
+
+TRACERITE_OVERRIDE_CSS = (
+    Path(__file__).parent / "styles" / "ErrorPageTraceRite.css"
+).read_text(encoding="UTF-8")
 
 
 # Avoid showing the request in the traceback variable inspectors
@@ -24,8 +29,6 @@ for the inconvenience and appreciate your patience.\
 
 class ErrorPage(BasePage):
     """Page for displaying an error."""
-
-    STYLE_APPEND = tracerite.html.style
 
     def __init__(
         self,
@@ -50,7 +53,11 @@ class ErrorPage(BasePage):
         self.details_open = not getattr(exc, "quiet", False)
 
     def _head(self) -> None:
-        self.doc._script(tracerite.html.javascript)
+        # Only include TraceRite assets when the traceback will be shown
+        if self.request.app.debug:
+            self.doc.style(HTML(style))
+            self.doc.style(HTML(TRACERITE_OVERRIDE_CSS))
+            self.doc._script(javascript)
         super()._head()
 
     def _body(self) -> None:

@@ -3,11 +3,10 @@
     max-width: 30em;
     margin: 5em auto 5em auto;
     text-align: justify;
-    /*text-justify: both;*/
 }
 
 #enduser a {
-    color: var(--sanic-blue);
+    color: var(--sanic-link);
 }
 
 #enduser p:last-child {
@@ -18,50 +17,6 @@ summary {
     margin-top: 3em;
     color: var(--sanic-text-lighter);
     cursor: pointer;
-}
-
-.tracerite {
-    --tracerite-var: var(--sanic-tracerite-var);
-    --tracerite-val: var(--sanic-tracerite-val);
-    --tracerite-type: var(--sanic-tracerite-type);
-    --tracerite-exception: var(--sanic);
-    --tracerite-highlight: var(--sanic-yellow);
-    --tracerite-tab: var(--sanic-tab-background);
-    --tracerite-tab-text: var(--sanic-tab-text);
-}
-
-.tracerite>h3 {
-    margin: 0.5rem 0 !important;
-}
-
-#sanic .tracerite .traceback-labels button {
-    font-size: 0.8rem;
-    line-height: 120%;
-    background: var(--tracerite-tab);
-    color: var(--tracerite-tab-text);
-    transition: 0.3s;
-    cursor: pointer;
-}
-
-.tracerite .traceback-labels {
-    padding-top: 5px;
-}
-
-.tracerite .traceback-labels button:hover {
-    filter: contrast(150%) brightness(120%) drop-shadow(0 -0 2px var(--sanic-tab-shadow));
-}
-
-#sanic .tracerite .tracerite-tooltip::before {
-    bottom: 1.75em;
-}
-
-#sanic .tracerite .traceback-details mark span {
-    background: var(--sanic-highlight-background);
-    color: var(--sanic-highlight-text);
-}
-
-header {
-    background: var(--sanic-header-background);
 }
 
 h2 {

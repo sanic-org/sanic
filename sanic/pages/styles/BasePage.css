@@ -15,12 +15,6 @@
     --sanic-header-text: #fff;
     --sanic-highlight-background: var(--sanic-yellow);
     --sanic-highlight-text: var(--sanic-text);
-    --sanic-tab-background: #f7f4f6;
-    --sanic-tab-shadow: #f7f6f6;
-    --sanic-tab-text: #222021;
-    --sanic-tracerite-var: var(--sanic-text);
-    --sanic-tracerite-val: #ff0d68;
-    --sanic-tracerite-type: #6d6a6b;
 }
 
 
@@ -33,9 +27,6 @@
         --sanic-header-background: #030203;
         --sanic-header-border: #000;
         --sanic-highlight-text: var(--sanic-background);
-        --sanic-tab-background: #292728;
-        --sanic-tab-shadow: #0f0d0e;
-        --sanic-tab-text: #aea7ab;
     }
 }
 
@@ -142,5 +133,4 @@ span.icon {
         Consolas,
         Lucida Console,
         monospace;
-    font-size: 0.8rem;
 }

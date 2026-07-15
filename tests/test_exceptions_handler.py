@@ -150,10 +150,12 @@ def test_chained_exception_handler(exception_handler_app: Sanic):
     assert "ValueError" in html
     assert "GET /6" in html
 
-    # Both exceptions should be present in the traceback headers
+    # The raised exception should be present in the traceback headers.
+    # TraceRite 2.5+ indicates the chained cause with "from previous" rather
+    # than repeating the cause exception type when it has no distinct frames.
     header_texts = [h.text for h in soup.select("h2, h3")]
     assert any("ZeroDivisionError" in text for text in header_texts)
-    assert any("ValueError" in text for text in header_texts)
+    assert any("from previous" in text for text in header_texts)
 
 
 def test_exception_handler_lookup(exception_handler_app: Sanic):

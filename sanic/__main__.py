@@ -1,12 +1,6 @@
 import tracerite
 
-try:
-    tracerite.load()
-except Exception as exc:
-    raise RuntimeError(
-        "Failed to initialize tracerite. Please verify that tracerite is "
-        "correctly installed and compatible with this environment."
-    ) from exc
+tracerite.load()
 
 from sanic.cli.app import SanicCLI
 from sanic.compat import OS_IS_WINDOWS, enable_windows_color_support

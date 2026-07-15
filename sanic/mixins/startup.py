@@ -37,6 +37,8 @@ from typing import (
     cast,
 )
 
+import tracerite
+
 from sanic.application.ext import setup_ext
 from sanic.application.logo import get_logo
 from sanic.application.motd import MOTD
@@ -991,6 +993,7 @@ class StartupMixin(metaclass=SanicMeta):
                 Sanic.serve()
             ```
         """
+        tracerite.load()
         cls._set_startup_method()
         os.environ["SANIC_MOTD_OUTPUT"] = "true"
         apps = list(cls._app_registry.values())

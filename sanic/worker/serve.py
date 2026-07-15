@@ -10,6 +10,8 @@ from multiprocessing.connection import Connection
 from ssl import SSLContext
 from typing import Any
 
+import tracerite
+
 from sanic.application.constants import ServerStage
 from sanic.application.state import ApplicationServerInfo
 from sanic.http.constants import HTTP
@@ -52,6 +54,7 @@ def worker_serve(
     try:
         from sanic import Sanic
 
+        tracerite.load()
         if app_loader:
             app = app_loader.load()
         else:

@@ -1,5 +1,5 @@
 from asyncio.events import AbstractEventLoop
-from collections.abc import Coroutine
+from collections.abc import Awaitable, Coroutine
 from typing import Any, Callable, TypeVar
 
 import sanic
@@ -26,5 +26,5 @@ ListenerType = (
     Callable[[Sanic], Coroutine[Any, Any, None] | None]
     | Callable[[Sanic, AbstractEventLoop], Coroutine[Any, Any, None] | None]
 )
-RouteHandler = Callable[..., Coroutine[Any, Any, HTTPResponse | None]]
+RouteHandler = Callable[..., Awaitable[HTTPResponse | None]]
 SignalHandler = Callable[..., Coroutine[Any, Any, None]]

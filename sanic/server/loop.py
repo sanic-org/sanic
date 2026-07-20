@@ -1,6 +1,7 @@
 import asyncio
 
 from os import getenv
+import sys
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.log import error_logger
@@ -43,8 +44,19 @@ def try_use_uvloop() -> None:
             "false."
         )
 
-    if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    import warnings
+
+    if sys.version_info >= (3, 14):
+        # Python 3.14+ deprecated asyncio.get_event_loop_policy() and
+        # asyncio.set_event_loop_policy(). Suppress the DeprecationWarning
+        # while maintaining backward compatibility until full API migration.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
+                asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    else:
+        if not isinstance(asyncio.get_event_loop_policy(), uvloop.EventLoopPolicy):
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def try_windows_loop():
@@ -58,7 +70,19 @@ def try_windows_loop():
         )
         return
 
-    if not isinstance(
-        asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
-    ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if sys.version_info >= (3, 14):
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            if not isinstance(
+                asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
+            ):
+                asyncio.set_event_loop_policy(
+                    asyncio.WindowsSelectorEventLoopPolicy()
+                )
+    else:
+        if not isinstance(
+            asyncio.get_event_loop_policy(), asyncio.WindowsSelectorEventLoopPolicy
+        ):
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

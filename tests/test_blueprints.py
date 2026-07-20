@@ -884,12 +884,12 @@ def test_duplicate_blueprint(app: Sanic):
 
     app.blueprint(bp)
 
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         app.blueprint(bp1)
 
     assert str(excinfo.value) == (
-        f'A blueprint with the name "{bp_name}" is already registered.  '
-        "Blueprint names must be unique."
+        f"A blueprint with the name '{bp_name}' is "
+        "already registered. Blueprint names must be unique."
     )
 
 

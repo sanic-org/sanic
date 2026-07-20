@@ -924,10 +924,11 @@ class Sanic(
                 self.blueprint(item, **params)
             return
         if blueprint.name in self.blueprints:
-            assert self.blueprints[blueprint.name] is blueprint, (
-                'A blueprint with the name "%s" is already registered.  '
-                "Blueprint names must be unique." % (blueprint.name,)
-            )
+            if self.blueprints[blueprint.name] is not blueprint:
+                raise KeyError(
+                    f"A blueprint with the name '{blueprint.name}' is "
+                    "already registered. Blueprint names must be unique."
+                )
         else:
             self.blueprints[blueprint.name] = blueprint
             self._blueprint_order.append(blueprint)

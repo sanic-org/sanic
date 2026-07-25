@@ -112,6 +112,7 @@ class ASGIApp:
     ws: WebSocketConnection | None
     stage: Stage
     response: BaseHTTPResponse | None
+    exception: Exception | None
 
     @classmethod
     async def create(
@@ -128,6 +129,7 @@ class ASGIApp:
         instance.transport.loop = sanic_app.loop
         instance.stage = Stage.IDLE
         instance.response = None
+        instance.exception = None
         instance.sanic_app.state.is_started = True
         setattr(instance.transport, "add_task", sanic_app.loop.create_task)
 
@@ -142,7 +144,10 @@ class ASGIApp:
                 ]
             )
         except UnicodeDecodeError:
-            raise BadRequest(
+            if scope["type"] != "http":
+                raise
+            headers = Header()
+            instance.exception = BadRequest(
                 "Header names can only contain US-ASCII characters"
             )
 
@@ -167,25 +172,45 @@ class ASGIApp:
             url_bytes = b"%b?%b" % (url_bytes, query)
 
         request_class = sanic_app.request_class or Request  # type: ignore
-        instance.request = request_class(
-            url_bytes,
-            headers,
-            version,
-            method,
-            instance.transport,
-            sanic_app,
-        )
+        try:
+            instance.request = request_class(
+                url_bytes,
+                headers,
+                version,
+                method,
+                instance.transport,
+                sanic_app,
+            )
+        except Exception as e:
+            if scope["type"] != "http":
+                raise
+            if instance.exception is None:
+                instance.exception = e
+            instance.request = request_class(
+                b"*",
+                Header(),
+                version,
+                method,
+                instance.transport,
+                sanic_app,
+            )
         request_class._current.set(instance.request)
         instance.request.stream = instance  # type: ignore
         instance.request_body = True
         instance.request.conn_info = ConnInfo(instance.transport)
 
-        await instance.sanic_app.dispatch(
-            "http.lifecycle.request",
-            inline=True,
-            context={"request": instance.request},
-            fail_not_found=False,
-        )
+        if instance.exception is None:
+            try:
+                await instance.sanic_app.dispatch(
+                    "http.lifecycle.request",
+                    inline=True,
+                    context={"request": instance.request},
+                    fail_not_found=False,
+                )
+            except Exception as e:
+                if scope["type"] != "http":
+                    raise
+                instance.exception = e
 
         return instance
 
@@ -255,6 +280,8 @@ class ASGIApp:
         """
         try:
             self.stage = Stage.HANDLER
+            if self.exception is not None:
+                raise self.exception
             await self.sanic_app.handle_request(self.request)
         except Exception as e:
             try:

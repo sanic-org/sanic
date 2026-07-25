@@ -13,7 +13,12 @@ from pytest import MonkeyPatch
 from sanic import Sanic
 from sanic.application.state import Mode
 from sanic.asgi import Lifespan, MockTransport
-from sanic.exceptions import BadRequest, Forbidden, ServiceUnavailable
+from sanic.exceptions import (
+    BadRequest,
+    Forbidden,
+    SanicException,
+    ServiceUnavailable,
+)
 from sanic.request import Request
 from sanic.response import json, text
 from sanic.server.websockets.connection import WebSocketConnection
@@ -655,11 +660,41 @@ async def test_asgi_headers_decoding(app: Sanic, monkeypatch: MonkeyPatch):
     monkeypatch.setattr(Headers, "__init__", mocked_headers_init)
 
     message = "Header names can only contain US-ASCII characters"
-    with pytest.raises(BadRequest, match=message):
-        _, response = await app.asgi_client.get("/", headers={"😂": "😅"})
+    _, response = await app.asgi_client.get("/", headers={"😂": "😅"})
+    assert response.status_code == 400
+    assert message in response.text
 
     _, response = await app.asgi_client.get("/", headers={"Test-Header": "😅"})
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_asgi_lifecycle_exception_status(app: Sanic):
+    @app.signal("http.lifecycle.request")
+    def raise_lifecycle_exception(request: Request):
+        raise SanicException("Short and stout", status_code=418)
+
+    _, response = await app.asgi_client.get("/")
+
+    assert response.status_code == 418
+    assert "Short and stout" in response.text
+
+
+@pytest.mark.asyncio
+async def test_asgi_request_creation_exception_status(app: Sanic):
+    class CreationErrorRequest(Request):
+        def __init__(self, url_bytes, *args, **kwargs):
+            if url_bytes != b"*":
+                raise SanicException(
+                    "Request creation failed", status_code=422
+                )
+            super().__init__(url_bytes, *args, **kwargs)
+
+    app.request_class = CreationErrorRequest
+    _, response = await app.asgi_client.get("/")
+
+    assert response.status_code == 422
+    assert "Request creation failed" in response.text
 
 
 @pytest.mark.asyncio

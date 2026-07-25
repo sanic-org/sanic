@@ -186,7 +186,7 @@ class ASGIApp:
                 raise
             if instance.exception is None:
                 instance.exception = e
-            instance.request = request_class(
+            instance.request = Request(
                 b"*",
                 Header(),
                 version,

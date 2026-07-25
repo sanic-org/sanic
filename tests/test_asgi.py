@@ -683,12 +683,8 @@ async def test_asgi_lifecycle_exception_status(app: Sanic):
 @pytest.mark.asyncio
 async def test_asgi_request_creation_exception_status(app: Sanic):
     class CreationErrorRequest(Request):
-        def __init__(self, url_bytes, *args, **kwargs):
-            if url_bytes != b"*":
-                raise SanicException(
-                    "Request creation failed", status_code=422
-                )
-            super().__init__(url_bytes, *args, **kwargs)
+        def __init__(self, *args, **kwargs):
+            raise SanicException("Request creation failed", status_code=422)
 
     app.request_class = CreationErrorRequest
     _, response = await app.asgi_client.get("/")

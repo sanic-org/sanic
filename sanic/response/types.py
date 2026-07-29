@@ -2,13 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Coroutine, Iterator
 from datetime import datetime
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    AnyStr,
-    Callable,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, AnyStr, Callable, TypeVar
 
 from sanic.compat import Header
 from sanic.cookies import CookieJar
@@ -24,6 +18,9 @@ if TYPE_CHECKING:
     from sanic.request import Request
 else:
     Request = TypeVar("Request")
+
+
+HEADER_TRANSLATION_TABLE = str.maketrans("", "", "\r\n\x00")
 
 
 class BaseHTTPResponse:
@@ -85,7 +82,12 @@ class BaseHTTPResponse:
             self.headers.setdefault("content-type", self.content_type)
         # Encode headers into bytes
         return (
-            (name.encode("ascii"), f"{value}".encode(errors="surrogateescape"))
+            (
+                self._sanitize_header_value(name).encode("ascii"),
+                self._sanitize_header_value(f"{value}").encode(
+                    errors="surrogateescape"
+                ),
+            )
             for name, value in self.headers.items()
         )
 
@@ -207,6 +209,10 @@ class BaseHTTPResponse:
             host_prefix=host_prefix,
             secure_prefix=secure_prefix,
         )
+
+    @staticmethod
+    def _sanitize_header_value(value: str) -> str:
+        return value.translate(HEADER_TRANSLATION_TABLE)
 
 
 class HTTPResponse(BaseHTTPResponse):

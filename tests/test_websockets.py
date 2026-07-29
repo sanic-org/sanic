@@ -1,14 +1,23 @@
+import asyncio
 import re
 
 from asyncio import Event, Queue, TimeoutError
+from itertools import chain
 from unittest.mock import Mock, call
 
 import pytest
 
-from websockets.frames import CTRL_OPCODES, DATA_OPCODES, OP_TEXT, Frame
+from websockets.frames import (
+    CTRL_OPCODES,
+    DATA_OPCODES,
+    OP_TEXT,
+    Frame,
+    Opcode,
+)
 
 from sanic.exceptions import ServerError
 from sanic.server.websockets.frame import WebsocketFrameAssembler
+from sanic.server.websockets.impl import OPEN, WebsocketImplProtocol
 
 
 try:
@@ -238,3 +247,122 @@ async def test_ws_frame_put_skip_ctrl(opcode):
     retval = await assembler.put(Frame(opcode, b""))
 
     assert retval is None
+
+
+def _make_ws():
+    ws_proto = Mock()
+    ws_proto.state = OPEN
+    return WebsocketImplProtocol(
+        ws_proto, ping_interval=None, ping_timeout=None
+    )
+
+
+RECV_CANCEL_CASES = (
+    pytest.param(lambda task, ws: task.cancel(), id="task-cancel"),
+    pytest.param(lambda task, ws: ws.recv_cancel.cancel(), id="recv-cancel"),
+)
+
+RECEIVE_METHODS = (
+    pytest.param(lambda ws: ws.recv(timeout=5), id="recv"),
+    pytest.param(lambda ws: ws.recv_burst(), id="recv-burst"),
+)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cancel_fn", RECV_CANCEL_CASES)
+@pytest.mark.parametrize("receive", RECEIVE_METHODS)
+async def test_ws_recv_cancel_awaits_assembler_task(receive, cancel_fn):
+    ws = _make_ws()
+
+    get_started = asyncio.Event()
+    get_finished = asyncio.Event()
+
+    async def slow_get(timeout=None):
+        get_started.set()
+        try:
+            await asyncio.sleep(10)
+        finally:
+            get_finished.set()
+
+    ws.assembler = Mock()
+    ws.assembler.get = slow_get
+
+    recv_task = asyncio.create_task(receive(ws))
+    await get_started.wait()
+
+    finished_before_return = False
+    original_release = ws.recv_lock.release
+
+    def check_on_release():
+        nonlocal finished_before_return
+        finished_before_return = get_finished.is_set()
+        original_release()
+
+    ws.recv_lock.release = check_on_release
+
+    cancel_fn(recv_task, ws)
+
+    with pytest.raises(asyncio.CancelledError):
+        await recv_task
+
+    assert finished_before_return, (
+        "assembler.get() coroutine was still pending when recv() "
+        "returned — would cause 'Task was destroyed but it is "
+        "pending' on shutdown"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cancel_fn", RECV_CANCEL_CASES)
+@pytest.mark.parametrize(
+    ("frames_before_cancel", "frames_after_cancel"),
+    (
+        pytest.param(
+            (),
+            (Frame(OP_TEXT, b"hello"),),
+            id="before-first-frame",
+        ),
+        pytest.param(
+            (Frame(OP_TEXT, b"he", fin=False),),
+            (
+                Frame(Opcode.CONT, b"ll", fin=False),
+                Frame(Opcode.CONT, b"o"),
+            ),
+            id="after-first-fragment",
+        ),
+    ),
+)
+async def test_ws_recv_cancel_keeps_assembler_usable(
+    cancel_fn, frames_before_cancel, frames_after_cancel
+):
+    ws = _make_ws()
+
+    recv_task = asyncio.create_task(ws.recv(timeout=5))
+    for _ in range(10):
+        if ws.recv_cancel is not None and ws.assembler.get_in_progress:
+            break
+        await asyncio.sleep(0)
+
+    assert ws.recv_cancel is not None
+    assert ws.assembler.get_in_progress is True
+
+    for frame in frames_before_cancel:
+        await ws.assembler.put(frame)
+
+    cancel_fn(recv_task, ws)
+
+    with pytest.raises(asyncio.CancelledError):
+        await recv_task
+
+    async def deliver_rest():
+        for frame in frames_after_cancel:
+            await ws.assembler.put(frame)
+
+    put_task = asyncio.create_task(deliver_rest())
+
+    expected = b"".join(
+        frame.data
+        for frame in chain(frames_before_cancel, frames_after_cancel)
+    ).decode()
+    assert await ws.recv(timeout=1) == expected
+    await put_task

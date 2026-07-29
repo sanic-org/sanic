@@ -108,61 +108,62 @@ class WebsocketFrameAssembler:
                     "while asynchronous get is already in progress."
                 )
             self.get_in_progress = True
-
-            # If the message_complete event isn't set yet, release the lock to
-            # allow put() to run and eventually set it.
-            # Locking with get_in_progress ensures only one task can get here.
-            if timeout is None:
-                completed = await self.message_complete.wait()
-            elif timeout <= 0:
-                completed = self.message_complete.is_set()
-            else:
-                try:
-                    await asyncio.wait_for(
-                        self.message_complete.wait(), timeout=timeout
-                    )
-                except asyncio.TimeoutError:
-                    ...
-                finally:
+            try:
+                # If the message_complete event isn't set yet, release the
+                # lock to allow put() to run and eventually set it. Locking
+                # with get_in_progress ensures only one task can get here.
+                if timeout is None:
+                    completed = await self.message_complete.wait()
+                elif timeout <= 0:
                     completed = self.message_complete.is_set()
+                else:
+                    try:
+                        await asyncio.wait_for(
+                            self.message_complete.wait(), timeout=timeout
+                        )
+                    except asyncio.TimeoutError:
+                        ...
+                    finally:
+                        completed = self.message_complete.is_set()
 
-            # Unpause the transport, if its paused
-            if self.paused:
-                self.protocol.resume_frames()
-                self.paused = False
-            if not self.get_in_progress:  # no cov
-                # This should be guarded against with the read_mutex,
-                # exception is here as a failsafe
-                raise ServerError(
-                    "State of Websocket frame assembler was modified while an "
-                    "asynchronous get was in progress."
-                )
-            self.get_in_progress = False
+                # Unpause the transport, if its paused
+                if self.paused:
+                    self.protocol.resume_frames()
+                    self.paused = False
+                if not self.get_in_progress:  # no cov
+                    # This should be guarded against with the read_mutex,
+                    # exception is here as a failsafe
+                    raise ServerError(
+                        "State of Websocket frame assembler was modified "
+                        "while an asynchronous get was in progress."
+                    )
 
-            # Waiting for a complete message timed out.
-            if not completed:
-                return None
-            if not self.message_complete.is_set():
-                return None
+                # Waiting for a complete message timed out.
+                if not completed:
+                    return None
+                if not self.message_complete.is_set():
+                    return None
 
-            self.message_complete.clear()
+                self.message_complete.clear()
 
-            joiner: Data = b"" if self.decoder is None else ""
-            # mypy cannot figure out that chunks have the proper type.
-            message: Data = joiner.join(self.chunks)  # type: ignore
-            if self.message_fetched.is_set():
-                # This should be guarded against with the read_mutex,
-                # and get_in_progress check, this exception is here
-                # as a failsafe
-                raise ServerError(
-                    "Websocket get() found a message when "
-                    "state was already fetched."
-                )
-            self.message_fetched.set()
-            self.chunks = []
-            # this should already be None, but set it here for safety
-            self.chunks_queue = None
-            return message
+                joiner: Data = b"" if self.decoder is None else ""
+                # mypy cannot figure out that chunks have the proper type.
+                message: Data = joiner.join(self.chunks)  # type: ignore
+                if self.message_fetched.is_set():
+                    # This should be guarded against with the read_mutex,
+                    # and get_in_progress check, this exception is here
+                    # as a failsafe
+                    raise ServerError(
+                        "Websocket get() found a message when "
+                        "state was already fetched."
+                    )
+                self.message_fetched.set()
+                self.chunks = []
+                # this should already be None, but set it here for safety
+                self.chunks_queue = None
+                return message
+            finally:
+                self.get_in_progress = False
 
     async def get_iter(self) -> AsyncIterator[Data]:
         """

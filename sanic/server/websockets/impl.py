@@ -2,6 +2,7 @@ import asyncio
 import secrets
 
 from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
+from contextlib import suppress
 
 from websockets.exceptions import (
     ConnectionClosed,
@@ -552,6 +553,8 @@ class WebsocketImplProtocol:
                 # recv was cancelled
                 for p in pending:
                     p.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await p
                 raise asyncio.CancelledError()
             else:
                 self.recv_cancel.cancel()
@@ -560,6 +563,8 @@ class WebsocketImplProtocol:
             # recv was cancelled
             if assembler_get:
                 assembler_get.cancel()
+                with suppress(asyncio.CancelledError):
+                    await assembler_get
             raise
         finally:
             self.recv_cancel = None
@@ -612,6 +617,8 @@ class WebsocketImplProtocol:
                     # recv_burst was cancelled
                     for p in pending:
                         p.cancel()
+                        with suppress(asyncio.CancelledError):
+                            await p
                     raise asyncio.CancelledError()
                 m = done_task.result()
                 if m is None:
@@ -629,6 +636,8 @@ class WebsocketImplProtocol:
             # recv_burst was cancelled
             if assembler_get:
                 assembler_get.cancel()
+                with suppress(asyncio.CancelledError):
+                    await assembler_get
             raise
         finally:
             self.recv_cancel = None

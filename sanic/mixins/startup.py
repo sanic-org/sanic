@@ -1083,18 +1083,26 @@ class StartupMixin(metaclass=SanicMeta):
             kwargs["app_name"] = app.name
             kwargs["app_loader"] = app_loader
             kwargs["server_info"] = {}
-            kwargs["passthru"] = {
-                "auto_reload": app.auto_reload,
-                "state": {
-                    "verbosity": app.state.verbosity,
-                    "mode": app.state.mode,
-                },
-                "config": {
-                    "ACCESS_LOG": app.config.ACCESS_LOG,
-                    "NOISY_EXCEPTIONS": app.config.NOISY_EXCEPTIONS,
-                },
-                "shared_ctx": app.shared_ctx.__dict__,
+
+            def build_passthru(current: Sanic) -> dict[str, Any]:
+                return {
+                    "auto_reload": current.auto_reload,
+                    "state": {
+                        "verbosity": current.state.verbosity,
+                        "mode": current.state.mode,
+                    },
+                    "config": {
+                        "ACCESS_LOG": current.config.ACCESS_LOG,
+                        "NOISY_EXCEPTIONS": current.config.NOISY_EXCEPTIONS,
+                    },
+                    "shared_ctx": current.shared_ctx.__dict__,
+                }
+
+            app_passthru = {
+                current.name: build_passthru(current) for current in apps
             }
+            kwargs["passthru"] = build_passthru(app)
+            kwargs["app_passthru"] = app_passthru
             for app in apps:
                 kwargs["server_info"][app.name] = []
                 for server_info in app.state.server_info:

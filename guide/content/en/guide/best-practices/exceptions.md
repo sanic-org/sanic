@@ -126,7 +126,7 @@ All of these properties can be passed to the exception when it is created, but t
 
     ### `headers`
 
-    Using `SanicException` as a tool for creating responses is super powerful. This is in part because not only can you control the `status_code`, but you can also control reponse headers directly from the exception.
+    Using `SanicException` as a tool for creating responses is super powerful. This is in part because not only can you control the `status_code`, but you can also control response headers directly from the exception.
 
 .. column::
 

@@ -66,7 +66,7 @@ Once the inspector is running, you will have access to it via the CLI or by dire
 
 .. note:: 
 
-    Remember, the Inspector is not running on your Sanic application. It is a seperate process, with a seperate application, and exposed on a seperate socket.
+    Remember, the Inspector is not running on your Sanic application. It is a separate process, with a separate application, and exposed on a separate socket.
 
 
 

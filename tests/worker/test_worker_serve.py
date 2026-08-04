@@ -118,7 +118,8 @@ def test_serve_passes_secondary_app_state(worker_manager: Mock, app: Sanic):
     app.prepare(dev=True)
     secondary.prepare(dev=True)
 
-    Sanic.serve(primary=app)
+    with patch("sanic.mixins.startup.configure_socket"):
+        Sanic.serve(primary=app)
 
     worker_kwargs = worker_manager.call_args.args[2]
     secondary_passthru = worker_kwargs["app_passthru"][secondary.name]

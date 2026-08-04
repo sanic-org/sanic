@@ -48,6 +48,7 @@ def worker_serve(
     version=HTTP.VERSION_1,
     config: bytes | str | dict[str, Any] | Any | None = None,
     passthru: dict[str, Any] | None = None,
+    app_passthru: dict[str, dict[str, Any]] | None = None,
 ):
     try:
         from sanic import Sanic
@@ -99,6 +100,9 @@ def worker_serve(
 
             # Run secondary servers
             apps = list(Sanic._app_registry.values())
+            for secondary in apps:
+                if secondary is not app:
+                    secondary.refresh((app_passthru or {}).get(secondary.name))
             app.before_server_start(partial(app._start_servers, apps=apps))
             for a in apps:
                 a.multiplexer = WorkerMultiplexer(

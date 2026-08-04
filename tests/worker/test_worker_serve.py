@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from os import environ
@@ -6,6 +7,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from sanic.app import Sanic
+from sanic.application.constants import Mode
+from sanic.signals import Event
 from sanic.worker.loader import AppLoader
 from sanic.worker.multiplexer import WorkerMultiplexer
 from sanic.worker.process import Worker, WorkerProcess
@@ -73,6 +76,55 @@ def test_has_multiplexer(app: Sanic):
     assert isinstance(app.multiplexer, WorkerMultiplexer)
 
     del environ["SANIC_WORKER_NAME"]
+
+
+def test_secondary_app_receives_worker_passthru(app: Sanic):
+    secondary = Sanic("secondary")
+    app_passthru = {
+        secondary.name: {
+            "state": {"mode": Mode.DEBUG},
+        }
+    }
+    environ["SANIC_WORKER_NAME"] = (
+        f"{Worker.WORKER_PREFIX}-{WorkerProcess.SERVER_LABEL}-FOO"
+    )
+
+    try:
+        with patch("sanic.worker.serve._serve_http_1"):
+            worker_serve(
+                **args(
+                    app,
+                    monitor_publisher=Mock(),
+                    worker_state=Mock(),
+                    app_passthru=app_passthru,
+                )
+            )
+
+        async def startup_and_dispatch():
+            await secondary._startup()
+            await secondary.dispatch(Event.HTTP_LIFECYCLE_BEGIN, inline=True)
+
+        asyncio.run(startup_and_dispatch())
+    finally:
+        del environ["SANIC_WORKER_NAME"]
+
+    assert secondary.state.is_debug
+    assert secondary.config.TOUCHUP is False
+
+
+@patch("sanic.mixins.startup.WorkerManager")
+def test_serve_passes_secondary_app_state(worker_manager: Mock, app: Sanic):
+    secondary = Sanic("secondary")
+    app.prepare(dev=True)
+    secondary.prepare(dev=True)
+
+    with patch("sanic.mixins.startup.configure_socket"):
+        Sanic.serve(primary=app)
+
+    worker_kwargs = worker_manager.call_args.args[2]
+    secondary_passthru = worker_kwargs["app_passthru"][secondary.name]
+    assert secondary_passthru["state"]["mode"] is Mode.DEBUG
+    assert secondary_passthru["config"]["ACCESS_LOG"] is True
 
 
 @patch("sanic.mixins.startup.WorkerManager")

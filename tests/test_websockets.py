@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 from asyncio import Event, Queue, TimeoutError
@@ -9,6 +10,7 @@ from websockets.frames import CTRL_OPCODES, DATA_OPCODES, OP_TEXT, Frame
 
 from sanic.exceptions import ServerError
 from sanic.server.websockets.frame import WebsocketFrameAssembler
+from sanic.server.websockets.impl import OPEN, WebsocketImplProtocol
 
 
 try:
@@ -238,3 +240,38 @@ async def test_ws_frame_put_skip_ctrl(opcode):
     retval = await assembler.put(Frame(opcode, b""))
 
     assert retval is None
+
+
+@pytest.mark.asyncio
+async def test_connection_lost_cancels_pending_io_tasks():
+    """An IO task scheduled from data_received/eof_received (eg via
+    _schedule_io) must not be left dangling on an abrupt disconnect: it
+    should be referenced on the protocol and cancelled by connection_lost,
+    instead of getting garbage-collected while still pending and logging
+    "Task was destroyed but it is pending!". Regression for #3175.
+    """
+    ws_proto = Mock()
+    ws_proto.state = OPEN
+    protocol = WebsocketImplProtocol(ws_proto)
+    protocol.loop = asyncio.get_running_loop()
+
+    started = asyncio.Event()
+
+    async def never_completes():
+        started.set()
+        await asyncio.sleep(1000)
+
+    task = protocol._schedule_io(never_completes())
+    await started.wait()
+    assert task in protocol.io_tasks
+    assert not task.done()
+
+    protocol.connection_lost(None)
+
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert task.cancelled()
+    # The done-callback discards the task from io_tasks once cancellation
+    # actually completes; give the loop a turn to run it.
+    await asyncio.sleep(0)
+    assert task not in protocol.io_tasks

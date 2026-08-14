@@ -1,0 +1,1 @@
+Stop the Inspector worker from accepting application HTTP when ``Sanic.start_method = "fork"``.

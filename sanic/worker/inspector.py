@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import suppress
 from datetime import datetime
 from inspect import isawaitable, ismethod
 from multiprocessing.connection import Connection
@@ -60,6 +61,12 @@ class Inspector:
     def __call__(self, run=True, **_) -> Inspector:
         from sanic import Sanic
 
+        # Forked children inherit the parent app registry and listener
+        # sockets. Drop those before Inspector serves, or this process
+        # will also accept HTTP on the application port (#2897).
+        if run:
+            self._release_inherited_listeners()
+
         self.app = Sanic("Inspector")
         self._setup()
         if run:
@@ -73,6 +80,38 @@ class Inspector:
                 else None,
             )
         return self
+
+    def _release_inherited_listeners(self) -> None:
+        """Stop serving parent apps inherited by a forked Inspector child.
+
+        With ``start_method="fork"`` the Inspector process inherits
+        ``Sanic._app_registry`` and the application listener sockets.
+        ``serve_single()`` then starts every registered app, so the
+        Inspector worker can accept HTTP on the application port.
+
+        Close those inherited sockets (the parent still holds its own
+        FDs) and unregister the inherited apps so only Inspector is
+        served. See https://github.com/sanic-org/sanic/issues/2897.
+        """
+        from sanic import Sanic
+
+        for app in list(Sanic._app_registry.values()):
+            socks = []
+            if getattr(app.state, "sock", None) is not None:
+                socks.append(app.state.sock)
+            infos = list(getattr(app.state, "server_info", None) or [])
+            for server_info in infos:
+                sock = (server_info.settings or {}).get("sock")
+                if sock is not None:
+                    socks.append(sock)
+                if server_info.settings is not None:
+                    server_info.settings["sock"] = None
+            for sock in socks:
+                with suppress(OSError):
+                    sock.close()
+            app.state.sock = None
+            app.state.server_info.clear()
+            Sanic.unregister_app(app)
 
     def _setup(self):
         self.app.get("/")(self._info)

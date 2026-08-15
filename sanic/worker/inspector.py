@@ -97,8 +97,9 @@ class Inspector:
 
         for app in list(Sanic._app_registry.values()):
             socks = []
-            if getattr(app.state, "sock", None) is not None:
-                socks.append(app.state.sock)
+            sock = getattr(app.state, "sock", None)
+            if sock is not None:
+                socks.append(sock)
             infos = list(getattr(app.state, "server_info", None) or [])
             for server_info in infos:
                 sock = (server_info.settings or {}).get("sock")

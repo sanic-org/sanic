@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import Any
 
 import tracerite.html
 
@@ -12,7 +12,7 @@ from .base import BasePage
 
 
 # Avoid showing the request in the traceback variable inspectors
-inspector.blacklist_types += (Request,)
+inspector.blacklist_types += (Request,)  # type: ignore[assignment]  # tracerite types this as a fixed-length tuple
 
 ENDUSER_TEXT = """\
 We're sorry, but it looks like something went wrong. Please try refreshing \
@@ -25,7 +25,7 @@ for the inconvenience and appreciate your patience.\
 class ErrorPage(BasePage):
     """Page for displaying an error."""
 
-    STYLE_APPEND: str = cast(str, tracerite.html.style)
+    STYLE_APPEND = tracerite.html.style
 
     def __init__(
         self,

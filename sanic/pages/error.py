@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 import tracerite.html
 
@@ -25,7 +25,7 @@ for the inconvenience and appreciate your patience.\
 class ErrorPage(BasePage):
     """Page for displaying an error."""
 
-    STYLE_APPEND = tracerite.html.style
+    STYLE_APPEND: str = cast(str, tracerite.html.style)
 
     def __init__(
         self,

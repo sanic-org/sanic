@@ -260,4 +260,20 @@ class ASGIApp:
             try:
                 await self.sanic_app.handle_exception(self.request, e)
             except Exception as exc:
-                await self.sanic_app.handle_exception(self.request, exc, False)
+                # If the exception has a status_code attribute (SanicException),
+                # use it; otherwise default to 500
+                status_code = getattr(exc, "status_code", 500)
+                await self.transport.send(
+                    {
+                        "type": "http.response.start",
+                        "status": status_code,
+                        "headers": [],
+                    }
+                )
+                await self.transport.send(
+                    {
+                        "type": "http.response.body",
+                        "body": str(exc).encode(),
+                        "more_body": False,
+                    }
+                )

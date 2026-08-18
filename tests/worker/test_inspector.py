@@ -11,6 +11,8 @@ import pytest
 
 from sanic_testing import TestManager
 
+from sanic import Sanic
+from sanic.application.state import ApplicationServerInfo
 from sanic.cli.inspector_client import InspectorClient
 from sanic.helpers import Default
 from sanic.log import Colors
@@ -167,3 +169,24 @@ def test_run_inspector_authentication():
         "/", headers={"Authorization": "Bearer super-secret"}
     )
     assert response.status == 200
+
+
+def test_inspector_releases_inherited_apps_and_sockets(publisher):
+    """Forked Inspector must not keep parent listeners (#2897)."""
+    inherited = Sanic("InheritedApp")
+    sock = Mock()
+    inherited.state.sock = sock
+    inherited.state.server_info.append(
+        ApplicationServerInfo(settings={"sock": sock})
+    )
+
+    inspector = Inspector(
+        publisher, {}, {}, "localhost", 9999, "", Default(), Default()
+    )
+    with patch.object(type(inherited), "run"):
+        inspector(True)
+
+    sock.close.assert_called()
+    assert "InheritedApp" not in Sanic._app_registry
+    assert inspector.app.name == "Inspector"
+    assert "Inspector" in Sanic._app_registry

@@ -12,7 +12,7 @@ from .base import BasePage
 
 
 # Avoid showing the request in the traceback variable inspectors
-inspector.blacklist_types += (Request,)  # type: ignore[assignment]  # tracerite types this as a fixed-length tuple
+inspector.blacklist_types += (Request,)
 
 ENDUSER_TEXT = """\
 We're sorry, but it looks like something went wrong. Please try refreshing \

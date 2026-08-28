@@ -15,6 +15,7 @@ from sanic import Sanic
 from sanic.compat import ctrlc_workaround_for_windows
 from sanic.exceptions import BadRequest, ServerError
 from sanic.response import HTTPResponse
+from sanic.server.runners import _setup_system_signals
 from sanic.signals import Event
 
 
@@ -94,6 +95,15 @@ def test_dont_register_system_signals(app):
 
     app.run(HOST, PORT, register_sys_signals=False, single_process=True)
     assert calledq.get() is False
+
+
+def test_dont_ignore_system_signals_when_not_registering(monkeypatch):
+    signal_func = MagicMock()
+    monkeypatch.setattr("sanic.server.runners.signal_func", signal_func)
+
+    _setup_system_signals(MagicMock(), False, False, MagicMock())
+
+    signal_func.assert_not_called()
 
 
 @pytest.mark.skipif(os.name == "nt", reason="windows cannot SIGINT processes")

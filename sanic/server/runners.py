@@ -162,11 +162,11 @@ def _setup_system_signals(
     register_sys_signals: bool,
     loop: asyncio.AbstractEventLoop,
 ) -> None:  # no cov
-    signal_func(SIGINT, SIG_IGN)
-    signal_func(SIGTERM, SIG_IGN)
     os.environ["SANIC_WORKER_PROCESS"] = "true"
     # Register signals for graceful termination
     if register_sys_signals:
+        signal_func(SIGINT, SIG_IGN)
+        signal_func(SIGTERM, SIG_IGN)
         if OS_IS_WINDOWS:
             ctrlc_workaround_for_windows(app)
         else:

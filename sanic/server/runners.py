@@ -28,7 +28,11 @@ from sanic.logging.setup import setup_logging
 from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
 from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
-from sanic.server.socket import bind_unix_socket, remove_unix_socket
+from sanic.server.socket import (
+    bind_unix_socket,
+    close_socket,
+    remove_unix_socket,
+)
 
 
 try:
@@ -220,7 +224,11 @@ def _run_server_forever(loop, before_stop, after_stop, cleanup, unix, pid):
         _run_shutdown_coro(loop, before_stop)
 
         if cleanup:
-            cleanup()
+            try:
+                cleanup()
+            except (RuntimeError, KeyboardInterrupt):
+                # Same uvloop/asyncio-after-stop() cases as _run_shutdown_coro
+                pass
 
         _run_shutdown_coro(loop, after_stop)
 
@@ -303,9 +311,14 @@ def _serve_http_1(
         return
 
     def _cleanup():
-        # Wait for event loop to finish and all connections to drain
+        # Wait for event loop to finish and all connections to drain.
+        # After loop.stop(), run_until_complete() can fail on asyncio/uvloop;
+        # use the same helper as other shutdown steps so the listener is
+        # actually released before the next test-client request rebinds.
         http_server.close()
-        loop.run_until_complete(http_server.wait_closed())
+        _run_shutdown_coro(loop, http_server.wait_closed)
+        for srv_sock in getattr(http_server, "sockets", None) or ():
+            close_socket(srv_sock)
 
         # Complete all tasks on the loop
         signal.stopped = True
@@ -319,7 +332,7 @@ def _serve_http_1(
         graceful = app.config.GRACEFUL_SHUTDOWN_TIMEOUT
         start_shutdown: float = 0
         while connections and (start_shutdown < graceful):
-            loop.run_until_complete(asyncio.sleep(0.1))
+            _run_shutdown_coro(loop, partial(asyncio.sleep, 0.1))
             start_shutdown = start_shutdown + 0.1
 
         app.shutdown_tasks(graceful - start_shutdown)

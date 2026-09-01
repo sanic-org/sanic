@@ -25,7 +25,7 @@ from multiprocessing import (
 )
 from multiprocessing.context import BaseContext
 from pathlib import Path
-from socket import SHUT_RDWR, socket
+from socket import socket
 from ssl import SSLContext
 from time import sleep
 from typing import (
@@ -60,7 +60,11 @@ from sanic.server.loop import try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve
-from sanic.server.socket import configure_socket, remove_unix_socket
+from sanic.server.socket import (
+    close_socket,
+    configure_socket,
+    remove_unix_socket,
+)
 from sanic.worker.loader import AppLoader
 from sanic.worker.manager import WorkerManager
 from sanic.worker.multiplexer import WorkerMultiplexer
@@ -1172,11 +1176,7 @@ class StartupMixin(metaclass=SanicMeta):
                 app.signal_router.reset()
 
             for sock in socks:
-                try:
-                    sock.shutdown(SHUT_RDWR)
-                except OSError:
-                    ...
-                sock.close()
+                close_socket(sock)
             socks = []
 
             trigger_events(main_stop, loop, primary)
@@ -1309,8 +1309,7 @@ class StartupMixin(metaclass=SanicMeta):
                 app.router.reset()
                 app.signal_router.reset()
 
-            if sock:
-                sock.close()
+            close_socket(sock)
 
             cls._cleanup_env_vars()
             cls._cleanup_apps()

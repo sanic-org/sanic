@@ -8,14 +8,53 @@ from ipaddress import ip_address
 from pathlib import Path
 from typing import Any
 
+from sanic.compat import OS_IS_WINDOWS
 from sanic.http.constants import HTTP
 
 
-def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
+def _enable_address_reuse(
+    sock: socket.socket, *, reuse_port: bool = False
+) -> None:
+    """Apply address-reuse options before bind/listen.
+
+    SO_REUSEADDR is always enabled so a listening port can be rebound after a
+    previous server socket has closed (including TIME_WAIT).
+
+    SO_REUSEPORT is optional and is intended for Sanic test_mode, where the
+    test client starts and stops a real server on the same host:port for every
+    request. It is not enabled for production binds, and is skipped on Windows
+    where reuse semantics differ.
+    """
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if reuse_port and not OS_IS_WINDOWS and hasattr(socket, "SO_REUSEPORT"):
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except OSError:
+            pass
+
+
+def close_socket(sock: socket.socket | None) -> None:
+    """Shutdown and close a server socket, ignoring already-closed sockets."""
+    if sock is None:
+        return
+    try:
+        sock.shutdown(socket.SHUT_RDWR)
+    except OSError:
+        pass
+    try:
+        sock.close()
+    except OSError:
+        pass
+
+
+def bind_socket(
+    host: str, port: int, *, backlog=100, reuse_port: bool = False
+) -> socket.socket:
     """Create TCP server socket.
     :param host: IPv4, IPv6 or hostname may be specified
     :param port: TCP port number
     :param backlog: Maximum number of connections to queue
+    :param reuse_port: Enable SO_REUSEPORT when available (test_mode)
     :return: socket.socket object
     """
     location = (host, port)
@@ -28,7 +67,7 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
         )
     except ValueError:  # Hostname, may become AF_INET or AF_INET6
         sock = socket.socket()
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    _enable_address_reuse(sock, reuse_port=reuse_port)
     sock.bind(location)
     sock.listen(backlog)
     sock.set_inheritable(True)
@@ -95,6 +134,35 @@ def remove_unix_socket(path: Path | str | None) -> None:
         pass
 
 
+def _reuse_port_from_settings(server_settings: dict[str, Any]) -> bool:
+    app = server_settings.get("app")
+    return bool(getattr(app, "test_mode", False))
+
+
+def _adopt_tcp_socket(
+    sock: socket.socket,
+    *,
+    backlog: int,
+    reuse_port: bool,
+) -> socket.socket:
+    """Ensure a pre-bound TCP socket has reuse options.
+
+    sanic-testing binds an ephemeral socket without SO_REUSEADDR/SO_REUSEPORT
+    and then reuses that port on later requests. Those options must be set
+    before bind(), so a provided socket is rebound when reuse_port is needed.
+    """
+    if not reuse_port:
+        _enable_address_reuse(sock, reuse_port=False)
+        sock.set_inheritable(True)
+        return sock
+
+    host, port, *_ = sock.getsockname()
+    close_socket(sock)
+    adopted = bind_socket(host, port, backlog=backlog, reuse_port=True)
+    adopted.set_inheritable(True)
+    return adopted
+
+
 def configure_socket(
     server_settings: dict[str, Any],
 ) -> socket.SocketType | None:
@@ -104,6 +172,7 @@ def configure_socket(
     sock = server_settings.get("sock")
     unix = server_settings["unix"]
     backlog = server_settings["backlog"]
+    reuse_port = _reuse_port_from_settings(server_settings)
     if unix:
         unix = Path(unix).absolute()
         sock = bind_unix_socket(unix, backlog=backlog)
@@ -113,9 +182,13 @@ def configure_socket(
             server_settings["host"],
             server_settings["port"],
             backlog=backlog,
+            reuse_port=reuse_port,
         )
         sock.set_inheritable(True)
         server_settings["sock"] = sock
         server_settings["host"] = None
         server_settings["port"] = None
+    elif unix is None:
+        sock = _adopt_tcp_socket(sock, backlog=backlog, reuse_port=reuse_port)
+        server_settings["sock"] = sock
     return sock

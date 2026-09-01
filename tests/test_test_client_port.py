@@ -22,6 +22,28 @@ def test_test_client_port_none(app):
     assert response.status == 405
 
 
+def test_sequential_test_client_get_requests(app):
+    """The WSGI test client starts a server per request on the same port.
+
+    Sequential requests must not fail with EADDRINUSE after the first bind.
+    See: https://github.com/sanic-org/sanic/issues/3128
+    """
+
+    @app.get("/my-endpoint")
+    def handler(request):
+        return text("OK")
+
+    client = SanicTestClient(app, port=None)
+    _, first = client.get("/my-endpoint")
+    assert first.status == 200
+    assert first.text == "OK"
+
+    _, second = client.get("/my-endpoint")
+    assert second.status == 200
+    assert second.text == "OK"
+    assert client.port > 0
+
+
 def test_test_client_port_default(app):
     @app.get("/get")
     def handler(request):

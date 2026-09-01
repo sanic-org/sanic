@@ -1,6 +1,7 @@
 from unittest.mock import Mock, call, patch
 
 import pytest
+
 from sanic.app import Sanic
 from sanic.http.constants import HTTP
 from sanic.server.runners import _run_server_forever, serve
@@ -55,4 +56,31 @@ def test_run_server_forever(remove_unix_socket: Mock, do_cleanup: bool):
         cleanup.assert_not_called()
 
     remove_unix_socket.assert_called_once_with(unix)
+    loop.close.assert_called_once_with()
+
+
+@patch("sanic.server.runners.remove_unix_socket")
+def test_cleanup_error_still_stops(remove_unix_socket: Mock):
+    loop = Mock()
+    loop.run_forever = Mock(side_effect=KeyboardInterrupt())
+    before_stop = Mock()
+    before_stop.return_value = Mock()
+    after_stop = Mock()
+    after_stop.return_value = Mock()
+    cleanup = Mock(side_effect=RuntimeError("loop was stopped"))
+
+    with pytest.raises(KeyboardInterrupt):
+        _run_server_forever(
+            loop,
+            before_stop,
+            after_stop,
+            cleanup,
+            Mock(),
+            12345,
+        )
+
+    cleanup.assert_called_once_with()
+    loop.run_until_complete.assert_has_calls(
+        [call(before_stop.return_value), call(after_stop.return_value)]
+    )
     loop.close.assert_called_once_with()

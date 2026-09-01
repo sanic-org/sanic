@@ -6,10 +6,16 @@ import stat
 
 from ipaddress import ip_address
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from sanic.compat import OS_IS_WINDOWS
 from sanic.http.constants import HTTP
+
+
+class _CloseableSocket(Protocol):
+    def shutdown(self, how: int, /) -> None: ...
+
+    def close(self) -> None: ...
 
 
 def _enable_address_reuse(
@@ -33,7 +39,7 @@ def _enable_address_reuse(
             pass
 
 
-def close_socket(sock: socket.socket | None) -> None:
+def close_socket(sock: _CloseableSocket | None) -> None:
     """Shutdown and close a server socket, ignoring already-closed sockets."""
     if sock is None:
         return

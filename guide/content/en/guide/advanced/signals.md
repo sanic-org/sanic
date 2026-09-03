@@ -58,10 +58,10 @@ async def handle_registration(request):
     app.add_signal(
         my_signal_handler,
         "something.happened.ohmy1",
-        conditions={"some_condition": "value"}
+        condition={"some_condition": "value"}
     )
 
-    @app.signal("something.happened.ohmy2", conditions={"some_condition": "value"})
+    @app.signal("something.happened.ohmy2", condition={"some_condition": "value"})
     async def my_signal_handler2():
         print("something happened")
     ```

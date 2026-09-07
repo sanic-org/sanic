@@ -1,0 +1,1 @@
+Respect ``register_sys_signals=False`` by preserving existing SIGINT and SIGTERM handlers.

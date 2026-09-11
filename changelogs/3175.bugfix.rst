@@ -1,0 +1,1 @@
+Fixes a "Task was destroyed but it is pending!" warning on abrupt WebSocket disconnects by keeping a strong reference to IO tasks and cancelling them on connection loss.

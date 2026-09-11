@@ -1,3 +1,5 @@
+import asyncio
+import gc
 import re
 
 from asyncio import Event, Queue, TimeoutError
@@ -9,6 +11,7 @@ from websockets.frames import CTRL_OPCODES, DATA_OPCODES, OP_TEXT, Frame
 
 from sanic.exceptions import ServerError
 from sanic.server.websockets.frame import WebsocketFrameAssembler
+from sanic.server.websockets.impl import OPEN, WebsocketImplProtocol
 
 
 try:
@@ -238,3 +241,69 @@ async def test_ws_frame_put_skip_ctrl(opcode):
     retval = await assembler.put(Frame(opcode, b""))
 
     assert retval is None
+
+
+@pytest.mark.asyncio
+async def test_connection_lost_cancels_pending_io_tasks():
+    """data_received() schedules a fire-and-forget task for
+    async_data_received(). On an abrupt disconnect where io_proto.send()
+    never resolves, that task must not be left dangling: connection_lost()
+    should cancel it via the protocol's own strong reference, instead of
+    letting it get garbage-collected while still pending and logging
+    "Task was destroyed but it is pending!". Regression for #3175.
+
+    This drives the real data_received() -> async_data_received() ->
+    send_data() path (rather than calling the _schedule_io() helper
+    directly), and asserts on the actual observable symptom -- the
+    loop's exception handler receiving that message -- so the test fails
+    for the reported reason on unpatched code, not merely because an
+    internal helper doesn't exist yet.
+    """
+    ws_proto = Mock()
+    ws_proto.state = OPEN
+    ws_proto.data_to_send = Mock(return_value=[b"pong"])
+    ws_proto.events_received = Mock(return_value=[])
+
+    protocol = WebsocketImplProtocol(ws_proto)
+    protocol.loop = asyncio.get_running_loop()
+    protocol.io_proto = Mock()
+
+    started = asyncio.Event()
+
+    async def send_that_hangs(data):
+        started.set()
+        # A bare, never-resolved Future -- unlike asyncio.sleep(), which
+        # the loop keeps an internal timer-callback reference to -- so
+        # nothing keeps the task alive once data_received()'s own local
+        # reference goes out of scope.
+        await asyncio.Future()
+
+    protocol.io_proto.send = send_that_hangs
+
+    warnings_seen = []
+    loop = asyncio.get_running_loop()
+    orig_handler = loop.get_exception_handler()
+    loop.set_exception_handler(
+        lambda loop, context: warnings_seen.append(context.get("message", ""))
+    )
+
+    try:
+        protocol.data_received(b"irrelevant")
+        await started.wait()
+
+        protocol.connection_lost(None)
+
+        # Give the cancellation a few loop turns to actually be
+        # delivered and the task to finish, then force a GC pass so
+        # anything left unreferenced (as it would be on unpatched code)
+        # gets collected and reported here rather than at some later,
+        # unrelated point in the suite.
+        for _ in range(5):
+            await asyncio.sleep(0)
+        gc.collect()
+        await asyncio.sleep(0)
+    finally:
+        loop.set_exception_handler(orig_handler)
+
+    assert not any("was destroyed" in w for w in warnings_seen), warnings_seen
+    assert protocol.io_tasks == set()

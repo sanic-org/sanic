@@ -56,6 +56,7 @@ class WebsocketImplProtocol:
     connection_lost_waiter: asyncio.Future | None
     keepalive_ping_task: asyncio.Task | None
     auto_closer_task: asyncio.Task | None
+    io_tasks: set[asyncio.Task]
 
     def __init__(
         self,
@@ -85,6 +86,7 @@ class WebsocketImplProtocol:
         self.keepalive_ping_task = None
         self.auto_closer_task = None
         self.connection_lost_waiter = None
+        self.io_tasks = set()
 
     @property
     def subprotocol(self):
@@ -808,6 +810,17 @@ class WebsocketImplProtocol:
                     # This will fail the connection appropriately
                     SanicProtocol.close(self.io_proto, timeout=1.0)
 
+    def _schedule_io(self, coro) -> asyncio.Task:
+        """Run ``coro`` as a task with a strong reference kept on this
+        protocol instance, so it can't be garbage-collected (and log a
+        "Task was destroyed but it is pending!" warning) while still
+        pending on an abrupt disconnect. See #3175.
+        """
+        task = asyncio.create_task(coro)
+        self.io_tasks.add(task)
+        task.add_done_callback(self.io_tasks.discard)
+        return task
+
     async def async_data_received(self, data_to_send, events_to_process):
         if self.ws_proto.state in (OPEN, CLOSING) and len(data_to_send) > 0:
             # receiving data can generate data to send (eg, pong for a ping)
@@ -821,7 +834,7 @@ class WebsocketImplProtocol:
         data_to_send = self.ws_proto.data_to_send()
         events_to_process = self.ws_proto.events_received()
         if len(data_to_send) > 0 or len(events_to_process) > 0:
-            asyncio.create_task(
+            self._schedule_io(
                 self.async_data_received(data_to_send, events_to_process)
             )
 
@@ -851,7 +864,7 @@ class WebsocketImplProtocol:
         self.ws_proto.receive_eof()
         data_to_send = self.ws_proto.data_to_send()
         events_to_process = self.ws_proto.events_received()
-        asyncio.create_task(
+        self._schedule_io(
             self.async_eof_received(data_to_send, events_to_process)
         )
         return False
@@ -867,6 +880,13 @@ class WebsocketImplProtocol:
             self.ws_proto.state = CLOSED
 
         self.abort_pings()
+        # Cancel any data/eof IO tasks still pending on an abrupt
+        # disconnect. Keeping them referenced in self.io_tasks (discarded
+        # via their done-callback) until cancellation completes prevents
+        # them being destroyed while still pending. See #3175.
+        for task in list(self.io_tasks):
+            if not task.done():
+                task.cancel()
         if self.connection_lost_waiter:
             self.connection_lost_waiter.set_result(None)
 

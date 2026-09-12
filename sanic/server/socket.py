@@ -8,6 +8,7 @@ from ipaddress import ip_address
 from pathlib import Path
 from typing import Any
 
+from sanic.compat import OS_IS_WINDOWS
 from sanic.http.constants import HTTP
 
 
@@ -28,7 +29,8 @@ def bind_socket(host: str, port: int, *, backlog=100) -> socket.socket:
         )
     except ValueError:  # Hostname, may become AF_INET or AF_INET6
         sock = socket.socket()
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if not OS_IS_WINDOWS:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(location)
     sock.listen(backlog)
     sock.set_inheritable(True)

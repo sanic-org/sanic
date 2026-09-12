@@ -416,7 +416,7 @@ class Sanic(
         try:
             return get_running_loop()
         except RuntimeError:  # no cov
-            return asyncio.get_event_loop_policy().get_event_loop()
+            return asyncio.get_event_loop()
 
     # -------------------------------------------------------------------- #
     # Registration

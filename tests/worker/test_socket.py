@@ -12,7 +12,7 @@ from sanic.server.socket import (
 def test_bind_socket_does_not_reuse_address_on_windows():
     sock = Mock()
     with (
-        patch("sanic.server.socket.OS_IS_WINDOWS", True),
+        patch("sanic.server.socket.OS_IS_WINDOWS", True, create=True),
         patch("sanic.server.socket.socket.socket", return_value=sock),
     ):
         bind_socket("127.0.0.1", 8000)

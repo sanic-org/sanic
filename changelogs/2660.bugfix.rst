@@ -1,0 +1,1 @@
+Do not set ``SO_REUSEADDR`` on Windows listener sockets, preventing multiple servers from binding to the same address and port.

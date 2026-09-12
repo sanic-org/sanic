@@ -1,8 +1,10 @@
 import asyncio
 import logging
 import re
+import warnings
 
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from inspect import isawaitable
 from os import environ
 from unittest.mock import Mock, patch
@@ -36,6 +38,32 @@ def test_app_loop_running(app: Sanic):
 
     request, response = app.test_client.get("/test")
     assert response.text == "pass"
+
+
+@pytest.mark.parametrize("has_loop", [True, False])
+def test_app_loop_without_running_loop(app: Sanic, has_loop: bool):
+    app.asgi = True
+
+    def check_loop():
+        loop = asyncio.new_event_loop() if has_loop else None
+        asyncio.set_event_loop(loop)
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                if has_loop:
+                    assert app.loop is loop
+                else:
+                    with pytest.raises(
+                        RuntimeError, match="no current event loop"
+                    ):
+                        app.loop
+        finally:
+            asyncio.set_event_loop(None)
+            if loop is not None:
+                loop.close()
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        executor.submit(check_loop).result()
 
 
 @pytest.mark.asyncio

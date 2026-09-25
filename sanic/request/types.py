@@ -633,16 +633,14 @@ class Request(Generic[sanic_type, ctx_type]):
                 pass
         return self.parsed_credentials
 
-    def get_form(
-        self, keep_blank_values: bool = False
-    ) -> RequestParameters | None:
+    def get_form(self, keep_blank_values: bool = False) -> RequestParameters:
         """Method to extract and parse the form data from a request.
 
         Args:
             keep_blank_values (bool): Whether to discard blank values from the form data.
 
         Returns:
-            RequestParameters | None: The parsed form data.
+            RequestParameters: The parsed form data.
         """  # noqa: E501
         self.parsed_form = RequestParameters()
         self.parsed_files = RequestParameters()
@@ -672,28 +670,28 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.parsed_form
 
     @property
-    def form(self) -> RequestParameters | None:
+    def form(self) -> RequestParameters:
         """The request body parsed as form data
 
         Returns:
-            RequestParameters | None: The request body parsed as form data
+            RequestParameters: The request body parsed as form data
         """
         if self.parsed_form is None:
-            self.get_form()
+            return self.get_form()
 
         return self.parsed_form
 
     @property
-    def files(self) -> RequestParameters | None:
+    def files(self) -> RequestParameters:
         """The request body parsed as uploaded files
 
         Returns:
-            RequestParameters | None: The request body parsed as uploaded files
-        """  # noqa: E501
+            RequestParameters: The request body parsed as uploaded files
+        """
         if self.parsed_files is None:
             self.form  # compute form to get files
 
-        return self.parsed_files
+        return cast(RequestParameters, self.parsed_files)
 
     def get_args(
         self,

@@ -1,5 +1,7 @@
 from logging import ERROR, INFO
+from multiprocessing import Pipe
 from signal import SIGINT
+from threading import Thread
 from unittest.mock import Mock, call, patch
 
 import pytest
@@ -449,3 +451,26 @@ def test_remove_untracked_worker(manager: WorkerManager, caplog):
     assert len(manager.transient) == 1
     assert len(manager.durable) == 0
     assert ("sanic.root", 20, message) in caplog.record_tuples
+
+
+def test_wait_for_ack_exits_on_shutdown_sentinel():
+    # https://github.com/sanic-org/sanic/issues/3196
+    # If SIGTERM arrives while workers are still starting, shutdown_signal
+    # sends None into the monitor pipe. wait_for_ack must not re-send that
+    # sentinel forever; it should hand it back to the steady-state monitor
+    # loop so the main process can exit.
+    read_end, write_end = Pipe(duplex=False)
+    context = Mock()
+    manager = WorkerManager(
+        1, fake_serve, {}, context, (write_end, read_end), {}
+    )
+    manager.monitor_publisher.send(None)
+
+    thread = Thread(target=manager.wait_for_ack, daemon=True)
+    thread.start()
+    thread.join(timeout=5)
+    assert not thread.is_alive(), "wait_for_ack spun forever on shutdown"
+
+    # The sentinel stays queued so _poll_monitor observes it and BREAKs
+    assert manager.monitor_subscriber.poll(1)
+    assert manager.monitor_subscriber.recv() is None

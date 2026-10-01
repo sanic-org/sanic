@@ -322,6 +322,13 @@ class WorkerManager:
         while not self._all_workers_ack():
             if self.monitor_subscriber.poll(0.1):
                 monitor_msg = self.monitor_subscriber.recv()
+                if not monitor_msg:
+                    # Shutdown was signaled (shutdown_signal sends None)
+                    # while waiting for workers to acknowledge. Re-queue the
+                    # sentinel so the steady-state monitor loop observes it
+                    # and exits, instead of re-sending it here forever.
+                    self.monitor_publisher.send(monitor_msg)
+                    break
                 if monitor_msg != "__TERMINATE_EARLY__":
                     self.monitor_publisher.send(monitor_msg)
                     continue

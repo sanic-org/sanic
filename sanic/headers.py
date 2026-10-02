@@ -326,6 +326,126 @@ def parse_accept(accept: str | None) -> AcceptList:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
 
 
+class UserAgent(str):
+    """A parsed User-Agent header value.
+
+    A lightweight, dependency-free parse of the ``User-Agent`` request
+    header. Only the most common browser and platform tokens are
+    recognized; a field that could not be determined is ``None``.
+
+    The original header value is preserved and available as a string
+    (this class subclasses ``str``) and via the :attr:`string` property.
+    """
+
+    browser: str | None = None
+    """The browser name, if it could be parsed from the string."""
+
+    browser_version: str | None = None
+    """The browser version, if it could be parsed from the string."""
+
+    platform: str | None = None
+    """The platform/OS name, if it could be parsed from the string."""
+
+    @property
+    def string(self) -> str:
+        """The original header value."""
+        return str(self)
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}(browser={self.browser!r}, "
+            f"browser_version={self.browser_version!r}, "
+            f"platform={self.platform!r})"
+        )
+
+
+# Order matters: tokens are matched top-down, first match wins. Browser
+# tokens must precede more generic ones because real-world User-Agent
+# strings carry compatibility cruft (e.g. every Chromium string also
+# contains a "Safari" token, and every Edge string a "Chrome" token).
+_USER_AGENT_BROWSERS: tuple[tuple[str, str], ...] = (
+    ("edg/", "Edge"),
+    ("edge/", "Edge"),
+    ("opr/", "Opera"),
+    ("samsungbrowser/", "Samsung Internet"),
+    ("crios/", "Chrome"),  # Chrome on iOS
+    ("chrome/", "Chrome"),
+    ("fxios/", "Firefox"),  # Firefox on iOS
+    ("firefox/", "Firefox"),
+)
+
+# iPhone/iPad tokens are checked before "mac os x" because iOS strings
+# contain "like Mac OS X".
+_USER_AGENT_PLATFORMS: tuple[tuple[str, str], ...] = (
+    ("windows", "Windows"),
+    ("android", "Android"),
+    ("iphone", "iOS"),
+    ("ipad", "iOS"),
+    ("ipod", "iOS"),
+    ("mac os x", "macOS"),
+    ("macintosh", "macOS"),
+    ("cros", "ChromeOS"),
+    ("linux", "Linux"),
+    ("x11", "Linux"),
+)
+
+_user_agent_version_re = re.compile(r"([0-9][0-9._]*)")
+
+
+def parse_user_agent(user_agent: str | None) -> UserAgent:
+    """Parse a User-Agent header into a UserAgent value object.
+
+    This is a deliberately simple parser covering the common browser and
+    platform tokens. It recognizes the major browsers (Chrome, Edge,
+    Firefox, Safari, Opera, Samsung Internet, including their iOS
+    variants) and platforms (Windows, macOS, iOS, Android, Linux,
+    ChromeOS). Anything else — bots, curl, unknown clients — yields
+    ``None`` for the fields that could not be determined. A missing or
+    empty header parses to a ``UserAgent`` with all fields ``None``.
+
+    Args:
+        user_agent (str | None): The User-Agent header value to parse.
+
+    Returns:
+        UserAgent: The parsed value object.
+    """
+    parsed = UserAgent(user_agent or "")
+    if not user_agent:
+        return parsed
+    ua = user_agent.lower()
+
+    for token, platform in _USER_AGENT_PLATFORMS:
+        if token in ua:
+            parsed.platform = platform
+            break
+
+    for token, browser in _USER_AGENT_BROWSERS:
+        idx = ua.find(token)
+        if idx == -1:
+            continue
+        parsed.browser = browser
+        version_match = _user_agent_version_re.match(ua, idx + len(token))
+        if version_match:
+            parsed.browser_version = version_match.group(1).replace("_", ".")
+        break
+    else:
+        # Safari-style strings carry the version in a separate token:
+        # "Version/17.2 ... Safari/605.1.15"
+        if "safari/" in ua:
+            parsed.browser = "Safari"
+            version_idx = ua.find("version/")
+            if version_idx != -1:
+                version_match = _user_agent_version_re.match(
+                    ua, version_idx + len("version/")
+                )
+                if version_match:
+                    parsed.browser_version = version_match.group(1).replace(
+                        "_", "."
+                    )
+
+    return parsed
+
+
 def parse_content_header(value: str) -> tuple[str, Options]:
     """Parse content-type and content-disposition header values.
 

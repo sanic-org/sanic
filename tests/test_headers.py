@@ -467,3 +467,77 @@ def test_multiple_fields_accessor(app: Sanic):
         "/", headers=(("Example-Field", "Foo, Bar"), ("Example-Field", "Baz"))
     )
     assert response.json["field"] == "Foo, Bar,Baz"
+
+
+USER_AGENT_STRINGS = (
+    # (raw header, (browser, browser_version, platform))
+    (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        ("Chrome", "120.0.0.0", "Windows"),
+    ),
+    (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
+        "(KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+        ("Safari", "17.2", "macOS"),
+    ),
+    (
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
+        "Mobile/15E148 Safari/604.1",
+        ("Safari", "17.0", "iOS"),
+    ),
+    (
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36",
+        ("Chrome", "120.0.6099.144", "Android"),
+    ),
+    (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+        ("Edge", "120.0.0.0", "Windows"),
+    ),
+    (
+        "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 "
+        "Firefox/121.0",
+        ("Firefox", "121.0", "Linux"),
+    ),
+    # Unknown / non-browser clients parse to explicit None fields
+    ("curl/8.5.0", (None, None, None)),
+    ("SomeRandomBot/1.0 (+http://example.com/bot)", (None, None, None)),
+)
+
+
+@pytest.mark.parametrize("raw,expected", USER_AGENT_STRINGS)
+def test_parse_user_agent(raw, expected):
+    parsed = headers.parse_user_agent(raw)
+    assert (parsed.browser, parsed.browser_version, parsed.platform) == expected
+    assert parsed.string == raw
+    assert str(parsed) == raw
+
+
+@pytest.mark.parametrize("raw", [None, ""])
+def test_parse_user_agent_missing_or_empty(raw):
+    parsed = headers.parse_user_agent(raw)
+    assert parsed.browser is None
+    assert parsed.browser_version is None
+    assert parsed.platform is None
+    assert parsed.string == ""
+
+
+@pytest.mark.parametrize("raw,expected", USER_AGENT_STRINGS)
+def test_request_user_agent(raw, expected):
+    request = make_request({"user-agent": raw})
+    user_agent = request.user_agent
+    assert (user_agent.browser, user_agent.browser_version, user_agent.platform) == expected  # noqa: E501
+    # Parsed once and cached, following the Request property idiom
+    assert request.user_agent is user_agent
+    # The raw header accessor is unchanged
+    assert request.headers["user-agent"] == raw
+
+
+def test_request_user_agent_missing_header():
+    request = make_request({})
+    assert request.user_agent.browser is None
+    assert request.user_agent.browser_version is None
+    assert request.user_agent.platform is None

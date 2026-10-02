@@ -45,11 +45,13 @@ from sanic.exceptions import BadRequest, BadURL, ServerError, URITooLong
 from sanic.headers import (
     AcceptList,
     Options,
+    UserAgent,
     parse_accept,
     parse_content_header,
     parse_credentials,
     parse_forwarded,
     parse_host,
+    parse_user_agent,
     parse_xforwarded,
 )
 from sanic.http import Stage
@@ -133,6 +135,7 @@ class Request(Generic[sanic_type, ctx_type]):
         "parsed_json",
         "parsed_not_grouped_args",
         "parsed_token",
+        "parsed_user_agent",
         "raw_url",
         "responded",
         "route",
@@ -192,6 +195,7 @@ class Request(Generic[sanic_type, ctx_type]):
             tuple[bool, bool, str, str], list[tuple[str, str]]
         ] = defaultdict(list)
         self.parsed_token: str | None = None
+        self.parsed_user_agent: UserAgent | None = None
         self._request_middleware_started = False
         self._response_middleware_started = False
         self.responded: bool = False
@@ -593,6 +597,26 @@ class Request(Generic[sanic_type, ctx_type]):
         if self.parsed_accept is None:
             self.parsed_accept = parse_accept(self.headers.get("accept"))
         return self.parsed_accept
+
+    @property
+    def user_agent(self) -> UserAgent:
+        """Parsed User-Agent header.
+
+        A convenience accessor returning the ``User-Agent`` header parsed
+        into a `UserAgent` value object with ``browser``, ``browser_version``
+        and ``platform`` fields. The parsing runs once, on first access, and
+        the result is cached. Fields that could not be determined from the
+        header value are ``None``; the raw header value is unchanged and
+        still available via ``request.headers["user-agent"]``.
+
+        Returns:
+            UserAgent: Parsed User-Agent header value
+        """
+        if self.parsed_user_agent is None:
+            self.parsed_user_agent = parse_user_agent(
+                self.headers.get("user-agent")
+            )
+        return self.parsed_user_agent
 
     @property
     def token(self) -> str | None:

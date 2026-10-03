@@ -29,6 +29,45 @@ class File(NamedTuple):
     name: str
 
 
+class FileRequestParameters(RequestParameters):
+    """``RequestParameters`` specialized for uploaded files.
+
+    Returned by :attr:`sanic.request.Request.files`. Attribute access
+    returns the first :class:`File` uploaded for the given field, or
+    ``None`` when no file with that name was uploaded::
+
+        avatar = request.files.avatar  # File | None
+        if avatar is not None:
+            handler.save(avatar.name, avatar.body)
+
+    Keeping the file-shaped parameters on their own subclass means the
+    plain :class:`RequestParameters` returned by :attr:`Request.form` /
+    :attr:`Request.args` can promise an unconditional ``str`` from its
+    attribute access without a runtime :func:`isinstance` branch — a
+    form reader never has to defend against an accidental ``File``,
+    and a file reader never gets back a stringified namedtuple.
+    """
+
+    def __getattr__(self, name: str) -> File | None:
+        """Return the first uploaded :class:`File`, or ``None`` when missing.
+
+        Trailing underscores are stripped so Python keywords such as
+        ``class_`` can be used as attribute names. Underscore-prefixed
+        lookups fall through so ``copy``/``pickle`` and other stdlib
+        machinery keep working on the dict subclass.
+
+        Missing fields return ``None`` rather than ``""`` (used by the
+        base class for form/args) or an empty ``File``: an empty
+        namedtuple would silently satisfy ``.body``/``.name``/``.type``
+        reads at the call site and hide the "no file uploaded" case,
+        whereas ``None`` makes the absence explicit and lines up with
+        ``File | None`` typing.
+        """
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return self.get(name.rstrip("_"))
+
+
 def parse_multipart_form(body, boundary):
     """Parse a request body and returns fields and files
 
@@ -37,7 +76,9 @@ def parse_multipart_form(body, boundary):
         boundary (bytes): Bytes multipart boundary.
 
     Returns:
-        tuple[RequestParameters, RequestParameters]: A tuple containing fields and files as `RequestParameters`.
+        tuple[RequestParameters, FileRequestParameters]: A tuple containing
+            fields as a plain `RequestParameters` and uploaded files as a
+            `FileRequestParameters`.
     """  # noqa: E501
     files = {}
     fields = {}
@@ -111,4 +152,4 @@ def parse_multipart_form(body, boundary):
                 "in the Content-Disposition header"
             )
 
-    return RequestParameters(fields), RequestParameters(files)
+    return RequestParameters(fields), FileRequestParameters(files)

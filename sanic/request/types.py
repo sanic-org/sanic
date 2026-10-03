@@ -57,7 +57,7 @@ from sanic.log import error_logger
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response import BaseHTTPResponse, HTTPResponse
 
-from .form import parse_multipart_form
+from .form import FileRequestParameters, parse_multipart_form
 from .parameters import RequestParameters
 
 
@@ -184,7 +184,7 @@ class Request(Generic[sanic_type, ctx_type]):
         ] = defaultdict(RequestParameters)
         self.parsed_cookies: RequestParameters | None = None
         self.parsed_credentials: Credentials | None = None
-        self.parsed_files: RequestParameters | None = None
+        self.parsed_files: FileRequestParameters | None = None
         self.parsed_form: RequestParameters | None = None
         self.parsed_forwarded: Options | None = None
         self.parsed_json = None
@@ -645,7 +645,7 @@ class Request(Generic[sanic_type, ctx_type]):
             RequestParameters | None: The parsed form data.
         """  # noqa: E501
         self.parsed_form = RequestParameters()
-        self.parsed_files = RequestParameters()
+        self.parsed_files = FileRequestParameters()
         content_type = self.headers.getone(
             "content-type", DEFAULT_HTTP_CONTENT_TYPE
         )
@@ -684,11 +684,14 @@ class Request(Generic[sanic_type, ctx_type]):
         return self.parsed_form
 
     @property
-    def files(self) -> RequestParameters | None:
+    def files(self) -> FileRequestParameters | None:
         """The request body parsed as uploaded files
 
         Returns:
-            RequestParameters | None: The request body parsed as uploaded files
+            FileRequestParameters | None: The request body parsed as uploaded
+                files. Attribute access on the returned object yields the
+                first :class:`~sanic.request.form.File` for the named field
+                or ``None`` when no file with that name was uploaded.
         """  # noqa: E501
         if self.parsed_files is None:
             self.form  # compute form to get files

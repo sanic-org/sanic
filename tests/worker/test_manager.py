@@ -1,4 +1,5 @@
 from logging import ERROR, INFO
+from multiprocessing import Pipe
 from signal import SIGINT
 from unittest.mock import Mock, call, patch
 
@@ -35,6 +36,35 @@ def test_manager_no_workers():
     message = "Cannot serve with no workers"
     with pytest.raises(RuntimeError, match=message):
         WorkerManager(0, fake_serve, {}, Mock(), (Mock(), Mock()), {})
+
+
+@pytest.mark.parametrize("message", (None, ""))
+def test_monitor_shutdown_before_workers_ack(manager, message):
+    subscriber, publisher = Pipe(duplex=False)
+    manager.monitor_subscriber = subscriber
+    manager.monitor_publisher = publisher
+    manager._all_workers_ack = Mock(
+        side_effect=[False, AssertionError("Still waiting after shutdown")]
+    )
+    try:
+        publisher.send(message)
+        manager.monitor()
+        assert not subscriber.poll()
+    finally:
+        subscriber.close()
+        publisher.close()
+
+
+def test_wait_for_ack_early_termination_still_kills(manager):
+    manager._all_workers_ack = Mock(return_value=False)
+    manager.monitor_subscriber.recv.return_value = "__TERMINATE_EARLY__"
+    manager.kill = Mock(side_effect=ServerKilled)
+
+    with pytest.raises(ServerKilled):
+        manager.wait_for_ack()
+
+    manager.kill.assert_called_once_with()
+    manager.monitor_publisher.send.assert_not_called()
 
 
 @patch("sanic.worker.process.os")

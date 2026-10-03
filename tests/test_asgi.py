@@ -97,8 +97,14 @@ def test_listeners_triggered(caplog):
         def install_signal_handlers(self):
             pass
 
+    # pytest-sanic requires websockets <11, which predates Uvicorn's
+    # default Sans-I/O implementation. Use its compatible legacy backend.
     config = uvicorn.Config(
-        app=app, loop="asyncio", limit_max_requests=0, port=get_port()
+        app=app,
+        loop="asyncio",
+        limit_max_requests=0,
+        port=get_port(),
+        ws="websockets",
     )
     server = CustomServer(config=config)
 
@@ -198,7 +204,11 @@ def test_listeners_triggered_async(app, caplog):
             pass
 
     config = uvicorn.Config(
-        app=app, loop="asyncio", limit_max_requests=0, port=get_port()
+        app=app,
+        loop="asyncio",
+        limit_max_requests=0,
+        port=get_port(),
+        ws="websockets",
     )
     server = CustomServer(config=config)
 
@@ -272,7 +282,11 @@ def test_non_default_uvloop_config_raises_warning(app):
             pass
 
     config = uvicorn.Config(
-        app=app, loop="asyncio", limit_max_requests=0, port=get_port()
+        app=app,
+        loop="asyncio",
+        limit_max_requests=0,
+        port=get_port(),
+        ws="websockets",
     )
     server = CustomServer(config=config)
 

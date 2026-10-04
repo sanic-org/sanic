@@ -472,6 +472,19 @@ class WorkerManager:
             elif message == "__TERMINATE__":
                 self._handle_terminate()
                 return MonitorCycle.BREAK
+            elif message == "__TERMINATE_EARLY__":
+                # Worker failed after acknowledging startup (e.g. in
+                # after_server_start). Same outcome as wait_for_ack().
+                error_logger.error(
+                    "One of your worker processes terminated before startup "
+                    "was completed. Please solve any errors experienced "
+                    "during startup. If you do not see an exception traceback "
+                    "in your error logs, try running Sanic in a single "
+                    "process using --single-process or single_process=True. "
+                    "Once you are confident that the server is able to start "
+                    "without errors you can switch back to multiprocess mode."
+                )
+                self.kill()
             elif isinstance(message, tuple) and (
                 len(message) == 7 or len(message) == 8
             ):

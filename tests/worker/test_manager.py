@@ -7,7 +7,7 @@ import pytest
 from sanic.compat import OS_IS_WINDOWS
 from sanic.exceptions import ServerKilled
 from sanic.worker.constants import RestartOrder
-from sanic.worker.manager import WorkerManager
+from sanic.worker.manager import MonitorCycle, WorkerManager
 from sanic.worker.process import Worker
 
 
@@ -449,3 +449,35 @@ def test_remove_untracked_worker(manager: WorkerManager, caplog):
     assert len(manager.transient) == 1
     assert len(manager.durable) == 0
     assert ("sanic.root", 20, message) in caplog.record_tuples
+
+
+def test_poll_monitor_terminate_early_kills(manager: WorkerManager, caplog):
+    """A late after_server_start failure must kill, not attempt a restart.
+
+    Regression for #3200: once wait_for_ack() has returned, __TERMINATE_EARLY__
+    used to fall through to _handle_message() and be treated as process names.
+    """
+    manager.monitor_subscriber.poll.return_value = True
+    manager.monitor_subscriber.recv.return_value = "__TERMINATE_EARLY__"
+    manager.kill = Mock(side_effect=ServerKilled)
+    manager.restart = Mock()
+
+    with pytest.raises(ServerKilled):
+        manager._poll_monitor()
+
+    manager.kill.assert_called_once_with()
+    manager.restart.assert_not_called()
+    assert any(
+        "terminated before startup was completed" in record.getMessage()
+        for record in caplog.records
+        if record.levelno >= ERROR
+    )
+
+
+def test_poll_monitor_terminate_still_breaks(manager: WorkerManager):
+    manager.monitor_subscriber.poll.return_value = True
+    manager.monitor_subscriber.recv.return_value = "__TERMINATE__"
+    manager._handle_terminate = Mock()
+
+    assert manager._poll_monitor() is MonitorCycle.BREAK
+    manager._handle_terminate.assert_called_once_with()

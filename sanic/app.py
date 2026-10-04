@@ -1299,7 +1299,7 @@ class Sanic(
         # allocation before assignment below.
         response: (
             BaseHTTPResponse
-            | Coroutine[Any, Any, BaseHTTPResponse | None]
+            | Awaitable[BaseHTTPResponse | None]
             | ResponseStream
             | None
         ) = None

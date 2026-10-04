@@ -1,0 +1,4 @@
+Changed the ``RouteHandler`` type annotation to return ``Awaitable``
+instead of ``Coroutine`` so that applying a route decorator directly (e.g.
+``app.get("/api")(handler)``) no longer triggers ``unused-coroutine`` type
+errors.

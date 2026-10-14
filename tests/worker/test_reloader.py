@@ -1,9 +1,13 @@
+import os
 import re
 import signal
+import sys
 import threading
 
 from asyncio import Event
 from logging import DEBUG
+from multiprocessing import get_context
+from multiprocessing.connection import wait
 from pathlib import Path
 from time import sleep
 from unittest.mock import Mock
@@ -153,6 +157,51 @@ def test_reload_delayed(monkeypatch):
         worker_process.restart(restart_order=RestartOrder.STARTUP_FIRST)
 
     monkeypatch.setattr(threading.Thread, "start", orig)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Requires waitpid")
+def test_startup_first_restart_reaps_old_process(monkeypatch):
+    context = get_context("spawn")
+    shutdown = context.Event()
+    children = []
+    threads = []
+
+    def factory(**kwargs):
+        child = context.Process(**kwargs)
+        children.append(child)
+        return child
+
+    worker = WorkerProcess(factory, "Test", "TST", shutdown.wait, {}, {})
+
+    def thread_factory(**kwargs):
+        thread = threading.Thread(**kwargs)
+        threads.append(thread)
+        return thread
+
+    monkeypatch.setattr("sanic.worker.process.Thread", thread_factory)
+    try:
+        worker.start()
+        old_process = children[0]
+
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+        worker.set_state(ProcessState.ACKED)
+        threads[0].join(timeout=5)
+
+        assert not threads[0].is_alive()
+        assert wait([old_process.sentinel], timeout=5)
+        # Unlike Process.is_alive(), waitpid does not silently reap a zombie
+        # before we can check whether the restart already collected it.
+        with pytest.raises(ChildProcessError):
+            os.waitpid(old_process.pid, os.WNOHANG)
+        assert worker.is_alive()
+    finally:
+        worker.set_state(ProcessState.ACKED, force=True)
+        for child in children:
+            if child.pid is not None:
+                child.kill()
+                child.join(timeout=5)
+        for thread in threads:
+            thread.join(timeout=5)
 
 
 def test_reloader_triggers_start_stop_listeners(

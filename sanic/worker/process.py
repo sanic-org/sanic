@@ -226,8 +226,10 @@ class WorkerProcess:
                 self.name,
                 self._old_process.pid,
             )
-            self._old_process.terminate()
+            old_process = self._old_process
+            old_process.terminate()
         delattr(self, "_old_process")
+        old_process.join()
 
     def _add_config(self) -> bool:
         sig = signature(self.target)

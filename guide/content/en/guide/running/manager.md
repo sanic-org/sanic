@@ -113,6 +113,20 @@ If you are intending to use the restart functionality in production then you may
 
 *Added in v22.12*
 
+#### Retiring the old worker
+
+After the replacement acknowledges startup, Sanic terminates the old worker and waits up to 30 seconds for it to exit. If it is still running, Sanic logs a warning, kills it, and waits up to another 30 seconds to collect its exit status. If it still has not exited, the cleanup thread raises a `TimeoutError`. These waits run in the background and do not block the restart call.
+
+This shutdown deadline is separate from the startup acknowledgement threshold. It covers the old process's entire shutdown, including requests and shutdown listeners. Increase it if your application's graceful shutdown needs more time:
+
+```python
+from sanic.worker.process import WorkerProcess
+
+WorkerProcess.SHUTDOWN_TIMEOUT = 60.0  # seconds
+```
+
+Set this value in your application's global scope before starting the worker manager.
+
 ## Using shared context between worker processes
 
 Python provides a few methods for [exchanging objects](https://docs.python.org/3/library/multiprocessing.html#exchanging-objects-between-processes), [synchronizing](https://docs.python.org/3/library/multiprocessing.html#synchronization-between-processes), and [sharing state](https://docs.python.org/3/library/multiprocessing.html#sharing-state-between-processes) between processes. This usually involves objects from the `multiprocessing` and `ctypes` modules.

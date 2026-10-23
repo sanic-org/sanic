@@ -24,6 +24,7 @@ class WorkerProcess:
     """A worker process."""
 
     THRESHOLD = 300  # == 30 seconds
+    SHUTDOWN_TIMEOUT = 30.0  # seconds
     SERVER_LABEL = "Server"
     SERVER_IDENTIFIER = "Srv"
 
@@ -231,7 +232,21 @@ class WorkerProcess:
                 old_process.pid,
             )
             old_process.terminate()
-        old_process.join()
+        old_process.join(timeout=self.SHUTDOWN_TIMEOUT)
+        if old_process.is_alive():
+            logger.warning(
+                "Worker %s [%s] did not exit within %s seconds. Killing it.",
+                self.name,
+                old_process.pid,
+                self.SHUTDOWN_TIMEOUT,
+            )
+            old_process.kill()
+            old_process.join(timeout=self.SHUTDOWN_TIMEOUT)
+            if old_process.is_alive():
+                raise TimeoutError(
+                    f"Worker {self.name} [{old_process.pid}] "
+                    "failed to exit after being killed"
+                )
 
     def _add_config(self) -> bool:
         sig = signature(self.target)

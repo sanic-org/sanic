@@ -198,16 +198,20 @@ class WorkerProcess:
             self.name,
             self._current_process.pid,
         )
-        termination_thread = Thread(target=self._wait_to_terminate)
+        old_process = self._old_process
+        delattr(self, "_old_process")
+        termination_thread = Thread(
+            target=self._wait_to_terminate, args=(old_process,)
+        )
         termination_thread.start()
 
-    def _wait_to_terminate(self):
+    def _wait_to_terminate(self, old_process):
         logger.debug(
             f"{Colors.BLUE}Waiting for process to be acked: "
             f"{Colors.BOLD}{Colors.SANIC}"
             f"%s {Colors.BLUE}[%s]{Colors.END}",
             self.name,
-            self._old_process.pid,
+            old_process.pid,
         )
         misses = 0
         while self.state is not ProcessState.ACKED:
@@ -224,11 +228,9 @@ class WorkerProcess:
                 f"{Colors.BOLD}{Colors.SANIC}"
                 f"%s {Colors.BLUE}[%s]{Colors.END}",
                 self.name,
-                self._old_process.pid,
+                old_process.pid,
             )
-            old_process = self._old_process
             old_process.terminate()
-        delattr(self, "_old_process")
         old_process.join()
 
     def _add_config(self) -> bool:

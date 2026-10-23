@@ -111,7 +111,7 @@ def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
 
     def start(self):
         worker_process.set_state(ProcessState.ACKED)
-        self._target()
+        self._target(*self._args, **self._kwargs)
 
     orig = threading.Thread.start
     monkeypatch.setattr(threading.Thread, "start", start)
@@ -147,7 +147,7 @@ def test_reload_delayed(monkeypatch):
 
     def start(self):
         sleep(0.2)
-        self._target()
+        self._target(*self._args, **self._kwargs)
 
     orig = threading.Thread.start
     monkeypatch.setattr(threading.Thread, "start", start)
@@ -202,6 +202,51 @@ def test_startup_first_restart_reaps_old_process(monkeypatch):
                 child.join(timeout=5)
         for thread in threads:
             thread.join(timeout=5)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Requires waitpid")
+@pytest.mark.parametrize("first, second", ((0, 1), (1, 0)))
+def test_overlapping_startup_first_restarts_reap_each_old_process(
+    monkeypatch, first, second
+):
+    context = get_context("spawn")
+    shutdown = context.Event()
+    children = []
+    threads = []
+
+    def factory(**kwargs):
+        child = context.Process(**kwargs)
+        children.append(child)
+        return child
+
+    def thread_factory(**kwargs):
+        thread = threading.Thread(**kwargs)
+        # Delay execution until both restarts have scheduled their cleanup.
+        monkeypatch.setattr(thread, "start", lambda: None)
+        threads.append(thread)
+        return thread
+
+    worker = WorkerProcess(factory, "Test", "TST", shutdown.wait, {}, {})
+    monkeypatch.setattr("sanic.worker.process.Thread", thread_factory)
+    try:
+        worker.start()
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+        worker.set_state(ProcessState.ACKED)
+
+        threads[first].run()
+        threads[second].run()
+
+        with pytest.raises(ChildProcessError):
+            os.waitpid(children[0].pid, os.WNOHANG)
+        with pytest.raises(ChildProcessError):
+            os.waitpid(children[1].pid, os.WNOHANG)
+        assert worker.is_alive()
+    finally:
+        for child in children:
+            if child.pid is not None:
+                child.kill()
+                child.join(timeout=5)
 
 
 def test_reloader_triggers_start_stop_listeners(

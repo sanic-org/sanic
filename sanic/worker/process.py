@@ -24,6 +24,7 @@ class WorkerProcess:
     """A worker process."""
 
     THRESHOLD = 300  # == 30 seconds
+    SHUTDOWN_TIMEOUT = 30.0  # seconds
     SERVER_LABEL = "Server"
     SERVER_IDENTIFIER = "Srv"
 
@@ -198,16 +199,20 @@ class WorkerProcess:
             self.name,
             self._current_process.pid,
         )
-        termination_thread = Thread(target=self._wait_to_terminate)
+        old_process = self._old_process
+        delattr(self, "_old_process")
+        termination_thread = Thread(
+            target=self._wait_to_terminate, args=(old_process,)
+        )
         termination_thread.start()
 
-    def _wait_to_terminate(self):
+    def _wait_to_terminate(self, old_process):
         logger.debug(
             f"{Colors.BLUE}Waiting for process to be acked: "
             f"{Colors.BOLD}{Colors.SANIC}"
             f"%s {Colors.BLUE}[%s]{Colors.END}",
             self.name,
-            self._old_process.pid,
+            old_process.pid,
         )
         misses = 0
         while self.state is not ProcessState.ACKED:
@@ -224,10 +229,24 @@ class WorkerProcess:
                 f"{Colors.BOLD}{Colors.SANIC}"
                 f"%s {Colors.BLUE}[%s]{Colors.END}",
                 self.name,
-                self._old_process.pid,
+                old_process.pid,
             )
-            self._old_process.terminate()
-        delattr(self, "_old_process")
+            old_process.terminate()
+        old_process.join(timeout=self.SHUTDOWN_TIMEOUT)
+        if old_process.is_alive():
+            logger.warning(
+                "Worker %s [%s] did not exit within %s seconds. Killing it.",
+                self.name,
+                old_process.pid,
+                self.SHUTDOWN_TIMEOUT,
+            )
+            old_process.kill()
+            old_process.join(timeout=self.SHUTDOWN_TIMEOUT)
+            if old_process.is_alive():
+                raise TimeoutError(
+                    f"Worker {self.name} [{old_process.pid}] "
+                    "failed to exit after being killed"
+                )
 
     def _add_config(self) -> bool:
         sig = signature(self.target)

@@ -1,9 +1,13 @@
+import os
 import re
 import signal
+import sys
 import threading
 
 from asyncio import Event
 from logging import DEBUG
+from multiprocessing import get_context
+from multiprocessing.connection import wait
 from pathlib import Path
 from time import sleep
 from unittest.mock import Mock
@@ -51,6 +55,46 @@ def is_python_file(filename):
     )
 
 
+def ignore_termination(ready, release):
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    ready.set()
+    release.wait()
+
+
+def finish_on_termination(ready, stopping, release):
+    signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM})
+    ready.send(None)
+    signal.sigwait({signal.SIGTERM})
+    stopping.send(None)
+    release.recv()
+
+
+@pytest.fixture
+def restarting_processes(monkeypatch):
+    context = get_context("spawn")
+    children = []
+    threads = []
+
+    def factory(**kwargs):
+        child = context.Process(**kwargs)
+        children.append(child)
+        return child
+
+    def thread_factory(**kwargs):
+        thread = threading.Thread(**kwargs)
+        threads.append(thread)
+        return thread
+
+    monkeypatch.setattr("sanic.worker.process.Thread", thread_factory)
+    yield context, factory, children, threads
+    for child in children:
+        if child.pid is not None:
+            child.kill()
+            child.join(timeout=5)
+    for thread in threads:
+        thread.join(timeout=5)
+
+
 def test_reload_send():
     publisher = Mock()
     reloader = Reloader(publisher, 0.1, set(), Mock())
@@ -96,6 +140,11 @@ def test_iter_files():
 )
 def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
     current_process = Mock()
+
+    def mark_terminated():
+        current_process.is_alive.return_value = False
+
+    current_process.terminate.side_effect = mark_terminated
     worker_process = WorkerProcess(
         lambda **_: current_process,
         "Test",
@@ -107,7 +156,7 @@ def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
 
     def start(self):
         worker_process.set_state(ProcessState.ACKED)
-        self._target()
+        self._target(*self._args, **self._kwargs)
 
     orig = threading.Thread.start
     monkeypatch.setattr(threading.Thread, "start", start)
@@ -129,7 +178,7 @@ def test_default_reload_shutdown_order(monkeypatch, caplog, order, expected):
 
 
 def test_reload_delayed(monkeypatch):
-    WorkerProcess.THRESHOLD = 1
+    monkeypatch.setattr(WorkerProcess, "THRESHOLD", 1)
 
     current_process = Mock()
     worker_process = WorkerProcess(
@@ -143,7 +192,7 @@ def test_reload_delayed(monkeypatch):
 
     def start(self):
         sleep(0.2)
-        self._target()
+        self._target(*self._args, **self._kwargs)
 
     orig = threading.Thread.start
     monkeypatch.setattr(threading.Thread, "start", start)
@@ -153,6 +202,188 @@ def test_reload_delayed(monkeypatch):
         worker_process.restart(restart_order=RestartOrder.STARTUP_FIRST)
 
     monkeypatch.setattr(threading.Thread, "start", orig)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Requires waitpid")
+def test_startup_first_restart_reaps_old_process(monkeypatch):
+    context = get_context("spawn")
+    shutdown = context.Event()
+    children = []
+    threads = []
+
+    def factory(**kwargs):
+        child = context.Process(**kwargs)
+        children.append(child)
+        return child
+
+    worker = WorkerProcess(factory, "Test", "TST", shutdown.wait, {}, {})
+
+    def thread_factory(**kwargs):
+        thread = threading.Thread(**kwargs)
+        threads.append(thread)
+        return thread
+
+    monkeypatch.setattr("sanic.worker.process.Thread", thread_factory)
+    try:
+        worker.start()
+        old_process = children[0]
+
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+        worker.set_state(ProcessState.ACKED)
+        threads[0].join(timeout=5)
+
+        assert not threads[0].is_alive()
+        assert wait([old_process.sentinel], timeout=5)
+        # Unlike Process.is_alive(), waitpid does not silently reap a zombie
+        # before we can check whether the restart already collected it.
+        with pytest.raises(ChildProcessError):
+            os.waitpid(old_process.pid, os.WNOHANG)
+        assert worker.is_alive()
+    finally:
+        worker.set_state(ProcessState.ACKED, force=True)
+        for child in children:
+            if child.pid is not None:
+                child.kill()
+                child.join(timeout=5)
+        for thread in threads:
+            thread.join(timeout=5)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Requires waitpid")
+@pytest.mark.parametrize("first, second", ((0, 1), (1, 0)))
+def test_overlapping_startup_first_restarts_reap_each_old_process(
+    monkeypatch, first, second
+):
+    context = get_context("spawn")
+    shutdown = context.Event()
+    children = []
+    threads = []
+
+    def factory(**kwargs):
+        child = context.Process(**kwargs)
+        children.append(child)
+        return child
+
+    def thread_factory(**kwargs):
+        thread = threading.Thread(**kwargs)
+        # Delay execution until both restarts have scheduled their cleanup.
+        monkeypatch.setattr(thread, "start", lambda: None)
+        threads.append(thread)
+        return thread
+
+    worker = WorkerProcess(factory, "Test", "TST", shutdown.wait, {}, {})
+    monkeypatch.setattr("sanic.worker.process.Thread", thread_factory)
+    try:
+        worker.start()
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+        worker.set_state(ProcessState.ACKED)
+
+        threads[first].run()
+        threads[second].run()
+
+        with pytest.raises(ChildProcessError):
+            os.waitpid(children[0].pid, os.WNOHANG)
+        with pytest.raises(ChildProcessError):
+            os.waitpid(children[1].pid, os.WNOHANG)
+        assert worker.is_alive()
+    finally:
+        for child in children:
+            if child.pid is not None:
+                child.kill()
+                child.join(timeout=5)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Requires POSIX signals")
+def test_startup_first_kills_worker_that_ignores_termination(
+    monkeypatch, restarting_processes
+):
+    context, factory, children, threads = restarting_processes
+    ready = context.Event()
+    release = context.Event()
+    monkeypatch.setattr(WorkerProcess, "SHUTDOWN_TIMEOUT", 0.1, raising=False)
+    worker = WorkerProcess(
+        factory,
+        "Test",
+        "TST",
+        ignore_termination,
+        {"ready": ready, "release": release},
+        {},
+    )
+    worker.start()
+    assert ready.wait(timeout=5)
+
+    worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+    worker.set_state(ProcessState.ACKED)
+    threads[0].join(timeout=5)
+
+    assert not threads[0].is_alive()
+    with pytest.raises(ChildProcessError):
+        os.waitpid(children[0].pid, os.WNOHANG)
+    assert children[0].exitcode == -signal.SIGKILL
+    assert worker.is_alive()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Requires POSIX signals")
+def test_startup_first_allows_graceful_exit_before_shutdown_timeout(
+    restarting_processes,
+):
+    context, factory, children, threads = restarting_processes
+    ready, notify_ready = context.Pipe(duplex=False)
+    stopping, notify_stopping = context.Pipe(duplex=False)
+    proceed, release = context.Pipe(duplex=False)
+    with ready, notify_ready, stopping, notify_stopping, proceed, release:
+        worker = WorkerProcess(
+            factory,
+            "Test",
+            "TST",
+            finish_on_termination,
+            {
+                "ready": notify_ready,
+                "stopping": notify_stopping,
+                "release": proceed,
+            },
+            {},
+        )
+        worker.start()
+        assert ready.poll(timeout=5)
+
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
+        worker.set_state(ProcessState.ACKED)
+        assert stopping.poll(timeout=5)
+        assert threads[0].is_alive()
+        release.send(None)
+        threads[0].join(timeout=5)
+
+        assert not threads[0].is_alive()
+        with pytest.raises(ChildProcessError):
+            os.waitpid(children[0].pid, os.WNOHANG)
+        assert children[0].exitcode == 0
+        assert worker.is_alive()
+
+
+def test_startup_first_reports_worker_that_survives_kill(monkeypatch):
+    child = Mock()
+    child.is_alive.return_value = True
+    worker = WorkerProcess(
+        lambda **_: child,
+        "Test",
+        "TST",
+        lambda: None,
+        {},
+        {},
+    )
+    worker.start()
+
+    def run_cleanup(thread):
+        worker.set_state(ProcessState.ACKED)
+        thread.run()
+
+    monkeypatch.setattr(threading.Thread, "start", run_cleanup)
+    with pytest.raises(
+        TimeoutError, match="failed to exit after being killed"
+    ):
+        worker.restart(restart_order=RestartOrder.STARTUP_FIRST)
 
 
 def test_reloader_triggers_start_stop_listeners(

@@ -186,7 +186,7 @@ extras_require = {
     "dev": dev_require,
     "docs": docs_require,
     "all": all_require,
-    "ext": ["sanic-ext"],
+    "ext": ["sanic-ext @ git+https://github.com/daipham3213/sanic-ext"],
     "http3": ["aioquic"],
 }
 

@@ -121,7 +121,7 @@ requirements = [
     ujson,
     "aiofiles>=0.6.0",
     "websockets>=10.0",
-    "multidict>=5.0,<7.0",
+    "multidict>=5.0,<8.0",
     "html5tagger>=1.2.1",
     "tracerite>=2.2.0",
     "typing-extensions>=4.4.0",

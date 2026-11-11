@@ -67,9 +67,9 @@ def try_use_uvloop() -> None:
             "You are requesting to run Sanic using uvloop, but the "
             "install-time 'SANIC_NO_UVLOOP' environment variable (used to "
             "opt-out of installing uvloop with Sanic) is set to true. If "
-            "you want to prevent Sanic from overriding the event loop policy "
-            "during runtime, set the 'USE_UVLOOP' configuration value to "
-            "false."
+            "you want to prevent Sanic from selecting uvloop as the loop "
+            "factory during runtime, set the 'USE_UVLOOP' configuration "
+            "value to false."
         )
 
     _set_loop_factory(uvloop.new_event_loop)
@@ -79,10 +79,10 @@ def try_windows_loop():
     """Try to use a selector event loop instead of the Windows default"""
     if not OS_IS_WINDOWS:
         error_logger.warning(
-            "You are trying to use an event loop policy that is not "
-            "compatible with your system. You can simply let Sanic handle "
-            "selecting the best loop for you. Sanic will now continue to run "
-            "using the default event loop."
+            "You are trying to use the Windows selector event loop, which "
+            "is not compatible with your system. You can simply let Sanic "
+            "handle selecting the best loop for you. Sanic will now "
+            "continue to run using the default event loop."
         )
         return
 

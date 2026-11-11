@@ -79,9 +79,9 @@ def test_logs_when_install_and_runtime_config_mismatch(caplog, monkeypatch):
         "You are requesting to run Sanic using uvloop, but the "
         "install-time 'SANIC_NO_UVLOOP' environment variable (used to "
         "opt-out of installing uvloop with Sanic) is set to true. If "
-        "you want to prevent Sanic from overriding the event loop policy "
-        "during runtime, set the 'USE_UVLOOP' configuration value to "
-        "false."
+        "you want to prevent Sanic from selecting uvloop as the loop "
+        "factory during runtime, set the 'USE_UVLOOP' configuration value "
+        "to false."
     )
 
 

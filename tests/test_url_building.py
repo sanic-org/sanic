@@ -363,3 +363,42 @@ def test_versioning(app, path, version, expected):
 
     url = app.url_for("handler")
     assert url == expected
+
+
+def test_url_for_escapes_route_param_values(app):
+    @app.get("/catalog/<label:str>", name="item", unquote=True)
+    def item(request, label):
+        return text(f"{label}|page={request.args.get('page')}")
+
+    assert (
+        app.url_for("item", label="sample", page=2) == "/catalog/sample?page=2"
+    )
+
+    url = app.url_for("item", label="C# guide", page=2, _anchor="details")
+    assert url == "/catalog/C%23%20guide?page=2#details"
+    _, response = app.test_client.get(url)
+    assert response.status == 200
+    assert response.text == "C# guide|page=2"
+
+    url = app.url_for("item", label="Why?", page=2)
+    assert url == "/catalog/Why%3F?page=2"
+    _, response = app.test_client.get(url)
+    assert response.status == 200
+    assert response.text == "Why?|page=2"
+
+
+def test_url_for_keeps_pre_encoded_route_param_values(app):
+    @app.get("/catalog/<label:str>", name="item", unquote=True)
+    def item(request, label):
+        return text(label)
+
+    assert app.url_for("item", label="C%23") == "/catalog/C%23"
+
+
+def test_url_for_keeps_slashes_in_path_params(app):
+    @app.get("/files/<fp:path>", name="files")
+    def files(request, fp):
+        return text(fp)
+
+    assert app.url_for("files", fp="a/b/c.txt") == "/files/a/b/c.txt"
+    assert app.url_for("files", fp="a b/c#d") == "/files/a%20b/c%23d"

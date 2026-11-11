@@ -38,7 +38,7 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import urlencode, urlunparse
+from urllib.parse import quote, urlencode, urlunparse
 
 from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
@@ -104,6 +104,22 @@ if OS_IS_WINDOWS:  # no cov
 
 ctx_type = TypeVar("ctx_type")
 config_type = TypeVar("config_type", bound=Config)
+
+
+def _quote_path_param(value: str, safe: str = "") -> str:
+    """Percent-encode a route parameter value for a URL path segment.
+
+    Characters that would break out of the segment (``#``, ``?``, spaces,
+    ...) are encoded. Valid percent-encoded triplets (``%XX``) are left
+    alone so callers passing already-encoded values are not double
+    encoded. ``safe`` lets ``path`` parameters keep their slashes.
+    """
+    return "".join(
+        part
+        if re.fullmatch(r"%[0-9A-Fa-f]{2}", part)
+        else quote(part, safe=safe)
+        for part in re.split(r"(%[0-9A-Fa-f]{2})", value)
+    )
 
 
 class Sanic(
@@ -1118,9 +1134,17 @@ class Sanic(
                         )
                     raise URLBuildError(msg)
 
-            # replace the parameter in the URL with the supplied value
+            # replace the parameter in the URL with the supplied value,
+            # percent-encoded so it stays inside its path segment. A
+            # "path" parameter may contain slashes, other parameters
+            # may not.
             replacement_regex = f"(<{param_info.name}.*?>)"
-            out = re.sub(replacement_regex, supplied_param, out)
+            safe = "/" if param_info.label == "path" else ""
+            out = re.sub(
+                replacement_regex,
+                _quote_path_param(supplied_param, safe=safe),
+                out,
+            )
 
         # parse the remainder of the keyword arguments into a querystring
         query_string = urlencode(kwargs, doseq=True) if kwargs else ""

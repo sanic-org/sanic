@@ -16,6 +16,7 @@ from sanic.http.constants import HTTP
 from sanic.log import error_logger
 from sanic.logging.setup import setup_logging
 from sanic.models.server_types import Signal
+from sanic.server.loop import new_event_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.runners import _serve_http_1, _serve_http_3
 from sanic.worker.loader import AppLoader, CertLoader
@@ -63,7 +64,7 @@ def worker_serve(
             app.state.is_debug, app.config.NO_COLOR, app.config.LOG_EXTRA
         )
 
-        loop = asyncio.new_event_loop()
+        loop = new_event_loop()
         asyncio.set_event_loop(loop)
 
         # Hydrate server info if needed

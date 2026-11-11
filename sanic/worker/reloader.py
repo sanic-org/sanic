@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import sys
 
-from asyncio import new_event_loop
 from itertools import chain
 from multiprocessing.connection import Connection
 from pathlib import Path
@@ -12,6 +11,7 @@ from signal import signal as signal_func
 from time import sleep
 
 from sanic.server.events import trigger_events
+from sanic.server.loop import new_event_loop
 from sanic.worker.loader import AppLoader
 
 

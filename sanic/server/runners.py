@@ -27,6 +27,7 @@ from sanic.log import error_logger, server_logger
 from sanic.logging.setup import setup_logging
 from sanic.models.server_types import Signal
 from sanic.server.async_server import AsyncioServer
+from sanic.server.loop import new_event_loop
 from sanic.server.protocols.http_protocol import Http3Protocol, HttpProtocol
 from sanic.server.socket import bind_unix_socket, remove_unix_socket
 
@@ -123,7 +124,7 @@ def serve(
     """  # noqa: E501
     if not run_async and not loop:
         # create new event_loop after fork
-        loop = asyncio.new_event_loop()
+        loop = new_event_loop()
         asyncio.set_event_loop(loop)
 
     setup_logging(app.debug, app.config.NO_COLOR, app.config.LOG_EXTRA)

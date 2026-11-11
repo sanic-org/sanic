@@ -1,0 +1,1 @@
+Remove use of the deprecated asyncio event loop policy APIs, slated for removal in Python 3.16. Sanic now selects uvloop or the Windows selector loop through a registered loop factory instead of a process-wide policy, so startup on Python 3.14+ no longer emits ``DeprecationWarning``.

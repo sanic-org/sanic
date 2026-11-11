@@ -79,9 +79,9 @@ def test_logs_when_install_and_runtime_config_mismatch(caplog, monkeypatch):
         "You are requesting to run Sanic using uvloop, but the "
         "install-time 'SANIC_NO_UVLOOP' environment variable (used to "
         "opt-out of installing uvloop with Sanic) is set to true. If "
-        "you want to prevent Sanic from overriding the event loop policy "
-        "during runtime, set the 'USE_UVLOOP' configuration value to "
-        "false."
+        "you want to prevent Sanic from selecting uvloop as the loop "
+        "factory during runtime, set the 'USE_UVLOOP' configuration value "
+        "to false."
     )
 
 
@@ -89,28 +89,31 @@ def test_logs_when_install_and_runtime_config_mismatch(caplog, monkeypatch):
     OS_IS_WINDOWS or not UVLOOP_INSTALLED,
     reason="Not testable with current client",
 )
-def test_sets_loop_policy_only_when_not_already_set(monkeypatch):
+def test_try_use_uvloop_registers_factory_without_touching_policy(
+    monkeypatch,
+):
     import uvloop  # type: ignore
 
-    # Existing policy is not uvloop.EventLoopPolicy
-    get_event_loop_policy = Mock(return_value=None)
-    monkeypatch.setattr(
-        loop.asyncio, "get_event_loop_policy", get_event_loop_policy
-    )
-
-    with patch("asyncio.set_event_loop_policy") as set_event_loop_policy:
-        loop.try_use_uvloop()
-        set_event_loop_policy.assert_called_once()
-        args, _ = set_event_loop_policy.call_args
-        policy = args[0]
-        assert isinstance(policy, uvloop.EventLoopPolicy)
-
-    # Existing policy is uvloop.EventLoopPolicy
-    get_event_loop_policy = Mock(return_value=policy)
-    monkeypatch.setattr(
-        loop.asyncio, "get_event_loop_policy", get_event_loop_policy
-    )
+    monkeypatch.setattr(loop, "_loop_factory", None)
 
     with patch("asyncio.set_event_loop_policy") as set_event_loop_policy:
         loop.try_use_uvloop()
         set_event_loop_policy.assert_not_called()
+
+    event_loop = loop.new_event_loop()
+    try:
+        assert isinstance(event_loop, uvloop.Loop)
+    finally:
+        event_loop.close()
+
+
+def test_new_event_loop_falls_back_to_asyncio_default(monkeypatch):
+    monkeypatch.setattr(loop, "_loop_factory", None)
+
+    event_loop = loop.new_event_loop()
+    default_loop = loop.asyncio.new_event_loop()
+    try:
+        assert type(event_loop) is type(default_loop)
+    finally:
+        event_loop.close()
+        default_loop.close()

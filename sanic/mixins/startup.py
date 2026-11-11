@@ -10,7 +10,6 @@ from asyncio import (
     all_tasks,
     get_event_loop,
     get_running_loop,
-    new_event_loop,
 )
 from collections.abc import Mapping
 from contextlib import suppress
@@ -56,7 +55,7 @@ from sanic.server import try_use_uvloop
 from sanic.server.async_server import AsyncioServer
 from sanic.server.events import trigger_events
 from sanic.server.goodbye import get_goodbye
-from sanic.server.loop import try_windows_loop
+from sanic.server.loop import new_event_loop, try_windows_loop
 from sanic.server.protocols.http_protocol import HttpProtocol
 from sanic.server.protocols.websocket_protocol import WebSocketProtocol
 from sanic.server.runners import serve

@@ -17,7 +17,7 @@ except ImportError:
     termios = None  # type: ignore
 
 from ast import PyCF_ALLOW_TOP_LEVEL_AWAIT
-from asyncio import iscoroutine, new_event_loop
+from asyncio import iscoroutine
 from code import InteractiveConsole
 from collections.abc import Sequence
 from contextlib import suppress
@@ -34,6 +34,7 @@ from sanic.log import Colors
 from sanic.models.ctx_types import REPLContext
 from sanic.models.protocol_types import TransportProtocol
 from sanic.response.types import HTTPResponse
+from sanic.server.loop import new_event_loop
 
 
 try:

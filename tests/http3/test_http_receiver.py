@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 from aioquic.h3.connection import H3Connection
-from aioquic.h3.events import DataReceived, HeadersReceived
+from aioquic.h3.events import DatagramReceived, DataReceived, HeadersReceived
 from aioquic.quic.configuration import QuicConfiguration
 from aioquic.quic.connection import QuicConnection
 from aioquic.quic.events import ProtocolNegotiated
@@ -45,11 +45,8 @@ def http_request(app):
 
 def generate_protocol(app):
     connection = QuicConnection(configuration=QuicConfiguration())
-    connection._ack_delay = 0
-    connection._loss = Mock()
-    connection._loss.spaces = []
-    connection._loss.get_loss_detection_time = lambda: None
     connection.datagrams_to_send = Mock(return_value=[])  # type: ignore
+    connection.get_timer = Mock(return_value=None)  # type: ignore
     return Http3Protocol(
         connection,
         app=app,
@@ -172,6 +169,14 @@ async def test_http3_events(app):
     assert receiver.request.method == "GET"
     assert receiver.request.headers["foo"] == "bar"
     assert receiver.request.body == b"foobar"
+
+
+async def test_http3_unhandled_event(app):
+    protocol = generate_protocol(app)
+    http3 = Http3(protocol, protocol.transmit)
+    http3.http_event_received(DatagramReceived(b"foo", 0))
+
+    assert http3.receivers == {}
 
 
 async def test_send_headers(app: Sanic, http_request: Request):

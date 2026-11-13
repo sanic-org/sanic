@@ -187,7 +187,7 @@ extras_require = {
     "docs": docs_require,
     "all": all_require,
     "ext": ["sanic-ext"],
-    "http3": ["aioquic"],
+    "http3": ["aioquic>=1.3.0,<2"],
 }
 
 setup_kwargs["install_requires"] = requirements

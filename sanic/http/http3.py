@@ -24,29 +24,18 @@ from sanic.models.server_types import ConnInfo
 
 
 try:
-    from aioquic.h0.connection import H0_ALPN, H0Connection
-    from aioquic.h3.connection import H3_ALPN, H3Connection
-    from aioquic.h3.events import (
-        DatagramReceived,
-        DataReceived,
-        H3Event,
-        HeadersReceived,
-        WebTransportStreamDataReceived,
-    )
+    from aioquic.h3.connection import H3_ALPN
+    from aioquic.h3.events import DataReceived, H3Event, HeadersReceived
     from aioquic.quic.configuration import QuicConfiguration
     from aioquic.tls import SessionTicket
-
-    HTTP3_AVAILABLE = True
 except ModuleNotFoundError:  # no cov
-    HTTP3_AVAILABLE = False
+    pass
 
 if TYPE_CHECKING:
     from sanic import Sanic
     from sanic.request import Request
     from sanic.response import BaseHTTPResponse
     from sanic.server.protocols.http_protocol import Http3Protocol
-
-    HttpConnection = H0Connection | H3Connection
 
 
 class HTTP3Transport(TransportProtocol):
@@ -268,22 +257,8 @@ class WebsocketReceiver(Receiver):  # noqa
     async def run(self): ...
 
 
-class WebTransportReceiver(Receiver):  # noqa
-    """WebTransport receiver implementation."""
-
-    async def run(self): ...
-
-
 class Http3:
     """Internal helper for managing the HTTP/3 request/response cycle"""
-
-    if HTTP3_AVAILABLE:
-        HANDLER_PROPERTY_MAPPING = {
-            DataReceived: "stream_id",
-            HeadersReceived: "stream_id",
-            DatagramReceived: "flow_id",
-            WebTransportStreamDataReceived: "session_id",
-        }
 
     def __init__(
         self,
@@ -300,6 +275,8 @@ class Http3:
             f"{Colors.YELLOW}{event}{Colors.END}",
             extra={"verbosity": 2},
         )
+        if not isinstance(event, (DataReceived, HeadersReceived)):
+            return
         receiver, created_new = self.get_or_make_receiver(event)
         receiver = cast(HTTPReceiver, receiver)
 
@@ -318,7 +295,9 @@ class Http3:
                 extra={"verbosity": 2},
             )
 
-    def get_or_make_receiver(self, event: H3Event) -> tuple[Receiver, bool]:
+    def get_or_make_receiver(
+        self, event: DataReceived | HeadersReceived
+    ) -> tuple[Receiver, bool]:
         if (
             isinstance(event, HeadersReceived)
             and event.stream_id not in self.receivers
@@ -330,8 +309,7 @@ class Http3:
             self.receivers[event.stream_id] = receiver
             return receiver, True
         else:
-            ident = getattr(event, self.HANDLER_PROPERTY_MAPPING[type(event)])
-            return self.receivers[ident], False
+            return self.receivers[event.stream_id], False
 
     def get_receiver_by_stream_id(self, stream_id: int) -> Receiver:
         return self.receivers[stream_id]
@@ -410,9 +388,8 @@ def get_config(app: Sanic, ssl: SanicSSLContext | CertSelector | SSLContext):
         raise SanicException("SSLContext is not SanicSSLContext")
 
     config = QuicConfiguration(
-        alpn_protocols=H3_ALPN + H0_ALPN + ["siduck"],
+        alpn_protocols=H3_ALPN,
         is_client=False,
-        max_datagram_frame_size=65536,
     )
     password = app.config.TLS_CERT_PASSWORD or None
 

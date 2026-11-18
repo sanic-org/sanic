@@ -122,6 +122,10 @@ class WorkerProcess:
             except (KeyError, AttributeError, ProcessLookupError):
                 ...
 
+    def kill(self):
+        """Forcefully terminate the process without running its cleanup."""
+        self._current_process.kill()
+
     def restart(self, restart_order=RestartOrder.SHUTDOWN_FIRST, **kwargs):
         logger.debug(
             f"{Colors.BLUE}Restarting a process: {Colors.BOLD}{Colors.SANIC}"

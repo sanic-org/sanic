@@ -1,5 +1,5 @@
 from logging import ERROR, INFO
-from signal import SIGINT
+from signal import SIGINT, SIGTERM
 from unittest.mock import Mock, call, patch
 
 import pytest
@@ -76,8 +76,21 @@ def test_kill(os_mock: Mock):
 
 @patch("sanic.worker.process.os")
 @patch("sanic.worker.manager.os")
+@pytest.mark.parametrize(
+    "is_windows,received_signal,expected_calls",
+    (
+        (False, SIGINT, [call(1234, SIGINT)]),
+        (False, SIGTERM, [call(1234, SIGINT)]),
+        (True, SIGINT, []),
+        (True, SIGTERM, [call(1234, SIGINT)]),
+    ),
+)
 def test_shutdown_signal_send_kill(
-    manager_os_mock: Mock, process_os_mock: Mock
+    manager_os_mock: Mock,
+    process_os_mock: Mock,
+    is_windows,
+    received_signal,
+    expected_calls,
 ):
     process = Mock()
     process.pid = 1234
@@ -86,9 +99,10 @@ def test_shutdown_signal_send_kill(
     manager_os_mock.getpgid.return_value = 5678
     manager = WorkerManager(1, fake_serve, {}, context, (Mock(), Mock()), {})
     assert manager._shutting_down is False
-    manager.shutdown_signal(SIGINT, None)
+    with patch("sanic.worker.manager.OS_IS_WINDOWS", is_windows):
+        manager.shutdown_signal(received_signal, None)
     assert manager._shutting_down is True
-    process_os_mock.kill.assert_called_once_with(1234, SIGINT)
+    assert process_os_mock.kill.call_args_list == expected_calls
     manager.shutdown_signal(SIGINT, None)
     manager_os_mock.getpgid.assert_called_once_with(1234)
     manager_os_mock.killpg.assert_called_once_with(5678, SIGKILL)
@@ -230,7 +244,7 @@ def test_shutdown_signal():
     manager = WorkerManager(1, fake_serve, {}, Mock(), (pub, Mock()), {})
     manager.shutdown = Mock()  # type: ignore
 
-    manager.shutdown_signal(SIGINT, None)
+    manager.shutdown_signal(SIGTERM, None)
     pub.send.assert_called_with(None)
     manager.shutdown.assert_called_once_with()
 

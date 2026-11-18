@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import signal
 
 from collections.abc import Iterable, MutableMapping
 from contextlib import suppress
@@ -12,6 +11,7 @@ from multiprocessing.context import BaseContext
 from random import choice
 from signal import SIGINT, SIGTERM, Signals
 from signal import signal as signal_func
+from time import sleep
 from typing import Any, Callable
 
 from sanic.compat import OS_IS_WINDOWS
@@ -223,6 +223,11 @@ class WorkerManager:
             if process.state < ProcessState.JOINED:
                 logger.debug(f"Joining {process.pid}", extra={"verbosity": 1})
                 joined.add(process.pid)
+                if OS_IS_WINDOWS and self._shutting_down:
+                    # An unbounded Windows join prevents a second Ctrl+C
+                    # from reaching the manager's force-stop handler.
+                    while process.is_alive():
+                        sleep(0.1)
                 process.join()
         if joined:
             self.join()
@@ -378,8 +383,7 @@ class WorkerManager:
             logger.info("Killing %s [%s]", process.name, process.pid)
             with suppress(ProcessLookupError):
                 if os.name == "nt":
-                    # Windows has no os.killpg and SIGKILL doesn't seem to work
-                    os.kill(process.pid, signal.CTRL_C_EVENT)
+                    process.kill()
                 else:
                     try:
                         os.killpg(os.getpgid(process.pid), SIGKILL)
@@ -397,7 +401,15 @@ class WorkerManager:
 
         logger.info("Received signal %s. Shutting down.", Signals(signal).name)
         self.monitor_publisher.send(None)
-        self.shutdown()
+        if OS_IS_WINDOWS and signal == SIGINT:
+            # Ctrl+C reaches every process attached to the Windows console.
+            # Sending SIGINT again via os.kill would force-kill the workers.
+            self._shutting_down = True
+            for process in self.processes:
+                if process.target is not self._serve and process.is_alive():
+                    process.terminate()
+        else:
+            self.shutdown()
 
     def shutdown(self):
         """Shutdown the worker manager."""

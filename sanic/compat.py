@@ -167,7 +167,7 @@ def ctrlc_workaround_for_windows(app):
             # waiting for I/O. Frequent wakeups keep interrupts flowing.
             await asyncio.sleep(0.1)
         # Can't be called from signal handler, so call it from here
-        app.stop()
+        app.stop(terminate=False)
 
     def ctrlc_handler(sig, frame):
         nonlocal die

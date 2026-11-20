@@ -225,6 +225,21 @@ def test_monitor_one_process(zero_downtime):
     )
 
 
+def test_monitor_terminate_early():
+    sub = Mock()
+    sub.recv.side_effect = ["__TERMINATE_EARLY__", ""]
+    manager = WorkerManager(1, fake_serve, {}, Mock(), (Mock(), sub), {})
+    manager.kill = Mock()  # type: ignore
+    manager.wait_for_ack = Mock()  # type: ignore
+    manager.restart = Mock()  # type: ignore
+
+    manager.monitor()
+
+    manager.kill.assert_called_once()
+    manager.restart.assert_not_called()
+
+
+
 def test_shutdown_signal():
     pub = Mock()
     manager = WorkerManager(1, fake_serve, {}, Mock(), (pub, Mock()), {})

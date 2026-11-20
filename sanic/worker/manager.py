@@ -472,6 +472,13 @@ class WorkerManager:
             elif message == "__TERMINATE__":
                 self._handle_terminate()
                 return MonitorCycle.BREAK
+            elif message == "__TERMINATE_EARLY__":
+                error_logger.error(
+                    "One of your worker processes terminated before startup "
+                    "was completed. Shutting down."
+                )
+                self.kill()
+                return MonitorCycle.BREAK
             elif isinstance(message, tuple) and (
                 len(message) == 7 or len(message) == 8
             ):

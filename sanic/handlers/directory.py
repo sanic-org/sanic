@@ -89,6 +89,12 @@ class DirectoryHandler:
         for file_name in self.index:
             index_file = self.directory / current / file_name
             if index_file.is_file():
+                if (
+                    index_file.is_symlink()
+                    and not _is_path_within_root(index_file, self.root_path)
+                    and not self.follow_external_symlink_files
+                ):
+                    continue
                 return await file(index_file)
 
         if self.directory_view:

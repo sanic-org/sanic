@@ -203,6 +203,17 @@ def test_symlink_to_outside_file_returns_404(
     assert response.status == 404
 
 
+def test_index_symlink_to_outside_file_returns_404(
+    app: Sanic, symlink_test_directory: Path
+):
+    outside_file = symlink_test_directory.parent / "outside" / "secret.txt"
+    (symlink_test_directory / "index.html").symlink_to(outside_file)
+    app.static("/static", symlink_test_directory, index="index.html")
+
+    _, response = app.test_client.get("/static/")
+    assert response.status == 404
+
+
 def test_symlink_to_outside_dir_returns_404(
     app: Sanic, symlink_test_directory: Path
 ):

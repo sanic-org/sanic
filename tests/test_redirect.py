@@ -133,3 +133,16 @@ def test_redirect_with_params(app, test_str):
     assert response.status == 200
 
     assert response.body == b"OK"
+
+
+@pytest.mark.parametrize(
+    "target,expected",
+    [
+        ("/documents/meeting notes", "/documents/meeting%20notes"),
+        ("/documents/meeting%20notes", "/documents/meeting%20notes"),
+        ("/a+b", "/a+b"),
+    ],
+)
+def test_redirect_location_encodes_spaces_as_percent_20(target, expected):
+    assert redirect(target).headers["Location"] == expected
+

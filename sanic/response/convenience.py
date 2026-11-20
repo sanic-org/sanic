@@ -7,7 +7,7 @@ from os import path
 from pathlib import PurePath
 from time import time
 from typing import Any, AnyStr, Callable
-from urllib.parse import quote_plus
+from urllib.parse import quote
 
 from sanic.compat import Header, open_async, stat_async
 from sanic.constants import DEFAULT_HTTP_CONTENT_TYPE
@@ -321,7 +321,7 @@ def redirect(
     headers = headers or {}
 
     # URL Quote the URL before redirecting
-    safe_to = quote_plus(to, safe=":/%#?&=@[]!$&'()*+,;")
+    safe_to = quote(to, safe=":/%#?&=@[]!$&'()*+,;")
 
     # According to RFC 7231, a relative URI is now permitted.
     headers["Location"] = safe_to

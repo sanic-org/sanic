@@ -372,6 +372,33 @@ def test_server_run_with_repl(caplog, capsys):
     assert record in caplog.record_tuples
 
 
+def test_repl_tab_completion():
+    readline = pytest.importorskip("readline")
+
+    from sanic import Sanic
+    from sanic.cli import console as console_module
+    from sanic.cli.console import READLINE_BACKEND, SanicREPL
+
+    if READLINE_BACKEND is None:
+        pytest.skip("readline backend not available")
+
+    app = Sanic("test_repl_tab_completion")
+    app.repl_ctx.add("myvalue", "myvar", "A test local.")
+    previous_completer = readline.get_completer()
+    with patch.object(console_module, "HTTPX_AVAILABLE", False):
+        repl = SanicREPL(app)
+    completer = readline.get_completer()
+    try:
+        assert completer is not None
+        assert completer("ap", 0).startswith("app")
+        assert completer("app.", 0).startswith("app.")
+        assert completer("do", 0).startswith("do")
+        assert completer("myv", 0) == "myvar"
+    finally:
+        readline.set_completer(previous_completer)
+        repl.loop.close()
+
+
 def test_command_no_args(caplog):
     args = ["fake.server.app", "exec", "foo"]
     with patch("sys.argv", ["sanic", *args]):

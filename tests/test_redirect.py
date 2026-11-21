@@ -141,6 +141,11 @@ def test_redirect_with_params(app, test_str):
         ("/documents/meeting notes", "/documents/meeting%20notes"),
         ("/documents/meeting%20notes", "/documents/meeting%20notes"),
         ("/a+b", "/a+b"),
+        ("/search?q=sanic test", "/search?q=sanic+test"),
+        (
+            "/documents/meeting notes?q=hello world",
+            "/documents/meeting%20notes?q=hello+world",
+        ),
     ],
 )
 def test_redirect_location_encodes_spaces_as_percent_20(target, expected):

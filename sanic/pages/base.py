@@ -11,7 +11,7 @@ class BasePage(ABC, metaclass=CSS):  # no cov
     """Base page for Sanic pages."""
 
     TITLE = "Sanic"
-    HEADING = None
+    HEADING: Builder | str | None = None
     CSS: str
     doc: Builder
 

@@ -317,7 +317,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: str | None = None,
         **ctx_kwargs: Any,
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """Decorate a function handler to create a route definition using the **GET** HTTP method.
 
         Args:
@@ -341,10 +341,10 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 context (`route.ctx`).
 
         Returns:
-            RouteHandler: Object decorated with route method.
+            RouteWrapper: Object decorated with route method.
         """  # noqa: E501
         return cast(
-            RouteHandler,
+            RouteWrapper,
             self.route(
                 uri,
                 methods=frozenset({"GET"}),
@@ -370,7 +370,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: str | None = None,
         **ctx_kwargs: Any,
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """Decorate a function handler to create a route definition using the **POST** HTTP method.
 
         Args:
@@ -392,10 +392,10 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 context (`route.ctx`).
 
         Returns:
-            RouteHandler: Object decorated with route method.
+            RouteWrapper: Object decorated with route method.
         """  # noqa: E501
         return cast(
-            RouteHandler,
+            RouteWrapper,
             self.route(
                 uri,
                 methods=frozenset({"POST"}),
@@ -421,7 +421,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: str | None = None,
         **ctx_kwargs: Any,
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """Decorate a function handler to create a route definition using the **PUT** HTTP method.
 
         Args:
@@ -443,10 +443,10 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 context (`route.ctx`).
 
         Returns:
-            RouteHandler: Object decorated with route method.
+            RouteWrapper: Object decorated with route method.
         """  # noqa: E501
         return cast(
-            RouteHandler,
+            RouteWrapper,
             self.route(
                 uri,
                 methods=frozenset({"PUT"}),
@@ -472,7 +472,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: str | None = None,
         **ctx_kwargs: Any,
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """Decorate a function handler to create a route definition using the **HEAD** HTTP method.
 
         Args:
@@ -496,10 +496,10 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 context (`route.ctx`).
 
         Returns:
-            RouteHandler: Object decorated with route method.
+            RouteWrapper: Object decorated with route method.
         """  # noqa: E501
         return cast(
-            RouteHandler,
+            RouteWrapper,
             self.route(
                 uri,
                 methods=frozenset({"HEAD"}),
@@ -525,7 +525,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: str | None = None,
         **ctx_kwargs: Any,
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """Decorate a function handler to create a route definition using the **OPTIONS** HTTP method.
 
         Args:
@@ -549,10 +549,10 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 context (`route.ctx`).
 
         Returns:
-            RouteHandler: Object decorated with route method.
+            RouteWrapper: Object decorated with route method.
         """  # noqa: E501
         return cast(
-            RouteHandler,
+            RouteWrapper,
             self.route(
                 uri,
                 methods=frozenset({"OPTIONS"}),
@@ -578,7 +578,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: str | None = None,
         **ctx_kwargs: Any,
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """Decorate a function handler to create a route definition using the **PATCH** HTTP method.
 
         Args:
@@ -600,10 +600,10 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 context (`route.ctx`).
 
         Returns:
-            RouteHandler: Object decorated with route method.
+            RouteWrapper: Object decorated with route method.
         """  # noqa: E501
         return cast(
-            RouteHandler,
+            RouteWrapper,
             self.route(
                 uri,
                 methods=frozenset({"PATCH"}),
@@ -629,7 +629,7 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
         version_prefix: str = "/v",
         error_format: str | None = None,
         **ctx_kwargs: Any,
-    ) -> RouteHandler:
+    ) -> RouteWrapper:
         """Decorate a function handler to create a route definition using the **DELETE** HTTP method.
 
         Args:
@@ -650,10 +650,10 @@ class RouteMixin(BaseMixin, metaclass=SanicMeta):
                 prefix will be appended to the route context (`route.ctx`).
 
         Returns:
-            RouteHandler: Object decorated with route method.
+            RouteWrapper: Object decorated with route method.
         """  # noqa: E501
         return cast(
-            RouteHandler,
+            RouteWrapper,
             self.route(
                 uri,
                 methods=frozenset({"DELETE"}),

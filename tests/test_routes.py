@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import re
 
 import pytest
@@ -13,6 +14,7 @@ from sanic_testing.testing import SanicTestClient
 from sanic import Blueprint, Sanic
 from sanic.constants import HTTP_METHODS
 from sanic.exceptions import NotFound, SanicException, ServerError
+from sanic.mixins.routes import RouteMixin, RouteWrapper
 from sanic.request import Request
 from sanic.response import empty, json, text
 
@@ -1289,3 +1291,30 @@ async def test_duplicate_route_error(app):
     )
     with pytest.raises(ServerError, match=message):
         await app._startup()
+
+
+def test_route_method_decorators_return_type_annotation():
+    for method_name in (
+        "get",
+        "post",
+        "put",
+        "head",
+        "options",
+        "patch",
+        "delete",
+    ):
+        method = getattr(RouteMixin, method_name)
+        sig = inspect.signature(method)
+        assert sig.return_annotation in ("RouteWrapper", RouteWrapper)
+
+
+def test_route_decorator_applied_as_function(app):
+    async def api_handler(request):
+        return text("OK")
+
+    wrapped = app.get("/api")(api_handler)
+    assert wrapped is api_handler
+    _, response = app.test_client.get("/api")
+    assert response.status == 200
+    assert response.text == "OK"
+

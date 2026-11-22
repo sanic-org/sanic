@@ -177,3 +177,25 @@ def test_signal_server_lifecycle_exception(app: Sanic):
 
     assert isinstance(trigger, ServerError)
     assert str(trigger) == "test_before_server_start"
+
+
+def test_setup_system_signals_preserves_custom_handlers_when_disabled(
+    app: Sanic,
+):
+    from sanic.server.runners import _setup_system_signals
+
+    def custom_handler(sig, frame):
+        pass
+
+    orig_handler = signal.signal(signal.SIGTERM, custom_handler)
+    try:
+        loop = asyncio.new_event_loop()
+        _setup_system_signals(
+            app=app,
+            run_multiple=False,
+            register_sys_signals=False,
+            loop=loop,
+        )
+        assert signal.getsignal(signal.SIGTERM) is custom_handler
+    finally:
+        signal.signal(signal.SIGTERM, orig_handler)

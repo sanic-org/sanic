@@ -100,3 +100,20 @@ def test_trailing_slash_url_for(app, path, strict, expected):
 
     url = app.url_for("handler")
     assert url == expected
+
+
+def test_url_for_escapes_path_parameter_values(app):
+    @app.get("/catalog/<label:str>/<rest:path>", name="item")
+    def item(request, label, rest): ...
+
+    assert (
+        app.url_for("item", label="C# guide", rest="a/b")
+        == "/catalog/C%23%20guide/a/b"
+    )
+    assert (
+        app.url_for("item", label="Why?", rest="a/b") == "/catalog/Why%3F/a/b"
+    )
+    assert (
+        app.url_for("item", label="C%23", rest="a%2Fb")
+        == "/catalog/C%23/a%2Fb"
+    )

@@ -38,7 +38,7 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import urlencode, urlunparse
+from urllib.parse import quote, urlencode, urlunparse
 
 from sanic_routing.exceptions import FinalizationError, NotFound
 from sanic_routing.route import Route
@@ -1119,6 +1119,11 @@ class Sanic(
                     raise URLBuildError(msg)
 
             # replace the parameter in the URL with the supplied value
+            if not getattr(route.extra, "static", None):
+                safe = "%"
+                if pattern.match("/"):
+                    safe += "/"
+                supplied_param = quote(supplied_param, safe=safe)
             replacement_regex = f"(<{param_info.name}.*?>)"
             out = re.sub(replacement_regex, supplied_param, out)
 

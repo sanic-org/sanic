@@ -3,6 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 
+_MISSING = object()
+
+
 class RequestParameters(dict):
     """Hosts a dict with lists as values where get returns the first value of the list and getlist returns the whole shebang"""  # noqa: E501
 
@@ -16,7 +19,10 @@ class RequestParameters(dict):
         Returns:
             Any | None: The first value of the list
         """  # noqa: E501
-        return super().get(name, [default])[0]
+        values = super().get(name, _MISSING)
+        if values is _MISSING:
+            return default
+        return values[0]
 
     def getlist(
         self, name: str, default: list[Any] | None = None

@@ -3,11 +3,15 @@ from __future__ import annotations
 import re
 
 from collections.abc import Iterable
+from operator import attrgetter
 from typing import Any
 from urllib.parse import unquote
 
 from sanic.exceptions import InvalidHeader
 from sanic.helpers import STATUS_CODES
+
+
+_MEDIA_TYPE_KEY = attrgetter("key")
 
 
 # TODO:
@@ -50,6 +54,8 @@ class MediaType:
         **params (str): Any parameters for the media type.
     """
 
+    __slots__ = ("type", "subtype", "q", "params", "mime", "key")
+
     def __init__(
         self,
         type_: str,
@@ -58,14 +64,14 @@ class MediaType:
     ):
         self.type = type_
         self.subtype = subtype
-        self.q = float(params.get("q", "1.0"))
+        self.q = float(params["q"]) if "q" in params else 1.0
         self.params = params
         self.mime = f"{type_}/{subtype}"
         self.key = (
-            -1 * self.q,
-            -1 * len(self.params),
-            self.subtype == "*",
-            self.type == "*",
+            -self.q,
+            -len(params),
+            subtype == "*",
+            type_ == "*",
         )
 
     def __repr__(self):
@@ -112,25 +118,22 @@ class MediaType:
             if isinstance(mime_with_params, str)
             else mime_with_params
         )
-        return (
-            self
-            if (
-                mt
-                # All parameters given in the other media type must match
-                and all(self.params.get(k) == v for k, v in mt.params.items())
-                # Subtype match
-                and (
-                    self.subtype == mt.subtype
-                    or self.subtype == "*"
-                    or mt.subtype == "*"
-                )
-                # Type match
-                and (
-                    self.type == mt.type or self.type == "*" or mt.type == "*"
-                )
+        if mt is None:
+            return None
+        if (
+            (
+                self.subtype == mt.subtype
+                or self.subtype == "*"
+                or mt.subtype == "*"
             )
-            else None
-        )
+            and (self.type == mt.type or self.type == "*" or mt.type == "*")
+            and (
+                not mt.params
+                or all(self.params.get(k) == v for k, v in mt.params.items())
+            )
+        ):
+            return self
+        return None
 
     @property
     def has_wildcard(self) -> bool:
@@ -139,23 +142,56 @@ class MediaType:
         Returns:
             bool: True if this media type has a wildcard in it.
         """
-        return any(part == "*" for part in (self.subtype, self.type))
+        return self.subtype == "*" or self.type == "*"
 
     @classmethod
     def _parse(cls, mime_with_params: str) -> MediaType | None:
         mtype = mime_with_params.strip()
-        if "/" not in mime_with_params:
+        if "/" not in mtype:
             return None
+
+        if ";" not in mtype:
+            type_, subtype = mtype.split("/", 1)
+            if not type_ or not subtype:
+                raise ValueError(f"Invalid media type: {mtype}")
+            if cls is MediaType:
+                obj = cls.__new__(cls)
+                obj.type = type_
+                obj.subtype = subtype
+                obj.q = 1.0
+                obj.params = {}
+                obj.mime = mtype
+                obj.key = (-1.0, 0, subtype == "*", type_ == "*")
+                return obj
+            return cls(type_, subtype)
 
         mime, *raw_params = mtype.split(";")
         type_, subtype = mime.split("/", 1)
         if not type_ or not subtype:
             raise ValueError(f"Invalid media type: {mtype}")
 
-        params = {
-            key.strip(): value.strip()
-            for key, value in (param.split("=", 1) for param in raw_params)
-        }
+        params = {}
+        for param in raw_params:
+            key, value = param.split("=", 1)
+            params[key.strip()] = value.strip()
+
+        if (
+            cls is MediaType
+            and "self" not in params
+            and "type_" not in params
+            and "subtype" not in params
+        ):
+            type_ = type_.lstrip()
+            subtype = subtype.rstrip()
+            q = float(params["q"]) if "q" in params else 1.0
+            obj = cls.__new__(cls)
+            obj.type = type_
+            obj.subtype = subtype
+            obj.q = q
+            obj.params = params
+            obj.mime = f"{type_}/{subtype}"
+            obj.key = (-q, -len(params), subtype == "*", type_ == "*")
+            return obj
 
         return cls(type_.lstrip(), subtype.rstrip(), **params)
 
@@ -171,6 +207,8 @@ class Matched:
         mime (str): The MIME string to match.
         header (MediaType): The header to match against, if any.
     """
+
+    __slots__ = ("mime", "header")
 
     def __init__(self, mime: str, header: MediaType | None):
         self.mime = mime
@@ -281,14 +319,115 @@ class AcceptList(list):
         Returns:
             Match: A match object with the mime string and the MediaType object.
         """  # noqa: E501
-        a = sorted(
-            (-acc.q, i, j, mime, acc)
-            for j, acc in enumerate(self)
-            if accept_wildcards or not acc.has_wildcard
-            for i, mime in enumerate(mimes)
-            if acc.match(mime)
-        )
-        return Matched(*(a[0][-2:] if a else ("", None)))
+        if not self or not mimes:
+            return Matched("", None)
+
+        parsed_mimes: (
+            list[tuple[int, str, str, str, dict[str, str] | None]] | None
+        ) = None
+        best_neg_q = 0.0
+        best_i = 0
+        best_mime = ""
+        best_acc: MediaType | None = None
+
+        for acc in self:
+            if not accept_wildcards and (
+                acc.subtype == "*" or acc.type == "*"
+            ):
+                continue
+
+            neg_q = -acc.q
+            if best_acc is not None:
+                if neg_q > best_neg_q:
+                    continue
+                if neg_q == best_neg_q and best_i == 0:
+                    continue
+
+            same_q = best_acc is not None and neg_q == best_neg_q
+            if type(acc) is MediaType:
+                if parsed_mimes is None:
+                    parsed_mimes = []
+                    for i, mime in enumerate(mimes):
+                        if isinstance(mime, str):
+                            mtype = mime.strip()
+                            if "/" not in mtype:
+                                continue
+                            if ";" not in mtype:
+                                mt_type, mt_subtype = mtype.split("/", 1)
+                                if not mt_type or not mt_subtype:
+                                    raise ValueError(
+                                        f"Invalid media type: {mtype}"
+                                    )
+                                parsed_mimes.append(
+                                    (i, mime, mt_type, mt_subtype, None)
+                                )
+                            else:
+                                mt = MediaType._parse(mime)
+                                if mt is not None:
+                                    parsed_mimes.append(
+                                        (
+                                            i,
+                                            mime,
+                                            mt.type,
+                                            mt.subtype,
+                                            mt.params or None,
+                                        )
+                                    )
+                        elif mime is not None:
+                            parsed_mimes.append(
+                                (
+                                    i,
+                                    mime,
+                                    mime.type,
+                                    mime.subtype,
+                                    mime.params or None,
+                                )
+                            )
+                    if not parsed_mimes:
+                        return Matched("", None)
+
+                acc_type = acc.type
+                acc_subtype = acc.subtype
+                acc_params = acc.params
+                for i, mime, mt_type, mt_subtype, mt_params in parsed_mimes:
+                    if same_q and i >= best_i:
+                        break
+                    if (
+                        (
+                            acc_subtype == mt_subtype
+                            or acc_subtype == "*"
+                            or mt_subtype == "*"
+                        )
+                        and (
+                            acc_type == mt_type
+                            or acc_type == "*"
+                            or mt_type == "*"
+                        )
+                        and (
+                            mt_params is None
+                            or all(
+                                acc_params.get(k) == v
+                                for k, v in mt_params.items()
+                            )
+                        )
+                    ):
+                        best_neg_q = neg_q
+                        best_i = i
+                        best_mime = mime
+                        best_acc = acc
+                        break
+            else:
+                for i, mime in enumerate(mimes):
+                    if same_q and i >= best_i:
+                        break
+                    if acc.match(mime):
+                        best_neg_q = neg_q
+                        best_i = i
+                        best_mime = mime
+                        best_acc = acc
+                        break
+
+        return Matched(best_mime, best_acc)
 
     def __str__(self):
         """Format as Accept header value (parsed, not original)."""
@@ -314,14 +453,17 @@ def parse_accept(accept: str | None) -> AcceptList:
             return AcceptList()  # Empty header, accept nothing
         accept = "*/*"  # No header means that all types are accepted
     try:
-        a = [
-            mt
-            for mt in [MediaType._parse(mtype) for mtype in accept.split(",")]
-            if mt
-        ]
+        a = AcceptList()
+        parse = MediaType._parse
+        for mtype in accept.split(","):
+            mt = parse(mtype)
+            if mt is not None:
+                a.append(mt)
         if not a:
             raise ValueError
-        return AcceptList(sorted(a, key=lambda x: x.key))
+        if len(a) > 1:
+            a.sort(key=_MEDIA_TYPE_KEY)
+        return a
     except ValueError:
         raise InvalidHeader(f"Invalid header value in Accept: {accept}")
 
@@ -345,16 +487,14 @@ def parse_content_header(value: str) -> tuple[str, Options]:
     """
     pos = value.find(";")
     if pos == -1:
-        options: dict[str, int | str] = {}
-    else:
-        options = {
-            m.group(1).lower(): (m.group(2) or m.group(3))
-            .replace("%22", '"')
-            .replace("%0D%0A", "\n")
-            for m in _param.finditer(value[pos:])
-        }
-        value = value[:pos]
-    return value.strip().lower(), options
+        return value.strip().lower(), {}
+    options: dict[str, int | str] = {}
+    for m in _param.finditer(value, pos):
+        val = m.group(2) or m.group(3)
+        if "%" in val:
+            val = val.replace("%22", '"').replace("%0D%0A", "\n")
+        options[m.group(1).lower()] = val
+    return value[:pos].strip().lower(), options
 
 
 # https://tools.ietf.org/html/rfc7230#section-3.2.6 and
@@ -374,7 +514,7 @@ def parse_forwarded(headers, config) -> Options | None:
     secret = config.FORWARDED_SECRET
     if header is None or not secret:
         return None
-    header = ",".join(header)  # Join multiple header lines
+    header = header[0] if len(header) == 1 else ",".join(header)
     if secret not in header:
         return None
     # Loop over <separator><key>=<value> elements from right to left
@@ -392,7 +532,12 @@ def parse_forwarded(headers, config) -> Options | None:
         pos = m.end()
         val_token, val_quoted, key, sep = m.groups()
         key = key.lower()[::-1]
-        val = (val_token or val_quoted.replace('"\\', '"'))[::-1]
+        if val_token:
+            val = val_token[::-1]
+        elif "\\" in val_quoted:
+            val = val_quoted.replace('"\\', '"')[::-1]
+        else:
+            val = val_quoted[::-1]
         options_list.append((key, val))
         if key in ("secret", "by") and val == secret:
             found = True

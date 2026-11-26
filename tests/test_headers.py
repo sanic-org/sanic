@@ -467,3 +467,23 @@ def test_multiple_fields_accessor(app: Sanic):
         "/", headers=(("Example-Field", "Foo, Bar"), ("Example-Field", "Baz"))
     )
     assert response.json["field"] == "Foo, Bar,Baz"
+
+
+def test_accept_list_match_unsorted_and_tiebreak():
+    unsorted = headers.AcceptList(
+        [
+            headers.MediaType("text", "plain", q="0.5"),
+            headers.MediaType("application", "json", q="0.9"),
+            headers.MediaType("text", "html", q="0.9"),
+        ]
+    )
+    matched = unsorted.match("text/html", "application/json", "text/plain")
+    assert matched.mime == "text/html"
+    assert matched.header == "text/html"
+
+
+def test_accept_list_match_wildcards_disabled_and_invalid_mime():
+    wildcard_only = headers.parse_accept("*/*")
+    assert not wildcard_only.match("bad/", accept_wildcards=False)
+    with pytest.raises(ValueError):
+        wildcard_only.match("text/html", "bad/")

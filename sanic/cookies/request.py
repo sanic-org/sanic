@@ -12,6 +12,10 @@ COOKIE_NAME_RESERVED_CHARS = re.compile(
 OCTAL_PATTERN = re.compile(r"\\[0-3][0-7][0-7]")
 QUOTE_PATTERN = re.compile(r"[\\].")
 
+_MISSING = object()
+_HOST_PREFIX = Cookie.HOST_PREFIX
+_SECURE_PREFIX = Cookie.SECURE_PREFIX
+
 
 def _unquote(str):  # no cov
     if str is None or len(str) < 2:
@@ -20,6 +24,8 @@ def _unquote(str):  # no cov
         return str
 
     str = str[1:-1]
+    if "\\" not in str:
+        return str
 
     i = 0
     n = len(str)
@@ -70,6 +76,7 @@ def parse_cookie(raw: str) -> dict[str, list[str]]:
         ```
     """  # noqa: E501
     cookies: dict[str, list[str]] = {}
+    search_reserved = COOKIE_NAME_RESERVED_CHARS.search
 
     for token in raw.split(";"):
         name, sep, value = token.partition("=")
@@ -84,14 +91,18 @@ def parse_cookie(raw: str) -> dict[str, list[str]]:
                 continue
             name, value = "", name
 
-        if COOKIE_NAME_RESERVED_CHARS.search(name):  # no cov
+        if name and search_reserved(name):  # no cov
             continue
 
         if len(value) > 2 and value[0] == '"' and value[-1] == '"':  # no cov
-            value = _unquote(value)
+            if "\\" in value:
+                value = _unquote(value)
+            else:
+                value = value[1:-1]
 
-        if name in cookies:
-            cookies[name].append(value)
+        existing = cookies.get(name)
+        if existing is not None:
+            existing.append(value)
         else:
             cookies[name] = [value]
 
@@ -125,11 +136,13 @@ class CookieRequestParameters(RequestParameters):
     """  # noqa: E501
 
     def __getitem__(self, key: str) -> str | None:
-        try:
-            value = self._get_prefixed_cookie(key)
-        except KeyError:
-            value = super().__getitem__(key)
-        return value
+        value = dict.get(self, f"{_HOST_PREFIX}{key}", _MISSING)
+        if value is not _MISSING:
+            return value
+        value = dict.get(self, f"{_SECURE_PREFIX}{key}", _MISSING)
+        if value is not _MISSING:
+            return value
+        return super().__getitem__(key)
 
     def __getattr__(self, key: str) -> str:
         if key.startswith("_"):
@@ -138,18 +151,24 @@ class CookieRequestParameters(RequestParameters):
         return str(self.get(key, ""))
 
     def get(self, name: str, default: Any | None = None) -> Any | None:
-        try:
-            return self._get_prefixed_cookie(name)[0]
-        except KeyError:
-            return super().get(name, default)
+        values = dict.get(self, f"{_HOST_PREFIX}{name}", _MISSING)
+        if values is not _MISSING:
+            return values[0]
+        values = dict.get(self, f"{_SECURE_PREFIX}{name}", _MISSING)
+        if values is not _MISSING:
+            return values[0]
+        return super().get(name, default)
 
     def getlist(
         self, name: str, default: list[Any] | None = None
     ) -> list[Any]:
-        try:
-            return self._get_prefixed_cookie(name)
-        except KeyError:
-            return super().getlist(name, default)
+        values = dict.get(self, f"{_HOST_PREFIX}{name}", _MISSING)
+        if values is not _MISSING:
+            return values
+        values = dict.get(self, f"{_SECURE_PREFIX}{name}", _MISSING)
+        if values is not _MISSING:
+            return values
+        return super().getlist(name, default)
 
     def _get_prefixed_cookie(self, name: str) -> Any:
         getitem = super().__getitem__
